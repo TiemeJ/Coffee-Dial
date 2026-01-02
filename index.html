@@ -22,7 +22,6 @@
         th.filterable { position: relative; }
         th.filterable:hover::after { content: '\f0b0'; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 0.7em; margin-left: 6px; opacity: 0.5; }
         #filterDropdown { z-index: 50; animation: fadeIn 0.1s ease-out; }
-        #modalOverlay { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
@@ -31,7 +30,7 @@
         tailwind.config = { darkMode: 'class', theme: { extend: { colors: { coffee: { 50: '#fdf8f6', 100: '#f2e8e5', 200: '#eaddd7', 300: '#e0ccbb', 400: '#d2bab0', 500: '#a18e84', 600: '#8c7365', 700: '#7f5539', 800: '#9c6644', 900: '#4a3b32', } } } } }
     </script>
 </head>
-<body class="bg-[#fcfbf9] text-coffee-900 dark:bg-[#1c1917] dark:text-[#e7e5e4] min-h-screen pb-20" onclick="closeMenus(event)">
+<body class="bg-[#fcfbf9] text-coffee-900 dark:bg-[#1c1917] dark:text-[#e7e5e4] min-h-screen pb-20" onclick="closeFilterMenu(event)">
 
     <!-- Header -->
     <header class="bg-white dark:bg-[#292524] shadow-sm border-b border-coffee-200 dark:border-[#44403c] sticky top-0 z-20 transition-colors duration-300">
@@ -39,20 +38,22 @@
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-mug-hot text-coffee-700 dark:text-[#d6ccc2] text-2xl"></i>
                 <h1 class="text-2xl font-bold tracking-tight text-coffee-900 dark:text-white">Coffee Dial</h1>
-                <div id="syncStatus" class="hidden text-xs text-coffee-500 animate-pulse"><i class="fa-solid fa-cloud"></i></div>
             </div>
+            
             <div class="flex items-center gap-4">
+                <!-- Auth Section -->
                 <div id="authContainer">
                     <button id="loginBtn" onclick="googleLogin()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
                         <i class="fa-brands fa-google"></i> Sign In
                     </button>
                     <div id="userProfile" class="hidden flex items-center gap-3">
-                        <button onclick="openFriendsModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#34302e] hover:bg-coffee-100 dark:hover:bg-[#44403c] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]">
-                            <i class="fa-solid fa-user-group"></i> Friends
-                        </button>
+                        <span id="userName" class="text-sm font-medium hidden sm:block"></span>
                         <img id="userAvatar" src="" alt="User" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]">
+                        <button onclick="googleLogout()" class="text-xs text-red-500 hover:text-red-700 underline">Sign Out</button>
                     </div>
                 </div>
+
+                <!-- Dark Mode Toggle -->
                 <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-coffee-50 dark:hover:bg-[#44403c] transition-colors text-coffee-600 dark:text-[#a8a29e]" title="Toggle Theme">
                     <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i>
                 </button>
@@ -62,25 +63,14 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
         
-        <!-- View Selector -->
-        <div id="viewSelectorContainer" class="hidden mb-6 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-sm text-coffee-500 dark:text-[#a8a29e]">Viewing:</span>
-                <select id="viewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[200px]">
-                    <option value="mine">My Brews</option>
-                    <!-- Friends injected here -->
-                </select>
-            </div>
-            <button id="addBrewBtn" onclick="toggleForm(true); window.scrollTo({top:0,behavior:'smooth'})" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-all flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> New Brew
-            </button>
-        </div>
-
-        <!-- Add/Edit Form (Only visible on My Brews) -->
-        <div id="formContainer" class="hidden bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-all duration-300 overflow-hidden group" aria-expanded="false">
+        <!-- Add/Edit Coffee Form Container -->
+        <div id="formContainer" class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-all duration-300 overflow-hidden group" aria-expanded="false">
+            
+            <!-- Accordion Header -->
             <div onclick="toggleForm()" class="p-6 cursor-pointer flex justify-between items-center bg-coffee-50/50 dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">
                 <h2 id="formTitle" class="text-lg font-semibold flex items-center gap-2 text-coffee-900 dark:text-white select-none">
-                    <i class="fa-solid fa-plus-circle text-coffee-700 dark:text-[#d6ccc2]"></i> <span>Add New Brew</span>
+                    <i class="fa-solid fa-plus-circle text-coffee-700 dark:text-[#d6ccc2]"></i> 
+                    <span>Add New Brew</span>
                 </h2>
                 <div class="flex items-center gap-4">
                     <button id="cancelEditBtn" onclick="resetFormState(event)" class="hidden text-xs text-red-500 hover:text-red-700 dark:text-red-400 underline z-10 relative">
@@ -89,6 +79,8 @@
                     <i class="fa-solid fa-chevron-down text-coffee-400 chevron-rotate"></i>
                 </div>
             </div>
+
+            <!-- Accordion Content -->
             <div id="formContent" class="hidden px-6 pb-6 border-t border-coffee-100 dark:border-[#44403c]">
                 <form id="coffeeForm" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                     <input type="hidden" id="editId" name="editId" value="">
@@ -210,7 +202,7 @@
         <!-- Info Hint -->
         <div class="mb-2 text-xs text-coffee-500 dark:text-[#78716c] italic flex flex-col gap-1">
             <span><i class="fa-solid fa-hand-pointer mr-1"></i> Double tap Headers (Roast, Method, Temp) to filter.</span>
-            <span><i class="fa-solid fa-info-circle mr-1"></i> Drag rows to reorder.</span>
+            <span><i class="fa-solid fa-info-circle mr-1"></i> Drag rows to reorder (only when signed in).</span>
         </div>
 
         <!-- Table Container -->
@@ -278,54 +270,11 @@
 
     </main>
 
-    <!-- Friend Modal -->
-    <div id="modalOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
-            <!-- Modal Tabs -->
-            <div class="flex border-b border-coffee-200 dark:border-[#44403c]">
-                <button onclick="switchModalTab('profile')" id="tabProfile" class="flex-1 py-3 text-sm font-semibold text-coffee-700 dark:text-[#d6ccc2] bg-coffee-50 dark:bg-[#1c1917]">My Profile</button>
-                <button onclick="switchModalTab('following')" id="tabFollowing" class="flex-1 py-3 text-sm font-semibold text-coffee-500 dark:text-[#78716c] hover:bg-coffee-50 dark:hover:bg-[#1c1917]">Following</button>
-            </div>
-            
-            <!-- Tab: Profile -->
-            <div id="contentProfile" class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm font-medium text-coffee-900 dark:text-white">Public Profile</span>
-                    <button id="togglePublicBtn" onclick="togglePublicProfile()" class="bg-gray-200 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative"><div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform"></div></button>
-                </div>
-                <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-4">When enabled, anyone with your Share ID can see your brews.</p>
-                <div id="shareIdContainer" class="hidden">
-                    <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase">Your Share ID</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="myShareId" readonly class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1 text-sm font-mono text-coffee-900 dark:text-white select-all">
-                        <button onclick="copyShareId()" class="bg-coffee-200 dark:bg-[#44403c] hover:bg-coffee-300 px-3 rounded text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-regular fa-copy"></i></button>
-                    </div>
-                </div>
-                <hr class="my-6 border-coffee-200 dark:border-[#44403c]">
-                <button onclick="googleLogout()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-300 py-2 rounded-lg text-sm font-medium">Sign Out</button>
-            </div>
-
-            <!-- Tab: Following -->
-            <div id="contentFollowing" class="hidden p-6">
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="friendIdInput" placeholder="Enter Friend's Share ID" class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white">
-                    <button onclick="followUser()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-3 py-2 rounded-lg text-sm font-medium">Follow</button>
-                </div>
-                <div class="text-xs font-semibold text-coffee-500 dark:text-[#78716c] uppercase mb-2">People you follow</div>
-                <div id="followingList" class="space-y-2 max-h-48 overflow-y-auto">
-                    <!-- Friends injected here -->
-                </div>
-            </div>
-
-            <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end">
-                <button onclick="closeModal()" class="text-sm font-medium text-coffee-600 dark:text-[#a8a29e] hover:text-coffee-900 dark:hover:text-white">Close</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Scripts -->
     <script type="module">
-        // --- CONFIG ---
+        // --------------------------------------------------------
+        // STEP 1: PASTE YOUR FIREBASE CONFIGURATION HERE
+        // --------------------------------------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyAjKRgCrNuwaAvjOJPzTrmippI2sv5QG6M",
   authDomain: "coffee-dial-app-9db38.firebaseapp.com",
@@ -334,289 +283,529 @@ const firebaseConfig = {
   messagingSenderId: "513325852224",
   appId: "1:513325852224:web:0af5f15c4968a5bfad61a5"
 };
+        // --------------------------------------------------------
 
-
+        // Firebase Imports (Direct from CDN for GitHub Pages compatibility)
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, onSnapshot, query } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
+        // --- State Management ---
+        let coffees = []; 
         let currentUser = null;
-        let currentView = 'mine'; // 'mine' or uid of friend
-        let coffees = [];
-        let following = []; // List of objects { uid: '...', name: '...' }
-        let unsubscribeData = null; // To stop listeners when switching views
-        let isPublic = false;
+        let currentSort = { key: null, direction: 'asc' };
+        let activeFilters = {
+            method: null,
+            temp: null,
+            roastType: null
+        };
 
-        // --- Auth ---
-        window.googleLogin = () => signInWithPopup(auth, provider).catch(e => alert(e.message));
-        window.googleLogout = () => signOut(auth).then(() => window.location.reload());
+        // --- Auth Functions ---
+        window.googleLogin = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login failed", error);
+                alert("Login failed: " + error.message);
+            }
+        };
 
-        onAuthStateChanged(auth, async (user) => {
+        window.googleLogout = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Logout failed", error);
+            }
+        };
+
+        // Auth Listener
+        onAuthStateChanged(auth, (user) => {
             currentUser = user;
             if (user) {
-                document.getElementById('authContainer').innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <button onclick="openFriendsModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#34302e] hover:bg-coffee-100 dark:hover:bg-[#44403c] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-solid fa-user-group"></i> Friends</button>
-                        <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}">
-                    </div>`;
-                document.getElementById('syncStatus').classList.remove('hidden');
-                document.getElementById('viewSelectorContainer').classList.remove('hidden');
+                // User is signed in
+                document.getElementById('loginBtn').classList.add('hidden');
+                document.getElementById('userProfile').classList.remove('hidden');
+                document.getElementById('userName').textContent = user.displayName;
+                document.getElementById('userAvatar').src = user.photoURL;
                 
-                await initUserData(user);
-                loadFollowingList();
-                changeView('mine');
+                // Start listening to their private data
+                startDataListener(user.uid);
             } else {
-                // Reset UI
-                document.getElementById('authContainer').innerHTML = `<button onclick="googleLogin()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button>`;
-                document.getElementById('viewSelectorContainer').classList.add('hidden');
-                document.getElementById('coffeeTableBody').innerHTML = '';
-                document.getElementById('emptyState').classList.remove('hidden');
+                // User is signed out
+                document.getElementById('loginBtn').classList.remove('hidden');
+                document.getElementById('userProfile').classList.add('hidden');
+                coffees = [];
+                renderTable();
             }
         });
 
-        async function initUserData(user) {
-            // Check public status
-            const userDocRef = doc(db, 'users', user.uid);
-            const snap = await getDoc(userDocRef);
-            if (snap.exists()) {
-                isPublic = snap.data().isPublic || false;
-            } else {
-                // Initialize doc
-                await setDoc(userDocRef, { isPublic: false, displayName: user.displayName });
-            }
-            updatePublicToggleUI();
-            document.getElementById('myShareId').value = user.uid;
-        }
-
-        // --- Data Logic ---
-        
-        window.changeView = (uid) => {
-            currentView = uid;
-            if(unsubscribeData) unsubscribeData(); // Stop previous listener
+        // --- Firestore Data Listener ---
+        function startDataListener(uid) {
+            // Path: users/{uid}/coffees
+            // This matches the Security Rules: allow read/write if request.auth.uid == userId
+            const q = query(collection(db, "users", uid, "coffees"));
             
-            const targetUid = uid === 'mine' ? currentUser.uid : uid;
-            const isMine = uid === 'mine';
-
-            // Show/Hide Add Button
-            document.getElementById('addBrewBtn').classList.toggle('hidden', !isMine);
-            
-            // Manage Form Container Visibility
-            const formContainer = document.getElementById('formContainer');
-            if (isMine) {
-                formContainer.classList.remove('hidden');
-                // We keep the form collapsed by default, but header is visible
-            } else {
-                formContainer.classList.add('hidden');
-                toggleForm(false); // Collapse form if viewing friend
-            }
-
-            // Start Listener
-            const q = collection(db, 'users', targetUid, 'coffees');
-            unsubscribeData = onSnapshot(q, (snapshot) => {
+            onSnapshot(q, (snapshot) => {
                 coffees = [];
-                snapshot.forEach(doc => coffees.push({ id: doc.id, ...doc.data() }));
-                // Default sort
-                coffees.sort((a,b) => (a.name||"").localeCompare(b.name||""));
+                snapshot.forEach((doc) => {
+                    coffees.push({ id: doc.id, ...doc.data() });
+                });
+                // Sort by default (name or created)
+                if(!currentSort.key) {
+                    // Simple default sort by name for now, or add createdAt timestamp
+                    coffees.sort((a,b) => (a.name || "").localeCompare(b.name || ""));
+                }
                 renderTable();
             }, (error) => {
-                console.error(error);
-                if(error.code === 'permission-denied') {
-                    alert("⚠️ Access Denied: This user's profile is private.");
-                    document.getElementById('viewSelect').value = 'mine';
-                    changeView('mine');
+                console.error("Error fetching data: ", error);
+                if (error.code === 'permission-denied') {
+                    alert("Permission denied. Check your Firestore Security Rules.");
                 }
             });
         }
 
-        async function handleFormSubmit(e) {
+        // --- Core Functions (Updated for Firebase) ---
+
+        window.handleFormSubmit = async (e) => {
             e.preventDefault();
-            if(currentView !== 'mine') return;
-            // (Same submit logic as before, just ensuring we only save to own UID)
-            const f = new FormData(e.target); const eid = f.get('editId');
-            const tMode = f.get('tempMode'); const finalTemp = tMode === 'profile' ? f.get('tempProfile') : (f.get('tempNumeric') || "M");
-            const d = { name: f.get('name'), beanType: f.get('beanType'), roastType: f.get('roastType'), method: f.get('method'), grind: parseFloat(f.get('grind')), weight: parseFloat(f.get('weight')), ratio: parseFloat(f.get('ratio')), time: parseFloat(f.get('time')), temp: finalTemp, notes: f.get('notes'), updatedAt: new Date().toISOString() };
+            if (!currentUser) {
+                alert("Please sign in to save brews.");
+                return;
+            }
+
+            const form = e.target;
+            const formData = new FormData(form);
+            const editId = formData.get('editId');
             
+            // Logic to get correct temp based on mode
+            const tempMode = formData.get('tempMode');
+            let finalTemp = tempMode === 'profile' ? formData.get('tempProfile') : formData.get('tempNumeric');
+            if(!finalTemp) finalTemp = "M"; 
+
+            const coffeeData = {
+                name: formData.get('name'),
+                beanType: formData.get('beanType'),
+                roastType: formData.get('roastType'),
+                method: formData.get('method'),
+                grind: parseFloat(formData.get('grind')),
+                weight: parseFloat(formData.get('weight')),
+                ratio: parseFloat(formData.get('ratio')),
+                time: parseFloat(formData.get('time')),
+                temp: finalTemp,
+                notes: formData.get('notes')
+            };
+
             try {
-                const col = collection(db, 'users', currentUser.uid, 'coffees');
-                if(eid) await updateDoc(doc(col, eid), d);
-                else await addDoc(col, { ...d, createdAt: new Date().toISOString() });
+                if (editId) {
+                    // Update
+                    const docRef = doc(db, "users", currentUser.uid, "coffees", editId);
+                    await updateDoc(docRef, coffeeData);
+                } else {
+                    // Add
+                    const colRef = collection(db, "users", currentUser.uid, "coffees");
+                    await addDoc(colRef, coffeeData);
+                }
                 resetFormState();
-            } catch(err){ alert(err.message); }
-        }
-        window.handleFormSubmit = handleFormSubmit;
+                // We don't need to call renderTable() because onSnapshot does it automatically
+            } catch (error) {
+                console.error("Error saving document: ", error);
+                alert("Error saving: " + error.message);
+            }
+        };
 
-        // --- Friends Logic ---
+        window.deleteCoffee = async (id, event) => {
+            if (event) event.stopPropagation();
+            if (!currentUser) return;
 
-        window.openFriendsModal = () => {
-            document.getElementById('modalOverlay').classList.remove('hidden');
-            switchModalTab('profile');
-        }
-        window.closeModal = () => document.getElementById('modalOverlay').classList.add('hidden');
+            if(confirm('Are you sure you want to delete this brew log?')) {
+                try {
+                    await deleteDoc(doc(db, "users", currentUser.uid, "coffees", id));
+                    
+                    const editingId = document.getElementById('editId').value;
+                    if (editingId && editingId == id) {
+                        resetFormState();
+                    }
+                } catch (error) {
+                    console.error("Error removing document: ", error);
+                    alert("Error deleting: " + error.message);
+                }
+            }
+        };
+
+        // --- Existing Logic (UI, Calc, etc) ---
         
-        window.switchModalTab = (tab) => {
-            const tProf = document.getElementById('tabProfile');
-            const tFoll = document.getElementById('tabFollowing');
-            const cProf = document.getElementById('contentProfile');
-            const cFoll = document.getElementById('contentFollowing');
+        window.handleRecipeInput = (source) => {
+            const weightEl = document.getElementById('inputWeight');
+            const ratioEl = document.getElementById('inputRatio');
+            const yieldEl = document.getElementById('inputYield');
 
-            if (tab === 'profile') {
-                tProf.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
-                tProf.classList.remove('text-coffee-500','dark:text-[#78716c]');
-                tFoll.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
-                tFoll.classList.add('text-coffee-500','dark:text-[#78716c]');
-                cProf.classList.remove('hidden'); cFoll.classList.add('hidden');
-            } else {
-                tFoll.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
-                tFoll.classList.remove('text-coffee-500','dark:text-[#78716c]');
-                tProf.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
-                tProf.classList.add('text-coffee-500','dark:text-[#78716c]');
-                cFoll.classList.remove('hidden'); cProf.classList.add('hidden');
+            const weight = parseFloat(weightEl.value) || 0;
+            const ratio = parseFloat(ratioEl.value) || 0;
+            const yieldVal = parseFloat(yieldEl.value) || 0;
+
+            if (weight === 0) return; 
+
+            if (source === 'weight') {
+                if (ratio > 0) {
+                    yieldEl.value = (weight * ratio).toFixed(1);
+                } else if (yieldVal > 0) {
+                    ratioEl.value = (yieldVal / weight).toFixed(1);
+                }
+            } else if (source === 'ratio') {
+                yieldEl.value = (weight * ratio).toFixed(1);
+            } else if (source === 'yield') {
+                if (weight > 0) {
+                    ratioEl.value = (yieldVal / weight).toFixed(2); 
+                }
             }
         }
 
-        window.togglePublicProfile = async () => {
-            if(!currentUser) return;
-            isPublic = !isPublic;
-            updatePublicToggleUI();
-            await updateDoc(doc(db, 'users', currentUser.uid), { isPublic: isPublic });
+        // --- Helper Functions ---
+        
+        // Theme
+        window.initTheme = () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark'); 
+            }
         }
 
-        function updatePublicToggleUI() {
-            const btn = document.getElementById('togglePublicBtn');
-            const dot = btn.firstElementChild;
-            const container = document.getElementById('shareIdContainer');
-            if (isPublic) {
-                btn.className = "bg-green-500 w-12 h-6 rounded-full p-1 transition-colors relative";
-                dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform translate-x-6 transition-transform";
+        window.toggleTheme = () => {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Temp Mode
+        window.setTempMode = (mode) => {
+            const btnProfile = document.getElementById('btnTempProfile');
+            const btnNumeric = document.getElementById('btnTempNumeric');
+            const containerProfile = document.getElementById('tempProfileContainer');
+            const containerNumeric = document.getElementById('tempNumericContainer');
+            const hiddenMode = document.getElementById('tempMode');
+
+            hiddenMode.value = mode;
+
+            if (mode === 'profile') {
+                btnProfile.classList.add('bg-white', 'dark:bg-[#1c1917]', 'shadow-sm', 'text-coffee-800', 'dark:text-white');
+                btnProfile.classList.remove('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700');
+                
+                btnNumeric.classList.remove('bg-white', 'dark:bg-[#1c1917]', 'shadow-sm', 'text-coffee-800', 'dark:text-white');
+                btnNumeric.classList.add('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700');
+
+                containerProfile.classList.remove('hidden');
+                containerNumeric.classList.add('hidden');
+                document.getElementById('tempNumeric').value = ''; 
+            } else {
+                btnNumeric.classList.add('bg-white', 'dark:bg-[#1c1917]', 'shadow-sm', 'text-coffee-800', 'dark:text-white');
+                btnNumeric.classList.remove('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700');
+                
+                btnProfile.classList.remove('bg-white', 'dark:bg-[#1c1917]', 'shadow-sm', 'text-coffee-800', 'dark:text-white');
+                btnProfile.classList.add('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700');
+
+                containerNumeric.classList.remove('hidden');
+                containerProfile.classList.add('hidden');
+            }
+        }
+
+        // Accordion
+        window.toggleForm = (forceState = null) => {
+            const container = document.getElementById('formContainer');
+            const content = document.getElementById('formContent');
+            const isExpanded = container.getAttribute('aria-expanded') === 'true';
+            
+            const shouldExpand = forceState !== null ? forceState : !isExpanded;
+
+            if (shouldExpand) {
+                container.setAttribute('aria-expanded', 'true');
+                content.classList.remove('hidden');
+            } else {
+                container.setAttribute('aria-expanded', 'false');
+                content.classList.add('hidden');
+            }
+        }
+
+        // UI Reset
+        window.resetFormState = (event) => {
+            if(event) event.stopPropagation();
+
+            const form = document.getElementById('coffeeForm');
+            form.reset();
+            document.getElementById('editId').value = '';
+            // Reset Temp Mode default
+            window.setTempMode('profile');
+
+            document.getElementById('formContainer').classList.remove('editing-mode');
+            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-plus-circle text-coffee-700 dark:text-[#d6ccc2]"></i> <span>Add New Brew</span>';
+            
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Save Brew</span>';
+            btn.classList.add('bg-coffee-700', 'hover:bg-coffee-800', 'dark:bg-[#57534e]', 'dark:hover:bg-[#44403c]');
+            btn.classList.remove('bg-orange-600', 'hover:bg-orange-700', 'text-white');
+            
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        // Edit
+        window.editCoffee = (id) => {
+            const coffee = coffees.find(c => c.id === id);
+            if (!coffee) return;
+
+            document.getElementById('editId').value = coffee.id;
+            document.getElementById('name').value = coffee.name;
+            document.getElementById('beanType').value = coffee.beanType;
+            document.getElementById('roastType').value = coffee.roastType;
+            document.getElementById('method').value = coffee.method;
+            document.getElementById('grind').value = coffee.grind;
+            document.getElementById('inputWeight').value = coffee.weight;
+            document.getElementById('inputRatio').value = coffee.ratio;
+            document.getElementById('inputYield').value = (coffee.weight * coffee.ratio).toFixed(1);
+            document.getElementById('time').value = coffee.time;
+            document.getElementById('notes').value = coffee.notes;
+
+            // Handle Temp Edit Logic
+            const isNumeric = !isNaN(parseFloat(coffee.temp)) && isFinite(coffee.temp);
+            if (isNumeric) {
+                window.setTempMode('numeric');
+                document.getElementById('tempNumeric').value = coffee.temp;
+            } else {
+                window.setTempMode('profile');
+                document.getElementById('tempProfile').value = coffee.temp;
+            }
+
+            const container = document.getElementById('formContainer');
+            container.classList.add('editing-mode');
+            
+            window.toggleForm(true);
+
+            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-pencil text-orange-500"></i> <span class="text-orange-500">Edit Brew</span>';
+            document.getElementById('submitBtn').innerHTML = '<i class="fa-solid fa-rotate"></i> <span>Update Brew</span>';
+            document.getElementById('submitBtn').classList.remove('bg-coffee-700', 'hover:bg-coffee-800', 'dark:bg-[#57534e]', 'dark:hover:bg-[#44403c]');
+            document.getElementById('submitBtn').classList.add('bg-orange-600', 'hover:bg-orange-700', 'text-white');
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Table & Filtering ---
+
+        window.openFilterMenu = (event, key) => {
+            event.stopPropagation();
+            const menu = document.getElementById('filterDropdown');
+            const values = [...new Set(coffees.map(c => c[key]))].sort();
+            if (values.length === 0) return; 
+
+            let html = `
+                <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase tracking-wide border-b border-coffee-100 dark:border-[#44403c] mb-1">
+                    Filter by ${key === 'roastType' ? 'Roast' : key.charAt(0).toUpperCase() + key.slice(1)}
+                </div>
+                <button onclick="applyFilter('${key}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] ${!activeFilters[key] ? 'text-coffee-700 dark:text-[#d6ccc2] font-bold' : 'text-coffee-600 dark:text-[#a8a29e]'}">
+                    All
+                </button>
+            `;
+
+            values.forEach(val => {
+                const isActive = activeFilters[key] === val;
+                html += `
+                    <button onclick="applyFilter('${key}', '${val}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] ${isActive ? 'text-coffee-700 dark:text-[#d6ccc2] font-bold bg-coffee-50 dark:bg-[#44403c]' : 'text-coffee-600 dark:text-[#a8a29e]'}">
+                        ${val}
+                    </button>
+                `;
+            });
+
+            menu.innerHTML = html;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const containerRect = event.currentTarget.closest('.relative').getBoundingClientRect();
+            menu.style.top = (rect.bottom - containerRect.top + 5) + 'px';
+            menu.style.left = (rect.left - containerRect.left) + 'px';
+            menu.classList.remove('hidden');
+        }
+
+        window.closeFilterMenu = (event) => {
+            const menu = document.getElementById('filterDropdown');
+            if (!menu.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        }
+
+        window.applyFilter = (key, value) => {
+            activeFilters[key] = value;
+            document.getElementById('filterDropdown').classList.add('hidden');
+            renderTable();
+            renderActiveFilters();
+        }
+
+        window.clearAllFilters = () => {
+            activeFilters = { method: null, temp: null, roastType: null };
+            renderTable();
+            renderActiveFilters();
+        }
+
+        window.renderActiveFilters = () => {
+            const container = document.getElementById('activeFiltersContainer');
+            const list = document.getElementById('activeFiltersList');
+            list.innerHTML = '';
+            
+            let hasFilters = false;
+            Object.entries(activeFilters).forEach(([key, value]) => {
+                if(value) {
+                    hasFilters = true;
+                    const displayKey = key === 'roastType' ? 'Roast' : key.charAt(0).toUpperCase() + key.slice(1);
+                    const chip = document.createElement('div');
+                    chip.className = 'flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm animate-fade-in';
+                    chip.innerHTML = `
+                        <span class="opacity-75">${displayKey}:</span>
+                        <span class="font-bold">${value}</span>
+                        <button onclick="applyFilter('${key}', null)" class="ml-1 hover:text-red-200"><i class="fa-solid fa-xmark"></i></button>
+                    `;
+                    list.appendChild(chip);
+                }
+            });
+
+            if(hasFilters) {
                 container.classList.remove('hidden');
             } else {
-                btn.className = "bg-gray-300 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative";
-                dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform translate-x-0 transition-transform";
                 container.classList.add('hidden');
             }
         }
 
-        window.copyShareId = () => {
-            const input = document.getElementById('myShareId');
-            input.select();
-            document.execCommand('copy'); // Legacy but reliable
-            alert("ID Copied!");
-        }
+        window.getFilteredCoffees = () => {
+            let filtered = coffees.filter(c => {
+                const matchMethod = !activeFilters.method || c.method === activeFilters.method;
+                const matchTemp = !activeFilters.temp || String(c.temp) === String(activeFilters.temp);
+                const matchRoast = !activeFilters.roastType || c.roastType === activeFilters.roastType;
+                return matchMethod && matchTemp && matchRoast;
+            });
 
-        window.followUser = async () => {
-            const input = document.getElementById('friendIdInput');
-            const uid = input.value.trim();
-            if(!uid || uid === currentUser.uid) return alert("Invalid ID");
-            
-            try {
-                await setDoc(doc(db, 'users', currentUser.uid, 'following', uid), { 
-                    uid: uid, 
-                    addedAt: new Date().toISOString() 
+            if (currentSort.key) {
+                filtered.sort((a, b) => {
+                    let valA = a[currentSort.key];
+                    let valB = b[currentSort.key];
+                    if (currentSort.key === 'temp') {
+                         const numA = parseFloat(valA);
+                         const numB = parseFloat(valB);
+                         if (!isNaN(numA) && !isNaN(numB)) { valA = numA; valB = numB; }
+                    }
+                    if (typeof valA === 'string') valA = valA.toLowerCase();
+                    if (typeof valB === 'string') valB = valB.toLowerCase();
+                    if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+                    return 0;
                 });
-                input.value = '';
-                loadFollowingList(); // Refresh list
-            } catch(e) { console.error(e); alert("Could not follow user."); }
-        }
-
-        window.unfollowUser = async (uid) => {
-            if(!confirm("Unfollow this user?")) return;
-            await deleteDoc(doc(db, 'users', currentUser.uid, 'following', uid));
-            loadFollowingList();
-            if (currentView === uid) {
-                document.getElementById('viewSelect').value = 'mine';
-                changeView('mine');
             }
+            return filtered;
         }
 
-        async function loadFollowingList() {
-            if(!currentUser) return;
-            const snap = await getDocs(collection(db, 'users', currentUser.uid, 'following'));
-            following = [];
-            snap.forEach(doc => following.push(doc.data()));
+        window.renderTable = () => {
+            const tbody = document.getElementById('coffeeTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const filteredCoffees = window.getFilteredCoffees();
             
-            // Render Modal List
-            const list = document.getElementById('followingList');
-            list.innerHTML = '';
-            following.forEach(f => {
-                const d = document.createElement('div');
-                d.className = "flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]";
-                d.innerHTML = `<span class="text-sm font-mono text-coffee-700 dark:text-[#a8a29e] truncate w-40">${f.uid}</span> <button onclick="unfollowUser('${f.uid}')" class="text-xs text-red-500 hover:text-red-700">Unfollow</button>`;
-                list.appendChild(d);
-            });
+            tbody.innerHTML = '';
 
-            // Render Dropdown
-            const select = document.getElementById('viewSelect');
-            // Keep "My Brews"
-            select.innerHTML = '<option value="mine">My Brews</option>';
-            following.forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f.uid;
-                opt.text = `Friend (${f.uid.substr(0,5)}...)`;
-                select.appendChild(opt);
-            });
-            // Restore selection if viewing friend
-            select.value = currentView;
-        }
-
-        // --- Standard UI Stuff ---
-        // (Include all previous helpers like formatTime, getRoastBadge, editCoffee, etc here)
-        // Re-pasting standard helpers for completeness:
-        window.handleRecipeInput = (s) => {
-            const w=document.getElementById('inputWeight'),r=document.getElementById('inputRatio'),y=document.getElementById('inputYield');
-            const wv=parseFloat(w.value)||0,rv=parseFloat(r.value)||0,yv=parseFloat(y.value)||0; if(!wv)return;
-            if(s==='weight'){ if(rv>0)y.value=(wv*rv).toFixed(1); else if(yv>0)r.value=(yv/wv).toFixed(1); }
-            else if(s==='ratio')y.value=(wv*rv).toFixed(1); else if(s==='yield'){ if(wv>0)r.value=(yv/wv).toFixed(2); }
-        }
-        window.setTempMode = (m) => { document.getElementById('tempMode').value=m; if(m==='profile'){document.getElementById('tempProfileContainer').classList.remove('hidden');document.getElementById('tempNumericContainer').classList.add('hidden');}else{document.getElementById('tempNumericContainer').classList.remove('hidden');document.getElementById('tempProfileContainer').classList.add('hidden');} }
-        window.toggleForm = (f=null) => { 
-            const c=document.getElementById('formContainer');
-            const o=document.getElementById('formContent');
-            const isHidden = c.classList.contains('hidden');
-            
-            if (isHidden) {
-                c.classList.remove('hidden');
-                c.setAttribute('aria-expanded', 'true');
-                o.classList.remove('hidden');
-                return;
-            }
-
-            const e=c.getAttribute('aria-expanded')==='true';
-            const s=f!==null?f:!e; 
-            c.setAttribute('aria-expanded',s?'true':'false'); 
-            if(s)o.classList.remove('hidden'); else o.classList.add('hidden'); 
-        }
-        
-        window.editCoffee = (id) => {
-            const c=coffees.find(x=>x.id===id); if(!c)return; document.getElementById('editId').value=c.id; document.getElementById('name').value=c.name; document.getElementById('beanType').value=c.beanType; document.getElementById('roastType').value=c.roastType; document.getElementById('method').value=c.method; document.getElementById('grind').value=c.grind; document.getElementById('inputWeight').value=c.weight; document.getElementById('inputRatio').value=c.ratio; document.getElementById('inputYield').value=(c.weight*c.ratio).toFixed(1); document.getElementById('time').value=c.time; document.getElementById('notes').value=c.notes; if(!isNaN(parseFloat(c.temp))&&isFinite(c.temp)){ setTempMode('numeric'); document.getElementById('tempNumeric').value=c.temp; } else { setTempMode('profile'); document.getElementById('tempProfile').value=c.temp; } document.getElementById('formContainer').classList.add('editing-mode'); toggleForm(true); document.getElementById('formTitle').innerHTML='<span class="text-orange-500">Edit Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Update</span>'; document.getElementById('submitBtn').className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); 
-        }
-        window.deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); }
-        window.resetFormState = (e) => { if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('profile'); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); }
-        
-        window.renderTable = () => { const t=document.getElementById('coffeeTableBody'); const e=document.getElementById('emptyState'); t.innerHTML=''; if(coffees.length===0){e.classList.remove('hidden'); return;} e.classList.add('hidden');
-            coffees.forEach(c => {
-                const w=(c.weight*c.ratio).toFixed(1);
-                const r=document.createElement('tr'); r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0';
-                // Only show actions if 'mine'
-                const actions = currentView==='mine' ? `<button onclick="editCoffee('${c.id}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded"><i class="fa-solid fa-pencil"></i></button><button onclick="deleteCoffee('${c.id}',event)" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button>` : `<span class="text-xs text-gray-400">Read Only</span>`;
+            if (coffees.length === 0 && !currentUser) {
+                // Not logged in
+                emptyState.classList.remove('hidden');
+            } else if (filteredCoffees.length === 0) {
+                // Logged in but empty or filtered to empty
+                emptyState.classList.remove('hidden');
+                // You might want to change text here if user is logged in
+                if(currentUser) {
+                     emptyState.innerHTML = `<i class="fa-solid fa-mug-saucer text-4xl mb-3 opacity-50"></i><p class="text-lg font-medium">No brews found.</p><p class="text-sm">Add a new coffee above!</p>`;
+                }
+            } else {
+                emptyState.classList.add('hidden');
                 
-                // Richer Recipe Column
-                const recipeCol = `<div class="flex flex-col items-center"><span class="text-xs text-coffee-500 dark:text-[#78716c] mb-1">1:${c.ratio}</span><div class="font-mono text-coffee-900 dark:text-[#e7e5e4] bg-coffee-50 dark:bg-[#1c1917] px-2 py-1 rounded border border-coffee-100 dark:border-[#44403c]"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight}g</span><i class="fa-solid fa-arrow-right text-[10px] text-coffee-400 dark:text-[#57534e] mx-1"></i><span class="font-bold text-coffee-900 dark:text-white">${w.endsWith('.0')?parseInt(w):w}g</span></div></div>`;
+                filteredCoffees.forEach((coffee) => {
+                    const outWeight = (coffee.weight * coffee.ratio).toFixed(1);
+                    const formattedTime = formatTime(coffee.time);
 
-                r.innerHTML=`<td class="px-4 py-4 text-center"><i class="fa-solid fa-cloud text-xs opacity-50"></i></td><td class="px-4 py-4 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${c.name}<div class="text-xs font-normal text-coffee-500">${c.beanType}</div></td><td class="px-4 py-4 pointer-events-auto" ondblclick="openFilterMenu(event,'roastType')">${getRoastBadge(c.roastType)}</td><td class="px-4 py-4 pointer-events-auto" ondblclick="openFilterMenu(event,'method')"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method}</span></td><td class="px-4 py-4 text-right font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind}</td><td class="px-4 py-4 text-center">${recipeCol}</td><td class="px-4 py-4 text-right">${Math.floor(c.time/60)}m ${c.time%60}s</td><td class="px-4 py-4 text-center pointer-events-auto" ondblclick="openFilterMenu(event,'temp')">${getTempBadge(c.temp)}</td><td class="px-4 py-4 text-sm max-w-xs truncate" title="${c.notes}">${c.notes}</td><td class="px-4 py-4 text-center flex justify-center gap-2">${actions}</td>`;
-                t.appendChild(r);
-            });
+                    const row = document.createElement('tr');
+                    row.className = `bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0`;
+
+                    row.innerHTML = `
+                        <td class="px-4 py-4 text-center text-coffee-300 dark:text-[#57534e]">
+                            <i class="fa-solid fa-cloud text-xs opacity-50"></i>
+                        </td>
+                        <td class="px-4 py-4">
+                            <div class="font-semibold text-coffee-900 dark:text-[#e7e5e4]">${coffee.name}</div>
+                            <div class="text-xs text-coffee-500 dark:text-[#a8a29e]">${coffee.beanType}</div>
+                        </td>
+                        <td class="px-4 py-4 cursor-pointer" ondblclick="openFilterMenu(event, 'roastType')">
+                             ${getRoastBadge(coffee.roastType)}
+                        </td>
+                        <td class="px-4 py-4 cursor-pointer" ondblclick="openFilterMenu(event, 'method')">
+                            <span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${coffee.method}</span>
+                        </td>
+                        <td class="px-4 py-4 text-right font-mono text-coffee-700 dark:text-[#d6ccc2]">
+                            ${coffee.grind}
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-xs text-coffee-500 dark:text-[#78716c] mb-1">1:${coffee.ratio}</span>
+                                <div class="font-mono text-coffee-900 dark:text-[#e7e5e4] bg-coffee-50 dark:bg-[#1c1917] px-2 py-1 rounded border border-coffee-100 dark:border-[#44403c]">
+                                    <span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${coffee.weight}g</span> 
+                                    <i class="fa-solid fa-arrow-right text-[10px] text-coffee-400 dark:text-[#57534e] mx-1"></i>
+                                    <span class="font-bold text-coffee-900 dark:text-white">${outWeight.endsWith('.0') ? parseInt(outWeight) : outWeight}g</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 text-right font-mono text-coffee-600 dark:text-[#a8a29e]">
+                            ${formattedTime}
+                        </td>
+                        <td class="px-4 py-4 text-center cursor-pointer" ondblclick="openFilterMenu(event, 'temp')">
+                            ${getTempBadge(coffee.temp)}
+                        </td>
+                        <td class="px-4 py-4 text-sm text-coffee-600 dark:text-[#a8a29e] max-w-xs truncate" title="${coffee.notes}">
+                            ${coffee.notes}
+                        </td>
+                        <td class="px-4 py-4 text-center w-24">
+                             <div class="flex items-center justify-center gap-2">
+                                <button onclick="editCoffee('${coffee.id}')" class="text-coffee-400 dark:text-[#57534e] hover:text-blue-500 dark:hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20" title="Edit">
+                                    <i class="fa-solid fa-pencil"></i>
+                                </button>
+                                <button onclick="deleteCoffee('${coffee.id}', event)" class="text-coffee-400 dark:text-[#57534e] hover:text-red-500 dark:hover:text-red-400 transition-colors p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
         }
-        
-        window.closeMenus = (e) => { if(!document.getElementById('modalOverlay').contains(e.target) && !document.getElementById('modalOverlay').classList.contains('hidden') && e.target.id==='modalOverlay') closeModal(); }
-        
-        // Theme
-        const st=localStorage.getItem('theme'); if(st==='light')document.documentElement.classList.remove('dark'); else {document.documentElement.classList.add('dark'); localStorage.setItem('theme','dark');}
-        window.toggleTheme = () => { const h=document.documentElement; if(h.classList.contains('dark')){h.classList.remove('dark');localStorage.setItem('theme','light');}else{h.classList.add('dark');localStorage.setItem('theme','dark');} }
+
+        window.sortBy = (key) => {
+            if (currentSort.key === key) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.key = key;
+                currentSort.direction = 'asc';
+            }
+            renderTable();
+        }
+
+        // Simple Formatters
+        function formatTime(s) { const m=Math.floor(s/60),sc=s%60; return m>0?`${m}m ${sc}s`:`${sc}s`; }
+        function getRoastBadge(r) { if(!r)return''; const m={'Light':'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800','Medium':'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-800','Medium-Dark':'bg-[#d6ccc2] text-[#5e4b41] border-[#c0b4aa] dark:bg-[#57534e]/50 dark:text-[#d6ccc2] dark:border-[#57534e]','Dark':'bg-gray-800 text-gray-100 border-gray-700 dark:bg-black dark:text-gray-300 dark:border-gray-800'}; return `<span class="${m[r]||'bg-gray-100 dark:bg-gray-800'} text-xs font-medium px-2 py-0.5 rounded-full border pointer-events-none select-none">${r}</span>`; }
+        function getTempBadge(t) { if(!isNaN(parseFloat(t))&&isFinite(t)){ let c='bg-gray-100 dark:bg-gray-800';if(t<90)c='bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';else if(t<94)c='bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300';else c='bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';return `<span class="inline-flex items-center justify-center px-2 py-1 rounded-md ${c} text-xs font-bold shadow-sm pointer-events-none select-none font-mono">${t}°C</span>`;} const m={'L3':'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300','L2':'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-200','L1':'bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/20 dark:text-cyan-200','M':'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-200','H1':'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/20 dark:text-orange-200','H2':'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200','H3':'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300'}; return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${m[t]||'bg-gray-100'} text-xs font-bold shadow-sm pointer-events-none select-none">${t}</span>`; }
+
+        // Initialize Theme on load
+        window.initTheme();
     </script>
 </body>
 </html>
