@@ -9,20 +9,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        body {
-            font-family: 'Outfit', sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            -webkit-tap-highlight-color: transparent; 
-        }
-
-        /* Custom Scrollbar */
+        body { font-family: 'Outfit', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d6ccc2; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #57534e; }
         ::-webkit-scrollbar-thumb:hover { background: #a18e84; }
-
-        /* General Styles */
         .dragging { opacity: 0.5; background-color: #e6dfd9; border: 2px dashed #8c7365; }
         .dark .dragging { background-color: #44403c; border-color: #a8a29e; }
         input:focus, select:focus, textarea:focus { outline: none; ring: 2px; border-color: #b08968; box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.2); }
@@ -53,7 +45,7 @@
             </div>
             <div class="flex items-center gap-4">
                 <button onclick="openUserModal(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#1c1917] hover:bg-coffee-100 dark:hover:bg-[#34302e] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]">
-                    <i class="fa-solid fa-user-circle"></i><span id="currentUserDisplay">Loading...</span>
+                    <i class="fa-solid fa-user-circle"></i><span id="currentUserDisplay">Connecting...</span>
                 </button>
                 <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-coffee-50 dark:hover:bg-[#44403c] transition-colors text-coffee-600 dark:text-[#a8a29e]" title="Toggle Theme">
                     <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i>
@@ -185,8 +177,7 @@
 
     <!-- Scripts -->
     <script type="module">
-        // --- 1. CONFIGURATION ---
-        // Your specific config is here
+        // --- YOUR CONFIG (Paste here if not already done) ---
         const firebaseConfig = {
           apiKey: "AIzaSyAC-2sy4Rr0Pr7wdpxWjWy43s9AN_FHZN8",
           authDomain: "coffee-dial-app.firebaseapp.com",
@@ -196,13 +187,11 @@
           appId: "1:395423050180:web:724fdcf31f9c9970eedc91"
         };
 
-        // --- 2. IMPORTS ---
-        // We use full URLs for browser compatibility without build tools
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        // --- IMPORTS ---
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        // --- 3. INITIALIZATION ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -218,16 +207,20 @@
         // Bindings
         window.handleFormSubmit = handleFormSubmit; window.editCoffee = editCoffee; window.deleteCoffee = deleteCoffee; window.sortBy = sortBy; window.openUserModal = openUserModal; window.closeUserModal = closeUserModal; window.createNewUser = createNewUser; window.toggleTheme = toggleTheme; window.toggleForm = toggleForm; window.resetFormState = resetFormState; window.handleRecipeInput = handleRecipeInput; window.setTempMode = setTempMode; window.openFilterMenu = openFilterMenu; window.closeFilterMenu = closeFilterMenu; window.applyFilter = applyFilter; window.clearAllFilters = clearAllFilters; window.closeMenus = closeMenus; window.clearStorage = () => alert("Cloud storage is active.");
 
-        // Auth Listener
+        // Auth
         signInAnonymously(auth).catch((error) => {
-            console.error("Auth Error:", error);
-            alert("Could not connect to database. Check console.");
+            console.error("Auth Failed:", error);
+            // DEBUG ALERT
+            alert("Firebase Error: " + error.code + " - " + error.message + "\n\nCHECK: Did you enable Anonymous Auth in Firebase Console?");
+            document.getElementById('currentUserDisplay').textContent = "Auth Error";
         });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 globalUser = user;
                 document.getElementById('syncStatus').classList.remove('hidden');
+                document.getElementById('currentUserDisplay').textContent = "Guest";
+                // Load last profile
                 const p = new URLSearchParams(window.location.search).get('user');
                 if (p) currentProfile = p; else if (localStorage.getItem('last_profile')) currentProfile = localStorage.getItem('last_profile');
                 updateProfileUI();
@@ -252,30 +245,40 @@
                 if(!profiles.includes(currentProfile) && currentProfile !== 'Guest') { currentProfile = 'Guest'; updateProfileUI(); }
                 renderTable();
                 if(!document.getElementById('userModal').classList.contains('hidden')) renderUserList();
+            }, (error) => {
+               console.error("DB Listener Error:", error);
+               if(error.code === 'permission-denied') alert("Database Permission Denied. Check your Firestore Rules.");
             });
         }
 
         async function handleFormSubmit(e) {
-            e.preventDefault(); if (!globalUser) return;
+            e.preventDefault(); 
+            if (!globalUser) { alert("You are not connected to the database."); return; }
             const f = new FormData(e.target); const eid = f.get('editId');
             const tMode = f.get('tempMode'); const finalTemp = tMode === 'profile' ? f.get('tempProfile') : (f.get('tempNumeric') || "M");
             const d = { type: 'coffee', profile: currentProfile, name: f.get('name'), beanType: f.get('beanType'), roastType: f.get('roastType'), method: f.get('method'), grind: parseFloat(f.get('grind')), weight: parseFloat(f.get('weight')), ratio: parseFloat(f.get('ratio')), time: parseFloat(f.get('time')), temp: finalTemp, notes: f.get('notes'), updatedAt: new Date().toISOString() };
             const col = collection(db, 'users', globalUser.uid, 'data');
-            try { if (eid) await updateDoc(doc(col, eid), d); else await addDoc(col, { ...d, createdAt: new Date().toISOString() }); resetFormState(); } catch (err) { alert("Save error: " + err.message); }
+            try { if (eid) await updateDoc(doc(col, eid), d); else await addDoc(col, { ...d, createdAt: new Date().toISOString() }); resetFormState(); } catch (err) { console.error(err); alert("Save Failed: " + err.message); }
         }
 
         async function deleteCoffee(id, ev) {
             if (ev) ev.stopPropagation(); if (!globalUser || !confirm('Delete log?')) return;
-            await deleteDoc(doc(db, 'users', globalUser.uid, 'data', id));
-            if (document.getElementById('editId').value == id) resetFormState();
+            try { await deleteDoc(doc(db, 'users', globalUser.uid, 'data', id));
+            if (document.getElementById('editId').value == id) resetFormState(); } catch(e) { alert(e.message); }
         }
 
         async function createNewUser() {
             const n = document.getElementById('newUserInput').value.trim();
-            if(!n || !globalUser) return; if(profiles.includes(n)) return alert("Exists");
+            if(!globalUser) { alert("Not connected."); return; }
+            if(!n) return;
+            if(profiles.includes(n)) return alert("Profile exists");
             profiles.push(n);
-            await setDoc(doc(db, 'users', globalUser.uid, 'data', 'metadata_profiles'), { type: 'metadata', id: 'profiles', list: profiles });
-            switchUser(n); document.getElementById('newUserInput').value = '';
+            try {
+                await setDoc(doc(db, 'users', globalUser.uid, 'data', 'metadata_profiles'), { type: 'metadata', id: 'profiles', list: profiles });
+                switchUser(n); document.getElementById('newUserInput').value = '';
+            } catch (err) {
+                console.error(err); alert("Failed to create user: " + err.message);
+            }
         }
 
         function switchUser(n) { currentProfile = n; localStorage.setItem('last_profile', n); updateProfileUI(); closeUserModal(); renderTable(); resetFormState(); }
