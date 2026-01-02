@@ -185,31 +185,24 @@
 
     <!-- Scripts -->
     <script type="module">
+        // --- 1. CONFIGURATION ---
+        // Your specific config is here
+        const firebaseConfig = {
+          apiKey: "AIzaSyAC-2sy4Rr0Pr7wdpxWjWy43s9AN_FHZN8",
+          authDomain: "coffee-dial-app.firebaseapp.com",
+          projectId: "coffee-dial-app",
+          storageBucket: "coffee-dial-app.firebasestorage.app",
+          messagingSenderId: "395423050180",
+          appId: "1:395423050180:web:724fdcf31f9c9970eedc91"
+        };
+
+        // --- 2. IMPORTS ---
+        // We use full URLs for browser compatibility without build tools
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // --- PASTE YOUR FIREBASE CONFIG HERE ---
-        // Replace the object below with the one you copied from Firebase Console
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAC-2sy4Rr0Pr7wdpxWjWy43s9AN_FHZN8",
-  authDomain: "coffee-dial-app.firebaseapp.com",
-  projectId: "coffee-dial-app",
-  storageBucket: "coffee-dial-app.firebasestorage.app",
-  messagingSenderId: "395423050180",
-  appId: "1:395423050180:web:724fdcf31f9c9970eedc91"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-        // ---------------------------------------
-
+        // --- 3. INITIALIZATION ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -225,8 +218,12 @@ const app = initializeApp(firebaseConfig);
         // Bindings
         window.handleFormSubmit = handleFormSubmit; window.editCoffee = editCoffee; window.deleteCoffee = deleteCoffee; window.sortBy = sortBy; window.openUserModal = openUserModal; window.closeUserModal = closeUserModal; window.createNewUser = createNewUser; window.toggleTheme = toggleTheme; window.toggleForm = toggleForm; window.resetFormState = resetFormState; window.handleRecipeInput = handleRecipeInput; window.setTempMode = setTempMode; window.openFilterMenu = openFilterMenu; window.closeFilterMenu = closeFilterMenu; window.applyFilter = applyFilter; window.clearAllFilters = clearAllFilters; window.closeMenus = closeMenus; window.clearStorage = () => alert("Cloud storage is active.");
 
-        // Init
-        signInAnonymously(auth).catch(console.error);
+        // Auth Listener
+        signInAnonymously(auth).catch((error) => {
+            console.error("Auth Error:", error);
+            alert("Could not connect to database. Check console.");
+        });
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 globalUser = user;
@@ -241,7 +238,6 @@ const app = initializeApp(firebaseConfig);
 
         // Logic
         function startDataListener(uid) {
-            // Note: We use 'users/{uid}/data' to match the security rules
             const dataRef = collection(db, 'users', uid, 'data');
             onSnapshot(dataRef, (snapshot) => {
                 const fetchedCoffees = [];
@@ -313,4 +309,5 @@ const app = initializeApp(firebaseConfig);
     </script>
 </body>
 </html>
+
 
