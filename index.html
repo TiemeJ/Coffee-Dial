@@ -25,7 +25,16 @@
             cursor: context-menu; 
             touch-action: manipulation; 
         }
-        th.filterable:hover::after { content: '\f0b0'; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 0.7em; margin-left: 6px; opacity: 0.5; }
+        /* Adjusted filter icon positioning */
+        th.filterable:hover::after { 
+            content: '\f0b0'; 
+            font-family: "Font Awesome 6 Free"; 
+            font-weight: 900; 
+            font-size: 0.7em; 
+            margin-left: 6px; 
+            opacity: 0.5; 
+            display: inline-block;
+        }
         
         #filterDropdown { z-index: 50; animation: fadeIn 0.1s ease-out; }
         #modalOverlay { animation: fadeIn 0.2s ease-out; }
@@ -68,7 +77,7 @@
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+    <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
         
         <!-- View Selector -->
         <div id="viewSelectorContainer" class="hidden mb-6 flex justify-between items-center">
@@ -240,21 +249,21 @@
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
-                            <th scope="col" class="px-4 py-4 w-10 text-center"><i class="fa-solid fa-grip-vertical"></i></th>
-                            <th scope="col" class="px-4 py-4 text-center w-28">Actions</th>
-                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group" onclick="sortBy('roaster')">Roaster <i class="fa-solid fa-sort text-coffee-400 dark:text-[#57534e] ml-1"></i></th>
-                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable" onclick="sortBy('origin')" ondblclick="openFilterMenu(event, 'origin')">Origin <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
-                            <th scope="col" class="px-4 py-4">Farmer</th>
-                            <th scope="col" class="px-4 py-4">Variety</th>
-                            <th scope="col" class="px-4 py-4">Process</th>
-                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable" onclick="sortBy('roastType')" ondblclick="openFilterMenu(event, 'roastType')">Roast <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
-                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable" onclick="sortBy('method')" ondblclick="openFilterMenu(event, 'method')">Method <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
-                            <th scope="col" class="px-4 py-4 text-right" onclick="sortBy('grind')">Grind <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
-                            <th scope="col" class="px-4 py-4 text-center">Recipe</th>
-                            <th scope="col" class="px-4 py-4 text-right" onclick="sortBy('time')">Time <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
-                            <th scope="col" class="px-4 py-4 text-center filterable" onclick="sortBy('temp')" ondblclick="openFilterMenu(event, 'temp')">Temp <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
-                            <th scope="col" class="px-4 py-4">Notes</th>
-                            <th scope="col" class="px-4 py-4" onclick="sortBy('createdAt')">Date <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 w-10 text-center whitespace-nowrap"><i class="fa-solid fa-grip-vertical"></i></th>
+                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap" onclick="sortBy('roaster')">Roaster <i class="fa-solid fa-sort text-coffee-400 dark:text-[#57534e] ml-1"></i></th>
+                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('origin')" ondblclick="openFilterMenu(event, 'origin')">Origin <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('farmer')" ondblclick="openFilterMenu(event, 'farmer')">Farmer <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('variety')" ondblclick="openFilterMenu(event, 'variety')">Variety <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('processing')" ondblclick="openFilterMenu(event, 'processing')">Process <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('roastType')" ondblclick="openFilterMenu(event, 'roastType')">Roast <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('method')" ondblclick="openFilterMenu(event, 'method')">Method <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 text-right whitespace-nowrap" onclick="sortBy('grind')">Grind <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 text-center whitespace-nowrap">Recipe</th>
+                            <th scope="col" class="px-4 py-4 text-right whitespace-nowrap" onclick="sortBy('time')">Time <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 text-center filterable whitespace-nowrap" onclick="sortBy('temp')" ondblclick="openFilterMenu(event, 'temp')">Temp <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 whitespace-nowrap">Notes</th>
+                            <th scope="col" class="px-4 py-4 whitespace-nowrap" onclick="sortBy('createdAt')">Date <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
+                            <th scope="col" class="px-4 py-4 text-center w-28 whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="coffeeTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
@@ -421,7 +430,7 @@
         const switchModalTab = (tab) => {
             const tProf = document.getElementById('tabProfile'); const tFoll = document.getElementById('tabFollowing');
             const cProf = document.getElementById('contentProfile'); const cFoll = document.getElementById('contentFollowing');
-            if (tab === 'profile') { tProf.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tProf.classList.remove('text-coffee-500','dark:text-[#78716c]'); tFoll.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tFoll.classList.add('text-coffee-500','dark:text-[#78716c]'); cProf.classList.remove('hidden'); cFoll.classList.add('hidden'); } else { tFoll.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tFoll.classList.remove('text-coffee-500','dark:text-[#78716c]'); tProf.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tProf.classList.add('text-coffee-500','dark:text-[#78716c]'); cFoll.classList.remove('hidden'); cProf.classList.add('hidden'); }
+            if (tab === 'profile') { tProf.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tProf.classList.remove('text-coffee-500','dark:text-[#78716c]'); tFoll.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tFoll.classList.add('text-coffee-500','dark:text-[#78716c]'); cProf.classList.remove('hidden'); cFoll.classList.add('hidden'); } else { tFoll.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tFoll.classList.remove('text-coffee-500','dark:text-[#78716c]'); tProf.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tProf.classList.add('text-coffee-500','dark:text-[#78716c]'); cFoll.classList.remove('hidden'); cFoll.classList.add('hidden'); }
         };
         const togglePublicProfile = async () => { if(!currentUser) return; isPublic = !isPublic; updatePublicToggleUI(); await updateDoc(doc(db, 'users', currentUser.uid), { isPublic: isPublic }); };
         const updatePublicToggleUI = () => { const btn = document.getElementById('togglePublicBtn'); const dot = btn.firstElementChild; const container = document.getElementById('shareIdContainer'); if (isPublic) { btn.className = "bg-green-500 w-12 h-6 rounded-full p-1 transition-colors relative"; dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform translate-x-6 transition-transform"; container.classList.remove('hidden'); } else { btn.className = "bg-gray-300 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative"; dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform translate-x-0 transition-transform"; container.classList.add('hidden'); } };
@@ -482,7 +491,7 @@
         const resetFormState = (e) => { if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('profile'); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); };
         
         let currentSort = { key: null, direction: 'asc' };
-        let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null }; // Added new filters
+        let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null }; // Updated filters
         const sortBy = (k) => { if(currentSort.key===k)currentSort.direction=currentSort.direction==='asc'?'desc':'asc'; else {currentSort.key=k;currentSort.direction='asc';} renderTable(); };
         const openFilterMenu = (e,k) => { e.stopPropagation(); const m=document.getElementById('filterDropdown'); 
             // Handle migration for filtering: map name->roaster, beanType->origin
@@ -494,7 +503,7 @@
         }
         const closeFilterMenu = (e) => { const m=document.getElementById('filterDropdown'); if(!m.contains(e.target))m.classList.add('hidden'); }
         const applyFilter = (k,v) => { activeFilters[k]=v; document.getElementById('filterDropdown').classList.add('hidden'); renderTable(); renderActiveFilters(); };
-        const clearAllFilters = () => { activeFilters={method:null,temp:null,roastType:null,roaster:null,origin:null}; renderTable(); renderActiveFilters(); }
+        const clearAllFilters = () => { activeFilters={method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null}; renderTable(); renderActiveFilters(); }
         const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${k}:</span><b>${v}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
         
         const getFilteredCoffees = () => { 
@@ -508,8 +517,11 @@
                 const r=!activeFilters.roastType||c.roastType===activeFilters.roastType;
                 const rost=!activeFilters.roaster||cRoaster===activeFilters.roaster;
                 const orig=!activeFilters.origin||cOrigin===activeFilters.origin;
+                const farm=!activeFilters.farmer||c.farmer===activeFilters.farmer;
+                const varr=!activeFilters.variety||c.variety===activeFilters.variety;
+                const proc=!activeFilters.processing||c.processing===activeFilters.processing;
                 
-                return m&&t&&r&&rost&&orig; 
+                return m&&t&&r&&rost&&orig&&farm&&varr&&proc; 
             }); 
             if(currentSort.key){ f.sort((a,b)=>{ 
                 let va=a[currentSort.key], vb=b[currentSort.key]; 
@@ -535,11 +547,13 @@
 
         const renderTable = () => { 
             const t=document.getElementById('coffeeTableBody'); const e=document.getElementById('emptyState'); t.innerHTML=''; 
+            
+            // USE THE FILTERED LIST HERE
             const filteredCoffees = getFilteredCoffees();
             
             if(coffees.length===0){e.classList.remove('hidden'); return;} e.classList.add('hidden');
             
-            const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !activeFilters.temp && !activeFilters.roastType && !activeFilters.roaster && !activeFilters.origin;
+            const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !activeFilters.temp && !activeFilters.roastType && !activeFilters.roaster && !activeFilters.origin && !activeFilters.farmer && !activeFilters.variety && !activeFilters.processing;
 
             filteredCoffees.forEach((c, index) => {
                 const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
@@ -573,12 +587,11 @@
 
                 r.innerHTML=`
                     <td class="px-4 py-4 text-center"><i class="fa-solid ${gripIcon} text-coffee-300 dark:text-[#57534e]"></i></td>
-                    <td class="px-4 py-4 text-center flex justify-center gap-2">${actions}</td>
                     <td class="px-4 py-4 font-semibold text-coffee-900 dark:text-[#e7e5e4] filterable pointer-events-auto" ondblclick="openFilterMenu(event,'roaster')">${displayRoaster}</td>
                     <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event,'origin')">${displayOrigin}</td>
-                    <td class="px-4 py-4 text-sm">${c.farmer || '-'}</td>
-                    <td class="px-4 py-4 text-sm">${c.variety || '-'}</td>
-                    <td class="px-4 py-4 text-sm">${c.processing || '-'}</td>
+                    <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event, 'farmer')">${c.farmer || '-'}</td>
+                    <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event, 'variety')">${c.variety || '-'}</td>
+                    <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event, 'processing')">${c.processing || '-'}</td>
                     <td class="px-4 py-4 pointer-events-auto" ondblclick="openFilterMenu(event,'roastType')">${getRoastBadge(c.roastType)}</td>
                     <td class="px-4 py-4 pointer-events-auto" ondblclick="openFilterMenu(event,'method')"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>
                     <td class="px-4 py-4 text-right font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>
@@ -587,6 +600,7 @@
                     <td class="px-4 py-4 text-center pointer-events-auto" ondblclick="openFilterMenu(event,'temp')">${getTempBadge(c.temp)}</td>
                     <td class="px-4 py-4 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>
                     <td class="px-4 py-4 text-xs font-mono text-coffee-500">${displayDate}</td>
+                    <td class="px-4 py-4 text-center flex justify-center gap-2">${actions}</td>
                 `;
                 t.appendChild(r);
             });
