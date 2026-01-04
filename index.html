@@ -36,7 +36,7 @@
         }
         
         #filterDropdown { z-index: 50; animation: fadeIn 0.1s ease-out; }
-        #modalOverlay { animation: fadeIn 0.2s ease-out; }
+        #modalOverlay, #imageModalOverlay { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
@@ -247,9 +247,12 @@
                     <div class="col-span-1 md:col-span-2 lg:col-span-4">
                         <div class="flex justify-between items-end mb-1">
                             <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Tasting Notes</label>
+                            <button type="button" onclick="openImageModal()" class="text-xs text-blue-500 hover:underline dark:text-blue-400 mr-auto ml-2">
+                                <i class="fa-solid fa-image mr-1"></i>View Wheel
+                            </button>
                             <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
-                                <button type="button" onclick="setNotesMode('manual')" id="btnNotesManual" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">Text</button>
-                                <button type="button" onclick="setNotesMode('sca')" id="btnNotesSCA" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">SCA Wheel</button>
+                                <button type="button" onclick="setNotesMode('sca')" id="btnNotesSCA" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">SCA Wheel</button>
+                                <button type="button" onclick="setNotesMode('manual')" id="btnNotesManual" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">Text</button>
                             </div>
                         </div>
 
@@ -257,15 +260,18 @@
                             <input type="text" id="notes" name="notes" placeholder="e.g. Floral, fruity acidity, clean finish" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
                         </div>
 
-                        <div id="notesSCAContainer" class="hidden mt-2 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-3">
+                        <div id="notesSCAContainer" class="mt-2 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-3">
                             <div id="scaSelectionDisplay" class="text-sm font-bold text-coffee-800 dark:text-white mb-2 min-h-[1.25rem]"></div>
                             <div id="scaButtonsContainer" class="flex flex-wrap gap-2">
                                 </div>
                         </div>
-                        <input type="hidden" id="notesMode" name="notesMode" value="manual">
+                        <input type="hidden" id="notesMode" name="notesMode" value="sca">
                     </div>
 
-                    <div class="col-span-1 md:col-span-2 lg:col-span-4 flex justify-end mt-2">
+                    <div class="col-span-1 md:col-span-2 lg:col-span-4 flex justify-end mt-2 gap-3">
+                        <button type="button" onclick="discardForm()" class="text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] px-4 py-2.5 rounded-lg font-medium transition-colors">
+                            Discard
+                        </button>
                         <button type="submit" id="submitBtn" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2">
                             <i class="fa-solid fa-check"></i> <span>Save Brew</span>
                         </button>
@@ -354,6 +360,13 @@
             <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end">
                 <button onclick="closeModal()" class="text-sm font-medium text-coffee-600 dark:text-[#a8a29e] hover:text-coffee-900 dark:hover:text-white">Close</button>
             </div>
+        </div>
+    </div>
+
+    <div id="imageModalOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onclick="closeImageModal(event)">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl max-w-3xl max-h-[90vh] overflow-auto relative">
+            <button onclick="closeImageModal(null)" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white text-2xl font-bold">&times;</button>
+            <img src="img/SCA_wheel.png" alt="SCA Flavor Wheel" class="w-full h-auto">
         </div>
     </div>
 
@@ -501,6 +514,13 @@
             } catch(err){ alert(err.message); }
         };
 
+        const discardForm = () => {
+            if(confirm("Discard unsaved changes?")) {
+                resetFormState();
+                toggleForm(false);
+            }
+        };
+
         // --- Drag/Drop (unchanged) ---
         const handleDragStart = (e) => { dragSrcEl = e.target.closest('tr'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', dragSrcEl.innerHTML); dragSrcEl.classList.add('opacity-50'); };
         const handleDragOver = (e) => { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; };
@@ -544,6 +564,7 @@
                 btnSca.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white";
                 btnMan.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
                 
+                // Auto-render if empty
                 if (scaState.level === 0 && scaState.path.length === 0) renderScaWheel();
             }
         };
@@ -705,7 +726,19 @@
 
         const handleRecipeInput = (s) => { const w=document.getElementById('inputWeight'),r=document.getElementById('inputRatio'),y=document.getElementById('inputYield'); const wv=parseFloat(w.value)||0,rv=parseFloat(r.value)||0,yv=parseFloat(y.value)||0; if(!wv)return; if(s==='weight'){ if(rv>0)y.value=(wv*rv).toFixed(1); else if(yv>0)r.value=(yv/wv).toFixed(1); } else if(s==='ratio')y.value=(wv*rv).toFixed(1); else if(s==='yield'){ if(wv>0)r.value=(yv/wv).toFixed(2); } };
         const setTempMode = (m) => { document.getElementById('tempMode').value=m; if(m==='profile'){document.getElementById('tempProfileContainer').classList.remove('hidden');document.getElementById('tempNumericContainer').classList.add('hidden');}else{document.getElementById('tempNumericContainer').classList.remove('hidden');document.getElementById('tempProfileContainer').classList.add('hidden');} };
-        const toggleForm = (f=null) => { const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; c.setAttribute('aria-expanded',s?'true':'false'); if(s)o.classList.remove('hidden'); else o.classList.add('hidden'); };
+        
+        // --- Form Toggle & Populate ---
+        const toggleForm = (f=null) => { 
+            const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
+            c.setAttribute('aria-expanded',s?'true':'false'); 
+            if(s){
+                o.classList.remove('hidden'); 
+                // Ensure wheel is rendered when opening
+                if(document.getElementById('notesMode').value === 'sca') renderScaWheel();
+            } else {
+                o.classList.add('hidden'); 
+            }
+        };
         
         const populateForm = (c) => { document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('method').value=c.method||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; if(!isNaN(parseFloat(c.temp))&&isFinite(c.temp)){setTempMode('numeric');document.getElementById('tempNumeric').value=c.temp;}else{setTempMode('profile');document.getElementById('tempProfile').value=c.temp||'';} setRating(c.rating||0); setNotesMode('manual'); } // Default to manual on edit
 
@@ -714,7 +747,21 @@
         const cloneBrew = (id) => duplicateCoffee(id);
 
         const deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); };
-        const resetFormState = (e) => { if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('profile'); setNotesMode('manual'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); };
+        const resetFormState = (e) => { 
+            if(e)e.stopPropagation(); 
+            document.getElementById('coffeeForm').reset(); 
+            document.getElementById('editId').value=''; 
+            setTempMode('profile'); 
+            // Reset to SCA and Render
+            setNotesMode('sca'); 
+            resetSca(); 
+            setRating(0); 
+            document.getElementById('formContainer').classList.remove('editing-mode'); 
+            document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; 
+            document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; 
+            document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; 
+            document.getElementById('cancelEditBtn').classList.add('hidden'); 
+        };
         
         let currentSort = { key: null, direction: 'asc' };
         let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null };
@@ -756,6 +803,10 @@
         const getTempBadge = (t) => { if(!t) return '-'; if(!isNaN(parseFloat(t))&&isFinite(t)){ let c='bg-gray-100 dark:bg-gray-800';if(t<90)c='bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';else if(t<94)c='bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300';else c='bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';return `<span class="inline-flex items-center justify-center px-2 py-1 rounded-md ${c} text-xs font-bold shadow-sm pointer-events-none select-none font-mono">${t}°C</span>`;} const m={'L4':'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300','L3':'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300','L2':'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-200','L1':'bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/20 dark:text-cyan-200','M':'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-200','H1':'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/20 dark:text-orange-200','H2':'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200','H3':'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300','H4':'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300'}; return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${m[t]||'bg-gray-100'} text-xs font-bold shadow-sm pointer-events-none select-none">${t}</span>`; };
         const closeMenus = (e) => { if(!document.getElementById('modalOverlay').contains(e.target) && !document.getElementById('modalOverlay').classList.contains('hidden') && e.target.id==='modalOverlay') closeModal(); if(!document.getElementById('filterDropdown').contains(e.target)) document.getElementById('filterDropdown').classList.add('hidden'); };
         
+        // --- Image Modal Logic ---
+        const openImageModal = () => document.getElementById('imageModalOverlay').classList.remove('hidden');
+        const closeImageModal = (e) => { if(!e || e.target.id === 'imageModalOverlay' || e.target.closest('button')) document.getElementById('imageModalOverlay').classList.add('hidden'); };
+
         // Theme
         const initTheme = () => { const s=localStorage.getItem('theme'); if(s==='light')document.documentElement.classList.remove('dark'); else {document.documentElement.classList.add('dark');localStorage.setItem('theme','dark');} };
         const toggleTheme = () => { const h=document.documentElement; if(h.classList.contains('dark')){h.classList.remove('dark');localStorage.setItem('theme','light');}else{h.classList.add('dark');localStorage.setItem('theme','dark');} };
@@ -864,6 +915,7 @@
         window.duplicateCoffee = duplicateCoffee;
         window.cloneBrew = cloneBrew; 
         window.deleteCoffee = deleteCoffee;
+        window.discardForm = discardForm;
         window.sortBy = sortBy;
         window.openFilterMenu = openFilterMenu;
         window.closeFilterMenu = closeFilterMenu;
@@ -879,6 +931,8 @@
         window.getFilteredCoffees = getFilteredCoffees;
         window.setRating = setRating;
         window.exportCSV = exportCSV;
+        window.openImageModal = openImageModal;
+        window.closeImageModal = closeImageModal;
 
         // Init
         initTheme();
