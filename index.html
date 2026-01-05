@@ -132,17 +132,14 @@
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roaster</label>
                         <input type="text" id="roaster" name="roaster" placeholder="e.g. La Cabra" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
                     </div>
-                    
                     <div>
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Farmer</label>
                         <input type="text" id="farmer" name="farmer" placeholder="e.g. Felipe Arcila" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
                     </div>
-                    
                     <div>
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Origin</label>
                         <input type="text" id="origin" name="origin" placeholder="e.g. Ethiopia" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
                     </div>
-                    
                     <div>
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Variety</label>
                         <input type="text" id="variety" name="variety" placeholder="e.g. Geisha" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
@@ -152,7 +149,6 @@
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Processing</label>
                         <input type="text" id="processing" name="processing" placeholder="e.g. Natural" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
                     </div>
-
                     <div>
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roast Type</label>
                         <select id="roastType" name="roastType" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
@@ -163,7 +159,6 @@
                             <option value="Dark">Dark</option>
                         </select>
                     </div>
-
                     <div>
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Brewing Method</label>
                         <select id="method" name="method" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
@@ -177,7 +172,6 @@
                             <option value="Chemex">Chemex</option>
                         </select>
                     </div>
-                    
                     <div>
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grind Size</label>
                         <input type="number" step="any" id="grind" name="grind" placeholder="e.g. 14" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
@@ -202,7 +196,6 @@
                         <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Time (Sec)</label>
                         <input type="number" step="any" id="time" name="time" placeholder="e.g. 180" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
                     </div>
-
                     <div class="relative">
                         <div class="flex justify-between items-end mb-1">
                             <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Temp</label>
@@ -211,7 +204,6 @@
                                 <button type="button" onclick="setTempMode('numeric')" id="btnTempNumeric" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">°C</button>
                             </div>
                         </div>
-                        
                         <div id="tempProfileContainer">
                             <select id="tempProfile" name="tempProfile" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
                                 <option value="" disabled selected>Select</option>
@@ -255,23 +247,18 @@
                                 <button type="button" onclick="setNotesMode('manual')" id="btnNotesManual" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">Text</button>
                             </div>
                         </div>
-
                         <div id="notesManualContainer">
                             <input type="text" id="notes" name="notes" placeholder="e.g. Floral, fruity acidity, clean finish" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
                         </div>
-
                         <div id="notesSCAContainer" class="mt-2 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-3">
                             <div id="scaSelectionDisplay" class="text-sm font-bold text-coffee-800 dark:text-white mb-2 min-h-[1.25rem]"></div>
-                            <div id="scaButtonsContainer" class="flex flex-wrap gap-2">
-                                </div>
+                            <div id="scaButtonsContainer" class="flex flex-wrap gap-2"></div>
                         </div>
                         <input type="hidden" id="notesMode" name="notesMode" value="sca">
                     </div>
 
                     <div class="col-span-1 md:col-span-2 lg:col-span-4 flex justify-end mt-2 gap-3">
-                        <button type="button" onclick="discardForm()" class="text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] px-4 py-2.5 rounded-lg font-medium transition-colors">
-                            Discard
-                        </button>
+                        <button type="button" onclick="discardForm()" class="text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] px-4 py-2.5 rounded-lg font-medium transition-colors">Discard</button>
                         <button type="submit" id="submitBtn" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2">
                             <i class="fa-solid fa-check"></i> <span>Save Brew</span>
                         </button>
@@ -283,6 +270,39 @@
         <div id="activeFiltersContainer" class="hidden mb-4 p-3 bg-coffee-100 dark:bg-[#292524] rounded-lg border border-coffee-200 dark:border-[#44403c] flex items-center justify-between">
             <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
             <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap ml-2">Clear All</button>
+        </div>
+
+        <div id="activeBrewsContainer" class="hidden mb-8">
+            <h3 class="text-sm font-bold text-coffee-800 dark:text-[#d6ccc2] uppercase tracking-wide mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-thumbtack text-green-600 dark:text-green-500"></i> Active Brews
+            </h3>
+            <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-green-200 dark:border-green-900 overflow-hidden relative">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+                        <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-green-50 dark:bg-green-900/10 border-b border-green-100 dark:border-green-900">
+                            <tr>
+                                <th scope="col" class="px-4 py-4 w-10 text-center"><i class="fa-solid fa-star text-green-600"></i></th>
+                                <th scope="col" class="px-4 py-4">Roaster</th>
+                                <th scope="col" class="px-4 py-4">Origin</th>
+                                <th scope="col" class="px-4 py-4">Farmer</th>
+                                <th scope="col" class="px-4 py-4">Variety</th>
+                                <th scope="col" class="px-4 py-4">Process</th>
+                                <th scope="col" class="px-4 py-4">Roast</th>
+                                <th scope="col" class="px-4 py-4">Method</th>
+                                <th scope="col" class="px-4 py-4 text-right">Grind</th>
+                                <th scope="col" class="px-4 py-4 text-center">Recipe</th>
+                                <th scope="col" class="px-4 py-4 text-right">Time</th>
+                                <th scope="col" class="px-4 py-4 text-center">Temp</th>
+                                <th scope="col" class="px-4 py-4">Notes</th>
+                                <th scope="col" class="px-4 py-4">Rating</th>
+                                <th scope="col" class="px-4 py-4">Date</th>
+                                <th scope="col" class="px-4 py-4 text-center w-28">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeCoffeeTableBody" class="divide-y divide-green-50 dark:divide-green-900/10"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] overflow-hidden transition-colors duration-300 relative">
@@ -400,48 +420,15 @@
 
         // --- SCA Wheel Data ---
         const scaData = {
-          "Fruity": { c: "bg-red-400 text-white", s: {
-              "Berry": ["Blackberry", "Raspberry", "Blueberry", "Strawberry"],
-              "Dried Fruit": ["Raisin", "Prune"],
-              "Other Fruit": ["Coconut", "Cherry", "Pomegranate", "Pineapple", "Grape", "Apple", "Peach", "Pear"],
-              "Citrus Fruit": ["Grapefruit", "Orange", "Lemon", "Lime"]
-          }},
-          "Sour/Fermented": { c: "bg-yellow-400 text-black", s: {
-              "Sour": ["Sour Aromatics", "Acetic Acid", "Butyric Acid", "Isovaleric Acid", "Citric Acid", "Malic Acid"],
-              "Alcohol/Fermented": ["Winey", "Whiskey", "Fermented", "Overripe"]
-          }},
-          "Green/Vegetative": { c: "bg-green-500 text-white", s: {
-              "Olive Oil": [],
-              "Raw": [],
-              "Green/Vegetative": ["Under-ripe", "Peapod", "Fresh", "Dark Green", "Vegetative", "Hay-like", "Herb-like"]
-          }},
-          "Floral": { c: "bg-pink-400 text-white", s: {
-              "Floral": ["Chamomile", "Rose", "Jasmine"]
-          }},
-          "Sweet": { c: "bg-orange-300 text-black", s: {
-              "Overall Sweet": ["Sweet Aromatics"],
-              "Vanilla": [],
-              "Vanillin": [],
-              "Brown Sugar": ["Molasses", "Maple Syrup", "Caramel", "Honey"]
-          }},
-          "Nutty/Cocoa": { c: "bg-amber-600 text-white", s: {
-              "Nutty": ["Peanuts", "Hazelnut", "Almond"],
-              "Cocoa": ["Chocolate", "Dark Chocolate"]
-          }},
-          "Spices": { c: "bg-red-700 text-white", s: {
-              "Brown Spice": ["Nutmeg", "Clove", "Cinnamon", "Anise"],
-              "Pepper": [],
-              "Pungent": []
-          }},
-          "Roasted": { c: "bg-orange-800 text-white", s: {
-              "Tobacco": ["Pipe Tobacco"],
-              "Burnt": ["Acrid", "Ashy", "Smoky", "Brown Roast"],
-              "Cereal": ["Grain", "Malt", "Toast"]
-          }},
-          "Other": { c: "bg-gray-400 text-black", s: {
-              "Chemical": ["Rubber", "Skunky", "Petroleum", "Medicinal", "Salty", "Bitter"],
-              "Papery/Musty": ["Phenolic", "Meaty", "Brothy", "Animalic", "Musty/Earthy", "Musty/Dusty", "Moldy/Damp", "Woody", "Papery/Stale", "Cardboard", "Stale"]
-          }}
+          "Fruity": { c: "bg-red-400 text-white", s: { "Berry": ["Blackberry", "Raspberry", "Blueberry", "Strawberry"], "Dried Fruit": ["Raisin", "Prune"], "Other Fruit": ["Coconut", "Cherry", "Pomegranate", "Pineapple", "Grape", "Apple", "Peach", "Pear"], "Citrus Fruit": ["Grapefruit", "Orange", "Lemon", "Lime"] }},
+          "Sour/Fermented": { c: "bg-yellow-400 text-black", s: { "Sour": ["Sour Aromatics", "Acetic Acid", "Butyric Acid", "Isovaleric Acid", "Citric Acid", "Malic Acid"], "Alcohol/Fermented": ["Winey", "Whiskey", "Fermented", "Overripe"] }},
+          "Green/Vegetative": { c: "bg-green-500 text-white", s: { "Olive Oil": [], "Raw": [], "Green/Vegetative": ["Under-ripe", "Peapod", "Fresh", "Dark Green", "Vegetative", "Hay-like", "Herb-like"] }},
+          "Floral": { c: "bg-pink-400 text-white", s: { "Floral": ["Chamomile", "Rose", "Jasmine"] }},
+          "Sweet": { c: "bg-orange-300 text-black", s: { "Overall Sweet": ["Sweet Aromatics"], "Vanilla": [], "Vanillin": [], "Brown Sugar": ["Molasses", "Maple Syrup", "Caramel", "Honey"] }},
+          "Nutty/Cocoa": { c: "bg-amber-600 text-white", s: { "Nutty": ["Peanuts", "Hazelnut", "Almond"], "Cocoa": ["Chocolate", "Dark Chocolate"] }},
+          "Spices": { c: "bg-red-700 text-white", s: { "Brown Spice": ["Nutmeg", "Clove", "Cinnamon", "Anise"], "Pepper": [], "Pungent": [] }},
+          "Roasted": { c: "bg-orange-800 text-white", s: { "Tobacco": ["Pipe Tobacco"], "Burnt": ["Acrid", "Ashy", "Smoky", "Brown Roast"], "Cereal": ["Grain", "Malt", "Toast"] }},
+          "Other": { c: "bg-gray-400 text-black", s: { "Chemical": ["Rubber", "Skunky", "Petroleum", "Medicinal", "Salty", "Bitter"], "Papery/Musty": ["Phenolic", "Meaty", "Brothy", "Animalic", "Musty/Earthy", "Musty/Dusty", "Moldy/Damp", "Woody", "Papery/Stale", "Cardboard", "Stale"] }}
         };
 
         // --- SCA Logic Variables ---
@@ -492,8 +479,6 @@
             if(currentView !== 'mine') return;
             const f = new FormData(e.target); const eid = f.get('editId');
             const tMode = f.get('tempMode'); const finalTemp = tMode === 'profile' ? f.get('tempProfile') : (f.get('tempNumeric') || "M");
-            
-            // Notes logic: Always take the text input value, as SCA now appends to it
             const finalNotes = f.get('notes') || '';
 
             let newOrder = 0; if (coffees.length > 0) { const minOrder = Math.min(...coffees.map(c => c.customOrder || 0)); newOrder = minOrder - 1; }
@@ -504,12 +489,22 @@
                 ratio: parseNum(f.get('ratio')), time: parseNum(f.get('time')), temp: finalTemp, 
                 notes: finalNotes, 
                 rating: parseInt(f.get('rating')) || 0,
+                isActive: false, // Default new to false, unless we want to option to add straight to active? Default false for now.
                 updatedAt: new Date().toISOString() 
             };
             
             try {
                 const col = collection(db, 'users', currentUser.uid, 'coffees');
-                if(eid) { await updateDoc(doc(col, eid), d); } else { d.customOrder = newOrder; d.createdAt = new Date().toISOString(); await addDoc(col, d); }
+                if(eid) { 
+                    // Preserve isActive status on edit
+                    const existing = coffees.find(c => c.id === eid);
+                    if(existing) d.isActive = existing.isActive || false;
+                    await updateDoc(doc(col, eid), d); 
+                } else { 
+                    d.customOrder = newOrder; 
+                    d.createdAt = new Date().toISOString(); 
+                    await addDoc(col, d); 
+                }
                 resetFormState();
             } catch(err){ alert(err.message); }
         };
@@ -521,13 +516,25 @@
             }
         };
 
-        // --- Drag/Drop (unchanged) ---
+        const toggleActive = async (id, ev) => {
+            if(ev) ev.stopPropagation();
+            if(currentView !== 'mine') return;
+            const c = coffees.find(x => x.id === id);
+            if(!c) return;
+            const newState = !c.isActive;
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'coffees', id), { isActive: newState });
+            } catch(e) { console.error(e); }
+        };
+
+        // --- Drag/Drop ---
         const handleDragStart = (e) => { dragSrcEl = e.target.closest('tr'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', dragSrcEl.innerHTML); dragSrcEl.classList.add('opacity-50'); };
         const handleDragOver = (e) => { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; };
         const handleDrop = async (e) => {
             if (e.stopPropagation) e.stopPropagation();
             const targetRow = e.target.closest('tr');
-            if (dragSrcEl !== targetRow && targetRow) {
+            // Only allow reordering within the main table, not mixed with active table
+            if (dragSrcEl !== targetRow && targetRow && targetRow.closest('tbody').id === 'coffeeTableBody' && dragSrcEl.closest('tbody').id === 'coffeeTableBody') {
                 const oldIndex = parseInt(dragSrcEl.getAttribute('data-index')); const newIndex = parseInt(targetRow.getAttribute('data-index'));
                 const movedItem = coffees.splice(oldIndex, 1)[0]; coffees.splice(newIndex, 0, movedItem);
                 coffees.forEach((c, idx) => c.customOrder = idx);
@@ -548,23 +555,15 @@
             const conMan = document.getElementById('notesManualContainer');
             const conSca = document.getElementById('notesSCAContainer');
             const hidden = document.getElementById('notesMode');
-
             hidden.value = mode;
-
             if (mode === 'manual') {
-                conMan.classList.remove('hidden'); 
-                conSca.classList.add('hidden');
+                conMan.classList.remove('hidden'); conSca.classList.add('hidden');
                 btnMan.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white";
                 btnSca.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
             } else {
-                // Show BOTH inputs so user can see what they are building
-                conSca.classList.remove('hidden'); 
-                conMan.classList.remove('hidden');
-                
+                conSca.classList.remove('hidden'); conMan.classList.remove('hidden');
                 btnSca.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white";
                 btnMan.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
-                
-                // Auto-render if empty
                 if (scaState.level === 0 && scaState.path.length === 0) renderScaWheel();
             }
         };
@@ -573,91 +572,32 @@
             const container = document.getElementById('scaButtonsContainer');
             const display = document.getElementById('scaSelectionDisplay');
             container.innerHTML = '';
-            
-            // --- HEADER WITH ADD BUTTON ---
             const pathString = scaState.path.join(' > ');
             const leafNode = scaState.path.length > 0 ? scaState.path[scaState.path.length - 1] : null;
-
             if (leafNode) {
-                display.innerHTML = `
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-2 bg-coffee-100 dark:bg-[#292524] p-2 rounded">
-                        <span class="text-xs text-coffee-500 italic">${pathString}</span>
-                        <div class="flex gap-2">
-                             <button onclick="resetSca()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 underline">Reset</button>
-                             <button type="button" onclick="addScaToNotes()" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1 rounded shadow-sm transition-colors">
-                                <i class="fa-solid fa-plus mr-1"></i> Add "${leafNode}"
-                             </button>
-                        </div>
-                    </div>`;
+                display.innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-center gap-2 bg-coffee-100 dark:bg-[#292524] p-2 rounded"><span class="text-xs text-coffee-500 italic">${pathString}</span><div class="flex gap-2"><button onclick="resetSca()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 underline">Reset</button><button type="button" onclick="addScaToNotes()" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1 rounded shadow-sm transition-colors"><i class="fa-solid fa-plus mr-1"></i> Add "${leafNode}"</button></div></div>`;
             } else {
                 display.innerHTML = '<span class="text-coffee-400 font-normal italic text-xs">Tap categories below to build a flavor...</span>';
             }
-
-            // --- WHEEL RENDERING ---
             if (scaState.level === 0) {
                 Object.keys(scaData).forEach(key => {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm ${scaData[key].c}`;
-                    btn.textContent = key;
-                    btn.onclick = () => {
-                        scaState.path = [key];
-                        scaState.level = 1;
-                        scaState.currentNode = scaData[key];
-                        renderScaWheel();
-                    };
-                    container.appendChild(btn);
+                    const btn = document.createElement('button'); btn.type = 'button'; btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm ${scaData[key].c}`; btn.textContent = key;
+                    btn.onclick = () => { scaState.path = [key]; scaState.level = 1; scaState.currentNode = scaData[key]; renderScaWheel(); }; container.appendChild(btn);
                 });
             } else if (scaState.level === 1) {
-                const subs = scaState.currentNode.s;
-                const parentColor = scaState.currentNode.c;
-                
-                const backBtn = document.createElement('button');
-                backBtn.type = 'button';
-                backBtn.className = "sca-btn px-3 py-2 rounded text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200";
-                backBtn.innerHTML = "<i class='fa-solid fa-arrow-left'></i>";
-                backBtn.onclick = () => { scaState.level = 0; scaState.path = []; scaState.currentNode = null; renderScaWheel(); };
-                container.appendChild(backBtn);
-
+                const subs = scaState.currentNode.s; const parentColor = scaState.currentNode.c;
+                const backBtn = document.createElement('button'); backBtn.type = 'button'; backBtn.className = "sca-btn px-3 py-2 rounded text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"; backBtn.innerHTML = "<i class='fa-solid fa-arrow-left'></i>"; backBtn.onclick = () => { scaState.level = 0; scaState.path = []; scaState.currentNode = null; renderScaWheel(); }; container.appendChild(backBtn);
                 Object.keys(subs).forEach(key => {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm opacity-90 hover:opacity-100 ${parentColor}`;
-                    btn.textContent = key;
-                    btn.onclick = () => {
-                        scaState.path.push(key);
-                        scaState.level = 2;
-                        renderScaWheel();
-                    };
-                    container.appendChild(btn);
+                    const btn = document.createElement('button'); btn.type = 'button'; btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm opacity-90 hover:opacity-100 ${parentColor}`; btn.textContent = key;
+                    btn.onclick = () => { scaState.path.push(key); scaState.level = 2; renderScaWheel(); }; container.appendChild(btn);
                 });
             } else if (scaState.level === 2) {
-                const parentKey = scaState.path[0];
-                const subKey = scaState.path[1];
-                const notes = scaData[parentKey].s[subKey];
-                const parentColor = scaData[parentKey].c;
-
-                const backBtn = document.createElement('button');
-                backBtn.type = 'button';
-                backBtn.className = "sca-btn px-3 py-2 rounded text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200";
-                backBtn.innerHTML = "<i class='fa-solid fa-arrow-left'></i>";
-                backBtn.onclick = () => { scaState.path.pop(); scaState.level = 1; renderScaWheel(); };
-                container.appendChild(backBtn);
-                
-                if (notes.length === 0) {
-                     container.innerHTML += `<div class="flex-1 text-xs text-coffee-500 italic ml-2 flex items-center">Use 'Add' above to confirm selection.</div>`;
-                } else {
+                const parentKey = scaState.path[0]; const subKey = scaState.path[1]; const notes = scaData[parentKey].s[subKey]; const parentColor = scaData[parentKey].c;
+                const backBtn = document.createElement('button'); backBtn.type = 'button'; backBtn.className = "sca-btn px-3 py-2 rounded text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"; backBtn.innerHTML = "<i class='fa-solid fa-arrow-left'></i>"; backBtn.onclick = () => { scaState.path.pop(); scaState.level = 1; renderScaWheel(); }; container.appendChild(backBtn);
+                if (notes.length === 0) { container.innerHTML += `<div class="flex-1 text-xs text-coffee-500 italic ml-2 flex items-center">Use 'Add' above to confirm selection.</div>`; } else {
                     notes.forEach(note => {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm opacity-80 hover:opacity-100 ${parentColor}`;
-                        btn.textContent = note;
-                        btn.onclick = () => {
-                            if (scaState.path.length === 3) scaState.path.pop();
-                            scaState.path.push(note);
-                            renderScaWheel();
-                        };
-                        container.appendChild(btn);
+                        const btn = document.createElement('button'); btn.type = 'button'; btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm opacity-80 hover:opacity-100 ${parentColor}`; btn.textContent = note;
+                        btn.onclick = () => { if (scaState.path.length === 3) scaState.path.pop(); scaState.path.push(note); renderScaWheel(); }; container.appendChild(btn);
                     });
                 }
             }
@@ -666,59 +606,22 @@
         const addScaToNotes = () => {
             if (scaState.path.length === 0) return;
             const flavorToAdd = scaState.path[scaState.path.length - 1];
-            
-            const input = document.getElementById('notes');
-            let currentText = input.value.trim();
-
-            if (currentText.length > 0) {
-                if(currentText.endsWith(',')) currentText = currentText.slice(0, -1);
-                input.value = `${currentText}, ${flavorToAdd}`;
-            } else {
-                input.value = flavorToAdd;
-            }
+            const input = document.getElementById('notes'); let currentText = input.value.trim();
+            if (currentText.length > 0) { if(currentText.endsWith(',')) currentText = currentText.slice(0, -1); input.value = `${currentText}, ${flavorToAdd}`; } else { input.value = flavorToAdd; }
             resetSca();
         };
-
-        const resetSca = () => {
-            scaState = { level: 0, path: [], currentNode: null };
-            renderScaWheel();
-        };
+        const resetSca = () => { scaState = { level: 0, path: [], currentNode: null }; renderScaWheel(); };
 
         // --- Standard UI ---
         const openFriendsModal = () => { document.getElementById('modalOverlay').classList.remove('hidden'); switchModalTab('profile'); };
         const closeModal = () => document.getElementById('modalOverlay').classList.add('hidden');
-        const switchModalTab = (tab) => {
-            const tProf = document.getElementById('tabProfile'); const tFoll = document.getElementById('tabFollowing');
-            const cProf = document.getElementById('contentProfile'); const cFoll = document.getElementById('contentFollowing');
-            if (tab === 'profile') { tProf.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tProf.classList.remove('text-coffee-500','dark:text-[#78716c]'); tFoll.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tFoll.classList.add('text-coffee-500','dark:text-[#78716c]'); cProf.classList.remove('hidden'); cFoll.classList.add('hidden'); } else { tFoll.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tFoll.classList.remove('text-coffee-500','dark:text-[#78716c]'); tProf.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tProf.classList.add('text-coffee-500','dark:text-[#78716c]'); cFoll.classList.remove('hidden'); cFoll.classList.add('hidden'); }
-        };
+        const switchModalTab = (tab) => { const tProf=document.getElementById('tabProfile'),tFoll=document.getElementById('tabFollowing'),cProf=document.getElementById('contentProfile'),cFoll=document.getElementById('contentFollowing');if(tab==='profile'){tProf.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');tProf.classList.remove('text-coffee-500','dark:text-[#78716c]');tFoll.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');tFoll.classList.add('text-coffee-500','dark:text-[#78716c]');cProf.classList.remove('hidden');cFoll.classList.add('hidden');}else{tFoll.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');tFoll.classList.remove('text-coffee-500','dark:text-[#78716c]');tProf.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');tProf.classList.add('text-coffee-500','dark:text-[#78716c]');cFoll.classList.remove('hidden');cFoll.classList.add('hidden');} };
         const togglePublicProfile = async () => { if(!currentUser) return; isPublic = !isPublic; updatePublicToggleUI(); await updateDoc(doc(db, 'users', currentUser.uid), { isPublic: isPublic }); };
-        const updatePublicToggleUI = () => { const btn = document.getElementById('togglePublicBtn'); const dot = btn.firstElementChild; const container = document.getElementById('shareIdContainer'); if (isPublic) { btn.className = "bg-green-500 w-12 h-6 rounded-full p-1 transition-colors relative"; dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform translate-x-6 transition-transform"; container.classList.remove('hidden'); } else { btn.className = "bg-gray-300 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative"; dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform translate-x-0 transition-transform"; container.classList.add('hidden'); } };
+        const updatePublicToggleUI = () => { const btn=document.getElementById('togglePublicBtn'),dot=btn.firstElementChild,con=document.getElementById('shareIdContainer');if(isPublic){btn.className="bg-green-500 w-12 h-6 rounded-full p-1 transition-colors relative";dot.className="bg-white w-4 h-4 rounded-full shadow-md transform translate-x-6 transition-transform";con.classList.remove('hidden');}else{btn.className="bg-gray-300 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative";dot.className="bg-white w-4 h-4 rounded-full shadow-md transform translate-x-0 transition-transform";con.classList.add('hidden');} };
         const copyShareId = () => { document.getElementById('myShareId').select(); document.execCommand('copy'); alert("ID Copied!"); };
-        const followUser = async () => {
-            const input = document.getElementById('friendIdInput'); const uid = input.value.trim(); if(!uid || uid === currentUser.uid) return alert("Invalid ID");
-            try {
-                const friendDoc = await getDoc(doc(db, 'users', uid));
-                let friendName = 'Friend'; if(friendDoc.exists() && friendDoc.data().displayName) friendName = friendDoc.data().displayName;
-                await setDoc(doc(db, 'users', currentUser.uid, 'following', uid), { uid: uid, name: friendName, addedAt: new Date().toISOString() });
-                input.value = ''; loadFollowingList();
-            } catch(e) { console.error(e); alert("Could not follow user. Check ID."); }
-        };
-        const unfollowUser = async (uid) => { if(!confirm("Unfollow?")) return; await deleteDoc(doc(db, 'users', currentUser.uid, 'following', uid)); loadFollowingList(); if(currentView===uid){document.getElementById('viewSelect').value='mine';changeView('mine');} };
-        const loadFollowingList = async () => {
-            if(!currentUser) return;
-            const snap = await getDocs(collection(db, 'users', currentUser.uid, 'following'));
-            following = []; snap.forEach(doc => following.push(doc.data()));
-            const list = document.getElementById('followingList'); list.innerHTML = '';
-            following.forEach(f => {
-                const d = document.createElement('div'); d.className = "flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]";
-                d.innerHTML = `<span class="text-sm font-mono text-coffee-700 dark:text-[#a8a29e] truncate w-40">${f.name || f.uid}</span> <button onclick="unfollowUser('${f.uid}')" class="text-xs text-red-500 hover:text-red-700">Unfollow</button>`;
-                list.appendChild(d);
-            });
-            const select = document.getElementById('viewSelect'); select.innerHTML = '<option value="mine">My Brews</option>';
-            following.forEach(f => { const opt = document.createElement('option'); opt.value = f.uid; opt.text = f.name || `Friend (${f.uid.substr(0,5)}...)`; select.appendChild(opt); });
-            select.value = currentView;
-        };
+        const followUser = async () => { const i=document.getElementById('friendIdInput');const u=i.value.trim();if(!u||u===currentUser.uid)return alert("Invalid ID");try{const d=await getDoc(doc(db,'users',u));let n='Friend';if(d.exists()&&d.data().displayName)n=d.data().displayName;await setDoc(doc(db,'users',currentUser.uid,'following',u),{uid:u,name:n,addedAt:new Date().toISOString()});i.value='';loadFollowingList();}catch(e){console.error(e);alert("Could not follow user. Check ID.");} };
+        const unfollowUser = async (u) => { if(!confirm("Unfollow?"))return;await deleteDoc(doc(db,'users',currentUser.uid,'following',u));loadFollowingList();if(currentView===u){document.getElementById('viewSelect').value='mine';changeView('mine');} };
+        const loadFollowingList = async () => { if(!currentUser)return;const s=await getDocs(collection(db,'users',currentUser.uid,'following'));following=[];s.forEach(d=>following.push(d.data()));const l=document.getElementById('followingList');l.innerHTML='';following.forEach(f=>{const d=document.createElement('div');d.className="flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]";d.innerHTML=`<span class="text-sm font-mono text-coffee-700 dark:text-[#a8a29e] truncate w-40">${f.name||f.uid}</span> <button onclick="unfollowUser('${f.uid}')" class="text-xs text-red-500 hover:text-red-700">Unfollow</button>`;l.appendChild(d);});const sl=document.getElementById('viewSelect');sl.innerHTML='<option value="mine">My Brews</option>';following.forEach(f=>{const o=document.createElement('option');o.value=f.uid;o.text=f.name||`Friend (${f.uid.substr(0,5)}...)`;sl.appendChild(o);});sl.value=currentView; };
 
         const setRating = (r) => { const c=document.getElementById('starContainer'); document.getElementById('ratingInput').value=r; for(let i=0;i<c.children.length;i++){ if(i<r)c.children[i].classList.add('active'); else c.children[i].classList.remove('active'); } };
         const getStarDisplay = (r) => { if(!r)return'-'; let h=''; for(let i=0;i<r;i++)h+='<i class="fa-solid fa-star text-xs text-yellow-400"></i>'; return h; };
@@ -727,41 +630,15 @@
         const handleRecipeInput = (s) => { const w=document.getElementById('inputWeight'),r=document.getElementById('inputRatio'),y=document.getElementById('inputYield'); const wv=parseFloat(w.value)||0,rv=parseFloat(r.value)||0,yv=parseFloat(y.value)||0; if(!wv)return; if(s==='weight'){ if(rv>0)y.value=(wv*rv).toFixed(1); else if(yv>0)r.value=(yv/wv).toFixed(1); } else if(s==='ratio')y.value=(wv*rv).toFixed(1); else if(s==='yield'){ if(wv>0)r.value=(yv/wv).toFixed(2); } };
         const setTempMode = (m) => { document.getElementById('tempMode').value=m; if(m==='profile'){document.getElementById('tempProfileContainer').classList.remove('hidden');document.getElementById('tempNumericContainer').classList.add('hidden');}else{document.getElementById('tempNumericContainer').classList.remove('hidden');document.getElementById('tempProfileContainer').classList.add('hidden');} };
         
-        // --- Form Toggle & Populate ---
-        const toggleForm = (f=null) => { 
-            const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
-            c.setAttribute('aria-expanded',s?'true':'false'); 
-            if(s){
-                o.classList.remove('hidden'); 
-                // Ensure wheel is rendered when opening
-                if(document.getElementById('notesMode').value === 'sca') renderScaWheel();
-            } else {
-                o.classList.add('hidden'); 
-            }
-        };
-        
-        const populateForm = (c) => { document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('method').value=c.method||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; if(!isNaN(parseFloat(c.temp))&&isFinite(c.temp)){setTempMode('numeric');document.getElementById('tempNumeric').value=c.temp;}else{setTempMode('profile');document.getElementById('tempProfile').value=c.temp||'';} setRating(c.rating||0); setNotesMode('manual'); } // Default to manual on edit
+        const toggleForm = (f=null) => { const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); } else { o.classList.add('hidden'); } };
+        const populateForm = (c) => { document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('method').value=c.method||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; if(!isNaN(parseFloat(c.temp))&&isFinite(c.temp)){setTempMode('numeric');document.getElementById('tempNumeric').value=c.temp;}else{setTempMode('profile');document.getElementById('tempProfile').value=c.temp||'';} setRating(c.rating||0); setNotesMode('manual'); }
 
         const editCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; document.getElementById('editId').value=c.id; populateForm(c); document.getElementById('formContainer').classList.add('editing-mode'); toggleForm(true); document.getElementById('formTitle').innerHTML='<span class="text-orange-500">Edit Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Update</span>'; document.getElementById('submitBtn').className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); };
         const duplicateCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; if(currentView!=='mine'){const d={...c};document.getElementById('viewSelect').value='mine';changeView('mine');setTimeout(()=>{document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});},500);}else{document.getElementById('editId').value='';populateForm(c);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});} };
         const cloneBrew = (id) => duplicateCoffee(id);
 
         const deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); };
-        const resetFormState = (e) => { 
-            if(e)e.stopPropagation(); 
-            document.getElementById('coffeeForm').reset(); 
-            document.getElementById('editId').value=''; 
-            setTempMode('profile'); 
-            // Reset to SCA and Render
-            setNotesMode('sca'); 
-            resetSca(); 
-            setRating(0); 
-            document.getElementById('formContainer').classList.remove('editing-mode'); 
-            document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; 
-            document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; 
-            document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; 
-            document.getElementById('cancelEditBtn').classList.add('hidden'); 
-        };
+        const resetFormState = (e) => { if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('profile'); setNotesMode('sca'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); };
         
         let currentSort = { key: null, direction: 'asc' };
         let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null };
@@ -803,52 +680,66 @@
         const getTempBadge = (t) => { if(!t) return '-'; if(!isNaN(parseFloat(t))&&isFinite(t)){ let c='bg-gray-100 dark:bg-gray-800';if(t<90)c='bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';else if(t<94)c='bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300';else c='bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';return `<span class="inline-flex items-center justify-center px-2 py-1 rounded-md ${c} text-xs font-bold shadow-sm pointer-events-none select-none font-mono">${t}°C</span>`;} const m={'L4':'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300','L3':'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300','L2':'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-200','L1':'bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/20 dark:text-cyan-200','M':'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-200','H1':'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/20 dark:text-orange-200','H2':'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200','H3':'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300','H4':'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300'}; return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${m[t]||'bg-gray-100'} text-xs font-bold shadow-sm pointer-events-none select-none">${t}</span>`; };
         const closeMenus = (e) => { if(!document.getElementById('modalOverlay').contains(e.target) && !document.getElementById('modalOverlay').classList.contains('hidden') && e.target.id==='modalOverlay') closeModal(); if(!document.getElementById('filterDropdown').contains(e.target)) document.getElementById('filterDropdown').classList.add('hidden'); };
         
-        // --- Image Modal Logic ---
         const openImageModal = () => document.getElementById('imageModalOverlay').classList.remove('hidden');
         const closeImageModal = (e) => { if(!e || e.target.id === 'imageModalOverlay' || e.target.closest('button')) document.getElementById('imageModalOverlay').classList.add('hidden'); };
 
-        // Theme
         const initTheme = () => { const s=localStorage.getItem('theme'); if(s==='light')document.documentElement.classList.remove('dark'); else {document.documentElement.classList.add('dark');localStorage.setItem('theme','dark');} };
         const toggleTheme = () => { const h=document.documentElement; if(h.classList.contains('dark')){h.classList.remove('dark');localStorage.setItem('theme','light');}else{h.classList.add('dark');localStorage.setItem('theme','dark');} };
 
+        // --- CORE RENDER FUNCTION ---
         const renderTable = () => { 
-            const t=document.getElementById('coffeeTableBody'); const e=document.getElementById('emptyState'); t.innerHTML=''; 
+            const t=document.getElementById('coffeeTableBody'); 
+            const activeT=document.getElementById('activeCoffeeTableBody');
+            const activeContainer=document.getElementById('activeBrewsContainer');
+            const e=document.getElementById('emptyState'); 
+            
+            t.innerHTML=''; 
+            activeT.innerHTML='';
+            
             const filteredCoffees = getFilteredCoffees();
-            if(coffees.length===0){e.classList.remove('hidden'); return;} e.classList.add('hidden');
+            
+            if(coffees.length===0){
+                e.classList.remove('hidden'); 
+                activeContainer.classList.add('hidden');
+                return;
+            } 
+            e.classList.add('hidden');
+
             const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !activeFilters.temp && !activeFilters.roastType && !activeFilters.roaster && !activeFilters.origin && !activeFilters.farmer && !activeFilters.variety && !activeFilters.processing;
+
+            // Separate active vs regular
+            let hasActive = false;
 
             filteredCoffees.forEach((c, index) => {
                 const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
-                const r=document.createElement('tr'); 
-                r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0';
                 
-                if (isDraggable) {
-                    r.setAttribute('draggable', 'true');
-                    r.setAttribute('data-index', index);
-                    r.classList.add('cursor-grab');
-                    r.addEventListener('dragstart', handleDragStart);
-                    r.addEventListener('dragover', handleDragOver);
-                    r.addEventListener('drop', handleDrop);
-                    r.addEventListener('dragend', handleDragEnd);
-                }
-
-                // Actions: Edit, Duplicate, Delete
-                const actions = currentView==='mine' ? `
-                    <button onclick="editCoffee('${c.id}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded" title="Edit"><i class="fa-solid fa-pencil"></i></button>
-                    <button onclick="duplicateCoffee('${c.id}')" class="text-green-500 hover:bg-green-50 p-2 rounded" title="Duplicate"><i class="fa-regular fa-copy"></i></button>
-                    <button onclick="deleteCoffee('${c.id}',event)" class="text-red-500 hover:bg-red-50 p-2 rounded" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                ` : `
-                    <button onclick="cloneBrew('${c.id}')" class="text-green-600 hover:bg-green-50 p-2 rounded" title="Clone to My Brews"><i class="fa-solid fa-file-import"></i></button>
-                `;
-                
-                const recipeCol = `<div class="flex flex-col items-center"><span class="text-xs text-coffee-500 dark:text-[#78716c] mb-1">1:${c.ratio || '-'}</span><div class="font-mono text-coffee-900 dark:text-[#e7e5e4] bg-coffee-50 dark:bg-[#1c1917] px-2 py-1 rounded border border-coffee-100 dark:border-[#44403c]"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><i class="fa-solid fa-arrow-right text-[10px] text-coffee-400 dark:text-[#57534e] mx-1"></i><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span></div></div>`;
-                const gripIcon = isDraggable ? 'fa-grip-vertical cursor-grab' : 'fa-lock opacity-30';
-                
+                // Mapped Variables
                 const displayRoaster = c.roaster || c.name || '-';
                 const displayOrigin = c.origin || c.beanType || '-';
                 const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
+                const gripIcon = isDraggable ? 'fa-grip-vertical cursor-grab' : 'fa-lock opacity-30';
+                
+                // ACTIONS Logic
+                let actions = '';
+                if(currentView === 'mine') {
+                    // Pin/Unpin Button
+                    const pinBtn = c.isActive 
+                        ? `<button onclick="toggleActive('${c.id}',event)" class="text-green-600 hover:bg-green-50 p-2 rounded" title="Unpin from Active"><i class="fa-solid fa-thumbtack"></i></button>`
+                        : `<button onclick="toggleActive('${c.id}',event)" class="text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" title="Pin to Active"><i class="fa-solid fa-thumbtack"></i></button>`;
 
-                r.innerHTML=`
+                    actions = `
+                        <button onclick="editCoffee('${c.id}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded" title="Edit"><i class="fa-solid fa-pencil"></i></button>
+                        <button onclick="duplicateCoffee('${c.id}')" class="text-green-500 hover:bg-green-50 p-2 rounded" title="Duplicate"><i class="fa-regular fa-copy"></i></button>
+                        ${pinBtn}
+                        <button onclick="deleteCoffee('${c.id}',event)" class="text-red-500 hover:bg-red-50 p-2 rounded" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                } else {
+                    actions = `<button onclick="cloneBrew('${c.id}')" class="text-green-600 hover:bg-green-50 p-2 rounded" title="Clone to My Brews"><i class="fa-solid fa-file-import"></i></button>`;
+                }
+
+                const recipeCol = `<div class="flex flex-col items-center"><span class="text-xs text-coffee-500 dark:text-[#78716c] mb-1">1:${c.ratio || '-'}</span><div class="font-mono text-coffee-900 dark:text-[#e7e5e4] bg-coffee-50 dark:bg-[#1c1917] px-2 py-1 rounded border border-coffee-100 dark:border-[#44403c]"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><i class="fa-solid fa-arrow-right text-[10px] text-coffee-400 dark:text-[#57534e] mx-1"></i><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span></div></div>`;
+
+                const rowHTML = `
                     <td class="px-4 py-4 text-center"><i class="fa-solid ${gripIcon} text-coffee-300 dark:text-[#57534e]"></i></td>
                     <td class="px-4 py-4 font-semibold text-coffee-900 dark:text-[#e7e5e4] filterable pointer-events-auto" ondblclick="openFilterMenu(event,'roaster')">${displayRoaster}</td>
                     <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event,'origin')">${displayOrigin}</td>
@@ -866,8 +757,39 @@
                     <td class="px-4 py-4 text-xs font-mono text-coffee-500">${displayDate}</td>
                     <td class="px-4 py-4 text-center flex justify-center gap-2">${actions}</td>
                 `;
+
+                // Render to Main Table (History)
+                const r = document.createElement('tr');
+                r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0';
+                if (isDraggable) {
+                    r.setAttribute('draggable', 'true');
+                    r.setAttribute('data-index', index);
+                    r.classList.add('cursor-grab');
+                    r.addEventListener('dragstart', handleDragStart);
+                    r.addEventListener('dragover', handleDragOver);
+                    r.addEventListener('drop', handleDrop);
+                    r.addEventListener('dragend', handleDragEnd);
+                }
+                r.innerHTML = rowHTML;
                 t.appendChild(r);
+
+                // Render to Active Table if applicable
+                if(c.isActive && currentView === 'mine') {
+                    hasActive = true;
+                    const rActive = document.createElement('tr');
+                    rActive.className='bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-green-50 dark:border-green-900/10 last:border-b-0';
+                    // We do NOT add drag handlers to the active table to keep it simple
+                    rActive.innerHTML = rowHTML.replace(gripIcon, 'fa-star text-green-500'); // Replace grip with star in active view
+                    activeT.appendChild(rActive);
+                }
             });
+
+            // Toggle visibility of Active Table
+            if(hasActive && currentView === 'mine') {
+                activeContainer.classList.remove('hidden');
+            } else {
+                activeContainer.classList.add('hidden');
+            }
         };
 
         // Auth
@@ -916,6 +838,7 @@
         window.cloneBrew = cloneBrew; 
         window.deleteCoffee = deleteCoffee;
         window.discardForm = discardForm;
+        window.toggleActive = toggleActive;
         window.sortBy = sortBy;
         window.openFilterMenu = openFilterMenu;
         window.closeFilterMenu = closeFilterMenu;
