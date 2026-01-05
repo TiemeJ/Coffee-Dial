@@ -20,6 +20,7 @@
         input:focus, select:focus, textarea:focus { outline: none; ring: 2px; border-color: #b08968; box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.2); }
         .editing-mode { border: 2px solid #ea580c !important; }
         
+        /* Filterable Headers Only */
         th.filterable { 
             position: relative; 
             cursor: context-menu; 
@@ -296,17 +297,17 @@
                         <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-green-50 dark:bg-green-900/10 border-b border-green-100 dark:border-green-900">
                             <tr>
                                 <th scope="col" class="px-4 py-4 w-10 text-center"><i class="fa-solid fa-star text-green-600"></i></th>
-                                <th scope="col" class="px-4 py-4">Roaster</th>
-                                <th scope="col" class="px-4 py-4">Origin</th>
-                                <th scope="col" class="px-4 py-4">Farmer</th>
-                                <th scope="col" class="px-4 py-4">Variety</th>
-                                <th scope="col" class="px-4 py-4">Process</th>
-                                <th scope="col" class="px-4 py-4">Roast</th>
-                                <th scope="col" class="px-4 py-4">Method</th>
+                                <th scope="col" class="px-4 py-4 filterable" ondblclick="openFilterMenu(event,'roaster')">Roaster</th>
+                                <th scope="col" class="px-4 py-4 filterable" ondblclick="openFilterMenu(event,'origin')">Origin</th>
+                                <th scope="col" class="px-4 py-4 filterable" ondblclick="openFilterMenu(event,'farmer')">Farmer</th>
+                                <th scope="col" class="px-4 py-4 filterable" ondblclick="openFilterMenu(event,'variety')">Variety</th>
+                                <th scope="col" class="px-4 py-4 filterable" ondblclick="openFilterMenu(event,'processing')">Process</th>
+                                <th scope="col" class="px-4 py-4 filterable" ondblclick="openFilterMenu(event,'roastType')">Roast</th>
+                                <th scope="col" class="px-4 py-4 filterable" ondblclick="openFilterMenu(event,'method')">Method</th>
                                 <th scope="col" class="px-4 py-4 text-right">Grind</th>
                                 <th scope="col" class="px-4 py-4 text-center">Recipe</th>
                                 <th scope="col" class="px-4 py-4 text-right">Time</th>
-                                <th scope="col" class="px-4 py-4 text-center">Temp</th>
+                                <th scope="col" class="px-4 py-4 text-center filterable" ondblclick="openFilterMenu(event,'temp')">Temp</th>
                                 <th scope="col" class="px-4 py-4">Notes</th>
                                 <th scope="col" class="px-4 py-4">Rating</th>
                                 <th scope="col" class="px-4 py-4">Date</th>
@@ -325,7 +326,7 @@
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
                             <th scope="col" class="px-4 py-4 w-10 text-center whitespace-nowrap"><i class="fa-solid fa-grip-vertical"></i></th>
-                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap" onclick="sortBy('roaster')">Roaster <i class="fa-solid fa-sort text-coffee-400 dark:text-[#57534e] ml-1"></i></th>
+                            <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable" onclick="sortBy('roaster')" ondblclick="openFilterMenu(event,'roaster')">Roaster <i class="fa-solid fa-sort text-coffee-400 dark:text-[#57534e] ml-1"></i></th>
                             <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('origin')" ondblclick="openFilterMenu(event, 'origin')">Origin <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
                             <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('farmer')" ondblclick="openFilterMenu(event, 'farmer')">Farmer <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
                             <th scope="col" class="px-4 py-4 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('variety')" ondblclick="openFilterMenu(event, 'variety')">Variety <i class="fa-solid fa-sort ml-1 opacity-50"></i></th>
@@ -921,17 +922,17 @@
 
                 const rowHTML = `
                     <td class="px-4 py-4 text-center"><i class="fa-solid ${gripIcon} text-coffee-300 dark:text-[#57534e]"></i></td>
-                    <td class="px-4 py-4 font-semibold text-coffee-900 dark:text-[#e7e5e4] filterable pointer-events-auto" ondblclick="openFilterMenu(event,'roaster')">${displayRoaster}</td>
-                    <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event,'origin')">${displayOrigin}</td>
-                    <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event, 'farmer')">${c.farmer || '-'}</td>
-                    <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event, 'variety')">${c.variety || '-'}</td>
-                    <td class="px-4 py-4 text-sm filterable pointer-events-auto" ondblclick="openFilterMenu(event, 'processing')">${c.processing || '-'}</td>
-                    <td class="px-4 py-4 pointer-events-auto" ondblclick="openFilterMenu(event,'roastType')">${getRoastBadge(c.roastType)}</td>
-                    <td class="px-4 py-4 pointer-events-auto" ondblclick="openFilterMenu(event,'method')"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>
+                    <td class="px-4 py-4 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>
+                    <td class="px-4 py-4 text-sm">${displayOrigin}</td>
+                    <td class="px-4 py-4 text-sm">${c.farmer || '-'}</td>
+                    <td class="px-4 py-4 text-sm">${c.variety || '-'}</td>
+                    <td class="px-4 py-4 text-sm">${c.processing || '-'}</td>
+                    <td class="px-4 py-4">${getRoastBadge(c.roastType)}</td>
+                    <td class="px-4 py-4"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>
                     <td class="px-4 py-4 text-right font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>
                     <td class="px-4 py-4 text-center">${recipeCol}</td>
                     <td class="px-4 py-4 text-right">${formatTime(c.time)}</td>
-                    <td class="px-4 py-4 text-center pointer-events-auto" ondblclick="openFilterMenu(event,'temp')">${getTempBadge(c.temp)}</td>
+                    <td class="px-4 py-4 text-center">${getTempBadge(c.temp)}</td>
                     <td class="px-4 py-4 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>
                     <td class="px-4 py-4 text-center">${getStarDisplay(c.rating)}</td>
                     <td class="px-4 py-4 text-xs font-mono text-coffee-500">${displayDate}</td>
