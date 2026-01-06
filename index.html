@@ -880,7 +880,13 @@
                     actions = `<button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="text-green-600 hover:bg-green-50 p-2 rounded" title="Clone to My Brews"><i class="fa-solid fa-file-import"></i></button>`;
                 }
 
-                const recipeCol = `<div class="flex flex-col items-center"><span class="text-xs text-coffee-500 dark:text-[#78716c] leading-none mb-0.5">1:${c.ratio || '-'}</span><div class="font-mono text-coffee-900 dark:text-[#e7e5e4] text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span> • <span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span></div></div>`;
+                // Flattened structure
+                const recipeCol = `<div class="whitespace-nowrap text-xs">
+                    <span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span>
+                    <span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span>
+                    <span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span>
+                    <span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span>
+                </div>`;
 
                 const rowHTML = `
                     <td class="px-4 py-2 text-center"><i class="fa-solid ${gripIcon} text-coffee-300 dark:text-[#57534e]"></i></td>
