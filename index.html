@@ -20,7 +20,7 @@
         input:focus, select:focus, textarea:focus { outline: none; ring: 2px; border-color: #b08968; box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.2); }
         .editing-mode { border: 2px solid #ea580c !important; }
         
-        /* Filterable Headers - Removed hover icon CSS */
+        /* Filterable Headers - Clean, no icons */
         th.filterable { 
             position: relative; 
             cursor: context-menu; 
@@ -278,39 +278,6 @@
             <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap ml-2">Clear All</button>
         </div>
 
-        <div id="activeBrewsContainer" class="hidden mb-8">
-            <h3 class="text-sm font-bold text-coffee-800 dark:text-[#d6ccc2] uppercase tracking-wide mb-2 flex items-center gap-2">
-                <i class="fa-solid fa-thumbtack text-green-600 dark:text-green-500"></i> Active Brews
-            </h3>
-            <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-green-200 dark:border-green-900 overflow-hidden relative">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
-                        <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-green-50 dark:bg-green-900/10 border-b border-green-100 dark:border-green-900">
-                            <tr>
-                                <th scope="col" class="px-4 py-4 w-10 text-center"><i class="fa-solid fa-star text-green-600"></i></th>
-                                <th scope="col" class="px-4 py-4">Roaster</th>
-                                <th scope="col" class="px-4 py-4">Origin</th>
-                                <th scope="col" class="px-4 py-4">Farmer</th>
-                                <th scope="col" class="px-4 py-4">Variety</th>
-                                <th scope="col" class="px-4 py-4">Process</th>
-                                <th scope="col" class="px-4 py-4">Roast</th>
-                                <th scope="col" class="px-4 py-4">Method</th>
-                                <th scope="col" class="px-4 py-4 text-right">Grind</th>
-                                <th scope="col" class="px-4 py-4 text-center">Recipe</th>
-                                <th scope="col" class="px-4 py-4 text-right">Time</th>
-                                <th scope="col" class="px-4 py-4 text-center">Temp</th>
-                                <th scope="col" class="px-4 py-4">Notes</th>
-                                <th scope="col" class="px-4 py-4">Rating</th>
-                                <th scope="col" class="px-4 py-4">Date</th>
-                                <th scope="col" class="px-4 py-4 text-center w-28">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activeCoffeeTableBody" class="divide-y divide-green-50 dark:divide-green-900/10"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] overflow-hidden transition-colors duration-300 relative">
             <div class="overflow-x-auto min-h-[300px]">
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
@@ -334,7 +301,12 @@
                             <th scope="col" class="px-4 py-4 text-center w-28 whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="coffeeTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
+                    
+                    <tbody id="activeCoffeeTableBody" class="divide-y divide-green-50 dark:divide-green-900/10 border-b-2 border-coffee-100 dark:border-[#44403c] hidden">
+                    </tbody>
+
+                    <tbody id="coffeeTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]">
+                    </tbody>
                 </table>
             </div>
             
@@ -684,7 +656,7 @@
                     btn.onclick = () => { scaState.path.push(key); scaState.level = 2; renderScaWheel(); }; container.appendChild(btn);
                 });
             } else if (scaState.level === 2) {
-                const parentKey = scaState.path[0]; const subKey = scaState.path[1]; const notes = scaData[parentKey].s[subKey]; const parentColor = Data[parentKey].c;
+                const parentKey = scaState.path[0]; const subKey = scaState.path[1]; const notes = scaData[parentKey].s[subKey]; const parentColor = scaData[parentKey].c;
                 const backBtn = document.createElement('button'); backBtn.type = 'button'; backBtn.className = "sca-btn px-3 py-2 rounded text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"; backBtn.innerHTML = "<i class='fa-solid fa-arrow-left'></i>"; backBtn.onclick = () => { scaState.path.pop(); scaState.level = 1; renderScaWheel(); }; container.appendChild(backBtn);
                 if (notes.length === 0) { container.innerHTML += `<div class="flex-1 text-xs text-coffee-500 italic ml-2 flex items-center">Use 'Add' above to confirm selection.</div>`; } else {
                     notes.forEach(note => {
@@ -864,7 +836,6 @@
         const renderTable = () => { 
             const t=document.getElementById('coffeeTableBody'); 
             const activeT=document.getElementById('activeCoffeeTableBody');
-            const activeContainer=document.getElementById('activeBrewsContainer');
             const e=document.getElementById('emptyState'); 
             
             t.innerHTML=''; 
@@ -874,14 +845,13 @@
             
             if(coffees.length===0){
                 e.classList.remove('hidden'); 
-                activeContainer.classList.add('hidden');
+                activeT.classList.add('hidden');
                 return;
             } 
             e.classList.add('hidden');
 
             const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !activeFilters.temp && !activeFilters.roastType && !activeFilters.roaster && !activeFilters.origin && !activeFilters.farmer && !activeFilters.variety && !activeFilters.processing;
 
-            // Separate active vs regular
             let hasActive = false;
 
             filteredCoffees.forEach((c, index) => {
@@ -934,7 +904,6 @@
                 // Render to Main Table (History)
                 const r = document.createElement('tr');
                 r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0 cursor-pointer';
-                // Add dblclick handler for Card
                 r.ondblclick = (e) => openCoffeeCard(c.id, e);
                 
                 if (isDraggable) {
@@ -960,11 +929,22 @@
                 }
             });
 
-            // Toggle visibility of Active Table
             if(hasActive && currentView === 'mine') {
-                activeContainer.classList.remove('hidden');
+                // Add header row to Active body
+                const activeHeader = document.createElement('tr');
+                activeHeader.className = "bg-green-50/50 dark:bg-green-900/20";
+                activeHeader.innerHTML = `<td colspan="16" class="px-4 py-2 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`;
+                activeT.insertBefore(activeHeader, activeT.firstChild);
+
+                // Add header row to History body
+                const histHeader = document.createElement('tr');
+                histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b]";
+                histHeader.innerHTML = `<td colspan="16" class="px-4 py-2 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`;
+                t.insertBefore(histHeader, t.firstChild);
+
+                activeT.classList.remove('hidden');
             } else {
-                activeContainer.classList.add('hidden');
+                activeT.classList.add('hidden');
             }
         };
 
