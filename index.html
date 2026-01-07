@@ -20,14 +20,13 @@
         input:focus, select:focus, textarea:focus { outline: none; ring: 2px; border-color: #b08968; box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.2); }
         .editing-mode { border: 2px solid #ea580c !important; }
         
-        /* Filterable Headers - Clean, no icons */
         th.filterable { 
             position: relative; 
             cursor: context-menu; 
             touch-action: manipulation; 
         }
         
-        #filterDropdown { z-index: 50; animation: fadeIn 0.1s ease-out; }
+        #filterDropdown, #mainMenuDropdown { z-index: 50; animation: fadeIn 0.1s ease-out; }
         #modalOverlay, #imageModalOverlay, #coffeeCardOverlay { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
@@ -73,9 +72,22 @@
                         <img id="userAvatar" src="" alt="User" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]">
                     </div>
                 </div>
-                <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-coffee-50 dark:hover:bg-[#44403c] transition-colors text-coffee-600 dark:text-[#a8a29e]" title="Toggle Theme">
-                    <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i>
-                </button>
+                
+                <div class="relative">
+                    <button onclick="toggleMainMenu(event)" class="p-2 rounded-full hover:bg-coffee-50 dark:hover:bg-[#44403c] transition-colors text-coffee-600 dark:text-[#a8a29e]" title="Menu">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div id="mainMenuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] py-2 z-50">
+                        <button onclick="toggleTheme(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i> 
+                            <span>Toggle Theme</span>
+                        </button>
+                        <button onclick="exportCSV(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv"></i> <span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </header>
@@ -99,8 +111,8 @@
             </div>
             
             <div class="flex gap-2 w-full sm:w-auto justify-end">
-                <button onclick="exportCSV()" class="bg-coffee-100 hover:bg-coffee-200 dark:bg-[#34302e] dark:hover:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-all flex items-center gap-2">
-                    <i class="fa-solid fa-file-csv"></i> Export
+                <button id="addBrewBtn" onclick="toggleForm(true); window.scrollTo({top:0,behavior:'smooth'})" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> New Brew
                 </button>
             </div>
         </div>
@@ -771,8 +783,18 @@
         const formatTime = (s) => { if(!s && s !== 0) return '-'; const m=Math.floor(s/60), sc=s%60; return m>0?`${m}m ${sc}s`:`${sc}s`; };
         const getRoastBadge = (r) => { if(!r)return''; const m={'Light':'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800','Medium':'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-800','Medium-Dark':'bg-[#d6ccc2] text-[#5e4b41] border-[#c0b4aa] dark:bg-[#57534e]/50 dark:text-[#d6ccc2] dark:border-[#57534e]','Dark':'bg-gray-800 text-gray-100 border-gray-700 dark:bg-black dark:text-gray-300 dark:border-gray-800'}; return `<span class="${m[r]||'bg-gray-100 dark:bg-gray-800'} text-xs font-medium px-2 py-0.5 rounded-full border pointer-events-none select-none">${r}</span>`; };
         const getTempBadge = (t) => { if(!t) return '-'; if(!isNaN(parseFloat(t))&&isFinite(t)){ let c='bg-gray-100 dark:bg-gray-800';if(t<90)c='bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';else if(t<94)c='bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300';else c='bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';return `<span class="inline-flex items-center justify-center px-2 py-1 rounded-md ${c} text-xs font-bold shadow-sm pointer-events-none select-none font-mono">${t}°C</span>`;} const m={'L4':'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300','L3':'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300','L2':'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-200','L1':'bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/20 dark:text-cyan-200','M':'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-200','H1':'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/20 dark:text-orange-200','H2':'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200','H3':'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300','H4':'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300'}; return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${m[t]||'bg-gray-100'} text-xs font-bold shadow-sm pointer-events-none select-none">${t}</span>`; };
-        const closeMenus = (e) => { if(!document.getElementById('modalOverlay').contains(e.target) && !document.getElementById('modalOverlay').classList.contains('hidden') && e.target.id==='modalOverlay') closeModal(); if(!document.getElementById('filterDropdown').contains(e.target)) document.getElementById('filterDropdown').classList.add('hidden'); };
+        const closeMenus = (e) => { 
+            if(!document.getElementById('modalOverlay').contains(e.target) && !document.getElementById('modalOverlay').classList.contains('hidden') && e.target.id==='modalOverlay') closeModal(); 
+            if(!document.getElementById('filterDropdown').contains(e.target)) document.getElementById('filterDropdown').classList.add('hidden'); 
+            if(!document.getElementById('mainMenuDropdown').contains(e.target) && !e.target.closest('button[onclick*="toggleMainMenu"]')) document.getElementById('mainMenuDropdown').classList.add('hidden');
+        };
         
+        const toggleMainMenu = (e) => {
+            if(e) e.stopPropagation();
+            const m = document.getElementById('mainMenuDropdown');
+            m.classList.toggle('hidden');
+        };
+
         const openImageModal = () => document.getElementById('imageModalOverlay').classList.remove('hidden');
         const closeImageModal = (e) => { if(!e || e.target.id === 'imageModalOverlay' || e.target.closest('button')) document.getElementById('imageModalOverlay').classList.add('hidden'); };
 
@@ -849,7 +871,6 @@
 
             const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !activeFilters.temp && !activeFilters.roastType && !activeFilters.roaster && !activeFilters.origin && !activeFilters.farmer && !activeFilters.variety && !activeFilters.processing;
 
-            // Separate active vs regular
             let hasActive = false;
 
             filteredCoffees.forEach((c, index) => {
@@ -1019,6 +1040,7 @@
         window.closeImageModal = closeImageModal;
         window.openCoffeeCard = openCoffeeCard;
         window.closeCoffeeCard = closeCoffeeCard;
+        window.toggleMainMenu = toggleMainMenu;
 
         // Init
         initTheme();
