@@ -23,7 +23,7 @@
         th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
         
         #filterDropdown, #mainMenuDropdown { z-index: 50; animation: fadeIn 0.1s ease-out; }
-        #modalOverlay, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal { animation: fadeIn 0.2s ease-out; }
+        #modalOverlay, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
@@ -81,6 +81,9 @@
                                 <i class="fa-solid fa-images"></i> <span>Photo Gallery</span>
                             </div>
                             <span id="galleryBadge" class="hidden h-2 w-2 rounded-full bg-red-500 mr-2"></span>
+                        </button>
+                        <button onclick="openPreferences(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-sliders"></i> <span>Preferences</span>
                         </button>
                         <button onclick="toggleTheme(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i> 
@@ -188,20 +191,20 @@
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
                             <th scope="col" class="px-4 py-2 w-10 text-center whitespace-nowrap"><i class="fa-solid fa-grip-vertical"></i></th>
-                            <th scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable" onclick="sortBy('roaster')" ondblclick="openFilterMenu(event,'roaster')">Roaster</th>
-                            <th scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('origin')" ondblclick="openFilterMenu(event, 'origin')">Origin</th>
-                            <th scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('farmer')" ondblclick="openFilterMenu(event, 'farmer')">Farmer</th>
-                            <th scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('variety')" ondblclick="openFilterMenu(event, 'variety')">Variety</th>
-                            <th scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('processing')" ondblclick="openFilterMenu(event, 'processing')">Process</th>
-                            <th scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('roastType')" ondblclick="openFilterMenu(event, 'roastType')">Roast</th>
-                            <th scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('method')" ondblclick="openFilterMenu(event, 'method')">Method</th>
-                            <th scope="col" class="px-4 py-2 text-right whitespace-nowrap" onclick="sortBy('grind')">Grind</th>
-                            <th scope="col" class="px-4 py-2 text-center whitespace-nowrap">Recipe</th>
-                            <th scope="col" class="px-4 py-2 text-right whitespace-nowrap" onclick="sortBy('time')">Time</th>
-                            <th scope="col" class="px-4 py-2 text-center filterable whitespace-nowrap" onclick="sortBy('temp')" ondblclick="openFilterMenu(event, 'temp')">Temp</th>
-                            <th scope="col" class="px-4 py-2 whitespace-nowrap">Notes</th>
-                            <th scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap" onclick="sortBy('rating')">Rating</th>
-                            <th scope="col" class="px-4 py-2 whitespace-nowrap" onclick="sortBy('createdAt')">Date</th>
+                            <th id="th-roaster" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable" onclick="sortBy('roaster')" ondblclick="openFilterMenu(event,'roaster')">Roaster</th>
+                            <th id="th-origin" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('origin')" ondblclick="openFilterMenu(event, 'origin')">Origin</th>
+                            <th id="th-farmer" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('farmer')" ondblclick="openFilterMenu(event, 'farmer')">Farmer</th>
+                            <th id="th-variety" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('variety')" ondblclick="openFilterMenu(event, 'variety')">Variety</th>
+                            <th id="th-processing" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('processing')" ondblclick="openFilterMenu(event, 'processing')">Process</th>
+                            <th id="th-roastType" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('roastType')" ondblclick="openFilterMenu(event, 'roastType')">Roast</th>
+                            <th id="th-method" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('method')" ondblclick="openFilterMenu(event, 'method')">Method</th>
+                            <th id="th-grind" scope="col" class="px-4 py-2 text-right whitespace-nowrap" onclick="sortBy('grind')">Grind</th>
+                            <th id="th-recipe" scope="col" class="px-4 py-2 text-center whitespace-nowrap">Recipe</th>
+                            <th id="th-time" scope="col" class="px-4 py-2 text-right whitespace-nowrap" onclick="sortBy('time')">Time</th>
+                            <th id="th-temp" scope="col" class="px-4 py-2 text-center filterable whitespace-nowrap" onclick="sortBy('temp')" ondblclick="openFilterMenu(event, 'temp')">Temp</th>
+                            <th id="th-notes" scope="col" class="px-4 py-2 whitespace-nowrap">Notes</th>
+                            <th id="th-rating" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap" onclick="sortBy('rating')">Rating</th>
+                            <th id="th-date" scope="col" class="px-4 py-2 whitespace-nowrap" onclick="sortBy('createdAt')">Date</th>
                             <th scope="col" class="px-4 py-2 text-center w-36 whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
@@ -336,6 +339,26 @@
         </div>
     </div>
 
+    <div id="preferencesModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
+                <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-sliders mr-2"></i>Table Preferences</h3>
+                <button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-4">Select the columns you want to see in your brew log.</p>
+                <div id="preferencesList" class="space-y-3">
+                    </div>
+            </div>
+            <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2">
+                <button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button>
+                <button onclick="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    Save Preferences
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="easterEggModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-300" onclick="closeEasterEgg(event)">
         <div class="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/20">
             <button onclick="closeEasterEgg(null)" class="absolute top-4 right-4 text-white/70 hover:text-white z-10 transition-colors">
@@ -380,6 +403,27 @@
         let dragSrcEl = null;
         let currentUploadCoffeeId = null;
 
+        // --- PREFERENCES CONFIG ---
+        const columnDefs = [
+            { id: 'roaster', label: 'Roaster' },
+            { id: 'origin', label: 'Origin' },
+            { id: 'farmer', label: 'Farmer' },
+            { id: 'variety', label: 'Variety' },
+            { id: 'processing', label: 'Process' },
+            { id: 'roastType', label: 'Roast' },
+            { id: 'method', label: 'Method' },
+            { id: 'grind', label: 'Grind' },
+            { id: 'recipe', label: 'Recipe' },
+            { id: 'time', label: 'Time' },
+            { id: 'temp', label: 'Temp' },
+            { id: 'notes', label: 'Notes' },
+            { id: 'rating', label: 'Rating' },
+            { id: 'date', label: 'Date' }
+        ];
+
+        // Default: All true
+        let columnPreferences = columnDefs.reduce((acc, col) => ({...acc, [col.id]: true}), {});
+
         // --- SCA Wheel Data ---
         const scaData = {
           "Fruity": { c: "bg-red-400 text-white", s: { "Berry": ["Blackberry", "Raspberry", "Blueberry", "Strawberry"], "Dried Fruit": ["Raisin", "Prune"], "Other Fruit": ["Coconut", "Cherry", "Pomegranate", "Pineapple", "Grape", "Apple", "Peach", "Pear"], "Citrus Fruit": ["Grapefruit", "Orange", "Lemon", "Lime"] }},
@@ -403,13 +447,25 @@
             const userDocRef = doc(db, 'users', user.uid);
             const snap = await getDoc(userDocRef);
             if (snap.exists()) {
-                isPublic = snap.data().isPublic || false;
-                if(snap.data().displayName !== user.displayName) await updateDoc(userDocRef, { displayName: user.displayName });
+                const data = snap.data();
+                isPublic = data.isPublic || false;
+                
+                // LOAD PREFERENCES
+                if(data.preferences) {
+                    columnPreferences = { ...columnPreferences, ...data.preferences };
+                }
+
+                if(data.displayName !== user.displayName) await updateDoc(userDocRef, { displayName: user.displayName });
             } else {
-                await setDoc(userDocRef, { isPublic: false, displayName: user.displayName });
+                await setDoc(userDocRef, { 
+                    isPublic: false, 
+                    displayName: user.displayName,
+                    preferences: columnPreferences 
+                });
             }
             updatePublicToggleUI();
             document.getElementById('myShareId').value = user.uid;
+            renderTable();
         };
 
         const changeView = (uid) => {
@@ -704,6 +760,52 @@
             }
         };
 
+        // --- Preferences Logic ---
+        const openPreferences = () => {
+            const list = document.getElementById('preferencesList');
+            list.innerHTML = '';
+            
+            columnDefs.forEach(col => {
+                const isChecked = columnPreferences[col.id] !== false; // Default true
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]";
+                div.innerHTML = `
+                    <span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">${col.label}</span>
+                    <div class="relative inline-block w-10 align-middle select-none">
+                        <input type="checkbox" id="pref_${col.id}" ${isChecked ? 'checked' : ''} class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/>
+                        <label for="pref_${col.id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            
+            document.getElementById('preferencesModal').classList.remove('hidden');
+        };
+
+        const savePreferences = async () => {
+            const newPrefs = {};
+            columnDefs.forEach(col => {
+                const cb = document.getElementById(`pref_${col.id}`);
+                newPrefs[col.id] = cb.checked;
+            });
+            
+            columnPreferences = newPrefs;
+            
+            // Save to Firestore
+            if(currentUser) {
+                try {
+                    await updateDoc(doc(db, 'users', currentUser.uid), {
+                        preferences: newPrefs
+                    });
+                } catch(e) {
+                    console.error("Error saving prefs", e);
+                }
+            }
+            
+            document.getElementById('preferencesModal').classList.add('hidden');
+            renderTable(); // Apply changes
+        };
+
         // --- Notifications Listener ---
         const initNotificationListener = (uid) => {
             if(unsubscribeNotifications) unsubscribeNotifications();
@@ -868,12 +970,28 @@
 
         // --- CORE RENDER FUNCTION ---
         const renderTable = () => { 
-            const t=document.getElementById('coffeeTableBody'); const activeT=document.getElementById('activeCoffeeTableBody'); const e=document.getElementById('emptyState'); 
+            const t = document.getElementById('coffeeTableBody'); 
+            const activeT = document.getElementById('activeCoffeeTableBody'); 
+            const e = document.getElementById('emptyState'); 
+            
+            // 1. Manage Header Visibility based on Preferences
+            columnDefs.forEach(col => {
+                const th = document.getElementById(`th-${col.id}`);
+                if(th) {
+                    if(columnPreferences[col.id] === false) th.classList.add('hidden');
+                    else th.classList.remove('hidden');
+                }
+            });
+
             t.innerHTML=''; activeT.innerHTML='';
             const filteredCoffees = getFilteredCoffees();
-            if(coffees.length===0){ e.classList.remove('hidden'); activeT.classList.add('hidden'); return; } e.classList.add('hidden');
+            
+            if(coffees.length === 0){ e.classList.remove('hidden'); activeT.classList.add('hidden'); return; } 
+            e.classList.add('hidden');
+            
             const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v=>v!==null);
             let hasActive = false;
+            
             filteredCoffees.forEach((c, index) => {
                 const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
                 const displayRoaster = c.roaster || c.name || '-';
@@ -898,24 +1016,27 @@
                 }
 
                 const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
-                const rowHTML = `
-                    <td class="px-4 py-2 text-center"><i class="fa-solid ${gripIcon} text-coffee-300 dark:text-[#57534e]"></i></td>
-                    <td class="px-4 py-2 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>
-                    <td class="px-4 py-2 text-sm">${displayOrigin}</td>
-                    <td class="px-4 py-2 text-sm">${c.farmer || '-'}</td>
-                    <td class="px-4 py-2 text-sm">${c.variety || '-'}</td>
-                    <td class="px-4 py-2 text-sm">${c.processing || '-'}</td>
-                    <td class="px-4 py-2">${getRoastBadge(c.roastType)}</td>
-                    <td class="px-4 py-2"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>
-                    <td class="px-4 py-2 text-right font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>
-                    <td class="px-4 py-2 text-center">${recipeCol}</td>
-                    <td class="px-4 py-2 text-right">${formatTime(c.time)}</td>
-                    <td class="px-4 py-2 text-center">${getTempBadge(c.temp)}</td>
-                    <td class="px-4 py-2 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>
-                    <td class="px-4 py-2 text-center">${getStarDisplay(c.rating)}</td>
-                    <td class="px-4 py-2 text-xs font-mono text-coffee-500">${displayDate}</td>
-                    <td class="px-4 py-2 text-center flex justify-center gap-2" onclick="event.stopPropagation()">${actions}</td>
-                `;
+                
+                // CONDITIONAL ROW BUILDING
+                let rowHTML = `<td class="px-4 py-2 text-center"><i class="fa-solid ${gripIcon} text-coffee-300 dark:text-[#57534e]"></i></td>`;
+                
+                if(columnPreferences.roaster !== false) rowHTML += `<td class="px-4 py-2 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
+                if(columnPreferences.origin !== false) rowHTML += `<td class="px-4 py-2 text-sm">${displayOrigin}</td>`;
+                if(columnPreferences.farmer !== false) rowHTML += `<td class="px-4 py-2 text-sm">${c.farmer || '-'}</td>`;
+                if(columnPreferences.variety !== false) rowHTML += `<td class="px-4 py-2 text-sm">${c.variety || '-'}</td>`;
+                if(columnPreferences.processing !== false) rowHTML += `<td class="px-4 py-2 text-sm">${c.processing || '-'}</td>`;
+                if(columnPreferences.roastType !== false) rowHTML += `<td class="px-4 py-2">${getRoastBadge(c.roastType)}</td>`;
+                if(columnPreferences.method !== false) rowHTML += `<td class="px-4 py-2"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>`;
+                if(columnPreferences.grind !== false) rowHTML += `<td class="px-4 py-2 text-right font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
+                if(columnPreferences.recipe !== false) rowHTML += `<td class="px-4 py-2 text-center">${recipeCol}</td>`;
+                if(columnPreferences.time !== false) rowHTML += `<td class="px-4 py-2 text-right">${formatTime(c.time)}</td>`;
+                if(columnPreferences.temp !== false) rowHTML += `<td class="px-4 py-2 text-center">${getTempBadge(c.temp)}</td>`;
+                if(columnPreferences.notes !== false) rowHTML += `<td class="px-4 py-2 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>`;
+                if(columnPreferences.rating !== false) rowHTML += `<td class="px-4 py-2 text-center">${getStarDisplay(c.rating)}</td>`;
+                if(columnPreferences.date !== false) rowHTML += `<td class="px-4 py-2 text-xs font-mono text-coffee-500">${displayDate}</td>`;
+                
+                // Actions always visible
+                rowHTML += `<td class="px-4 py-2 text-center flex justify-center gap-2" onclick="event.stopPropagation()">${actions}</td>`;
 
                 const r = document.createElement('tr');
                 r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0 cursor-pointer';
@@ -932,10 +1053,13 @@
                     activeT.appendChild(rActive);
                 }
             });
+            
+            // Add logic to make colspan dynamic for section headers based on visible columns
+            const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length; // 2 for Grip and Actions
 
             if(hasActive && currentView === 'mine') {
-                const activeHeader = document.createElement('tr'); activeHeader.className = "bg-green-50/50 dark:bg-green-900/20"; activeHeader.innerHTML = `<td colspan="16" class="px-4 py-2 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; activeT.insertBefore(activeHeader, activeT.firstChild);
-                const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b]"; histHeader.innerHTML = `<td colspan="16" class="px-4 py-2 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild); activeT.classList.remove('hidden');
+                const activeHeader = document.createElement('tr'); activeHeader.className = "bg-green-50/50 dark:bg-green-900/20"; activeHeader.innerHTML = `<td colspan="${totalCols}" class="px-4 py-2 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; activeT.insertBefore(activeHeader, activeT.firstChild);
+                const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-4 py-2 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild); activeT.classList.remove('hidden');
             } else { activeT.classList.add('hidden'); }
         };
 
@@ -957,7 +1081,7 @@
         });
 
         // Expose to window
-        Object.assign(window, { googleLogin, googleLogout, openFriendsModal, closeModal, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, closeFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, switchGalleryTab, openEasterEgg, closeEasterEgg });
+        Object.assign(window, { googleLogin, googleLogout, openFriendsModal, closeModal, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, closeFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, switchGalleryTab, openEasterEgg, closeEasterEgg, openPreferences, savePreferences });
 
         initTheme();
         const searchInput = document.getElementById('globalSearch'); if(searchInput) { searchInput.addEventListener('input', () => { renderTable(); }); }
