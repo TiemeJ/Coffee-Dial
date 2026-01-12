@@ -290,12 +290,12 @@
                 <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Origin</span><span id="cardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Blend/Farmer</span><span id="cardFarmer" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
-                    <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Variety</span><span id="cardVariety" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                    <!-- Variety Removed from Card -->
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Process</span><span id="cardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Roast</span><div id="cardRoastType"></div></div>
-                    <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Method</span><span id="cardMethod" class="inline-block px-2 py-0.5 rounded bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-bold"></span></div>
-                    <!-- Added Drink to Card for consistency -->
+                    <!-- Drink Moved to Left of Method -->
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Drink</span><span id="cardDrink" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                    <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Method</span><span id="cardMethod" class="inline-block px-2 py-0.5 rounded bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-bold"></span></div>
                 </div>
                 <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-4 border border-coffee-100 dark:border-[#44403c]">
                     <div class="flex justify-between items-center mb-3"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew Stats</span></div>
@@ -1120,7 +1120,8 @@
             document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
             document.getElementById('cardOrigin').textContent = c.origin || c.beanType || '-';
             document.getElementById('cardFarmer').textContent = c.farmer || '-';
-            document.getElementById('cardVariety').textContent = c.variety || '-';
+            // REMOVED VARIETY POPULATION
+            // document.getElementById('cardVariety').textContent = c.variety || '-';
             document.getElementById('cardProcess').textContent = c.processing || '-';
             document.getElementById('cardRoastType').innerHTML = getRoastBadge(c.roastType);
             document.getElementById('cardMethod').textContent = c.method || '-';
