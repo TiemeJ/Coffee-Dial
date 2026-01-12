@@ -177,6 +177,23 @@
                         <input type="hidden" id="tempMode" name="tempMode" value="numeric">
                     </div>
                     
+                    <!-- New Drink Variable -->
+                    <div>
+                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Drink</label>
+                        <select id="drinkType" name="drinkType" onchange="toggleDrinkOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                            <option value="" disabled selected>Select Drink</option>
+                            <option value="Espresso">Espresso</option>
+                            <option value="Lungo">Lungo</option>
+                            <option value="Americano">Americano</option>
+                            <option value="Cappuccino">Cappuccino</option>
+                            <option value="Flat White">Flat White</option>
+                            <option value="Macchiato">Macchiato</option>
+                            <option value="Latte Macchiato">Latte Macchiato</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <input type="text" id="drinkOther" name="drinkOther" placeholder="e.g. Cortado" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                    </div>
+
                     <div class="col-span-1 md:col-span-2 lg:col-span-4">
                         <div class="flex justify-between items-end mb-1">
                             <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Tasting Notes</label>
@@ -235,6 +252,8 @@
                             <th id="th-recipe" scope="col" class="px-4 py-2 text-center whitespace-nowrap">Recipe</th>
                             <th id="th-time" scope="col" class="px-4 py-2 text-right whitespace-nowrap" onclick="sortBy('time')">Time</th>
                             <th id="th-temp" scope="col" class="px-4 py-2 text-center filterable whitespace-nowrap" onclick="sortBy('temp')" ondblclick="openFilterMenu(event, 'temp')">Temp</th>
+                            <!-- New Drink Column -->
+                            <th id="th-drink" scope="col" class="px-4 py-2 text-center filterable whitespace-nowrap" onclick="sortBy('drink')" ondblclick="openFilterMenu(event, 'drink')">Drink</th>
                             <th id="th-notes" scope="col" class="px-4 py-2 whitespace-nowrap">Notes</th>
                             <th id="th-improve" scope="col" class="px-4 py-2 whitespace-nowrap">Improve</th>
                             <th id="th-rating" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap" onclick="sortBy('rating')">Rating</th>
@@ -275,6 +294,8 @@
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Process</span><span id="cardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Roast</span><div id="cardRoastType"></div></div>
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Method</span><span id="cardMethod" class="inline-block px-2 py-0.5 rounded bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-bold"></span></div>
+                    <!-- Added Drink to Card for consistency -->
+                    <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Drink</span><span id="cardDrink" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                 </div>
                 <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-4 border border-coffee-100 dark:border-[#44403c]">
                     <div class="flex justify-between items-center mb-3"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew Stats</span></div>
@@ -442,7 +463,6 @@
         const columnDefs = [
             { id: 'roaster', label: 'Roaster' },
             { id: 'origin', label: 'Origin' },
-            // CHANGED: Preference label to Blend/Farmer
             { id: 'farmer', label: 'Blend/Farmer' },
             { id: 'variety', label: 'Variety' },
             { id: 'processing', label: 'Process' },
@@ -452,6 +472,7 @@
             { id: 'recipe', label: 'Recipe' },
             { id: 'time', label: 'Time' },
             { id: 'temp', label: 'Temp' },
+            { id: 'drink', label: 'Drink' }, // ADDED DRINK COLUMN DEF
             { id: 'notes', label: 'Notes' },
             { id: 'improve', label: 'Improve' },
             { id: 'rating', label: 'Rating' },
@@ -527,6 +548,14 @@
 
         const parseNum = (v) => (v === '' || v === null || isNaN(v)) ? null : parseFloat(v);
 
+        // --- Handle Drink Type Logic ---
+        const toggleDrinkOther = () => {
+            const val = document.getElementById('drinkType').value;
+            const input = document.getElementById('drinkOther');
+            if(val === 'Other') input.classList.remove('hidden');
+            else input.classList.add('hidden');
+        };
+
         const handleFormSubmit = async (e) => {
             e.preventDefault();
             if(currentView !== 'mine') return;
@@ -534,6 +563,11 @@
             const tMode = f.get('tempMode'); const finalTemp = tMode === 'profile' ? f.get('tempProfile') : (f.get('tempNumeric') || "M");
             const finalNotes = f.get('notes') || '';
             const isActiveChecked = f.get('isActive') === 'on'; 
+            
+            // Drink Logic
+            const rawDrinkType = f.get('drinkType');
+            const rawDrinkOther = f.get('drinkOther');
+            const finalDrink = rawDrinkType === 'Other' ? (rawDrinkOther || 'Other') : rawDrinkType;
 
             let newOrder = 0; if (coffees.length > 0) { const minOrder = Math.min(...coffees.map(c => c.customOrder || 0)); newOrder = minOrder - 1; }
 
@@ -541,8 +575,9 @@
                 roaster: f.get('roaster'), farmer: f.get('farmer'), origin: f.get('origin'), variety: f.get('variety'), processing: f.get('processing'),
                 roastType: f.get('roastType'), method: f.get('method'), grind: parseNum(f.get('grind')), weight: parseNum(f.get('weight')), 
                 ratio: parseNum(f.get('ratio')), time: parseNum(f.get('time')), temp: finalTemp, 
+                drink: finalDrink, // Save Drink
                 notes: finalNotes, 
-                improve: f.get('improve') || '', // Added Improve
+                improve: f.get('improve') || '', 
                 rating: parseInt(f.get('rating')) || 0,
                 isActive: isActiveChecked, 
                 updatedAt: new Date().toISOString() 
@@ -552,7 +587,7 @@
                 const col = collection(db, 'users', currentUser.uid, 'coffees');
                 if(eid) { await updateDoc(doc(col, eid), d); } else { d.customOrder = newOrder; d.createdAt = new Date().toISOString(); await addDoc(col, d); }
                 resetFormState();
-                toggleForm(false); // CHANGED: Collapse form after save
+                toggleForm(false);
             } catch(err){ alert(err.message); }
         };
 
@@ -585,12 +620,10 @@
             hidden.value = mode;
             if (mode === 'manual') {
                 conMan.classList.remove('hidden'); conSca.classList.add('hidden');
-                // CHANGED: Active styling for manual button
                 btnMan.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white"; 
                 btnSca.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
             } else {
                 conSca.classList.remove('hidden'); conMan.classList.remove('hidden');
-                // CHANGED: Active styling for SCA button
                 btnSca.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white"; 
                 btnMan.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
                 if (scaState.level === 0 && scaState.path.length === 0) renderScaWheel();
@@ -636,7 +669,6 @@
         const openFriendsModal = () => { document.getElementById('modalOverlay').classList.remove('hidden'); switchModalTab('profile'); };
         const closeModal = () => document.getElementById('modalOverlay').classList.add('hidden');
         
-        // FIXED switchModalTab Function
         const switchModalTab = (tab) => { 
             const tProf = document.getElementById('tabProfile');
             const tFoll = document.getElementById('tabFollowing');
@@ -928,19 +960,17 @@
             const d = getFilteredCoffees(); 
             if(!d.length) return alert("No data"); 
             
-            // Helper to safely escape CSV fields
             const esc = (t) => {
                 if (t === null || t === undefined) return '';
                 const str = String(t);
-                // If contains comma, double-quote, or newline, wrap in quotes and escape double-quotes
                 if (str.includes(',') || str.includes('"') || str.includes('\n')) {
                     return `"${str.replace(/"/g, '""')}"`;
                 }
                 return str;
             };
 
-            // CHANGED: Export Header to Blend/Farmer
-            const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grind","In(g)","Out(g)","Time(s)","Temp","Rating","Notes","Improve"]; 
+            // Added Drink to CSV Export
+            const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grind","In(g)","Out(g)","Time(s)","Temp","Drink","Rating","Notes","Improve"]; 
             
             const r = d.map(c => [
                 c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
@@ -956,6 +986,7 @@
                 (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '',
                 esc(c.time),
                 esc(c.temp),
+                esc(c.drink),
                 esc(c.rating),
                 esc(c.notes),
                 esc(c.improve)
@@ -996,9 +1027,26 @@
         };
         
         const toggleForm = (f=null) => { const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); } else { o.classList.add('hidden'); } };
+        
         const populateForm = (c) => { 
             document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('method').value=c.method||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; document.getElementById('improve').value=c.improve||'';
             if(!isNaN(parseFloat(c.temp))&&isFinite(c.temp)){setTempMode('numeric');document.getElementById('tempNumeric').value=c.temp;}else{setTempMode('profile');document.getElementById('tempProfile').value=c.temp||'';} 
+            
+            // Populate Drink
+            const stdDrinks = ["Espresso","Lungo", "Americano", "Cappuccino", "Flat White", "Macchiato", "Latte Macchiato"];
+            const dVal = c.drink || "";
+            if(stdDrinks.includes(dVal)) {
+                document.getElementById('drinkType').value = dVal;
+                document.getElementById('drinkOther').classList.add('hidden');
+            } else if (dVal) {
+                document.getElementById('drinkType').value = 'Other';
+                document.getElementById('drinkOther').value = dVal;
+                document.getElementById('drinkOther').classList.remove('hidden');
+            } else {
+                 document.getElementById('drinkType').value = "";
+                 document.getElementById('drinkOther').classList.add('hidden');
+            }
+
             setRating(c.rating||0); setNotesMode('manual'); document.getElementById('isActiveToggle').checked = c.isActive || false; 
         }
 
@@ -1008,8 +1056,8 @@
 
         const deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); };
         const resetFormState = (e) => { 
-            // CHANGED: Default mode is now manual on reset
             if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('numeric'); setNotesMode('manual'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); document.getElementById('isActiveToggle').checked = false; 
+            document.getElementById('drinkOther').classList.add('hidden');
         };
 
         // --- Clear Search Function ---
@@ -1022,12 +1070,12 @@
         };
         
         let currentSort = { key: null, direction: 'asc' };
-        let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null };
+        let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null };
         const sortBy = (k) => { if(currentSort.key===k)currentSort.direction=currentSort.direction==='asc'?'desc':'asc'; else {currentSort.key=k;currentSort.direction='asc';} renderTable(); };
         const openFilterMenu = (e,k) => { e.stopPropagation(); const m=document.getElementById('filterDropdown'); const vals = coffees.map(c => k==='roaster' ? (c.roaster||c.name) : (k==='origin' ? (c.origin||c.beanType) : c[k])); const v=[...new Set(vals)].sort(); if(!v.length)return; let h=`<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] mb-1">Filter ${k}</div><button onclick="applyFilter('${k}',null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`; v.forEach(val=>{h+=`<button onclick="applyFilter('${k}','${val}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e]">${val}</button>`}); m.innerHTML=h; const r=e.currentTarget.getBoundingClientRect(); const c=e.currentTarget.closest('.relative').getBoundingClientRect(); m.style.top=(r.bottom-c.top+5)+'px'; m.style.left=(r.left-c.left)+'px'; m.classList.remove('hidden'); }
         const closeFilterMenu = (e) => { const m=document.getElementById('filterDropdown'); if(!m.contains(e.target))m.classList.add('hidden'); }
         const applyFilter = (k,v) => { activeFilters[k]=v; document.getElementById('filterDropdown').classList.add('hidden'); renderTable(); renderActiveFilters(); };
-        const clearAllFilters = () => { activeFilters={method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null}; renderTable(); renderActiveFilters(); }
+        const clearAllFilters = () => { activeFilters={method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null,drink:null}; renderTable(); renderActiveFilters(); }
         const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${k}:</span><b>${v}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
         
         const getFilteredCoffees = () => { 
@@ -1036,14 +1084,14 @@
             if (searchInput && searchInput.value) {
                 const term = searchInput.value.toLowerCase();
                 f = f.filter(c => {
-                    const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.notes||'', c.improve||''].join(' ').toLowerCase();
+                    const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||''].join(' ').toLowerCase();
                     return searchable.includes(term);
                 });
             }
             f=f.filter(c=>{ 
                 const cRoaster = c.roaster || c.name; const cOrigin = c.origin || c.beanType;
-                const m=!activeFilters.method||c.method===activeFilters.method; const t=!activeFilters.temp||String(c.temp)===String(activeFilters.temp); const r=!activeFilters.roastType||c.roastType===activeFilters.roastType; const rost=!activeFilters.roaster||cRoaster===activeFilters.roaster; const orig=!activeFilters.origin||cOrigin===activeFilters.origin; const farm=!activeFilters.farmer||c.farmer===activeFilters.farmer; const varr=!activeFilters.variety||c.variety===activeFilters.variety; const proc=!activeFilters.processing||c.processing===activeFilters.processing;
-                return m&&t&&r&&rost&&orig&&farm&&varr&&proc; 
+                const m=!activeFilters.method||c.method===activeFilters.method; const t=!activeFilters.temp||String(c.temp)===String(activeFilters.temp); const r=!activeFilters.roastType||c.roastType===activeFilters.roastType; const rost=!activeFilters.roaster||cRoaster===activeFilters.roaster; const orig=!activeFilters.origin||cOrigin===activeFilters.origin; const farm=!activeFilters.farmer||c.farmer===activeFilters.farmer; const varr=!activeFilters.variety||c.variety===activeFilters.variety; const proc=!activeFilters.processing||c.processing===activeFilters.processing; const dr=!activeFilters.drink||c.drink===activeFilters.drink;
+                return m&&t&&r&&rost&&orig&&farm&&varr&&proc&&dr; 
             }); 
             if(currentSort.key){ f.sort((a,b)=>{ 
                 let va=a[currentSort.key], vb=b[currentSort.key]; 
@@ -1071,7 +1119,6 @@
             document.getElementById('cardRoaster').textContent = c.roaster || c.name || 'Unknown Roaster';
             document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
             document.getElementById('cardOrigin').textContent = c.origin || c.beanType || '-';
-            // CHANGED: Card content farmer
             document.getElementById('cardFarmer').textContent = c.farmer || '-';
             document.getElementById('cardVariety').textContent = c.variety || '-';
             document.getElementById('cardProcess').textContent = c.processing || '-';
@@ -1084,6 +1131,7 @@
             document.getElementById('cardGrind').textContent = c.grind || '-';
             document.getElementById('cardTime').textContent = formatTime(c.time);
             document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
+            document.getElementById('cardDrink').textContent = c.drink || '-'; // Populate Card Drink
             const notesEl = document.getElementById('cardNotes');
             if(c.notes) { notesEl.textContent = '"' + c.notes + '"'; notesEl.classList.remove('hidden'); } else { notesEl.classList.add('hidden'); }
             
@@ -1161,6 +1209,8 @@
                 if(columnPreferences.recipe !== false) rowHTML += `<td class="px-4 py-2 text-center">${recipeCol}</td>`;
                 if(columnPreferences.time !== false) rowHTML += `<td class="px-4 py-2 text-right">${formatTime(c.time)}</td>`;
                 if(columnPreferences.temp !== false) rowHTML += `<td class="px-4 py-2 text-center">${getTempBadge(c.temp)}</td>`;
+                // Add Drink Cell
+                if(columnPreferences.drink !== false) rowHTML += `<td class="px-4 py-2 text-sm font-medium text-center">${c.drink || '-'}</td>`;
                 if(columnPreferences.notes !== false) rowHTML += `<td class="px-4 py-2 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>`;
                 if(columnPreferences.improve !== false) rowHTML += `<td class="px-4 py-2 text-sm italic text-red-400 dark:text-red-400/80 max-w-xs truncate" title="${c.improve || ''}">${c.improve || '-'}</td>`;
                 if(columnPreferences.rating !== false) rowHTML += `<td class="px-4 py-2 text-center">${getStarDisplay(c.rating)}</td>`;
@@ -1212,7 +1262,7 @@
         });
 
         // Expose to window
-        Object.assign(window, { googleLogin, googleLogout, openFriendsModal, closeModal, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, closeFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, switchGalleryTab, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch });
+        Object.assign(window, { googleLogin, googleLogout, openFriendsModal, closeModal, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, closeFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, switchGalleryTab, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther });
 
         initTheme();
         const searchInput = document.getElementById('globalSearch'); 
