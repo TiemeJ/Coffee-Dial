@@ -142,9 +142,24 @@
             <div id="formContent" class="hidden px-6 pb-6 border-t border-coffee-100 dark:border-[#44403c]">
                 <form id="coffeeForm" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                     <input type="hidden" id="editId" name="editId" value="">
-                    <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roaster</label><input type="text" id="roaster" name="roaster" placeholder="e.g. La Cabra" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors"></div>
-                    <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Blend/Farmer</label><input type="text" id="farmer" name="farmer" placeholder="e.g. Felipe Arcila" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors"></div>
-                    <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Origin</label><input type="text" id="origin" name="origin" placeholder="e.g. Ethiopia" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors"></div>
+                    
+                    <!-- Updated Inputs with Datalists for Autocomplete -->
+                    <div>
+                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roaster</label>
+                        <input type="text" id="roaster" name="roaster" list="roasterList" placeholder="e.g. La Cabra" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                        <datalist id="roasterList"></datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Blend/Farmer</label>
+                        <input type="text" id="farmer" name="farmer" list="farmerList" placeholder="e.g. Felipe Arcila" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                        <datalist id="farmerList"></datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Origin</label>
+                        <input type="text" id="origin" name="origin" list="originList" placeholder="e.g. Ethiopia" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                        <datalist id="originList"></datalist>
+                    </div>
+                    
                     <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Variety</label><input type="text" id="variety" name="variety" placeholder="e.g. Geisha" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors"></div>
                     <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Processing</label><input type="text" id="processing" name="processing" placeholder="e.g. Natural" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors"></div>
                     <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roast Type</label><select id="roastType" name="roastType" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer"><option value="" disabled selected>Select Roast</option><option value="Light">Light</option><option value="Medium">Medium</option><option value="Medium-Dark">Medium-Dark</option><option value="Dark">Dark</option></select></div>
@@ -660,10 +675,31 @@
                 snapshot.forEach(doc => coffees.push({ id: doc.id, ...doc.data() }));
                 if (!currentSort.key) coffees.sort((a,b) => (a.customOrder || 0) - (b.customOrder || 0));
                 renderTable();
+                updateAutocompleteLists(); // Update Autocomplete Data
             }, (error) => {
                 console.error(error);
                 if(error.code === 'permission-denied') { alert("⚠️ Access Denied: This user's profile is private."); document.getElementById('viewSelect').value = 'mine'; changeView('mine'); }
             });
+        };
+
+        // --- NEW: Autocomplete Update Function ---
+        const updateAutocompleteLists = () => {
+            // Get unique values from coffees array
+            const uniqueRoasters = [...new Set(coffees.map(c => c.roaster || c.name).filter(Boolean))].sort();
+            const uniqueFarmers = [...new Set(coffees.map(c => c.farmer).filter(Boolean))].sort();
+            const uniqueOrigins = [...new Set(coffees.map(c => c.origin || c.beanType).filter(Boolean))].sort();
+
+            // Populate Datalists
+            const populate = (id, values) => {
+                const list = document.getElementById(id);
+                if(list) {
+                    list.innerHTML = values.map(v => `<option value="${v}"></option>`).join('');
+                }
+            };
+
+            populate('roasterList', uniqueRoasters);
+            populate('farmerList', uniqueFarmers);
+            populate('originList', uniqueOrigins);
         };
 
         const parseNum = (v) => (v === '' || v === null || isNaN(v)) ? null : parseFloat(v);
@@ -850,7 +886,7 @@
 
         const handlePhotoSubmit = async () => {
             const fileInput = document.getElementById('photoInput');
-            const file = fileInput.files[0];
+            let file = fileInput.files[0];
             const message = document.getElementById('photoMessage').value;
             
             if(!file) return alert("Please select a photo.");
