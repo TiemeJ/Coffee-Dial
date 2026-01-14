@@ -384,7 +384,10 @@
                     <textarea id="photoMessage" rows="2" placeholder="Tell us about this brew..." class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white"></textarea>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">Share with specific friends</label>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">Share with specific friends</label>
+                        <span class="text-[10px] text-gray-400 italic">Toggle Green to share, Red to keep private.</span>
+                    </div>
                     <div id="shareWithList" class="max-h-32 overflow-y-auto space-y-2 border border-coffee-100 dark:border-[#44403c] rounded-lg p-2 bg-coffee-50 dark:bg-[#1c1917]"></div>
                 </div>
                 <div id="uploadProgress" class="hidden w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-4">
@@ -875,8 +878,14 @@
             } else {
                 following.forEach(f => {
                     const div = document.createElement('div');
-                    div.className = 'flex items-center gap-2';
-                    div.innerHTML = `<input type="checkbox" id="share_${f.uid}" value="${f.uid}" class="rounded text-coffee-600 focus:ring-coffee-500"><label for="share_${f.uid}" class="text-sm text-coffee-800 dark:text-gray-300 cursor-pointer">${f.name || f.uid}</label>`;
+                    div.className = 'flex items-center justify-between p-2 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]';
+                    div.innerHTML = `
+                        <span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">${f.name || f.uid}</span>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" id="share_${f.uid}" value="${f.uid}" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-red-500"/>
+                            <label for="share_${f.uid}" class="toggle-label block overflow-hidden h-5 rounded-full bg-red-500 cursor-pointer"></label>
+                        </div>
+                    `;
                     list.appendChild(div);
                 });
             }
