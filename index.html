@@ -1032,7 +1032,15 @@
 
         // --- Help & About Logic ---
         const openHelp = () => document.getElementById('helpModal').classList.remove('hidden');
-        const closeHelp = () => document.getElementById('helpModal').classList.add('hidden');
+        
+        const closeHelp = () => {
+            document.getElementById('helpModal').classList.add('hidden');
+            if(currentUser) {
+                // Set flag so it doesn't open automatically again
+                localStorage.setItem(`tutorialSeen_${currentUser.uid}`, 'true');
+            }
+        };
+        
         const openAbout = () => document.getElementById('aboutModal').classList.remove('hidden');
         const closeAbout = () => document.getElementById('aboutModal').classList.add('hidden');
 
@@ -1401,6 +1409,12 @@
                 loadFollowingList(); 
                 changeView('mine');
                 initNotificationListener(user.uid);
+                
+                // Check tutorial status
+                const hasSeen = localStorage.getItem(`tutorialSeen_${user.uid}`);
+                if (!hasSeen) {
+                    openHelp();
+                }
             } else {
                 document.getElementById('authContainer').innerHTML = `<button onclick="googleLogin()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button>`;
                 document.getElementById('viewSelectorContainer').classList.add('hidden'); document.getElementById('coffeeTableBody').innerHTML = ''; document.getElementById('emptyState').classList.remove('hidden');
