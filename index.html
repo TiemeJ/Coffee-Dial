@@ -185,7 +185,12 @@
                         <input type="text" id="methodOther" name="methodOther" placeholder="e.g. Moka Pot" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
                     </div>
                     <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grind Size</label><input type="number" step="any" id="grind" name="grind" placeholder="e.g. 14" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]"></div>
-                    <div class="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-3 gap-2 bg-coffee-50/50 dark:bg-[#201d1b] p-2 rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                    <div>
+                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grinder</label>
+                        <input type="text" id="grinder" name="grinder" list="grinderList" placeholder="e.g. Niche Zero" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                        <datalist id="grinderList"></datalist>
+                    </div>
+                    <div class="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-3 gap-2 bg-coffee-50/50 dark:bg-[#201d1b] p-2 rounded-lg border border-coffee-100 dark:border-[#44403c]">
                         <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">In (g)</label><input type="number" step="any" id="inputWeight" name="weight" oninput="handleRecipeInput('weight')" placeholder="18" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
                         <div class="relative"><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label><input type="number" step="any" id="inputRatio" name="ratio" oninput="handleRecipeInput('ratio')" placeholder="16" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
                         <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label><input type="number" step="any" id="inputYield" name="yield" oninput="handleRecipeInput('yield')" placeholder="288" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
@@ -289,6 +294,7 @@
                             <th id="th-processing" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('processing')" ondblclick="openFilterMenu(event, 'processing')">Process</th>
                             <th id="th-roastType" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('roastType')" ondblclick="openFilterMenu(event, 'roastType')">Roast</th>
                             <th id="th-method" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('method')" ondblclick="openFilterMenu(event, 'method')">Method</th>
+                            <th id="th-grinder" scope="col" class="px-4 py-2 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('grinder')" ondblclick="openFilterMenu(event, 'grinder')">Grinder</th>
                             <th id="th-grind" scope="col" class="px-4 py-2 text-right whitespace-nowrap" onclick="sortBy('grind')">Grind</th>
                             <th id="th-recipe" scope="col" class="px-4 py-2 text-center whitespace-nowrap">Recipe</th>
                             <th id="th-time" scope="col" class="px-4 py-2 text-right whitespace-nowrap" onclick="sortBy('time')">Time</th>
@@ -342,8 +348,8 @@
                         <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Ratio</div><div id="cardRatio" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
                         <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Out</div><div id="cardOut" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
                     </div>
-                    <div class="grid grid-cols-3 gap-4 text-center border-t border-coffee-200 dark:border-[#44403c] pt-2">
-                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Grind</div><div id="cardGrind" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
+                    <div class="grid grid-cols-3 gap-2 text-center border-t border-coffee-200 dark:border-[#44403c] pt-2">
+                        <div><div id="cardGrindTitle" class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase truncate px-1">Grind</div><div id="cardGrindValue" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
                         <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Time</div><div id="cardTime" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
                         <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Temp</div><div id="cardTemp" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
                     </div>
@@ -769,6 +775,7 @@
             { id: 'processing', label: 'Process' },
             { id: 'roastType', label: 'Roast' },
             { id: 'method', label: 'Method' },
+            { id: 'grinder', label: 'Grinder' },
             { id: 'grind', label: 'Grind' },
             { id: 'recipe', label: 'Recipe' },
             { id: 'time', label: 'Time' },
@@ -843,6 +850,8 @@
             const uniqueRoasters = [...new Set(coffees.map(c => c.roaster || c.name).filter(Boolean))].sort();
             const uniqueFarmers = [...new Set(coffees.map(c => c.farmer).filter(Boolean))].sort();
             const uniqueOrigins = [...new Set(coffees.map(c => c.origin || c.beanType).filter(Boolean))].sort();
+            const uniqueGrinders = [...new Set(coffees.map(c => c.grinder).filter(Boolean))].sort();
+            
             const populate = (id, values) => {
                 const list = document.getElementById(id);
                 if(list) list.innerHTML = values.map(v => `<option value="${v}"></option>`).join('');
@@ -850,6 +859,7 @@
             populate('roasterList', uniqueRoasters);
             populate('farmerList', uniqueFarmers);
             populate('originList', uniqueOrigins);
+            populate('grinderList', uniqueGrinders);
         };
 
         const parseNum = (v) => (v === '' || v === null || isNaN(v)) ? null : parseFloat(v);
@@ -887,7 +897,7 @@
             let newOrder = 0; if (coffees.length > 0) { const minOrder = Math.min(...coffees.map(c => c.customOrder || 0)); newOrder = minOrder - 1; }
             const d = { 
                 roaster: f.get('roaster'), farmer: f.get('farmer'), origin: f.get('origin'), variety: f.get('variety'), processing: f.get('processing'),
-                roastType: f.get('roastType'), method: finalMethod, grind: parseNum(f.get('grind')), weight: parseNum(f.get('weight')), 
+                roastType: f.get('roastType'), method: finalMethod, grinder: f.get('grinder'), grind: parseNum(f.get('grind')), weight: parseNum(f.get('weight')), 
                 ratio: parseNum(f.get('ratio')), time: parseNum(f.get('time')), temp: finalTemp, drink: finalDrink, notes: finalNotes, 
                 improve: f.get('improve') || '', rating: parseInt(f.get('rating')) || 0, isActive: isActiveChecked, updatedAt: new Date().toISOString() 
             };
@@ -1370,8 +1380,8 @@
         const exportCSV = () => { 
             const d = getFilteredCoffees(); if(!d.length) return alert("No data"); 
             const esc = (t) => { if (t === null || t === undefined) return ''; const str = String(t); if (str.includes(',') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; return str; };
-            const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grind","In(g)","Out(g)","Time(s)","Temp","Drink","Rating","Notes","Improve"]; 
-            const r = d.map(c => [ c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '', esc(c.roaster || c.name), esc(c.origin || c.beanType), esc(c.farmer), esc(c.variety), esc(c.processing), esc(c.roastType), esc(c.method), esc(c.grind), esc(c.weight), (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', esc(c.time), esc(c.temp), esc(c.drink), esc(c.rating), esc(c.notes), esc(c.improve) ]); 
+            const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grinder","Grind","In(g)","Out(g)","Time(s)","Temp","Drink","Rating","Notes","Improve"]; 
+            const r = d.map(c => [ c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '', esc(c.roaster || c.name), esc(c.origin || c.beanType), esc(c.farmer), esc(c.variety), esc(c.processing), esc(c.roastType), esc(c.method), esc(c.grinder), esc(c.grind), esc(c.weight), (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', esc(c.time), esc(c.temp), esc(c.drink), esc(c.rating), esc(c.notes), esc(c.improve) ]); 
             const csvContent = "data:text/csv;charset=utf-8," + h.join(",") + "\n" + r.map(e => e.join(",")).join("\n"); 
             const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "coffee_log.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); 
         };
@@ -1386,7 +1396,7 @@
         const toggleForm = (f=null) => { const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); } else { o.classList.add('hidden'); } };
         
         const populateForm = (c) => { 
-            document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; document.getElementById('improve').value=c.improve||'';
+            document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('grinder').value=c.grinder||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; document.getElementById('improve').value=c.improve||'';
             if(!isNaN(parseFloat(c.temp))&&isFinite(c.temp)){setTempMode('numeric');document.getElementById('tempNumeric').value=c.temp;}else{setTempMode('profile');document.getElementById('tempProfile').value=c.temp||'';} 
             
             const stdDrinks = ["Espresso","Lungo", "Americano", "Cappuccino", "Flat White", "Macchiato", "Latte Macchiato"]; const dVal = c.drink || "";
@@ -1416,21 +1426,21 @@
         const clearSearch = () => { const input = document.getElementById('globalSearch'); input.value = ''; renderTable(); document.getElementById('searchClearBtn').classList.add('hidden'); input.focus(); };
         
         let currentSort = { key: null, direction: 'asc' };
-        let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null };
+        let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null };
         const sortBy = (k) => { if(currentSort.key===k)currentSort.direction=currentSort.direction==='asc'?'desc':'asc'; else {currentSort.key=k;currentSort.direction='asc';} renderTable(); };
         const openFilterMenu = (e,k) => { e.stopPropagation(); const m=document.getElementById('filterDropdown'); const vals = coffees.map(c => k==='roaster' ? (c.roaster||c.name) : (k==='origin' ? (c.origin||c.beanType) : c[k])); const v=[...new Set(vals)].sort(); if(!v.length)return; let h=`<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] mb-1">Filter ${k}</div><button onclick="applyFilter('${k}',null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`; v.forEach(val=>{h+=`<button onclick="applyFilter('${k}','${val}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e]">${val}</button>`}); m.innerHTML=h; const r=e.currentTarget.getBoundingClientRect(); const c=e.currentTarget.closest('.relative').getBoundingClientRect(); m.style.top=(r.bottom-c.top+5)+'px'; m.style.left=(r.left-c.left)+'px'; m.classList.remove('hidden'); }
         const closeFilterMenu = (e) => { const m=document.getElementById('filterDropdown'); if(!m.contains(e.target))m.classList.add('hidden'); }
         const applyFilter = (k,v) => { activeFilters[k]=v; document.getElementById('filterDropdown').classList.add('hidden'); renderTable(); renderActiveFilters(); };
-        const clearAllFilters = () => { activeFilters={method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null,drink:null}; renderTable(); renderActiveFilters(); }
+        const clearAllFilters = () => { activeFilters={method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null,drink:null,grinder:null}; renderTable(); renderActiveFilters(); }
         const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${k}:</span><b>${v}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
         
         const getFilteredCoffees = () => { 
             let f=coffees; const searchInput = document.getElementById('globalSearch');
-            if (searchInput && searchInput.value) { const term = searchInput.value.toLowerCase(); f = f.filter(c => { const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||''].join(' ').toLowerCase(); return searchable.includes(term); }); }
+            if (searchInput && searchInput.value) { const term = searchInput.value.toLowerCase(); f = f.filter(c => { const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||'', c.grinder||''].join(' ').toLowerCase(); return searchable.includes(term); }); }
             f=f.filter(c=>{ 
                 const cRoaster = c.roaster || c.name; const cOrigin = c.origin || c.beanType;
-                const m=!activeFilters.method||c.method===activeFilters.method; const t=!activeFilters.temp||String(c.temp)===String(activeFilters.temp); const r=!activeFilters.roastType||c.roastType===activeFilters.roastType; const rost=!activeFilters.roaster||cRoaster===activeFilters.roaster; const orig=!activeFilters.origin||cOrigin===activeFilters.origin; const farm=!activeFilters.farmer||c.farmer===activeFilters.farmer; const varr=!activeFilters.variety||c.variety===activeFilters.variety; const proc=!activeFilters.processing||c.processing===activeFilters.processing; const dr=!activeFilters.drink||c.drink===activeFilters.drink;
-                return m&&t&&r&&rost&&orig&&farm&&varr&&proc&&dr; 
+                const m=!activeFilters.method||c.method===activeFilters.method; const t=!activeFilters.temp||String(c.temp)===String(activeFilters.temp); const r=!activeFilters.roastType||c.roastType===activeFilters.roastType; const rost=!activeFilters.roaster||cRoaster===activeFilters.roaster; const orig=!activeFilters.origin||cOrigin===activeFilters.origin; const farm=!activeFilters.farmer||c.farmer===activeFilters.farmer; const varr=!activeFilters.variety||c.variety===activeFilters.variety; const proc=!activeFilters.processing||c.processing===activeFilters.processing; const dr=!activeFilters.drink||c.drink===activeFilters.drink; const gri=!activeFilters.grinder||c.grinder===activeFilters.grinder;
+                return m&&t&&r&&rost&&orig&&farm&&varr&&proc&&dr&&gri; 
             }); 
             if(currentSort.key){ f.sort((a,b)=>{ 
                 let va=a[currentSort.key], vb=b[currentSort.key]; 
@@ -1465,7 +1475,20 @@
             document.getElementById('cardRatio').textContent = (c.ratio ? '1:' + c.ratio : '-');
             const outWeight = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
             document.getElementById('cardOut').textContent = (outWeight !== '-' ? (outWeight.endsWith('.0') ? parseInt(outWeight) : outWeight) + 'g' : '-');
-            document.getElementById('cardGrind').textContent = c.grind || '-';
+            
+            // Logic for dynamic Grinder Title and Grind Value
+            const grinderVal = c.grinder || '';
+            const grindVal = c.grind || '-';
+            const titleEl = document.getElementById('cardGrindTitle');
+            const valEl = document.getElementById('cardGrindValue');
+
+            if (grinderVal) {
+                titleEl.textContent = grinderVal;
+            } else {
+                titleEl.textContent = 'Grind';
+            }
+            valEl.textContent = grindVal;
+            
             document.getElementById('cardTime').textContent = formatTime(c.time);
             document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
             document.getElementById('cardDrink').textContent = c.drink || '-';
@@ -1505,6 +1528,7 @@
                 if(columnPreferences.processing !== false) rowHTML += `<td class="px-4 py-2 text-sm">${c.processing || '-'}</td>`;
                 if(columnPreferences.roastType !== false) rowHTML += `<td class="px-4 py-2">${getRoastBadge(c.roastType)}</td>`;
                 if(columnPreferences.method !== false) rowHTML += `<td class="px-4 py-2"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>`;
+                if(columnPreferences.grinder !== false) rowHTML += `<td class="px-4 py-2 text-sm">${c.grinder || '-'}</td>`;
                 if(columnPreferences.grind !== false) rowHTML += `<td class="px-4 py-2 text-right font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
                 if(columnPreferences.recipe !== false) rowHTML += `<td class="px-4 py-2 text-center">${recipeCol}</td>`;
                 if(columnPreferences.time !== false) rowHTML += `<td class="px-4 py-2 text-right">${formatTime(c.time)}</td>`;
