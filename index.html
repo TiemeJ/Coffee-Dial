@@ -8,14 +8,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Image Compression Library -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <!-- Chart.js for Statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
         body { font-family: 'Outfit', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d6ccc2; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #57534e; }
+        ::-webkit-scrollbar-thumb { background: #d6ccc2; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a18e84; }
         .dragging { opacity: 0.5; background-color: #e6dfd9; border: 2px dashed #8c7365; }
         .dark .dragging { background-color: #44403c; border-color: #a8a29e; }
@@ -25,7 +27,7 @@
         th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
         
         #filterDropdown, #mainMenuDropdown { z-index: 50; animation: fadeIn 0.1s ease-out; }
-        #modalOverlay, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #helpModal, #aboutModal { animation: fadeIn 0.2s ease-out; }
+        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #helpModal, #aboutModal { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
@@ -97,6 +99,9 @@
                         <button onclick="toggleTheme(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i> 
                             <span>Toggle Theme</span>
+                        </button>
+                        <button onclick="openStats(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie"></i> <span>Statistics</span>
                         </button>
                         <button onclick="exportCSV(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-file-csv"></i> <span>Export CSV</span>
@@ -333,6 +338,95 @@
                 <div id="cardImproveContainer" class="hidden"><span class="block text-xs font-bold text-red-500 dark:text-red-400 uppercase mb-1">To Improve</span><p id="cardImprove" class="text-sm text-coffee-800 dark:text-[#d6ccc2] bg-red-50 dark:bg-red-900/10 p-2 rounded-lg border border-red-100 dark:border-red-900/20"></p></div>
             </div>
             <div class="bg-coffee-50 dark:bg-[#1c1917] p-4 border-t border-coffee-200 dark:border-[#44403c] flex justify-between items-center text-xs text-coffee-400 dark:text-[#57534e]"><span id="cardDate"></span><button onclick="closeCoffeeCard(null)" class="font-bold text-coffee-600 dark:text-[#a8a29e] hover:text-coffee-900 dark:hover:text-white">Close</button></div>
+        </div>
+    </div>
+
+    <!-- Statistics Modal -->
+    <div id="statsModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col my-8 max-h-[90vh]">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex flex-col sm:flex-row justify-between items-center gap-4 bg-coffee-50 dark:bg-[#1c1917]">
+                <div class="flex items-center gap-4 w-full sm:w-auto">
+                    <h3 class="font-bold text-xl text-coffee-900 dark:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-chart-pie text-coffee-600 dark:text-[#d6ccc2]"></i> Brewing Statistics</h3>
+                    <select id="statsViewSelect" onchange="changeStatsView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-xs rounded-lg block p-2 shadow-sm font-bold min-w-[150px]">
+                        <option value="mine">My Brews</option>
+                    </select>
+                </div>
+                <button onclick="closeStats()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white absolute top-5 right-5 sm:static"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div id="statsModalContent" class="p-6 overflow-y-auto bg-coffee-50/50 dark:bg-[#1c1917]">
+                
+                <!-- General Stats Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
+                        <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Total Brews</div>
+                        <div id="statTotalBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
+                        <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Last 30 Days</div>
+                        <div id="statMonthBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
+                        <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Last 7 Days</div>
+                        <div id="statWeekBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
+                        <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Daily Avg</div>
+                        <div id="statAvgBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Pie Charts Container -->
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col items-center">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase">Roast Profile</h4>
+                        <div class="relative w-full h-48"><canvas id="chartRoast"></canvas></div>
+                    </div>
+                     <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col items-center">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase">Brew Method</h4>
+                        <div class="relative w-full h-48"><canvas id="chartMethod"></canvas></div>
+                    </div>
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col items-center">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase">Drink Type</h4>
+                        <div class="relative w-full h-48"><canvas id="chartDrink"></canvas></div>
+                    </div>
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col items-center">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase">Star Rating Frequency</h4>
+                         <div class="relative w-full h-48"><canvas id="chartStars"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Variety Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                     <div class="bg-white dark:bg-[#292524] p-5 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase border-b border-coffee-100 dark:border-[#44403c] pb-2">Variety Analysis</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-coffee-600 dark:text-[#a8a29e]">Unique Coffees Tried:</span>
+                                <span id="statUniqueCoffees" class="font-bold text-xl text-coffee-900 dark:text-white">-</span>
+                            </div>
+                            <div class="text-xs text-gray-400 italic mb-2">*Based on unique combination of Roaster, Origin, and Blend/Farmer.</div>
+                            
+                            <div>
+                                <span class="block text-sm text-coffee-600 dark:text-[#a8a29e] mb-1">Most Frequently Brewed:</span>
+                                <div id="statMostBrewed" class="p-3 bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                                    <div class="font-bold text-coffee-800 dark:text-white text-sm" id="mostBrewedName">-</div>
+                                    <div class="text-xs text-coffee-500 dark:text-[#78716c]" id="mostBrewedCount">0 brews</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Coffees List -->
+                    <div class="bg-white dark:bg-[#292524] p-5 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase border-b border-coffee-100 dark:border-[#44403c] pb-2"><i class="fa-solid fa-trophy text-yellow-500 mr-2"></i>Hall of Fame (5 Stars)</h4>
+                        <div id="topCoffeesList" class="overflow-y-auto max-h-48 space-y-2 pr-1">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -639,7 +733,7 @@
             { id: 'recipe', label: 'Recipe' },
             { id: 'time', label: 'Time' },
             { id: 'temp', label: 'Temp' },
-            { id: 'drink', label: 'Drink' }, // ADDED DRINK COLUMN DEF
+            { id: 'drink', label: 'Drink' },
             { id: 'notes', label: 'Notes' },
             { id: 'improve', label: 'Improve' },
             { id: 'rating', label: 'Rating' },
@@ -674,19 +768,10 @@
             if (snap.exists()) {
                 const data = snap.data();
                 isPublic = data.isPublic || false;
-                
-                // LOAD PREFERENCES
-                if(data.preferences) {
-                    columnPreferences = { ...columnPreferences, ...data.preferences };
-                }
-
+                if(data.preferences) columnPreferences = { ...columnPreferences, ...data.preferences };
                 if(data.displayName !== user.displayName) await updateDoc(userDocRef, { displayName: user.displayName });
             } else {
-                await setDoc(userDocRef, { 
-                    isPublic: false, 
-                    displayName: user.displayName,
-                    preferences: columnPreferences 
-                });
+                await setDoc(userDocRef, { isPublic: false, displayName: user.displayName, preferences: columnPreferences });
             }
             updatePublicToggleUI();
             document.getElementById('myShareId').value = user.uid;
@@ -707,28 +792,21 @@
                 snapshot.forEach(doc => coffees.push({ id: doc.id, ...doc.data() }));
                 if (!currentSort.key) coffees.sort((a,b) => (a.customOrder || 0) - (b.customOrder || 0));
                 renderTable();
-                updateAutocompleteLists(); // Update Autocomplete Data
+                updateAutocompleteLists();
             }, (error) => {
                 console.error(error);
                 if(error.code === 'permission-denied') { alert("⚠️ Access Denied: This user's profile is private."); document.getElementById('viewSelect').value = 'mine'; changeView('mine'); }
             });
         };
 
-        // --- NEW: Autocomplete Update Function ---
         const updateAutocompleteLists = () => {
-            // Get unique values from coffees array
             const uniqueRoasters = [...new Set(coffees.map(c => c.roaster || c.name).filter(Boolean))].sort();
             const uniqueFarmers = [...new Set(coffees.map(c => c.farmer).filter(Boolean))].sort();
             const uniqueOrigins = [...new Set(coffees.map(c => c.origin || c.beanType).filter(Boolean))].sort();
-
-            // Populate Datalists
             const populate = (id, values) => {
                 const list = document.getElementById(id);
-                if(list) {
-                    list.innerHTML = values.map(v => `<option value="${v}"></option>`).join('');
-                }
+                if(list) list.innerHTML = values.map(v => `<option value="${v}"></option>`).join('');
             };
-
             populate('roasterList', uniqueRoasters);
             populate('farmerList', uniqueFarmers);
             populate('originList', uniqueOrigins);
@@ -736,7 +814,6 @@
 
         const parseNum = (v) => (v === '' || v === null || isNaN(v)) ? null : parseFloat(v);
 
-        // --- Handle Drink Type Logic ---
         const toggleDrinkOther = () => {
             const val = document.getElementById('drinkType').value;
             const input = document.getElementById('drinkOther');
@@ -751,26 +828,16 @@
             const tMode = f.get('tempMode'); const finalTemp = tMode === 'profile' ? f.get('tempProfile') : (f.get('tempNumeric') || "M");
             const finalNotes = f.get('notes') || '';
             const isActiveChecked = f.get('isActive') === 'on'; 
-            
-            // Drink Logic
             const rawDrinkType = f.get('drinkType');
             const rawDrinkOther = f.get('drinkOther');
             const finalDrink = rawDrinkType === 'Other' ? (rawDrinkOther || 'Other') : rawDrinkType;
-
             let newOrder = 0; if (coffees.length > 0) { const minOrder = Math.min(...coffees.map(c => c.customOrder || 0)); newOrder = minOrder - 1; }
-
             const d = { 
                 roaster: f.get('roaster'), farmer: f.get('farmer'), origin: f.get('origin'), variety: f.get('variety'), processing: f.get('processing'),
                 roastType: f.get('roastType'), method: f.get('method'), grind: parseNum(f.get('grind')), weight: parseNum(f.get('weight')), 
-                ratio: parseNum(f.get('ratio')), time: parseNum(f.get('time')), temp: finalTemp, 
-                drink: finalDrink, // Save Drink
-                notes: finalNotes, 
-                improve: f.get('improve') || '', 
-                rating: parseInt(f.get('rating')) || 0,
-                isActive: isActiveChecked, 
-                updatedAt: new Date().toISOString() 
+                ratio: parseNum(f.get('ratio')), time: parseNum(f.get('time')), temp: finalTemp, drink: finalDrink, notes: finalNotes, 
+                improve: f.get('improve') || '', rating: parseInt(f.get('rating')) || 0, isActive: isActiveChecked, updatedAt: new Date().toISOString() 
             };
-            
             try {
                 const col = collection(db, 'users', currentUser.uid, 'coffees');
                 if(eid) { await updateDoc(doc(col, eid), d); } else { d.customOrder = newOrder; d.createdAt = new Date().toISOString(); await addDoc(col, d); }
@@ -782,7 +849,6 @@
         const discardForm = () => { if(confirm("Discard unsaved changes?")) { resetFormState(); toggleForm(false); } };
         const toggleActive = async (id, ev) => { if(ev) ev.stopPropagation(); if(currentView !== 'mine') return; const c = coffees.find(x => x.id === id); if(!c) return; try { await updateDoc(doc(db, 'users', currentUser.uid, 'coffees', id), { isActive: !c.isActive }); } catch(e) { console.error(e); } };
 
-        // --- Drag/Drop ---
         const handleDragStart = (e) => { dragSrcEl = e.target.closest('tr'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', dragSrcEl.innerHTML); dragSrcEl.classList.add('opacity-50'); };
         const handleDragOver = (e) => { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; };
         const handleDrop = async (e) => {
@@ -792,7 +858,6 @@
             const srcBody = dragSrcEl.closest('tbody');
             const targetBody = targetRow.closest('tbody');
             if (!srcBody || !targetBody) return false;
-
             if (dragSrcEl !== targetRow && srcBody.id === targetBody.id && (srcBody.id === 'coffeeTableBody' || srcBody.id === 'activeCoffeeTableBody')) {
                 const oldIndex = parseInt(dragSrcEl.getAttribute('data-index')); const newIndex = parseInt(targetRow.getAttribute('data-index'));
                 const movedItem = coffees.splice(oldIndex, 1)[0]; coffees.splice(newIndex, 0, movedItem);
@@ -807,7 +872,6 @@
         };
         const handleDragEnd = (e) => { if(dragSrcEl) dragSrcEl.classList.remove('opacity-50'); };
 
-        // --- SCA Logic ---
         const setNotesMode = (mode) => {
             const btnMan = document.getElementById('btnNotesManual'), btnSca = document.getElementById('btnNotesSCA'), conMan = document.getElementById('notesManualContainer'), conSca = document.getElementById('notesSCAContainer'), hidden = document.getElementById('notesMode');
             hidden.value = mode;
@@ -858,31 +922,25 @@
         const addScaToNotes = () => { if (scaState.path.length === 0) return; const flavorToAdd = scaState.path[scaState.path.length - 1]; const input = document.getElementById('notes'); let currentText = input.value.trim(); if (currentText.length > 0) { if(currentText.endsWith(',')) currentText = currentText.slice(0, -1); input.value = `${currentText}, ${flavorToAdd}`; } else { input.value = flavorToAdd; } resetSca(); };
         const resetSca = () => { scaState = { level: 0, path: [], currentNode: null }; renderScaWheel(); };
 
-        // --- Standard UI ---
         const openFriendsModal = () => { document.getElementById('modalOverlay').classList.remove('hidden'); switchModalTab('profile'); };
         const closeModal = () => document.getElementById('modalOverlay').classList.add('hidden');
         
         const switchModalTab = (tab) => { 
-            const tProf = document.getElementById('tabProfile');
-            const tFoll = document.getElementById('tabFollowing');
-            const cProf = document.getElementById('contentProfile');
-            const cFoll = document.getElementById('contentFollowing');
-
+            const tProf = document.getElementById('tabProfile'); const tFoll = document.getElementById('tabFollowing');
+            const cProf = document.getElementById('contentProfile'); const cFoll = document.getElementById('contentFollowing');
             if(tab === 'profile') {
                 tProf.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
                 tProf.classList.remove('text-coffee-500','dark:text-[#78716c]');
                 tFoll.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
                 tFoll.classList.add('text-coffee-500','dark:text-[#78716c]');
-                cProf.classList.remove('hidden');
-                cFoll.classList.add('hidden');
-                loadFollowersList(); // Load followers when profile is opened
+                cProf.classList.remove('hidden'); cFoll.classList.add('hidden');
+                loadFollowersList();
             } else {
                 tFoll.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
                 tFoll.classList.remove('text-coffee-500','dark:text-[#78716c]');
                 tProf.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
                 tProf.classList.add('text-coffee-500','dark:text-[#78716c]');
-                cFoll.classList.remove('hidden'); // Show Following
-                cProf.classList.add('hidden');    // Hide Profile
+                cFoll.classList.remove('hidden'); cProf.classList.add('hidden');
             } 
         };
 
@@ -890,646 +948,287 @@
         const updatePublicToggleUI = () => { const btn=document.getElementById('togglePublicBtn'),dot=btn.firstElementChild,con=document.getElementById('shareIdContainer');if(isPublic){btn.className="bg-green-500 w-12 h-6 rounded-full p-1 transition-colors relative";dot.className="bg-white w-4 h-4 rounded-full shadow-md transform translate-x-6 transition-transform";con.classList.remove('hidden');}else{btn.className="bg-gray-300 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative";dot.className="bg-white w-4 h-4 rounded-full shadow-md transform translate-x-0 transition-transform";con.classList.add('hidden');} };
         const copyShareId = () => { document.getElementById('myShareId').select(); document.execCommand('copy'); alert("ID Copied!"); };
         
-        // --- Follow Logic (Double Write) ---
         const followUser = async () => { 
             const i=document.getElementById('friendIdInput'); const u=i.value.trim();
             if(!u||u===currentUser.uid) return alert("Invalid ID");
-            
             try {
                 const d = await getDoc(doc(db, 'users', u));
-                let n = 'Friend';
-                if(d.exists() && d.data().displayName) n = d.data().displayName;
-                
-                // Write to My Following AND Target's Followers
+                let n = 'Friend'; if(d.exists() && d.data().displayName) n = d.data().displayName;
                 const batch = writeBatch(db);
-                
-                // My Following List
-                const myRef = doc(db, 'users', currentUser.uid, 'following', u);
-                batch.set(myRef, { uid: u, name: n, addedAt: new Date().toISOString() });
-                
-                // Target's Followers List
-                const targetRef = doc(db, 'users', u, 'followers', currentUser.uid);
-                batch.set(targetRef, { 
-                    uid: currentUser.uid, 
-                    name: currentUser.displayName || 'Unknown User', 
-                    addedAt: new Date().toISOString() 
-                });
-
+                batch.set(doc(db, 'users', currentUser.uid, 'following', u), { uid: u, name: n, addedAt: new Date().toISOString() });
+                batch.set(doc(db, 'users', u, 'followers', currentUser.uid), { uid: currentUser.uid, name: currentUser.displayName || 'Unknown User', addedAt: new Date().toISOString() });
                 await batch.commit();
-
-                i.value='';
-                loadFollowingList();
-                alert(`Following ${n}!`);
-            } catch(e) { 
-                console.error(e); 
-                alert("Could not follow user. Check ID or permissions."); 
-            } 
+                i.value=''; loadFollowingList(); alert(`Following ${n}!`);
+            } catch(e) { console.error(e); alert("Could not follow user. Check ID or permissions."); } 
         };
 
         const unfollowUser = async (u) => { 
             if(!confirm("Unfollow?")) return;
             try {
                 const batch = writeBatch(db);
-                
-                // Delete from my following
                 batch.delete(doc(db, 'users', currentUser.uid, 'following', u));
-                
-                // Delete from their followers (Best effort)
                 batch.delete(doc(db, 'users', u, 'followers', currentUser.uid));
-                
                 await batch.commit();
-                
                 loadFollowingList();
                 if(currentView===u){ document.getElementById('viewSelect').value='mine'; changeView('mine'); }
-            } catch(e) {
-                console.error("Unfollow error", e);
-                alert("Error unfollowing");
-            }
+            } catch(e) { console.error("Unfollow error", e); alert("Error unfollowing"); }
         };
 
         const loadFollowingList = async () => { 
             if(!currentUser) return;
             const s = await getDocs(collection(db, 'users', currentUser.uid, 'following'));
-            following = [];
-            s.forEach(d => following.push(d.data()));
-            
-            const l = document.getElementById('followingList');
-            l.innerHTML = '';
-            if(following.length === 0) {
-                l.innerHTML = '<p class="text-xs text-gray-400 italic">You are not following anyone yet.</p>';
-            } else {
+            following = []; s.forEach(d => following.push(d.data()));
+            const l = document.getElementById('followingList'); l.innerHTML = '';
+            if(following.length === 0) { l.innerHTML = '<p class="text-xs text-gray-400 italic">You are not following anyone yet.</p>'; } else {
                 following.forEach(f => {
-                    const d = document.createElement('div');
-                    d.className = "flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]";
+                    const d = document.createElement('div'); d.className = "flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]";
                     d.innerHTML = `<span class="text-sm font-mono text-coffee-700 dark:text-[#a8a29e] truncate w-40">${f.name||f.uid}</span> <button onclick="unfollowUser('${f.uid}')" class="text-xs text-red-500 hover:text-red-700">Unfollow</button>`;
                     l.appendChild(d);
                 });
             }
-
-            const sl = document.getElementById('viewSelect');
-            sl.innerHTML = '<option value="mine">My Brews</option>';
+            const sl = document.getElementById('viewSelect'); sl.innerHTML = '<option value="mine">My Brews</option>';
             following.forEach(f => {
-                const o = document.createElement('option');
-                o.value = f.uid;
-                o.text = f.name || `Friend (${f.uid.substr(0,5)}...)`;
-                sl.appendChild(o);
+                const o = document.createElement('option'); o.value = f.uid; o.text = f.name || `Friend (${f.uid.substr(0,5)}...)`; sl.appendChild(o);
             });
             sl.value = currentView; 
         };
 
-        // --- NEW: Load Followers List ---
         const loadFollowersList = async () => {
             if(!currentUser) return;
-            const listEl = document.getElementById('followersList');
-            listEl.innerHTML = '<p class="text-xs text-gray-400 italic animate-pulse">Loading...</p>';
-            
+            const listEl = document.getElementById('followersList'); listEl.innerHTML = '<p class="text-xs text-gray-400 italic animate-pulse">Loading...</p>';
             try {
                 const s = await getDocs(collection(db, 'users', currentUser.uid, 'followers'));
-                followers = [];
-                s.forEach(d => followers.push(d.data()));
-                
+                followers = []; s.forEach(d => followers.push(d.data()));
                 listEl.innerHTML = '';
-                if(followers.length === 0) {
-                    listEl.innerHTML = '<p class="text-xs text-gray-400 italic">No followers yet.</p>';
-                } else {
+                if(followers.length === 0) { listEl.innerHTML = '<p class="text-xs text-gray-400 italic">No followers yet.</p>'; } else {
                      followers.forEach(f => {
-                        const d = document.createElement('div');
-                        d.className = "flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]";
+                        const d = document.createElement('div'); d.className = "flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]";
                         d.innerHTML = `<span class="text-sm font-mono text-coffee-700 dark:text-[#a8a29e] truncate w-full">${f.name||f.uid}</span>`;
                         listEl.appendChild(d);
                     });
                 }
-            } catch(e) {
-                console.error("Error loading followers", e);
-                listEl.innerHTML = '<p class="text-xs text-red-400 italic">Error loading followers.</p>';
-            }
+            } catch(e) { console.error("Error loading followers", e); listEl.innerHTML = '<p class="text-xs text-red-400 italic">Error loading followers.</p>'; }
         };
 
-        // --- Photo & Gallery Logic ---
         const openUploadModal = (coffeeId) => {
             currentUploadCoffeeId = coffeeId;
             document.getElementById('uploadPhotoModal').classList.remove('hidden');
-            document.getElementById('photoInput').value = '';
-            document.getElementById('photoMessage').value = '';
-            document.getElementById('uploadProgress').classList.add('hidden');
-            
-            const list = document.getElementById('shareWithList');
-            list.innerHTML = '';
-            if(following.length === 0) {
-                list.innerHTML = '<span class="text-xs text-gray-400 italic">No friends followed yet.</span>';
-            } else {
+            document.getElementById('photoInput').value = ''; document.getElementById('photoMessage').value = ''; document.getElementById('uploadProgress').classList.add('hidden');
+            const list = document.getElementById('shareWithList'); list.innerHTML = '';
+            if(following.length === 0) { list.innerHTML = '<span class="text-xs text-gray-400 italic">No friends followed yet.</span>'; } else {
                 following.forEach(f => {
                     const div = document.createElement('div');
                     div.className = 'flex items-center justify-between p-2 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]';
-                    div.innerHTML = `
-                        <span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">${f.name || f.uid}</span>
-                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" id="share_${f.uid}" value="${f.uid}" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/>
-                            <label for="share_${f.uid}" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label>
-                        </div>
-                    `;
+                    div.innerHTML = `<span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">${f.name || f.uid}</span><div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in"><input type="checkbox" id="share_${f.uid}" value="${f.uid}" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="share_${f.uid}" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>`;
                     list.appendChild(div);
                 });
             }
         };
 
-        const toggleAllFriends = (state) => {
-            const checkboxes = document.querySelectorAll('#shareWithList input[type="checkbox"]');
-            checkboxes.forEach(cb => cb.checked = state);
-        };
-
+        const toggleAllFriends = (state) => { const checkboxes = document.querySelectorAll('#shareWithList input[type="checkbox"]'); checkboxes.forEach(cb => cb.checked = state); };
         const closeUploadModal = () => document.getElementById('uploadPhotoModal').classList.add('hidden');
 
         const handlePhotoSubmit = async () => {
-            const fileInput = document.getElementById('photoInput');
-            let file = fileInput.files[0];
+            const fileInput = document.getElementById('photoInput'); let file = fileInput.files[0];
             const message = document.getElementById('photoMessage').value;
-            
-            if(!file) return alert("Please select a photo.");
-            if(!currentUploadCoffeeId) return;
-
+            if(!file) return alert("Please select a photo."); if(!currentUploadCoffeeId) return;
             const checkboxes = document.querySelectorAll('#shareWithList input[type="checkbox"]:checked');
             const sharedWith = Array.from(checkboxes).map(cb => cb.value);
-
-            // Get coffee data snapshot
-            const coffeeData = coffees.find(c => c.id === currentUploadCoffeeId);
-            if(!coffeeData) return alert("Coffee data not found.");
-
-            // Create simple snapshot for gallery display
-            const coffeeSnapshot = {
-                roaster: coffeeData.roaster || coffeeData.name || 'Unknown',
-                origin: coffeeData.origin || coffeeData.beanType || 'Unknown',
-                method: coffeeData.method || '-',
-                rating: coffeeData.rating || 0
-            };
-
-            const progressBar = document.getElementById('uploadProgress');
-            progressBar.classList.remove('hidden');
-            
+            const coffeeData = coffees.find(c => c.id === currentUploadCoffeeId); if(!coffeeData) return alert("Coffee data not found.");
+            const coffeeSnapshot = { roaster: coffeeData.roaster || coffeeData.name || 'Unknown', origin: coffeeData.origin || coffeeData.beanType || 'Unknown', method: coffeeData.method || '-', rating: coffeeData.rating || 0 };
+            const progressBar = document.getElementById('uploadProgress'); progressBar.classList.remove('hidden');
             try {
-                // Image Compression Logic
-                const options = {
-                    maxSizeMB: 1, // Max file size 1MB
-                    maxWidthOrHeight: 1024, // Resize to max 1024px width/height
-                    useWebWorker: true
-                };
-                
-                // THUMBNAIL LOGIC
-                let thumbFile = null;
-                const thumbOptions = {
-                    maxSizeMB: 0.5,
-                    maxWidthOrHeight: 600,
-                    useWebWorker: true
-                };
-
-                try {
-                    thumbFile = await imageCompression(file, thumbOptions);
-                } catch (error) {
-                    console.log('Thumbnail generation failed:', error);
-                }
-
-                // Upload Original
+                let thumbFile = null; const thumbOptions = { maxSizeMB: 0.5, maxWidthOrHeight: 600, useWebWorker: true };
+                try { thumbFile = await imageCompression(file, thumbOptions); } catch (error) { console.log('Thumbnail generation failed:', error); }
                 const timestamp = Date.now();
                 const storageRef = ref(storage, `photos/${currentUser.uid}/${timestamp}_${file.name}_original`);
                 const snapshot = await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(snapshot.ref);
-                
-                // Upload Thumbnail (if generated)
                 let thumbURL = null;
                 if(thumbFile) {
                      const thumbRef = ref(storage, `photos/${currentUser.uid}/${timestamp}_${file.name}_thumb`);
                      const thumbSnapshot = await uploadBytes(thumbRef, thumbFile);
                      thumbURL = await getDownloadURL(thumbSnapshot.ref);
                 }
-
-                await addDoc(collection(db, 'photos'), {
-                    uid: currentUser.uid,
-                    uploaderName: currentUser.displayName || 'Unknown User',
-                    photoURL: downloadURL,
-                    thumbURL: thumbURL, // Save thumb URL
-                    message: message,
-                    coffeeId: currentUploadCoffeeId,
-                    coffeeSnapshot: coffeeSnapshot,
-                    sharedWith: sharedWith,
-                    createdAt: new Date().toISOString()
-                });
-
-                closeUploadModal();
-                alert("Photo uploaded successfully!");
-            } catch (error) {
-                console.error("Upload failed", error);
-                alert("Upload failed: " + error.message);
-            }
+                await addDoc(collection(db, 'photos'), { uid: currentUser.uid, uploaderName: currentUser.displayName || 'Unknown User', photoURL: downloadURL, thumbURL: thumbURL, message: message, coffeeId: currentUploadCoffeeId, coffeeSnapshot: coffeeSnapshot, sharedWith: sharedWith, createdAt: new Date().toISOString() });
+                closeUploadModal(); alert("Photo uploaded successfully!");
+            } catch (error) { console.error("Upload failed", error); alert("Upload failed: " + error.message); }
         };
 
         const openGallery = async () => {
             document.getElementById('galleryModal').classList.remove('hidden');
-
-            // Check if there is an active notification BEFORE clearing it
             const hasNotification = !document.getElementById('galleryBadge').classList.contains('hidden');
-
-            // Mark as visited to clear notifications
             localStorage.setItem('lastGalleryVisit', new Date().toISOString());
             document.getElementById('menuBadge').classList.add('hidden');
             document.getElementById('galleryBadge').classList.add('hidden');
-
-            // If there was a notification, jump straight to the shared tab
-            if(hasNotification) {
-                switchGalleryTab('shared');
-            } else {
-                switchGalleryTab('mine');
-            }
-            
-            // Initial load call
-            lastGalleryDoc = null;
-            document.getElementById('galleryGrid').innerHTML = '';
-            document.getElementById('galleryEmpty').classList.add('hidden');
-            document.getElementById('galleryLoadMore').classList.add('hidden');
+            if(hasNotification) switchGalleryTab('shared'); else switchGalleryTab('mine');
+            lastGalleryDoc = null; document.getElementById('galleryGrid').innerHTML = ''; document.getElementById('galleryEmpty').classList.add('hidden'); document.getElementById('galleryLoadMore').classList.add('hidden');
             loadMoreGallery();
         };
 
         const switchGalleryTab = async (tab) => {
-            const tMine = document.getElementById('tabGalleryMine');
-            const tShared = document.getElementById('tabGalleryShared');
-            
-            currentGalleryMode = tab;
-            lastGalleryDoc = null;
-            document.getElementById('galleryGrid').innerHTML = '';
-            document.getElementById('galleryEmpty').classList.add('hidden');
-            document.getElementById('galleryLoadMore').classList.add('hidden');
-
-            if(tab === 'mine') {
-                tMine.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
-                tMine.classList.remove('text-coffee-500','dark:text-[#78716c]');
-                tShared.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
-                tShared.classList.add('text-coffee-500','dark:text-[#78716c]');
-            } else {
-                tShared.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
-                tShared.classList.remove('text-coffee-500','dark:text-[#78716c]');
-                tMine.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]');
-                tMine.classList.add('text-coffee-500','dark:text-[#78716c]');
-            }
-            
+            const tMine = document.getElementById('tabGalleryMine'); const tShared = document.getElementById('tabGalleryShared');
+            currentGalleryMode = tab; lastGalleryDoc = null; document.getElementById('galleryGrid').innerHTML = ''; document.getElementById('galleryEmpty').classList.add('hidden'); document.getElementById('galleryLoadMore').classList.add('hidden');
+            if(tab === 'mine') { tMine.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tMine.classList.remove('text-coffee-500','dark:text-[#78716c]'); tShared.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tShared.classList.add('text-coffee-500','dark:text-[#78716c]'); } else { tShared.classList.add('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tShared.classList.remove('text-coffee-500','dark:text-[#78716c]'); tMine.classList.remove('bg-coffee-50','dark:bg-[#1c1917]','text-coffee-700','dark:text-[#d6ccc2]'); tMine.classList.add('text-coffee-500','dark:text-[#78716c]'); }
             loadMoreGallery();
         };
 
         const loadMoreGallery = async () => {
-            if(isGalleryLoading) return;
-            isGalleryLoading = true;
-            
-            const btn = document.getElementById('galleryLoadMore');
-            const empty = document.getElementById('galleryEmpty');
-            
-            // Construct Query
-            let q;
-            const constraints = [orderBy('createdAt', 'desc'), limit(9)];
-            
-            if(lastGalleryDoc) {
-                constraints.push(startAfter(lastGalleryDoc));
-            }
-            
-            if(currentGalleryMode === 'mine') {
-                q = query(collection(db, 'photos'), where('uid', '==', currentUser.uid), ...constraints);
-            } else {
-                q = query(collection(db, 'photos'), where('sharedWith', 'array-contains', currentUser.uid), ...constraints);
-            }
-            
+            if(isGalleryLoading) return; isGalleryLoading = true;
+            const btn = document.getElementById('galleryLoadMore'); const empty = document.getElementById('galleryEmpty');
+            let q; const constraints = [orderBy('createdAt', 'desc'), limit(9)];
+            if(lastGalleryDoc) constraints.push(startAfter(lastGalleryDoc));
+            if(currentGalleryMode === 'mine') q = query(collection(db, 'photos'), where('uid', '==', currentUser.uid), ...constraints);
+            else q = query(collection(db, 'photos'), where('sharedWith', 'array-contains', currentUser.uid), ...constraints);
             const snapshot = await getDocs(q);
-            
             if(!snapshot.empty) {
-                lastGalleryDoc = snapshot.docs[snapshot.docs.length - 1];
-                renderGalleryGrid(snapshot.docs);
-                
-                if(snapshot.docs.length < 9) {
-                    btn.classList.add('hidden'); // End of list
-                } else {
-                    btn.classList.remove('hidden');
-                }
-            } else {
-                btn.classList.add('hidden');
-                if(!lastGalleryDoc) { // If absolutely no photos found on first load
-                     empty.classList.remove('hidden');
-                }
-            }
-            
+                lastGalleryDoc = snapshot.docs[snapshot.docs.length - 1]; renderGalleryGrid(snapshot.docs);
+                if(snapshot.docs.length < 9) btn.classList.add('hidden'); else btn.classList.remove('hidden');
+            } else { btn.classList.add('hidden'); if(!lastGalleryDoc) empty.classList.remove('hidden'); }
             isGalleryLoading = false;
         };
 
         const renderGalleryGrid = (docs) => {
             const grid = document.getElementById('galleryGrid');
-            
             docs.forEach(doc => {
-                const data = doc.data();
-                const card = document.createElement('div');
-                card.className = "bg-white dark:bg-[#292524] rounded-lg shadow-md overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col";
-                
+                const data = doc.data(); const card = document.createElement('div'); card.className = "bg-white dark:bg-[#292524] rounded-lg shadow-md overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col";
                 const ratingHtml = getStarDisplay(data.coffeeSnapshot?.rating || 0);
-
-                // Use Thumbnail if available, fallback to original
                 const displayUrl = data.thumbURL || data.photoURL;
-
-                card.innerHTML = `
-                    <div class="h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative group cursor-pointer">
-                        <img src="${displayUrl}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Brew Photo" onclick="window.open('${data.photoURL}', '_blank')">
-                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs">
-                            ${new Date(data.createdAt).toLocaleDateString()}
-                        </div>
-                    </div>
-                    <div class="p-3 flex-1 flex flex-col">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span>
-                            <div class="text-xs">${ratingHtml}</div>
-                        </div>
-                        <p class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p>
-                        <div class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]">
-                            <div class="font-bold text-coffee-800 dark:text-white truncate">${data.coffeeSnapshot?.roaster}</div>
-                            <div class="text-coffee-600 dark:text-[#a8a29e] truncate">${data.coffeeSnapshot?.origin}</div>
-                            <div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${data.coffeeSnapshot?.method}</div>
-                        </div>
-                    </div>
-                `;
+                card.innerHTML = `<div class="h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative group cursor-pointer"><img src="${displayUrl}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Brew Photo" onclick="window.open('${data.photoURL}', '_blank')"><div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs">${new Date(data.createdAt).toLocaleDateString()}</div></div><div class="p-3 flex-1 flex flex-col"><div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-xs">${ratingHtml}</div></div><p class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${data.coffeeSnapshot?.roaster}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${data.coffeeSnapshot?.origin}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${data.coffeeSnapshot?.method}</div></div></div>`;
                 grid.appendChild(card);
             });
         };
 
-        // --- Preferences Logic ---
         const openPreferences = () => {
-            const list = document.getElementById('preferencesList');
-            list.innerHTML = '';
-            
+            const list = document.getElementById('preferencesList'); list.innerHTML = '';
             columnDefs.forEach(col => {
-                const isChecked = columnPreferences[col.id] !== false; // Default true
-                const div = document.createElement('div');
-                div.className = "flex items-center justify-between p-2 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]";
-                div.innerHTML = `
-                    <span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">${col.label}</span>
-                    <div class="relative inline-block w-10 align-middle select-none">
-                        <input type="checkbox" id="pref_${col.id}" ${isChecked ? 'checked' : ''} class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/>
-                        <label for="pref_${col.id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label>
-                    </div>
-                `;
+                const isChecked = columnPreferences[col.id] !== false; const div = document.createElement('div'); div.className = "flex items-center justify-between p-2 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]";
+                div.innerHTML = `<span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">${col.label}</span><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="pref_${col.id}" ${isChecked ? 'checked' : ''} class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="pref_${col.id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>`;
                 list.appendChild(div);
             });
-            
             document.getElementById('preferencesModal').classList.remove('hidden');
         };
 
         const savePreferences = async () => {
-            const newPrefs = {};
-            columnDefs.forEach(col => {
-                const cb = document.getElementById(`pref_${col.id}`);
-                newPrefs[col.id] = cb.checked;
-            });
-            
+            const newPrefs = {}; columnDefs.forEach(col => { const cb = document.getElementById(`pref_${col.id}`); newPrefs[col.id] = cb.checked; });
             columnPreferences = newPrefs;
-            
-            // Save to Firestore
-            if(currentUser) {
-                try {
-                    await updateDoc(doc(db, 'users', currentUser.uid), {
-                        preferences: newPrefs
-                    });
-                } catch(e) {
-                    console.error("Error saving prefs", e);
-                }
-            }
-            
-            document.getElementById('preferencesModal').classList.add('hidden');
-            renderTable(); // Apply changes
+            if(currentUser) { try { await updateDoc(doc(db, 'users', currentUser.uid), { preferences: newPrefs }); } catch(e) { console.error("Error saving prefs", e); } }
+            document.getElementById('preferencesModal').classList.add('hidden'); renderTable();
         };
 
-        // --- Help & About Logic ---
         const openHelp = () => document.getElementById('helpModal').classList.remove('hidden');
-        
-        const closeHelp = () => {
-            document.getElementById('helpModal').classList.add('hidden');
-            if(currentUser) {
-                // Set flag so it doesn't open automatically again
-                localStorage.setItem(`tutorialSeen_${currentUser.uid}`, 'true');
-            }
-        };
-        
+        const closeHelp = () => { document.getElementById('helpModal').classList.add('hidden'); if(currentUser) localStorage.setItem(`tutorialSeen_${currentUser.uid}`, 'true'); };
         const openAbout = () => document.getElementById('aboutModal').classList.remove('hidden');
         const closeAbout = () => document.getElementById('aboutModal').classList.add('hidden');
 
-        // --- Notifications Listener ---
         const initNotificationListener = (uid) => {
             if(unsubscribeNotifications) unsubscribeNotifications();
-
-            // Listen for newest photo shared with me
-            const q = query(
-                collection(db, 'photos'), 
-                where('sharedWith', 'array-contains', uid), 
-                orderBy('createdAt', 'desc'), 
-                limit(1)
-            );
-
+            const q = query(collection(db, 'photos'), where('sharedWith', 'array-contains', uid), orderBy('createdAt', 'desc'), limit(1));
             unsubscribeNotifications = onSnapshot(q, (snapshot) => {
                 if(!snapshot.empty) {
-                    const latestPhotoDate = snapshot.docs[0].data().createdAt;
-                    const lastVisit = localStorage.getItem('lastGalleryVisit');
-
-                    // If never visited, or photo is newer than last visit
-                    if(!lastVisit || new Date(latestPhotoDate) > new Date(lastVisit)) {
-                        document.getElementById('menuBadge').classList.remove('hidden');
-                        document.getElementById('galleryBadge').classList.remove('hidden');
-                    } else {
-                        document.getElementById('menuBadge').classList.add('hidden');
-                        document.getElementById('galleryBadge').classList.add('hidden');
-                    }
+                    const latestPhotoDate = snapshot.docs[0].data().createdAt; const lastVisit = localStorage.getItem('lastGalleryVisit');
+                    if(!lastVisit || new Date(latestPhotoDate) > new Date(lastVisit)) { document.getElementById('menuBadge').classList.remove('hidden'); document.getElementById('galleryBadge').classList.remove('hidden'); } 
+                    else { document.getElementById('menuBadge').classList.add('hidden'); document.getElementById('galleryBadge').classList.add('hidden'); }
                 }
             });
         };
 
-        // --- Easter Egg Logic ---
-        const openEasterEgg = () => {
-            const m = document.getElementById('easterEggModal');
-            const v = document.getElementById('easterEggVideo');
-            m.classList.remove('hidden');
-            v.currentTime = 0;
-            v.play().catch(e => console.log("Autoplay failed", e));
-        };
-        const closeEasterEgg = (e) => {
-            if(!e || e.target.id === 'easterEggModal' || e.target.closest('button')) {
-                const m = document.getElementById('easterEggModal');
-                const v = document.getElementById('easterEggVideo');
-                m.classList.add('hidden');
-                v.pause();
-            }
-        };
+        const openEasterEgg = () => { const m = document.getElementById('easterEggModal'); const v = document.getElementById('easterEggVideo'); m.classList.remove('hidden'); v.currentTime = 0; v.play().catch(e => console.log("Autoplay failed", e)); };
+        const closeEasterEgg = (e) => { if(!e || e.target.id === 'easterEggModal' || e.target.closest('button')) { const m = document.getElementById('easterEggModal'); const v = document.getElementById('easterEggVideo'); m.classList.add('hidden'); v.pause(); } };
 
-        // --- Image Zoom Logic ---
-        let zoomState = { scale: 1, x: 0, y: 0 };
-        let gesture = { startX: 0, startY: 0, startScale: 1, startDist: 0 };
-
-        const openImageModal = () => {
-            document.getElementById('imageModalOverlay').classList.remove('hidden');
-            resetZoom();
-        };
-
-        const closeImageModal = (e) => {
-            if (!e || e.target.id === 'imageModalOverlay' || e.target.closest('button')) {
-                document.getElementById('imageModalOverlay').classList.add('hidden');
-            }
-        };
-
-        const resetZoom = () => {
-            zoomState = { scale: 1, x: 0, y: 0 };
-            const img = document.getElementById('zoomableImage');
-            img.style.transition = 'transform 0.3s ease-out';
-            updateImage();
-        };
-
-        const updateImage = () => {
-            const img = document.getElementById('zoomableImage');
-            img.style.transform = `translate(${zoomState.x}px, ${zoomState.y}px) scale(${zoomState.scale})`;
-        };
-
-        // Zoom Pan Listeners
+        let zoomState = { scale: 1, x: 0, y: 0 }; let gesture = { startX: 0, startY: 0, startScale: 1, startDist: 0 };
+        const openImageModal = () => { document.getElementById('imageModalOverlay').classList.remove('hidden'); resetZoom(); };
+        const closeImageModal = (e) => { if (!e || e.target.id === 'imageModalOverlay' || e.target.closest('button')) document.getElementById('imageModalOverlay').classList.add('hidden'); };
+        const resetZoom = () => { zoomState = { scale: 1, x: 0, y: 0 }; const img = document.getElementById('zoomableImage'); img.style.transition = 'transform 0.3s ease-out'; updateImage(); };
+        const updateImage = () => { const img = document.getElementById('zoomableImage'); img.style.transform = `translate(${zoomState.x}px, ${zoomState.y}px) scale(${zoomState.scale})`; };
         const initZoomListeners = () => {
-            const img = document.getElementById('zoomableImage');
-            const container = document.getElementById('imageContainer');
-
-            // Wheel (Desktop)
-            container.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const delta = e.deltaY * -0.01;
-                const newScale = Math.min(Math.max(0.5, zoomState.scale + delta), 5);
-                zoomState.scale = newScale;
-                updateImage();
-            });
-
-            // Double Tap to Reset
-            container.addEventListener('dblclick', (e) => {
-                e.preventDefault();
-                resetZoom();
-            });
-
-            // Touch Start
-            container.addEventListener('touchstart', (e) => {
-                img.style.transition = 'none'; // Disable transition for instant feedback
-                if (e.touches.length === 2) {
-                    // Pinch Start
-                    e.preventDefault();
-                    gesture.startDist = Math.hypot(
-                        e.touches[0].pageX - e.touches[1].pageX,
-                        e.touches[0].pageY - e.touches[1].pageY
-                    );
-                    gesture.startScale = zoomState.scale;
-                } else if (e.touches.length === 1) {
-                    // Pan Start
-                    gesture.startX = e.touches[0].pageX - zoomState.x;
-                    gesture.startY = e.touches[0].pageY - zoomState.y;
-                }
-            }, { passive: false });
-
-            // Touch Move
-            container.addEventListener('touchmove', (e) => {
-                e.preventDefault(); // Prevent scrolling
-                if (e.touches.length === 2) {
-                    // Pinching
-                    const dist = Math.hypot(
-                         e.touches[0].pageX - e.touches[1].pageX,
-                         e.touches[0].pageY - e.touches[1].pageY
-                    );
-                    if(gesture.startDist > 0) {
-                        zoomState.scale = Math.min(Math.max(0.5, gesture.startScale * (dist / gesture.startDist)), 5);
-                        updateImage();
-                    }
-                } else if (e.touches.length === 1 && zoomState.scale > 1) {
-                    // Panning (only allowed when zoomed in)
-                    zoomState.x = e.touches[0].pageX - gesture.startX;
-                    zoomState.y = e.touches[0].pageY - gesture.startY;
-                    updateImage();
-                }
-            }, { passive: false });
-
-            // Touch End
-            container.addEventListener('touchend', (e) => {
-                if (e.touches.length === 0) {
-                    // Restore transition for smooth snapping/resetting
-                     img.style.transition = 'transform 0.2s ease-out';
-                     // Optional: Snap back if zoomed out too far
-                     if (zoomState.scale < 1) resetZoom();
-                }
-            });
+            const img = document.getElementById('zoomableImage'); const container = document.getElementById('imageContainer');
+            container.addEventListener('wheel', (e) => { e.preventDefault(); const delta = e.deltaY * -0.01; zoomState.scale = Math.min(Math.max(0.5, zoomState.scale + delta), 5); updateImage(); });
+            container.addEventListener('dblclick', (e) => { e.preventDefault(); resetZoom(); });
+            container.addEventListener('touchstart', (e) => { img.style.transition = 'none'; if (e.touches.length === 2) { e.preventDefault(); gesture.startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); gesture.startScale = zoomState.scale; } else if (e.touches.length === 1) { gesture.startX = e.touches[0].pageX - zoomState.x; gesture.startY = e.touches[0].pageY - zoomState.y; } }, { passive: false });
+            container.addEventListener('touchmove', (e) => { e.preventDefault(); if (e.touches.length === 2) { const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); if(gesture.startDist > 0) { zoomState.scale = Math.min(Math.max(0.5, gesture.startScale * (dist / gesture.startDist)), 5); updateImage(); } } else if (e.touches.length === 1 && zoomState.scale > 1) { zoomState.x = e.touches[0].pageX - gesture.startX; zoomState.y = e.touches[0].pageY - gesture.startY; updateImage(); } }, { passive: false });
+            container.addEventListener('touchend', (e) => { if (e.touches.length === 0) { img.style.transition = 'transform 0.2s ease-out'; if (zoomState.scale < 1) resetZoom(); } });
         };
-        // Initialize listeners
         initZoomListeners();
 
-        // --- Standard Logic ---
+        // --- Statistics Logic ---
+        let chartInstances = {};
+        const openStats = () => {
+            if (!currentUser) return alert("Please sign in first.");
+            document.getElementById('statsModal').classList.remove('hidden');
+            const sl = document.getElementById('statsViewSelect'); sl.innerHTML = '<option value="mine">My Brews</option>';
+            following.forEach(f => { const o = document.createElement('option'); o.value = f.uid; o.text = f.name || `Friend (${f.uid.substr(0,5)}...)`; sl.appendChild(o); });
+            sl.value = currentView; changeStatsView(currentView);
+        };
+        const closeStats = () => document.getElementById('statsModal').classList.add('hidden');
+
+        const changeStatsView = async (uid) => {
+            let dataToUse = [];
+            if (uid === currentView) dataToUse = coffees;
+            else {
+                const q = collection(db, 'users', uid, 'coffees');
+                const snap = await getDocs(q);
+                snap.forEach(doc => dataToUse.push({ id: doc.id, ...doc.data() }));
+            }
+            if(dataToUse.length === 0) { alert("No brews found for this user."); calculateStats([]); return; }
+            calculateStats(dataToUse);
+        };
+
+        const calculateStats = (dataToUse) => {
+            const total = dataToUse.length; const now = new Date(); const oneDay = 24 * 60 * 60 * 1000;
+            const last30 = dataToUse.filter(c => (now - new Date(c.createdAt)) < 30 * oneDay).length;
+            const last7 = dataToUse.filter(c => (now - new Date(c.createdAt)) < 7 * oneDay).length;
+            const firstDate = new Date(Math.min(...dataToUse.map(c => new Date(c.createdAt || now))));
+            const diffDays = Math.max(1, Math.round(Math.abs((now - firstDate) / oneDay)));
+            const avg = (total / diffDays).toFixed(1);
+            document.getElementById('statTotalBrews').innerText = total; document.getElementById('statMonthBrews').innerText = last30; document.getElementById('statWeekBrews').innerText = last7; document.getElementById('statAvgBrews').innerText = avg;
+            const agg = (key) => dataToUse.reduce((acc, c) => { const val = c[key] || 'Unknown'; acc[val] = (acc[val] || 0) + 1; return acc; }, {});
+            const roastData = agg('roastType'); const methodData = agg('method'); const drinkData = agg('drink');
+            const ratingData = dataToUse.reduce((acc, c) => { const r = c.rating || 0; if(r > 0) acc[r] = (acc[r] || 0) + 1; return acc; }, {});
+            renderCharts(roastData, methodData, drinkData, ratingData);
+            const uniqueMap = {}; dataToUse.forEach(c => { const key = `${c.roaster||''}|${c.origin||''}|${c.farmer||''}`; if(!uniqueMap[key]) uniqueMap[key] = { count: 0, roaster: c.roaster, origin: c.origin, farmer: c.farmer }; uniqueMap[key].count++; });
+            document.getElementById('statUniqueCoffees').innerText = Object.keys(uniqueMap).length;
+            let maxKey = null; Object.keys(uniqueMap).forEach(k => { if(!maxKey || uniqueMap[k].count > uniqueMap[maxKey].count) maxKey = k; });
+            if(maxKey) { const d = uniqueMap[maxKey]; document.getElementById('mostBrewedName').innerText = `${d.roaster || 'Unknown'} - ${d.origin || ''} ${d.farmer ? '('+d.farmer+')' : ''}`; document.getElementById('mostBrewedCount').innerText = `${d.count} brews`; }
+            const topMap = {}; dataToUse.filter(c => c.rating === 5).forEach(c => { const key = `${c.roaster||''}|${c.origin||''}|${c.farmer||''}`; if(!topMap[key]) topMap[key] = { count: 0, data: c }; topMap[key].count++; });
+            const sortedTop = Object.values(topMap).sort((a,b) => b.count - a.count); const listEl = document.getElementById('topCoffeesList'); listEl.innerHTML = '';
+            if(sortedTop.length === 0) listEl.innerHTML = '<p class="text-sm text-gray-400 italic">No 5-star brews yet.</p>';
+            else sortedTop.forEach(item => { const c = item.data; const div = document.createElement('div'); div.className = "flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-100 dark:border-[#44403c]"; div.innerHTML = `<div class="truncate pr-2"><span class="font-bold text-coffee-800 dark:text-white text-sm block truncate">${c.roaster || 'Unknown'}</span><span class="text-xs text-coffee-500 dark:text-[#78716c] truncate">${c.origin || ''} ${c.farmer ? '• '+c.farmer : ''}</span></div><span class="text-xs font-bold bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full whitespace-nowrap">${item.count} <i class="fa-solid fa-mug-hot ml-1"></i></span>`; listEl.appendChild(div); });
+        };
+
+        const renderCharts = (roast, method, drink, stars) => {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e7e5e4' : '#4a3b32'; const gridColor = isDark ? '#44403c' : '#e5e7eb';
+            const createPie = (ctxId, dataObj, colors) => {
+                if(chartInstances[ctxId]) chartInstances[ctxId].destroy(); const ctx = document.getElementById(ctxId).getContext('2d');
+                chartInstances[ctxId] = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(dataObj), datasets: [{ data: Object.values(dataObj), backgroundColor: colors, borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor, font: { size: 10, family: "'Outfit', sans-serif" }, boxWidth: 10 } } } } });
+            };
+            const roastColors = ['#fcd34d', '#f97316', '#78350f', '#000000', '#9ca3af'];
+            const methodColors = ['#60a5fa', '#34d399', '#f472b6', '#a78bfa', '#fbbf24', '#9ca3af', '#f87171', '#2dd4bf'];
+            const drinkColors = ['#fb923c', '#c084fc', '#22d3ee', '#4ade80', '#e879f9', '#9ca3af'];
+            createPie('chartRoast', roast, roastColors); createPie('chartMethod', method, methodColors); createPie('chartDrink', drink, drinkColors);
+            if(chartInstances['chartStars']) chartInstances['chartStars'].destroy(); const ctxStars = document.getElementById('chartStars').getContext('2d');
+            const starCounts = [1,2,3,4,5].map(i => stars[i] || 0);
+            chartInstances['chartStars'] = new Chart(ctxStars, { type: 'bar', data: { labels: ['1★', '2★', '3★', '4★', '5★'], datasets: [{ label: 'Count', data: starCounts, backgroundColor: '#fbbf24', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: textColor, precision:0 }, grid: { color: gridColor } }, x: { ticks: { color: textColor }, grid: { display: false } } } } });
+        };
+
         const setRating = (r) => { const c=document.getElementById('starContainer'); document.getElementById('ratingInput').value=r; for(let i=0;i<c.children.length;i++){ if(i<r)c.children[i].classList.add('active'); else c.children[i].classList.remove('active'); } };
         const getStarDisplay = (r) => { if(!r)return'-'; let h=''; for(let i=0;i<r;i++)h+='<i class="fa-solid fa-star text-xs text-yellow-400"></i>'; return h; };
         
-        // --- IMPROVED EXPORT FUNCTION ---
         const exportCSV = () => { 
-            const d = getFilteredCoffees(); 
-            if(!d.length) return alert("No data"); 
-            
-            const esc = (t) => {
-                if (t === null || t === undefined) return '';
-                const str = String(t);
-                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                    return `"${str.replace(/"/g, '""')}"`;
-                }
-                return str;
-            };
-
-            // Added Drink to CSV Export
+            const d = getFilteredCoffees(); if(!d.length) return alert("No data"); 
+            const esc = (t) => { if (t === null || t === undefined) return ''; const str = String(t); if (str.includes(',') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; return str; };
             const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grind","In(g)","Out(g)","Time(s)","Temp","Drink","Rating","Notes","Improve"]; 
-            
-            const r = d.map(c => [
-                c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
-                esc(c.roaster || c.name),
-                esc(c.origin || c.beanType),
-                esc(c.farmer),
-                esc(c.variety),
-                esc(c.processing),
-                esc(c.roastType),
-                esc(c.method),
-                esc(c.grind),
-                esc(c.weight),
-                (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '',
-                esc(c.time),
-                esc(c.temp),
-                esc(c.drink),
-                esc(c.rating),
-                esc(c.notes),
-                esc(c.improve)
-            ]); 
-            
+            const r = d.map(c => [ c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '', esc(c.roaster || c.name), esc(c.origin || c.beanType), esc(c.farmer), esc(c.variety), esc(c.processing), esc(c.roastType), esc(c.method), esc(c.grind), esc(c.weight), (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', esc(c.time), esc(c.temp), esc(c.drink), esc(c.rating), esc(c.notes), esc(c.improve) ]); 
             const csvContent = "data:text/csv;charset=utf-8," + h.join(",") + "\n" + r.map(e => e.join(",")).join("\n"); 
-            const encodedUri = encodeURI(csvContent); 
-            const link = document.createElement("a"); 
-            link.setAttribute("href", encodedUri); 
-            link.setAttribute("download", "coffee_log.csv"); 
-            document.body.appendChild(link); 
-            link.click(); 
-            document.body.removeChild(link); 
+            const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "coffee_log.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); 
         };
 
         const handleRecipeInput = (s) => { const w=document.getElementById('inputWeight'),r=document.getElementById('inputRatio'),y=document.getElementById('inputYield'); const wv=parseFloat(w.value)||0,rv=parseFloat(r.value)||0,yv=parseFloat(y.value)||0; if(!wv)return; if(s==='weight'){ if(rv>0)y.value=(wv*rv).toFixed(1); else if(yv>0)r.value=(yv/wv).toFixed(1); } else if(s==='ratio')y.value=(wv*rv).toFixed(1); else if(s==='yield'){ if(wv>0)r.value=(yv/wv).toFixed(2); } };
         const setTempMode = (m) => { 
-            document.getElementById('tempMode').value = m;
-            const btnNum = document.getElementById('btnTempNumeric');
-            const btnProf = document.getElementById('btnTempProfile');
-            const conNum = document.getElementById('tempNumericContainer');
-            const conProf = document.getElementById('tempProfileContainer');
-            
-            const activeClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white";
-            const inactiveClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
-
-            if (m === 'numeric') {
-                conNum.classList.remove('hidden');
-                conProf.classList.add('hidden');
-                btnNum.className = activeClass;
-                btnProf.className = inactiveClass;
-            } else {
-                conProf.classList.remove('hidden');
-                conNum.classList.add('hidden');
-                btnProf.className = activeClass;
-                btnNum.className = inactiveClass;
-            }
+            document.getElementById('tempMode').value = m; const btnNum = document.getElementById('btnTempNumeric'); const btnProf = document.getElementById('btnTempProfile'); const conNum = document.getElementById('tempNumericContainer'); const conProf = document.getElementById('tempProfileContainer');
+            const activeClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white"; const inactiveClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
+            if (m === 'numeric') { conNum.classList.remove('hidden'); conProf.classList.add('hidden'); btnNum.className = activeClass; btnProf.className = inactiveClass; } else { conProf.classList.remove('hidden'); conNum.classList.add('hidden'); btnProf.className = activeClass; btnNum.className = inactiveClass; }
         };
         
         const toggleForm = (f=null) => { const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); } else { o.classList.add('hidden'); } };
@@ -1537,22 +1236,10 @@
         const populateForm = (c) => { 
             document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('method').value=c.method||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; document.getElementById('improve').value=c.improve||'';
             if(!isNaN(parseFloat(c.temp))&&isFinite(c.temp)){setTempMode('numeric');document.getElementById('tempNumeric').value=c.temp;}else{setTempMode('profile');document.getElementById('tempProfile').value=c.temp||'';} 
-            
-            // Populate Drink
-            const stdDrinks = ["Espresso","Lungo", "Americano", "Cappuccino", "Flat White", "Macchiato", "Latte Macchiato"];
-            const dVal = c.drink || "";
-            if(stdDrinks.includes(dVal)) {
-                document.getElementById('drinkType').value = dVal;
-                document.getElementById('drinkOther').classList.add('hidden');
-            } else if (dVal) {
-                document.getElementById('drinkType').value = 'Other';
-                document.getElementById('drinkOther').value = dVal;
-                document.getElementById('drinkOther').classList.remove('hidden');
-            } else {
-                 document.getElementById('drinkType').value = "";
-                 document.getElementById('drinkOther').classList.add('hidden');
-            }
-
+            const stdDrinks = ["Espresso","Lungo", "Americano", "Cappuccino", "Flat White", "Macchiato", "Latte Macchiato"]; const dVal = c.drink || "";
+            if(stdDrinks.includes(dVal)) { document.getElementById('drinkType').value = dVal; document.getElementById('drinkOther').classList.add('hidden'); } 
+            else if (dVal) { document.getElementById('drinkType').value = 'Other'; document.getElementById('drinkOther').value = dVal; document.getElementById('drinkOther').classList.remove('hidden'); } 
+            else { document.getElementById('drinkType').value = ""; document.getElementById('drinkOther').classList.add('hidden'); }
             setRating(c.rating||0); setNotesMode('manual'); document.getElementById('isActiveToggle').checked = c.isActive || false; 
         }
 
@@ -1562,18 +1249,10 @@
 
         const deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); };
         const resetFormState = (e) => { 
-            if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('numeric'); setNotesMode('manual'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); document.getElementById('isActiveToggle').checked = false; 
-            document.getElementById('drinkOther').classList.add('hidden');
+            if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('numeric'); setNotesMode('manual'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); document.getElementById('isActiveToggle').checked = false; document.getElementById('drinkOther').classList.add('hidden');
         };
 
-        // --- Clear Search Function ---
-        const clearSearch = () => {
-            const input = document.getElementById('globalSearch');
-            input.value = '';
-            renderTable(); // Update table to show all items
-            document.getElementById('searchClearBtn').classList.add('hidden'); // Hide the X button
-            input.focus(); // Keep focus on input for better UX
-        };
+        const clearSearch = () => { const input = document.getElementById('globalSearch'); input.value = ''; renderTable(); document.getElementById('searchClearBtn').classList.add('hidden'); input.focus(); };
         
         let currentSort = { key: null, direction: 'asc' };
         let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null };
@@ -1585,15 +1264,8 @@
         const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${k}:</span><b>${v}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
         
         const getFilteredCoffees = () => { 
-            let f=coffees;
-            const searchInput = document.getElementById('globalSearch');
-            if (searchInput && searchInput.value) {
-                const term = searchInput.value.toLowerCase();
-                f = f.filter(c => {
-                    const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||''].join(' ').toLowerCase();
-                    return searchable.includes(term);
-                });
-            }
+            let f=coffees; const searchInput = document.getElementById('globalSearch');
+            if (searchInput && searchInput.value) { const term = searchInput.value.toLowerCase(); f = f.filter(c => { const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||''].join(' ').toLowerCase(); return searchable.includes(term); }); }
             f=f.filter(c=>{ 
                 const cRoaster = c.roaster || c.name; const cOrigin = c.origin || c.beanType;
                 const m=!activeFilters.method||c.method===activeFilters.method; const t=!activeFilters.temp||String(c.temp)===String(activeFilters.temp); const r=!activeFilters.roastType||c.roastType===activeFilters.roastType; const rost=!activeFilters.roaster||cRoaster===activeFilters.roaster; const orig=!activeFilters.origin||cOrigin===activeFilters.origin; const farm=!activeFilters.farmer||c.farmer===activeFilters.farmer; const varr=!activeFilters.variety||c.variety===activeFilters.variety; const proc=!activeFilters.processing||c.processing===activeFilters.processing; const dr=!activeFilters.drink||c.drink===activeFilters.drink;
@@ -1625,8 +1297,6 @@
             document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
             document.getElementById('cardOrigin').textContent = c.origin || c.beanType || '-';
             document.getElementById('cardFarmer').textContent = c.farmer || '-';
-            // REMOVED VARIETY POPULATION
-            // document.getElementById('cardVariety').textContent = c.variety || '-';
             document.getElementById('cardProcess').textContent = c.processing || '-';
             document.getElementById('cardRoastType').innerHTML = getRoastBadge(c.roastType);
             document.getElementById('cardMethod').textContent = c.method || '-';
@@ -1637,14 +1307,11 @@
             document.getElementById('cardGrind').textContent = c.grind || '-';
             document.getElementById('cardTime').textContent = formatTime(c.time);
             document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
-            document.getElementById('cardDrink').textContent = c.drink || '-'; // Populate Card Drink
+            document.getElementById('cardDrink').textContent = c.drink || '-';
             const notesEl = document.getElementById('cardNotes');
             if(c.notes) { notesEl.textContent = '"' + c.notes + '"'; notesEl.classList.remove('hidden'); } else { notesEl.classList.add('hidden'); }
-            
-            const improveEl = document.getElementById('cardImprove');
-            const improveCon = document.getElementById('cardImproveContainer');
+            const improveEl = document.getElementById('cardImprove'); const improveCon = document.getElementById('cardImproveContainer');
             if(c.improve) { improveEl.textContent = '"' + c.improve + '"'; improveCon.classList.remove('hidden'); } else { improveCon.classList.add('hidden'); }
-
             document.getElementById('cardDate').textContent = 'Brewed: ' + (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-');
             document.getElementById('coffeeCardOverlay').classList.remove('hidden');
         };
@@ -1652,58 +1319,24 @@
         const initTheme = () => { const s=localStorage.getItem('theme'); if(s==='light')document.documentElement.classList.remove('dark'); else {document.documentElement.classList.add('dark');localStorage.setItem('theme','dark');} };
         const toggleTheme = () => { const h=document.documentElement; if(h.classList.contains('dark')){h.classList.remove('dark');localStorage.setItem('theme','light');}else{h.classList.add('dark');localStorage.setItem('theme','dark');} };
 
-        // --- CORE RENDER FUNCTION ---
         const renderTable = () => { 
-            const t = document.getElementById('coffeeTableBody'); 
-            const activeT = document.getElementById('activeCoffeeTableBody'); 
-            const e = document.getElementById('emptyState'); 
-            
-            // 1. Manage Header Visibility based on Preferences
-            columnDefs.forEach(col => {
-                const th = document.getElementById(`th-${col.id}`);
-                if(th) {
-                    if(columnPreferences[col.id] === false) th.classList.add('hidden');
-                    else th.classList.remove('hidden');
-                }
-            });
-
-            t.innerHTML=''; activeT.innerHTML='';
-            const filteredCoffees = getFilteredCoffees();
-            
-            if(coffees.length === 0){ e.classList.remove('hidden'); activeT.classList.add('hidden'); return; } 
-            e.classList.add('hidden');
-            
+            const t = document.getElementById('coffeeTableBody'); const activeT = document.getElementById('activeCoffeeTableBody'); const e = document.getElementById('emptyState'); 
+            columnDefs.forEach(col => { const th = document.getElementById(`th-${col.id}`); if(th) { if(columnPreferences[col.id] === false) th.classList.add('hidden'); else th.classList.remove('hidden'); } });
+            t.innerHTML=''; activeT.innerHTML=''; const filteredCoffees = getFilteredCoffees();
+            if(coffees.length === 0){ e.classList.remove('hidden'); activeT.classList.add('hidden'); return; } e.classList.add('hidden');
             const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v=>v!==null);
             let hasActive = false;
-            
             filteredCoffees.forEach((c, index) => {
                 const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
-                const displayRoaster = c.roaster || c.name || '-';
-                const displayOrigin = c.origin || c.beanType || '-';
-                const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
+                const displayRoaster = c.roaster || c.name || '-'; const displayOrigin = c.origin || c.beanType || '-'; const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
                 const gripIcon = isDraggable ? 'fa-grip-vertical cursor-grab' : 'fa-lock opacity-30';
-                
                 let actions = '';
                 if(currentView === 'mine') {
-                    const pinBtn = c.isActive 
-                        ? `<button onclick="toggleActive('${c.id}',event)" class="text-green-600 hover:bg-green-50 p-2 rounded" title="Unpin from Active"><i class="fa-solid fa-thumbtack"></i></button>`
-                        : `<button onclick="toggleActive('${c.id}',event)" class="text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" title="Pin to Active"><i class="fa-solid fa-thumbtack"></i></button>`;
-                    actions = `
-                        <button onclick="editCoffee('${c.id}'); event.stopPropagation();" class="text-blue-500 hover:bg-blue-50 p-2 rounded" title="Edit"><i class="fa-solid fa-pencil"></i></button>
-                        <button onclick="duplicateCoffee('${c.id}'); event.stopPropagation();" class="text-green-500 hover:bg-green-50 p-2 rounded" title="Duplicate"><i class="fa-regular fa-copy"></i></button>
-                        ${pinBtn}
-                        <button onclick="openUploadModal('${c.id}'); event.stopPropagation();" class="text-purple-500 hover:bg-purple-50 p-2 rounded" title="Upload Photo"><i class="fa-solid fa-camera"></i></button>
-                        <button onclick="deleteCoffee('${c.id}',event); event.stopPropagation();" class="text-red-500 hover:bg-red-50 p-2 rounded" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                    `;
-                } else {
-                    actions = `<button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="text-green-600 hover:bg-green-50 p-2 rounded" title="Clone to My Brews"><i class="fa-solid fa-file-import"></i></button>`;
-                }
-
+                    const pinBtn = c.isActive ? `<button onclick="toggleActive('${c.id}',event)" class="text-green-600 hover:bg-green-50 p-2 rounded" title="Unpin from Active"><i class="fa-solid fa-thumbtack"></i></button>` : `<button onclick="toggleActive('${c.id}',event)" class="text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" title="Pin to Active"><i class="fa-solid fa-thumbtack"></i></button>`;
+                    actions = `<button onclick="editCoffee('${c.id}'); event.stopPropagation();" class="text-blue-500 hover:bg-blue-50 p-2 rounded" title="Edit"><i class="fa-solid fa-pencil"></i></button><button onclick="duplicateCoffee('${c.id}'); event.stopPropagation();" class="text-green-500 hover:bg-green-50 p-2 rounded" title="Duplicate"><i class="fa-regular fa-copy"></i></button>${pinBtn}<button onclick="openUploadModal('${c.id}'); event.stopPropagation();" class="text-purple-500 hover:bg-purple-50 p-2 rounded" title="Upload Photo"><i class="fa-solid fa-camera"></i></button><button onclick="deleteCoffee('${c.id}',event); event.stopPropagation();" class="text-red-500 hover:bg-red-50 p-2 rounded" title="Delete"><i class="fa-solid fa-trash"></i></button>`;
+                } else { actions = `<button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="text-green-600 hover:bg-green-50 p-2 rounded" title="Clone to My Brews"><i class="fa-solid fa-file-import"></i></button>`; }
                 const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
-                
-                // CONDITIONAL ROW BUILDING
                 let rowHTML = `<td class="px-4 py-2 text-center"><i class="fa-solid ${gripIcon} text-coffee-300 dark:text-[#57534e]"></i></td>`;
-                
                 if(columnPreferences.roaster !== false) rowHTML += `<td class="px-4 py-2 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
                 if(columnPreferences.origin !== false) rowHTML += `<td class="px-4 py-2 text-sm">${displayOrigin}</td>`;
                 if(columnPreferences.farmer !== false) rowHTML += `<td class="px-4 py-2 text-sm">${c.farmer || '-'}</td>`;
@@ -1715,73 +1348,36 @@
                 if(columnPreferences.recipe !== false) rowHTML += `<td class="px-4 py-2 text-center">${recipeCol}</td>`;
                 if(columnPreferences.time !== false) rowHTML += `<td class="px-4 py-2 text-right">${formatTime(c.time)}</td>`;
                 if(columnPreferences.temp !== false) rowHTML += `<td class="px-4 py-2 text-center">${getTempBadge(c.temp)}</td>`;
-                // Add Drink Cell
                 if(columnPreferences.drink !== false) rowHTML += `<td class="px-4 py-2 text-sm font-medium text-center">${c.drink || '-'}</td>`;
                 if(columnPreferences.notes !== false) rowHTML += `<td class="px-4 py-2 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>`;
                 if(columnPreferences.improve !== false) rowHTML += `<td class="px-4 py-2 text-sm italic text-red-400 dark:text-red-400/80 max-w-xs truncate" title="${c.improve || ''}">${c.improve || '-'}</td>`;
-                // ADDED whitespace-nowrap TO RATING COLUMN
                 if(columnPreferences.rating !== false) rowHTML += `<td class="px-4 py-2 text-center whitespace-nowrap">${getStarDisplay(c.rating)}</td>`;
                 if(columnPreferences.date !== false) rowHTML += `<td class="px-4 py-2 text-xs font-mono text-coffee-500">${displayDate}</td>`;
-                
-                // Actions always visible
                 rowHTML += `<td class="px-4 py-2 text-center flex justify-center gap-2" onclick="event.stopPropagation()">${actions}</td>`;
-
-                const r = document.createElement('tr');
-                r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0 cursor-pointer';
-                r.ondblclick = (e) => openCoffeeCard(c.id, e);
+                const r = document.createElement('tr'); r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0 cursor-pointer'; r.ondblclick = (e) => openCoffeeCard(c.id, e);
                 if (isDraggable) { r.setAttribute('draggable', 'true'); r.setAttribute('data-index', index); r.classList.add('cursor-grab'); r.addEventListener('dragstart', handleDragStart); r.addEventListener('dragover', handleDragOver); r.addEventListener('drop', handleDrop); r.addEventListener('dragend', handleDragEnd); }
                 r.innerHTML = rowHTML; t.appendChild(r);
-
                 if(c.isActive) {
-                    hasActive = true;
-                    const rActive = document.createElement('tr');
-                    rActive.className='bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-green-50 dark:border-green-900/10 last:border-b-0 cursor-pointer';
-                    rActive.ondblclick = (e) => openCoffeeCard(c.id, e);
-                    
-                    if (isDraggable) {
-                        rActive.setAttribute('draggable', 'true');
-                        rActive.setAttribute('data-index', index);
-                        rActive.classList.add('cursor-grab');
-                        rActive.addEventListener('dragstart', handleDragStart);
-                        rActive.addEventListener('dragover', handleDragOver);
-                        rActive.addEventListener('drop', handleDrop);
-                        rActive.addEventListener('dragend', handleDragEnd);
-                        // Use a green grip for draggable active rows
-                        rActive.innerHTML = rowHTML.replace(gripIcon, 'fa-grip-vertical text-green-500 cursor-grab'); 
-                    } else {
-                        // Keep star if not draggable (filtered mode)
-                        rActive.innerHTML = rowHTML.replace(gripIcon, 'fa-star text-green-500'); 
-                    }
-                    
+                    hasActive = true; const rActive = document.createElement('tr'); rActive.className='bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-green-50 dark:border-green-900/10 last:border-b-0 cursor-pointer'; rActive.ondblclick = (e) => openCoffeeCard(c.id, e);
+                    if (isDraggable) { rActive.setAttribute('draggable', 'true'); rActive.setAttribute('data-index', index); rActive.classList.add('cursor-grab'); rActive.addEventListener('dragstart', handleDragStart); rActive.addEventListener('dragover', handleDragOver); rActive.addEventListener('drop', handleDrop); rActive.addEventListener('dragend', handleDragEnd); rActive.innerHTML = rowHTML.replace(gripIcon, 'fa-grip-vertical text-green-500 cursor-grab'); } 
+                    else { rActive.innerHTML = rowHTML.replace(gripIcon, 'fa-star text-green-500'); }
                     activeT.appendChild(rActive);
                 }
             });
-            
-            // Add logic to make colspan dynamic for section headers based on visible columns
-            const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length; // 2 for Grip and Actions
-
+            const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length;
             if(hasActive) {
                 const activeHeader = document.createElement('tr'); activeHeader.className = "bg-green-50/50 dark:bg-green-900/20"; activeHeader.innerHTML = `<td colspan="${totalCols}" class="px-4 py-2 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; activeT.insertBefore(activeHeader, activeT.firstChild);
                 const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-4 py-2 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild); activeT.classList.remove('hidden');
             } else { activeT.classList.add('hidden'); }
         };
 
-        // Auth
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
             if (user) {
                 document.getElementById('authContainer').innerHTML = `<div class="flex items-center gap-3"><button onclick="openFriendsModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#34302e] hover:bg-coffee-100 dark:hover:bg-[#44403c] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-solid fa-user-group"></i> Friends</button><img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}"></div>`;
                 document.getElementById('syncStatus').classList.remove('hidden'); document.getElementById('viewSelectorContainer').classList.remove('hidden'); 
-                await initUserData(user); 
-                loadFollowingList(); 
-                changeView('mine');
-                initNotificationListener(user.uid);
-                
-                // Check tutorial status
-                const hasSeen = localStorage.getItem(`tutorialSeen_${user.uid}`);
-                if (!hasSeen) {
-                    openHelp();
-                }
+                await initUserData(user); loadFollowingList(); changeView('mine'); initNotificationListener(user.uid);
+                const hasSeen = localStorage.getItem(`tutorialSeen_${user.uid}`); if (!hasSeen) openHelp();
             } else {
                 document.getElementById('authContainer').innerHTML = `<button onclick="googleLogin()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button>`;
                 document.getElementById('viewSelectorContainer').classList.add('hidden'); document.getElementById('coffeeTableBody').innerHTML = ''; document.getElementById('emptyState').classList.remove('hidden');
@@ -1789,19 +1385,11 @@
             }
         });
 
-        // Expose to window
-        Object.assign(window, { googleLogin, googleLogout, openFriendsModal, closeModal, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, closeFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, switchGalleryTab, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, openImageModal, closeImageModal, resetZoom });
+        Object.assign(window, { googleLogin, googleLogout, openFriendsModal, closeModal, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, closeFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, switchGalleryTab, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView });
 
         initTheme();
         const searchInput = document.getElementById('globalSearch'); 
-        if(searchInput) { 
-            searchInput.addEventListener('input', (e) => { 
-                const clearBtn = document.getElementById('searchClearBtn');
-                if(e.target.value.length > 0) clearBtn.classList.remove('hidden');
-                else clearBtn.classList.add('hidden');
-                renderTable(); 
-            }); 
-        }
+        if(searchInput) { searchInput.addEventListener('input', (e) => { const clearBtn = document.getElementById('searchClearBtn'); if(e.target.value.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden'); renderTable(); }); }
     </script>
 </body>
 </html>
