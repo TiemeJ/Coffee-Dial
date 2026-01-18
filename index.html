@@ -318,11 +318,11 @@
                             <th id="th-roastType" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('roastType')" ondblclick="openFilterMenu(event, 'roastType')">Roast</th>
                             <th id="th-method" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('method')" ondblclick="openFilterMenu(event, 'method')">Method</th>
                             <th id="th-grinder" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('grinder')" ondblclick="openFilterMenu(event, 'grinder')">Grinder</th>
-                            <th id="th-grind" scope="col" class="px-3 py-1.5 text-right whitespace-nowrap" onclick="sortBy('grind')">Grind</th>
-                            <th id="th-recipe" scope="col" class="px-3 py-1.5 text-center whitespace-nowrap">Recipe</th>
+                            <th id="th-grind" scope="col" class="px-3 py-1.5 whitespace-nowrap" onclick="sortBy('grind')">Grind</th>
+                            <th id="th-recipe" scope="col" class="px-3 py-1.5 whitespace-nowrap">Recipe</th>
                             <th id="th-time" scope="col" class="px-3 py-1.5 text-right whitespace-nowrap" onclick="sortBy('time')">Time</th>
                             <th id="th-temp" scope="col" class="px-3 py-1.5 text-center filterable whitespace-nowrap" onclick="sortBy('temp')" ondblclick="openFilterMenu(event, 'temp')">Temp</th>
-                            <th id="th-drink" scope="col" class="px-3 py-1.5 text-center filterable whitespace-nowrap" onclick="sortBy('drink')" ondblclick="openFilterMenu(event, 'drink')">Drink</th>
+                            <th id="th-drink" scope="col" class="px-3 py-1.5 filterable whitespace-nowrap" onclick="sortBy('drink')" ondblclick="openFilterMenu(event, 'drink')">Drink</th>
                             <th id="th-notes" scope="col" class="px-3 py-1.5 whitespace-nowrap">Notes</th>
                             <th id="th-improve" scope="col" class="px-3 py-1.5 whitespace-nowrap">Improve</th>
                             <th id="th-rating" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap" onclick="sortBy('rating')">Rating</th>
@@ -719,6 +719,35 @@
                             <i class="fa-solid fa-camera"></i>
                         </div>
                         <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Use the camera icon on any brew row to upload a photo (latte art, bean bag, setup). You can share these photos specifically with friends, and view them in the global <strong>Photo Gallery</strong> via the main menu.</p>
+                    </div>
+                </div>
+
+                <!-- Step 6: Statistics -->
+                <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
+                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">6. Statistics & Insights</h4>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center">
+                        <div class="flex-shrink-0 text-indigo-500 text-3xl">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">
+                            Open the <strong>Statistics</strong> menu to visualize your brewing habits. See charts for roast types, methods, and your personal "Hall of Fame" (top-rated beans). You can even view stats for your friends!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 7: AI Features -->
+                <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
+                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">7. AI Power <span class="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-0.5 rounded-full ml-2">New!</span></h4>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center">
+                        <div class="flex-shrink-0 text-amber-500 text-3xl">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div class="flex-1">
+                            <ul class="list-disc list-inside text-sm text-coffee-600 dark:text-[#a8a29e] space-y-1">
+                                <li><strong>Scan Bag:</strong> When adding a brew, click "AI Scan Bag" to auto-fill details from a photo of your coffee packaging.</li>
+                                <li><strong>Brew Sommelier:</strong> In the Statistics view, click "AI Profile" to get a personalized analysis of your taste preferences.</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -1773,14 +1802,14 @@
                 if(columnPreferences.roastType !== false) rowHTML += `<td class="px-3 py-1">${getRoastBadge(c.roastType)}</td>`;
                 if(columnPreferences.method !== false) rowHTML += `<td class="px-3 py-1"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>`;
                 if(columnPreferences.grinder !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.grinder || '-'}</td>`;
-                if(columnPreferences.grind !== false) rowHTML += `<td class="px-3 py-1 text-right font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
-                if(columnPreferences.recipe !== false) rowHTML += `<td class="px-3 py-1 text-center">${recipeCol}</td>`;
+                if(columnPreferences.grind !== false) rowHTML += `<td class="px-3 py-1 font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
+                if(columnPreferences.recipe !== false) rowHTML += `<td class="px-3 py-1">${recipeCol}</td>`;
                 if(columnPreferences.time !== false) rowHTML += `<td class="px-3 py-1 text-right">${formatTime(c.time)}</td>`;
                 if(columnPreferences.temp !== false) rowHTML += `<td class="px-3 py-1 text-center">${getTempBadge(c.temp)}</td>`;
-                if(columnPreferences.drink !== false) rowHTML += `<td class="px-3 py-1 text-sm font-medium text-center">${c.drink || '-'}</td>`;
+                if(columnPreferences.drink !== false) rowHTML += `<td class="px-3 py-1 text-sm font-medium">${c.drink || '-'}</td>`;
                 if(columnPreferences.notes !== false) rowHTML += `<td class="px-3 py-1 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>`;
                 if(columnPreferences.improve !== false) rowHTML += `<td class="px-3 py-1 text-sm italic text-red-400 dark:text-red-400/80 max-w-xs truncate" title="${c.improve || ''}">${c.improve || '-'}</td>`;
-                if(columnPreferences.rating !== false) rowHTML += `<td class="px-3 py-1 text-center whitespace-nowrap">${getStarDisplay(c.rating)}</td>`;
+                if(columnPreferences.rating !== false) rowHTML += `<td class="px-3 py-1 whitespace-nowrap">${getStarDisplay(c.rating)}</td>`;
                 if(columnPreferences.date !== false) rowHTML += `<td class="px-3 py-1 text-xs font-mono text-coffee-500">${displayDate}</td>`;
                 rowHTML += `<td class="px-3 py-1 text-center w-16" onclick="event.stopPropagation()">${actions}</td>`;
                 const r = document.createElement('tr'); r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0 cursor-pointer'; r.ondblclick = (e) => openCoffeeCard(c.id, e);
