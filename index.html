@@ -26,7 +26,7 @@
         
         th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
         
-        #filterDropdown, #mainMenuDropdown, .action-menu { z-index: 50; animation: fadeIn 0.1s ease-out; }
+        #filterDropdown, #mainMenuDropdown, #aiMenuDropdown, .action-menu { z-index: 50; animation: fadeIn 0.1s ease-out; }
         #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #helpModal, #aboutModal { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
@@ -157,9 +157,20 @@
                     </h2>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button type="button" onclick="triggerAIScan()" id="aiScanBtn" class="hidden flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Scan Bag
-                    </button>
+                    <div class="relative">
+                        <button type="button" onclick="toggleAiMenu(event)" id="aiScanBtn" class="hidden flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Scan Bag
+                        </button>
+                        <!-- AI Menu -->
+                        <div id="aiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <button onclick="triggerAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
+                                <i class="fa-solid fa-camera w-4"></i> Take Photo
+                            </button>
+                            <button onclick="triggerAIScan('library')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-images w-4"></i> From Gallery
+                            </button>
+                        </div>
+                    </div>
                     <input type="file" id="aiFileInput" accept="image/*" class="hidden" onchange="handleAIFile(event)">
                     
                     <button id="cancelEditBtn" onclick="resetFormState(event)" class="hidden text-xs text-red-500 hover:text-red-700 dark:text-red-400 underline z-10 relative">
@@ -899,9 +910,27 @@
         // --- Functions ---
         
         // AI SCAN FUNCTIONS
-        const triggerAIScan = () => {
+        // Updated: Mode handles "camera" vs "library"
+        const triggerAIScan = (mode = null) => {
             if (!currentUser) return alert("Please sign in to use AI scanning.");
-            document.getElementById('aiFileInput').click();
+            const input = document.getElementById('aiFileInput');
+            
+            if (mode === 'camera') {
+                // Force camera capture
+                input.setAttribute('capture', 'environment');
+            } else if (mode === 'library') {
+                // Remove capture attribute to allow file picker (which usually includes gallery)
+                input.removeAttribute('capture');
+            }
+            
+            // Close menu if open
+            document.getElementById('aiMenuDropdown').classList.add('hidden');
+            input.click();
+        };
+
+        const toggleAiMenu = (e) => {
+            if(e) e.stopPropagation();
+            document.getElementById('aiMenuDropdown').classList.toggle('hidden');
         };
 
         const handleAIFile = async (event) => {
@@ -1708,6 +1737,7 @@
             if(!document.getElementById('modalOverlay').contains(e.target) && !document.getElementById('modalOverlay').classList.contains('hidden') && e.target.id==='modalOverlay') closeModal(); 
             if(!document.getElementById('filterDropdown').contains(e.target)) document.getElementById('filterDropdown').classList.add('hidden'); 
             if(!document.getElementById('mainMenuDropdown').contains(e.target) && !e.target.closest('button[onclick*="toggleMainMenu"]')) document.getElementById('mainMenuDropdown').classList.add('hidden');
+            if(!document.getElementById('aiMenuDropdown').contains(e.target) && !e.target.closest('button[onclick*="toggleAiMenu"]')) document.getElementById('aiMenuDropdown').classList.add('hidden');
             if(!e.target.closest('.action-menu') && !e.target.closest('button[onclick*="toggleActionMenu"]')) { document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden')); }
         };
         const toggleMainMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('mainMenuDropdown').classList.toggle('hidden'); };
@@ -1865,6 +1895,7 @@
         Object.assign(window, { 
             triggerAIScan, 
             handleAIFile,
+            toggleAiMenu, // Added
             triggerAIProfile,
             googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, closeFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu
         });
