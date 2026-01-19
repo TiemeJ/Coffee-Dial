@@ -1628,11 +1628,16 @@
             const shareControls = document.getElementById('shareControls');
             const closeBtn = document.getElementById('cardCloseBtn'); 
             const bottomBar = document.getElementById('cardBottomBar');
+            const improveContainer = document.getElementById('cardImproveContainer');
             
             // Temporary UI adjustments for snapshot
             shareControls.classList.add('hidden');
             closeBtn.classList.add('hidden'); 
             bottomBar.style.display = 'none';
+            
+            // Hide Improve Container if it's visible, for the shared image
+            const wasImproveVisible = !improveContainer.classList.contains('hidden');
+            if (wasImproveVisible) improveContainer.classList.add('hidden');
             
             // Disable transforms temporarily to avoid blur
             const originalTransform = content.style.transform;
@@ -1653,6 +1658,7 @@
                 closeBtn.classList.remove('hidden'); 
                 bottomBar.style.display = '';
                 content.style.transform = originalTransform;
+                if (wasImproveVisible) improveContainer.classList.remove('hidden');
 
                 canvas.toBlob(async (blob) => {
                     if (!blob) return alert('Failed to generate image');
@@ -1669,6 +1675,7 @@
                 closeBtn.classList.remove('hidden'); 
                 bottomBar.style.display = '';
                 content.style.transform = originalTransform;
+                if (wasImproveVisible) improveContainer.classList.remove('hidden');
                 alert("Could not generate card image.");
             }
         };
