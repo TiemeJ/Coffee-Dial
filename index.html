@@ -410,10 +410,10 @@
                     </div>
 
                     <!-- Photo Section (Hidden by default) -->
-                    <div id="cardPhotoSection" class="hidden relative h-64 bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] flex items-center justify-center group cursor-pointer" onclick="triggerCardPhoto()">
-                        <!-- Replaced img with div for background-image to fix html2canvas stretching -->
-                        <div id="cardDisplayedPhoto" class="absolute inset-0 w-full h-full bg-center bg-cover bg-no-repeat hidden z-10"></div>
-                        <div id="cardPhotoPlaceholder" class="text-center p-4">
+                    <div id="cardPhotoSection" class="hidden relative h-64 bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group cursor-pointer" onclick="triggerCardPhoto()">
+                        <!-- Replaced CSS background/object-fit with manual JS calculation for 100% robust export -->
+                        <img id="cardDisplayedPhoto" class="absolute hidden" src="" alt="Brew Photo" style="max-width: none;">
+                        <div id="cardPhotoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4">
                             <i class="fa-solid fa-camera text-3xl text-coffee-200 dark:text-[#44403c] mb-2"></i>
                             <p class="text-xs text-coffee-400 dark:text-[#57534e] font-medium">Tap to add brew photo</p>
                         </div>
@@ -422,7 +422,7 @@
                     <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Notes</span><p id="cardNotes" class="text-sm text-coffee-800 dark:text-[#d6ccc2] italic bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded-lg border border-yellow-100 dark:border-yellow-900/20"></p></div>
                     <div id="cardImproveContainer" class="hidden"><span class="block text-xs font-bold text-red-500 dark:text-red-400 uppercase mb-1">To Improve</span><p id="cardImprove" class="text-sm text-coffee-800 dark:text-[#d6ccc2] bg-red-50 dark:bg-red-900/10 p-2 rounded-lg border border-red-100 dark:border-red-900/20"></p></div>
                 </div>
-                <div id="cardBottomBar" class="bg-coffee-50 dark:bg-[#1c1917] p-4 border-t border-coffee-200 dark:border-[#44403c] flex justify-between items-center text-xs text-coffee-400 dark:text-[#57534e]"><span id="cardDate"></span><button onclick="closeCoffeeCard(null)" class="font-bold text-coffee-600 dark:text-[#a8a29e] hover:text-coffee-900 dark:hover:white">Close</button></div>
+                <div id="cardBottomBar" class="bg-coffee-50 dark:bg-[#1c1917] p-4 border-t border-coffee-200 dark:border-[#44403c] flex justify-between items-center text-xs text-coffee-400 dark:text-[#57534e]"><span id="cardDate"></span><button onclick="closeCoffeeCard(null)" class="font-bold text-coffee-600 dark:text-[#a8a29e] hover:text-coffee-900 dark:hover:text-white">Close</button></div>
             </div>
         </div>
     </div>
@@ -1485,6 +1485,196 @@
             c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); aiBtn.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); } else { o.classList.add('hidden'); aiBtn.classList.add('hidden'); } 
         };
         
+        const populateCardData = (c) => {
+            currentCardCoffee = c;
+            document.getElementById('cardRoaster').textContent = c.roaster || c.name || 'Unknown Roaster';
+            document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
+            document.getElementById('cardOrigin').textContent = c.origin || c.beanType || '-';
+            document.getElementById('cardFarmer').textContent = c.farmer || '-';
+            document.getElementById('cardProcess').textContent = c.processing || '-';
+            document.getElementById('cardRoastType').textContent = c.roastType || '-';
+            document.getElementById('cardMethod').textContent = c.method || '-';
+            document.getElementById('cardWeight').textContent = (c.weight ? c.weight + 'g' : '-');
+            document.getElementById('cardRatio').textContent = (c.ratio ? '1:' + c.ratio : '-');
+            const outWeight = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
+            document.getElementById('cardOut').textContent = (outWeight !== '-' ? (outWeight.endsWith('.0') ? parseInt(outWeight) : outWeight) + 'g' : '-');
+            const grinderVal = c.grinder || ''; const grindVal = c.grind || '-';
+            const titleEl = document.getElementById('cardGrindTitle'); const valEl = document.getElementById('cardGrindValue');
+            if (grinderVal) titleEl.textContent = grinderVal; else titleEl.textContent = 'Grind';
+            valEl.textContent = grindVal;
+            document.getElementById('cardTime').textContent = formatTime(c.time);
+            document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
+            document.getElementById('cardDrink').textContent = c.drink || '-';
+            const notesEl = document.getElementById('cardNotes');
+            if(c.notes) { notesEl.textContent = '"' + c.notes + '"'; notesEl.classList.remove('hidden'); } else { notesEl.classList.add('hidden'); }
+            const improveEl = document.getElementById('cardImprove'); const improveCon = document.getElementById('cardImproveContainer');
+            if(c.improve) { improveEl.textContent = '"' + c.improve + '"'; improveCon.classList.remove('hidden'); } else { improveCon.classList.add('hidden'); }
+            document.getElementById('cardDate').textContent = 'Brewed: ' + (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-');
+        };
+
+        const resetCardPhotoState = () => {
+             // Reset Photo View
+             const img = document.getElementById('cardDisplayedPhoto');
+             const ph = document.getElementById('cardPhotoPlaceholder');
+             const input = document.getElementById('cardPhotoInput');
+             img.src = '';
+             img.classList.add('hidden');
+             ph.classList.remove('hidden');
+             input.value = ''; // Clear file selection
+        };
+
+        const openCoffeeCard = (id, e) => {
+            if(window.getSelection().toString().length > 0) return;
+            const c = coffees.find(x => x.id === id); if(!c) return;
+            resetCardPhotoState(); // Clear previous photo state
+            // Always default to 'stats' view when opening normally (not share mode)
+            toggleCardMode('stats');
+            document.getElementById('shareControls').classList.add('hidden');
+            populateCardData(c); 
+            document.getElementById('coffeeCardOverlay').classList.remove('hidden');
+        };
+
+        const shareCoffeeCard = (id, e) => {
+            if(e) e.stopPropagation(); 
+            const c = coffees.find(x => x.id === id); if(!c) return;
+            resetCardPhotoState(); // Clear previous photo state
+            // Reset to Stats Mode initially
+            toggleCardMode('stats');
+            document.getElementById('shareControls').classList.remove('hidden');
+            populateCardData(c);
+            document.getElementById('coffeeCardOverlay').classList.remove('hidden');
+        };
+
+        const toggleCardMode = (mode) => {
+            currentShareMode = mode;
+            const btnStats = document.getElementById('btnCardStats');
+            const btnPhoto = document.getElementById('btnCardPhoto');
+            const btnUpload = document.getElementById('btnUploadCardPhoto');
+            const statsSection = document.getElementById('cardStatsSection');
+            const photoSection = document.getElementById('cardPhotoSection');
+
+            if(mode === 'stats') {
+                btnStats.className = "px-3 py-1.5 text-xs font-bold rounded shadow-sm bg-white dark:bg-[#292524] text-coffee-800 dark:text-white transition-all";
+                btnPhoto.className = "px-3 py-1.5 text-xs font-bold rounded text-coffee-500 dark:text-[#78716c] hover:text-coffee-700 dark:hover:text-[#d6ccc2] transition-all";
+                statsSection.classList.remove('hidden');
+                photoSection.classList.add('hidden');
+                btnUpload.classList.add('hidden');
+            } else {
+                btnPhoto.className = "px-3 py-1.5 text-xs font-bold rounded shadow-sm bg-white dark:bg-[#292524] text-coffee-800 dark:text-white transition-all";
+                btnStats.className = "px-3 py-1.5 text-xs font-bold rounded text-coffee-500 dark:text-[#78716c] hover:text-coffee-700 dark:hover:text-[#d6ccc2] transition-all";
+                photoSection.classList.remove('hidden');
+                statsSection.classList.add('hidden');
+                btnUpload.classList.remove('hidden');
+            }
+        };
+
+        const triggerCardPhoto = () => {
+             document.getElementById('cardPhotoInput').click();
+        };
+
+        const handleCardPhoto = (event) => {
+            const file = event.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.getElementById('cardDisplayedPhoto');
+                    const ph = document.getElementById('cardPhotoPlaceholder');
+                    const container = document.getElementById('cardPhotoSection');
+                    
+                    img.onload = () => {
+                        // Manual JS Geometry Calculation to simulate object-fit: cover
+                        // This guarantees no stretching and high res in html2canvas
+                        const containerW = container.offsetWidth;
+                        const containerH = container.offsetHeight;
+                        const imgW = img.naturalWidth;
+                        const imgH = img.naturalHeight;
+                        
+                        const containerRatio = containerW / containerH;
+                        const imgRatio = imgW / imgH;
+                        
+                        let finalW, finalH, finalTop, finalLeft;
+                        
+                        if (imgRatio > containerRatio) {
+                            // Image is wider than container: Match height, crop width
+                            finalH = containerH;
+                            finalW = imgW * (containerH / imgH);
+                            finalTop = 0;
+                            finalLeft = (containerW - finalW) / 2;
+                        } else {
+                            // Image is taller: Match width, crop height
+                            finalW = containerW;
+                            finalH = imgH * (containerW / imgW);
+                            finalLeft = 0;
+                            finalTop = (containerH - finalH) / 2;
+                        }
+                        
+                        img.style.width = `${finalW}px`;
+                        img.style.height = `${finalH}px`;
+                        img.style.top = `${finalTop}px`;
+                        img.style.left = `${finalLeft}px`;
+                        img.classList.remove('hidden');
+                        ph.classList.add('hidden');
+                    };
+                    
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        const generateShareImage = async () => {
+            const c = currentCardCoffee;
+            const content = document.getElementById('coffeeCardContent');
+            const shareControls = document.getElementById('shareControls');
+            const closeBtn = document.getElementById('cardCloseBtn'); 
+            const bottomBar = document.getElementById('cardBottomBar');
+            
+            // Temporary UI adjustments for snapshot
+            shareControls.classList.add('hidden');
+            closeBtn.classList.add('hidden'); 
+            bottomBar.style.display = 'none';
+            
+            // Disable transforms temporarily to avoid blur
+            const originalTransform = content.style.transform;
+            content.style.transform = 'none';
+
+            try {
+                await new Promise(r => setTimeout(r, 100)); // allow UI to update
+                // Use scale 4 for high resolution
+                const canvas = await html2canvas(content, { 
+                    scale: 4, 
+                    backgroundColor: getComputedStyle(content).backgroundColor, 
+                    useCORS: true,
+                    allowTaint: true 
+                });
+                
+                // Restore UI
+                shareControls.classList.remove('hidden');
+                closeBtn.classList.remove('hidden'); 
+                bottomBar.style.display = '';
+                content.style.transform = originalTransform;
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob) return alert('Failed to generate image');
+                    const file = new File([blob], `brew_${c.roaster || 'coffee'}_${Date.now()}.png`, { type: 'image/png' });
+                    if (navigator.share) {
+                        try { await navigator.share({ files: [file], title: 'My Coffee Brew', text: `Check out this brew of ${c.roaster}!` }); } catch (err) { if (err.name !== 'AbortError') console.error('Share failed:', err); }
+                    } else {
+                        const link = document.createElement('a'); link.download = file.name; link.href = canvas.toDataURL(); link.click();
+                    }
+                }, 'image/png');
+            } catch (err) {
+                console.error("Card generation failed", err); 
+                shareControls.classList.remove('hidden');
+                closeBtn.classList.remove('hidden'); 
+                bottomBar.style.display = '';
+                content.style.transform = originalTransform;
+                alert("Could not generate card image.");
+            }
+        };
+
+        const closeCoffeeCard = (e) => { if(!e || e.target.id === 'coffeeCardOverlay') { document.getElementById('coffeeCardOverlay').classList.add('hidden'); } };
+
         const populateForm = (c) => { 
             document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('grinder').value=c.grinder||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; document.getElementById('improve').value=c.improve||'';
             if(!isNaN(parseFloat(c.temp))&&isFinite(c.temp)){setTempMode('numeric');document.getElementById('tempNumeric').value=c.temp;}else{setTempMode('profile');document.getElementById('tempProfile').value=c.temp||'';} 
@@ -1547,155 +1737,6 @@
         };
         const toggleMainMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('mainMenuDropdown').classList.toggle('hidden'); };
         
-        const populateCardData = (c) => {
-            currentCardCoffee = c;
-            document.getElementById('cardRoaster').textContent = c.roaster || c.name || 'Unknown Roaster';
-            document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
-            document.getElementById('cardOrigin').textContent = c.origin || c.beanType || '-';
-            document.getElementById('cardFarmer').textContent = c.farmer || '-';
-            document.getElementById('cardProcess').textContent = c.processing || '-';
-            document.getElementById('cardRoastType').textContent = c.roastType || '-';
-            document.getElementById('cardMethod').textContent = c.method || '-';
-            document.getElementById('cardWeight').textContent = (c.weight ? c.weight + 'g' : '-');
-            document.getElementById('cardRatio').textContent = (c.ratio ? '1:' + c.ratio : '-');
-            const outWeight = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
-            document.getElementById('cardOut').textContent = (outWeight !== '-' ? (outWeight.endsWith('.0') ? parseInt(outWeight) : outWeight) + 'g' : '-');
-            const grinderVal = c.grinder || ''; const grindVal = c.grind || '-';
-            const titleEl = document.getElementById('cardGrindTitle'); const valEl = document.getElementById('cardGrindValue');
-            if (grinderVal) titleEl.textContent = grinderVal; else titleEl.textContent = 'Grind';
-            valEl.textContent = grindVal;
-            document.getElementById('cardTime').textContent = formatTime(c.time);
-            document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
-            document.getElementById('cardDrink').textContent = c.drink || '-';
-            const notesEl = document.getElementById('cardNotes');
-            if(c.notes) { notesEl.textContent = '"' + c.notes + '"'; notesEl.classList.remove('hidden'); } else { notesEl.classList.add('hidden'); }
-            const improveEl = document.getElementById('cardImprove'); const improveCon = document.getElementById('cardImproveContainer');
-            if(c.improve) { improveEl.textContent = '"' + c.improve + '"'; improveCon.classList.remove('hidden'); } else { improveCon.classList.add('hidden'); }
-            document.getElementById('cardDate').textContent = 'Brewed: ' + (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-');
-        };
-
-        const resetCardPhotoState = () => {
-             // Reset Photo View
-             const div = document.getElementById('cardDisplayedPhoto');
-             const ph = document.getElementById('cardPhotoPlaceholder');
-             const input = document.getElementById('cardPhotoInput');
-             div.style.backgroundImage = '';
-             div.classList.add('hidden');
-             ph.classList.remove('hidden');
-             input.value = ''; // Clear file selection
-        };
-
-        const openCoffeeCard = (id, e) => {
-            if(window.getSelection().toString().length > 0) return;
-            const c = coffees.find(x => x.id === id); if(!c) return;
-            resetCardPhotoState(); // Clear previous photo state
-            // Always default to 'stats' view when opening normally (not share mode)
-            toggleCardMode('stats');
-            document.getElementById('shareControls').classList.add('hidden');
-            populateCardData(c); 
-            document.getElementById('coffeeCardOverlay').classList.remove('hidden');
-        };
-
-        const shareCoffeeCard = (id, e) => {
-            if(e) e.stopPropagation(); 
-            const c = coffees.find(x => x.id === id); if(!c) return;
-            resetCardPhotoState(); // Clear previous photo state
-            // Reset to Stats Mode initially
-            toggleCardMode('stats');
-            document.getElementById('shareControls').classList.remove('hidden');
-            populateCardData(c);
-            document.getElementById('coffeeCardOverlay').classList.remove('hidden');
-        };
-
-        const toggleCardMode = (mode) => {
-            currentShareMode = mode;
-            const btnStats = document.getElementById('btnCardStats');
-            const btnPhoto = document.getElementById('btnCardPhoto');
-            const btnUpload = document.getElementById('btnUploadCardPhoto');
-            const statsSection = document.getElementById('cardStatsSection');
-            const photoSection = document.getElementById('cardPhotoSection');
-
-            if(mode === 'stats') {
-                btnStats.className = "px-3 py-1.5 text-xs font-bold rounded shadow-sm bg-white dark:bg-[#292524] text-coffee-800 dark:text-white transition-all";
-                btnPhoto.className = "px-3 py-1.5 text-xs font-bold rounded text-coffee-500 dark:text-[#78716c] hover:text-coffee-700 dark:hover:text-[#d6ccc2] transition-all";
-                statsSection.classList.remove('hidden');
-                photoSection.classList.add('hidden');
-                btnUpload.classList.add('hidden');
-            } else {
-                btnPhoto.className = "px-3 py-1.5 text-xs font-bold rounded shadow-sm bg-white dark:bg-[#292524] text-coffee-800 dark:text-white transition-all";
-                btnStats.className = "px-3 py-1.5 text-xs font-bold rounded text-coffee-500 dark:text-[#78716c] hover:text-coffee-700 dark:hover:text-[#d6ccc2] transition-all";
-                photoSection.classList.remove('hidden');
-                statsSection.classList.add('hidden');
-                btnUpload.classList.remove('hidden');
-            }
-        };
-
-        const triggerCardPhoto = () => {
-             document.getElementById('cardPhotoInput').click();
-        };
-
-        const handleCardPhoto = (event) => {
-            const file = event.target.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const div = document.getElementById('cardDisplayedPhoto');
-                    const ph = document.getElementById('cardPhotoPlaceholder');
-                    div.style.backgroundImage = `url(${e.target.result})`;
-                    div.classList.remove('hidden');
-                    ph.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        };
-
-        const generateShareImage = async () => {
-            const c = currentCardCoffee;
-            const overlay = document.getElementById('coffeeCardOverlay');
-            const content = document.getElementById('coffeeCardContent');
-            const shareControls = document.getElementById('shareControls');
-            const closeBtn = document.getElementById('cardCloseBtn'); 
-            const bottomBar = document.getElementById('cardBottomBar');
-            
-            // Temporary UI adjustments for snapshot
-            shareControls.classList.add('hidden');
-            closeBtn.classList.add('hidden'); 
-            bottomBar.style.display = 'none';
-
-            try {
-                await new Promise(r => setTimeout(r, 100)); // allow UI to update
-                // Increase scale to 3 for better quality
-                const canvas = await html2canvas(content, { 
-                    scale: 3, 
-                    backgroundColor: getComputedStyle(content).backgroundColor, 
-                    useCORS: true,
-                    allowTaint: true 
-                });
-                
-                // Restore UI
-                shareControls.classList.remove('hidden');
-                closeBtn.classList.remove('hidden'); 
-                bottomBar.style.display = '';
-
-                canvas.toBlob(async (blob) => {
-                    if (!blob) return alert('Failed to generate image');
-                    const file = new File([blob], `brew_${c.roaster || 'coffee'}_${Date.now()}.png`, { type: 'image/png' });
-                    if (navigator.share) {
-                        try { await navigator.share({ files: [file], title: 'My Coffee Brew', text: `Check out this brew of ${c.roaster}!` }); } catch (err) { if (err.name !== 'AbortError') console.error('Share failed:', err); }
-                    } else {
-                        const link = document.createElement('a'); link.download = file.name; link.href = canvas.toDataURL(); link.click();
-                    }
-                }, 'image/png');
-            } catch (err) {
-                console.error("Card generation failed", err); 
-                shareControls.classList.remove('hidden');
-                closeBtn.classList.remove('hidden'); 
-                bottomBar.style.display = '';
-                alert("Could not generate card image.");
-            }
-        };
-
-        const closeCoffeeCard = (e) => { if(!e || e.target.id === 'coffeeCardOverlay') { document.getElementById('coffeeCardOverlay').classList.add('hidden'); } };
         const initTheme = () => { const s=localStorage.getItem('theme'); if(s==='light')document.documentElement.classList.remove('dark'); else {document.documentElement.classList.add('dark');localStorage.setItem('theme','dark');} };
         const toggleTheme = () => { const h=document.documentElement; if(h.classList.contains('dark')){h.classList.remove('dark');localStorage.setItem('theme','light');}else{h.classList.add('dark');localStorage.setItem('theme','dark');} };
 
