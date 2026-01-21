@@ -229,6 +229,7 @@
                             <option value="" disabled selected>Select Method</option>
                             <option value="Espresso">Espresso</option>
                             <option value="V60">V60</option>
+                            <option value="Hario Switch">Hario Switch</option>
                             <option value="Clever Dripper">Clever Dripper</option>
                             <option value="Aeropress">Aeropress</option>
                             <option value="OXO Rapid Brewer">OXO Rapid Brewer</option>
@@ -1748,7 +1749,7 @@
             if(stdDrinks.includes(dVal)) { document.getElementById('drinkType').value = dVal; document.getElementById('drinkOther').classList.add('hidden'); } 
             else if (dVal) { document.getElementById('drinkType').value = 'Other'; document.getElementById('drinkOther').value = dVal; document.getElementById('drinkOther').classList.remove('hidden'); } 
             else { document.getElementById('drinkType').value = ""; document.getElementById('drinkOther').classList.add('hidden'); }
-            const stdMethods = ["Espresso", "V60", "Clever Dripper", "Aeropress", "OXO Rapid Brewer", "French Press", "Chemex"]; const mVal = c.method || "";
+            const stdMethods = ["Espresso", "V60", "Hario Switch", "Clever Dripper", "Aeropress", "OXO Rapid Brewer", "French Press", "Chemex"]; const mVal = c.method || "";
             if(stdMethods.includes(mVal)) { document.getElementById('method').value = mVal; document.getElementById('methodOther').classList.add('hidden'); } 
             else if (mVal) { document.getElementById('method').value = 'Other'; document.getElementById('methodOther').value = mVal; document.getElementById('methodOther').classList.remove('hidden'); } 
             else { document.getElementById('method').value = ""; document.getElementById('methodOther').classList.add('hidden'); }
