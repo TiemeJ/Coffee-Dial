@@ -648,7 +648,7 @@
             </div>
 
             <div class="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
-                 <span class="bg-black/50 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm">Drag to Pan • Pinch to Zoom • Double Tap to Reset</span>
+                 <span class="bg-black/50 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm">Drag to Pan • Pinch/Wheel to Zoom • Double Tap to Reset</span>
             </div>
         </div>
     </div>
@@ -1428,18 +1428,130 @@
         const openEasterEgg = () => { const m = document.getElementById('easterEggModal'); const v = document.getElementById('easterEggVideo'); m.classList.remove('hidden'); v.currentTime = 0; v.play().catch(e => console.log("Autoplay failed", e)); };
         const closeEasterEgg = (e) => { if(!e || e.target.id === 'easterEggModal' || e.target.closest('button')) { const m = document.getElementById('easterEggModal'); const v = document.getElementById('easterEggVideo'); m.classList.add('hidden'); v.pause(); } };
 
-        let zoomState = { scale: 1, x: 0, y: 0 }; let gesture = { startX: 0, startY: 0, startScale: 1, startDist: 0 };
-        const openImageModal = () => { document.getElementById('imageModalOverlay').classList.remove('hidden'); resetZoom(); };
-        const closeImageModal = (e) => { if (!e || e.target.id === 'imageModalOverlay' || e.target.closest('button')) document.getElementById('imageModalOverlay').classList.add('hidden'); };
-        const resetZoom = () => { zoomState = { scale: 1, x: 0, y: 0 }; const img = document.getElementById('zoomableImage'); img.style.transition = 'transform 0.3s ease-out'; updateImage(); };
-        const updateImage = () => { const img = document.getElementById('zoomableImage'); img.style.transform = `translate(${zoomState.x}px, ${zoomState.y}px) scale(${zoomState.scale})`; };
+        // --- NEW ZOOM LOGIC ---
+        let zoomState = { scale: 1, x: 0, y: 0 };
+        let panStart = { x: 0, y: 0 }; 
+        let isPanning = false;
+
+        const openImageModal = () => { 
+            document.getElementById('imageModalOverlay').classList.remove('hidden'); 
+            resetZoom(); 
+        };
+        
+        const closeImageModal = (e) => { 
+            if (!e || e.target.id === 'imageModalOverlay' || e.target.closest('button')) {
+                document.getElementById('imageModalOverlay').classList.add('hidden'); 
+            }
+        };
+
+        const resetZoom = () => { 
+            zoomState = { scale: 1, x: 0, y: 0 }; 
+            const img = document.getElementById('zoomableImage');
+            if(img) {
+                img.style.transform = `translate(0px, 0px) scale(1)`; 
+                img.style.cursor = 'grab';
+            }
+        };
+
+        const updateImage = () => { 
+            const img = document.getElementById('zoomableImage'); 
+            if(img) img.style.transform = `translate(${zoomState.x}px, ${zoomState.y}px) scale(${zoomState.scale})`; 
+        };
+
         const initZoomListeners = () => {
-            const img = document.getElementById('zoomableImage'); const container = document.getElementById('imageContainer');
-            container.addEventListener('wheel', (e) => { e.preventDefault(); const delta = e.deltaY * -0.01; zoomState.scale = Math.min(Math.max(0.5, zoomState.scale + delta), 5); updateImage(); });
-            container.addEventListener('dblclick', (e) => { e.preventDefault(); resetZoom(); });
-            container.addEventListener('touchstart', (e) => { img.style.transition = 'none'; if (e.touches.length === 2) { e.preventDefault(); gesture.startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); gesture.startScale = zoomState.scale; } else if (e.touches.length === 1) { gesture.startX = e.touches[0].pageX - zoomState.x; gesture.startY = e.touches[0].pageY - zoomState.y; } }, { passive: false });
-            container.addEventListener('touchmove', (e) => { e.preventDefault(); if (e.touches.length === 2) { const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); if(gesture.startDist > 0) { zoomState.scale = Math.min(Math.max(0.5, gesture.startScale * (dist / gesture.startDist)), 5); updateImage(); } } else if (e.touches.length === 1 && zoomState.scale > 1) { zoomState.x = e.touches[0].pageX - gesture.startX; zoomState.y = e.touches[0].pageY - gesture.startY; updateImage(); } }, { passive: false });
-            container.addEventListener('touchend', (e) => { if (e.touches.length === 0) { img.style.transition = 'transform 0.2s ease-out'; if (zoomState.scale < 1) resetZoom(); } });
+            const container = document.getElementById('imageContainer');
+            const img = document.getElementById('zoomableImage');
+            if(!container || !img) return;
+
+            // --- MOUSE EVENTS (Desktop) ---
+            
+            // Wheel Zoom
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY * -0.002;
+                const newScale = Math.min(Math.max(0.5, zoomState.scale + delta), 5);
+                zoomState.scale = newScale;
+                updateImage();
+            }, { passive: false });
+
+            // Mouse Down (Start Pan)
+            container.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isPanning = true;
+                panStart = { x: e.clientX - zoomState.x, y: e.clientY - zoomState.y };
+                img.style.cursor = 'grabbing';
+            });
+
+            // Mouse Move (Panning)
+            window.addEventListener('mousemove', (e) => {
+                if (!isPanning) return;
+                e.preventDefault();
+                zoomState.x = e.clientX - panStart.x;
+                zoomState.y = e.clientY - panStart.y;
+                updateImage();
+            });
+
+            // Mouse Up (End Pan)
+            window.addEventListener('mouseup', () => {
+                if(isPanning) {
+                    isPanning = false;
+                    img.style.cursor = 'grab';
+                }
+            });
+
+            // Double Click Reset
+            container.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                resetZoom();
+            });
+
+            // --- TOUCH EVENTS (Mobile) ---
+            
+            let initialDist = 0;
+            let initialScale = 1;
+
+            container.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    // Start Pinch
+                    e.preventDefault();
+                    initialDist = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                    initialScale = zoomState.scale;
+                } else if (e.touches.length === 1) {
+                    // Start Pan
+                    isPanning = true;
+                    panStart = { x: e.touches[0].pageX - zoomState.x, y: e.touches[0].pageY - zoomState.y };
+                }
+            }, { passive: false });
+
+            container.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2) {
+                    // Pinching
+                    e.preventDefault();
+                    const dist = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                    if (initialDist > 0) {
+                        const delta = dist - initialDist;
+                        zoomState.scale = Math.min(Math.max(0.5, initialScale * (dist / initialDist)), 5);
+                        updateImage();
+                    }
+                } else if (e.touches.length === 1 && isPanning) {
+                    // Panning
+                    e.preventDefault(); 
+                    zoomState.x = e.touches[0].pageX - panStart.x;
+                    zoomState.y = e.touches[0].pageY - panStart.y;
+                    updateImage();
+                }
+            }, { passive: false });
+
+            container.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) initialDist = 0;
+                if (e.touches.length === 0) isPanning = false;
+            });
         };
 
         // --- Statistics Logic ---
@@ -2129,6 +2241,7 @@
                 document.getElementById('syncStatus').classList.remove('hidden'); document.getElementById('viewSelectorContainer').classList.remove('hidden'); 
                 await initUserData(user); loadFollowingList(); changeView('mine'); initNotificationListener(user.uid);
                 const hasSeen = localStorage.getItem(`tutorialSeen_${user.uid}`); if (!hasSeen) openHelp();
+                initZoomListeners(); // Initialize Zoom Listeners on Load
             } else {
                 document.getElementById('authContainer').innerHTML = `<button onclick="googleLogin()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button>`;
                 document.getElementById('viewSelectorContainer').classList.add('hidden'); document.getElementById('coffeeTableBody').innerHTML = ''; document.getElementById('emptyState').classList.remove('hidden');
