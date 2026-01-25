@@ -342,7 +342,7 @@
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
-                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap"><i class="fa-solid fa-grip-vertical"></i></th>
+                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" onclick="refreshTableData(this)" title="Refresh Table"><i class="fa-solid fa-arrows-rotate"></i></th>
                             <th id="th-roaster" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable" onclick="sortBy('roaster')" ondblclick="openFilterMenu(event,'roaster')">Roaster</th>
                             <th id="th-origin" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('origin')" ondblclick="openFilterMenu(event, 'origin')">Origin</th>
                             <th id="th-farmer" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('farmer')" ondblclick="openFilterMenu(event, 'farmer')">Blend/Farmer</th>
@@ -1976,6 +1976,37 @@
             e.stopPropagation(); document.querySelectorAll('.action-menu').forEach(el => { if(el.id !== menuId) el.classList.add('hidden'); });
             const menu = document.getElementById(menuId); if(menu) menu.classList.toggle('hidden');
         };
+        
+        // --- NEW FUNCTION: Refresh Table with Full Reset ---
+        const refreshTableData = (el) => {
+            // 1. Visual Spin
+            const icon = el.querySelector('i');
+            if(icon) icon.classList.add('fa-spin');
+
+            // 2. Reset Sort to default (which enables drag handles in My Brews)
+            currentSort = { key: null, direction: 'asc' };
+
+            // 3. Reset Filters
+            activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null };
+
+            // 4. Reset Search Input
+            const searchInput = document.getElementById('globalSearch');
+            if(searchInput) {
+                searchInput.value = '';
+                document.getElementById('searchClearBtn').classList.add('hidden');
+            }
+
+            // 5. Update Filter UI (remove pills)
+            renderActiveFilters();
+
+            // 6. Re-fetch/Re-render
+            // Calling changeView(currentView) is robust as it tears down and sets up the listener again,
+            // ensuring the table order matches the database order (customOrder) and fetching fresh data.
+            changeView(currentView);
+
+            // 7. Remove Spin after delay
+            setTimeout(() => { if(icon) icon.classList.remove('fa-spin'); }, 800);
+        };
 
         const renderTable = () => { 
             const t = document.getElementById('coffeeTableBody'); const activeT = document.getElementById('activeCoffeeTableBody'); const e = document.getElementById('emptyState'); 
@@ -2092,7 +2123,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, handleDragStart, handleDragOver, handleDrop, handleDragEnd, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData
         });
 
         initTheme();
