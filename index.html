@@ -347,7 +347,7 @@
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
-                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" onclick="refreshTableData(this)" title="Refresh Table"><i class="fa-solid fa-arrows-rotate"></i></th>
+                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" onclick="refreshTableData(this)" title="Reset Table"><i class="fa-solid fa-arrow-rotate-left"></i></th>
                             <th id="th-roaster" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable" onclick="sortBy('roaster')" ondblclick="openFilterMenu(event,'roaster')">Roaster</th>
                             <th id="th-origin" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('origin')" ondblclick="openFilterMenu(event, 'origin')">Origin</th>
                             <th id="th-farmer" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('farmer')" ondblclick="openFilterMenu(event, 'farmer')">Blend/Farmer</th>
@@ -1134,53 +1134,53 @@
             sortableInstances.forEach(instance => instance.destroy());
             sortableInstances = [];
 
+            // Check if dragging should be enabled
             // Only enable sorting on 'mine' view when no filters/sort are active
             const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v => v !== null);
 
             if (!isDraggable) return;
 
-            const bodies = [document.getElementById('coffeeTableBody'), document.getElementById('activeCoffeeTableBody')];
+            // ONLY TARGET THE ACTIVE BREWS TABLE NOW
+            const activeBody = document.getElementById('activeCoffeeTableBody');
 
-            bodies.forEach(tbody => {
-                if (tbody && !tbody.classList.contains('hidden')) {
-                    const sortable = new Sortable(tbody, {
-                        handle: '.drag-handle', // Handle on the grip icon
-                        animation: 150,
-                        ghostClass: 'sortable-ghost',
-                        dragClass: 'sortable-drag',
-                        delay: 100, // Slight delay to prevent accidental drags
-                        delayOnTouchOnly: true,
-                        onEnd: async function(evt) {
-                            if (evt.oldIndex === evt.newIndex) return;
-                            
-                            // Get current order of IDs from the DOM
-                            const rows = Array.from(tbody.querySelectorAll('tr'));
-                            const newOrderIds = rows.map(row => row.getAttribute('data-id')).filter(id => id);
+            if (activeBody && !activeBody.classList.contains('hidden')) {
+                const sortable = new Sortable(activeBody, {
+                    handle: '.drag-handle', // Handle on the grip icon
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    delay: 100, // Slight delay to prevent accidental drags
+                    delayOnTouchOnly: true,
+                    onEnd: async function(evt) {
+                        if (evt.oldIndex === evt.newIndex) return;
+                        
+                        // Get current order of IDs from the DOM
+                        const rows = Array.from(activeBody.querySelectorAll('tr'));
+                        const newOrderIds = rows.map(row => row.getAttribute('data-id')).filter(id => id);
 
-                            // Update customOrder in Firebase
-                            const batch = writeBatch(db);
-                            newOrderIds.forEach((id, index) => {
-                                // Find the item in our local array to get its current data
-                                const item = coffees.find(c => c.id === id);
-                                if (item) {
-                                    item.customOrder = index; // Update local state immediately
-                                    const ref = doc(db, 'users', currentUser.uid, 'coffees', id);
-                                    batch.update(ref, { customOrder: index });
-                                }
-                            });
-                            
-                            try {
-                                await batch.commit();
-                            } catch(err) {
-                                console.error("Reorder failed", err);
-                                alert("Failed to save new order.");
-                                renderTable(); // Revert visual change on error
+                        // Update customOrder in Firebase
+                        const batch = writeBatch(db);
+                        newOrderIds.forEach((id, index) => {
+                            // Find the item in our local array to get its current data
+                            const item = coffees.find(c => c.id === id);
+                            if (item) {
+                                item.customOrder = index; // Update local state immediately
+                                const ref = doc(db, 'users', currentUser.uid, 'coffees', id);
+                                batch.update(ref, { customOrder: index });
                             }
+                        });
+                        
+                        try {
+                            await batch.commit();
+                        } catch(err) {
+                            console.error("Reorder failed", err);
+                            alert("Failed to save new order.");
+                            renderTable(); // Revert visual change on error
                         }
-                    });
-                    sortableInstances.push(sortable);
-                }
-            });
+                    }
+                });
+                sortableInstances.push(sortable);
+            }
         };
 
         const setNotesMode = (mode) => {
@@ -2136,13 +2136,17 @@
             if(coffees.length === 0){ e.classList.remove('hidden'); activeT.classList.add('hidden'); return; } e.classList.add('hidden');
             
             // Allow drag only when no specific sort/filter is active and viewing own profile
-            const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v=>v!==null);
+            // Note: Now we also use this to show the green handle on active rows, but force lock on history rows
+            const isActiveDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v=>v!==null);
             
             let hasActive = false;
             filteredCoffees.forEach((c, index) => {
                 const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
                 const displayRoaster = c.roaster || c.name || '-'; const displayOrigin = c.origin || c.beanType || '-'; const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
-                const gripIcon = isDraggable ? 'fa-grip-vertical drag-handle text-coffee-400 hover:text-coffee-600' : 'fa-lock opacity-30';
+                
+                // HISTORY ROW IS ALWAYS LOCKED NOW (Per user request)
+                const gripIcon = 'fa-lock opacity-10'; 
+                
                 const menuId = `action-menu-${c.id}`;
                 let actions = '';
                 
@@ -2195,7 +2199,7 @@
                 }
 
                 const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
-                let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIcon} text-coffee-300 dark:text-[#57534e]"></i></td>`;
+                let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIcon} text-coffee-200 dark:text-[#34302e]"></i></td>`;
                 if(columnPreferences.roaster !== false) rowHTML += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
                 if(columnPreferences.origin !== false) rowHTML += `<td class="px-3 py-1 text-sm">${displayOrigin}</td>`;
                 if(columnPreferences.farmer !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.farmer || '-'}</td>`;
@@ -2220,7 +2224,9 @@
                 if(c.isActive) {
                     hasActive = true; const rActive = document.createElement('tr'); rActive.className='bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-green-50 dark:border-green-900/10 last:border-b-0 cursor-pointer'; rActive.ondblclick = (e) => openCoffeeCard(c.id, e);
                     rActive.setAttribute('data-id', c.id);
-                    rActive.innerHTML = rowHTML.replace(gripIcon, 'fa-grip-vertical text-green-500 drag-handle');
+                    // ACTIVE ROW GRIP: Use drag handle if applicable
+                    const activeGripIcon = isActiveDraggable ? 'fa-grip-vertical text-green-500 drag-handle cursor-grab' : 'fa-lock opacity-30';
+                    rActive.innerHTML = rowHTML.replace(gripIcon, activeGripIcon);
                     activeT.appendChild(rActive);
                 }
             });
