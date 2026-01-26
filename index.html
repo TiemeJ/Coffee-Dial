@@ -2136,7 +2136,6 @@
             if(coffees.length === 0){ e.classList.remove('hidden'); activeT.classList.add('hidden'); return; } e.classList.add('hidden');
             
             // Allow drag only when no specific sort/filter is active and viewing own profile
-            // Note: Now we also use this to show the green handle on active rows, but force lock on history rows
             const isActiveDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v=>v!==null);
             
             let hasActive = false;
@@ -2144,8 +2143,8 @@
                 const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
                 const displayRoaster = c.roaster || c.name || '-'; const displayOrigin = c.origin || c.beanType || '-'; const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
                 
-                // HISTORY ROW IS ALWAYS LOCKED NOW (Per user request)
-                const gripIcon = 'fa-lock opacity-10'; 
+                // HISTORY ROW LOCK ICON (Visible grey)
+                const gripIcon = 'fa-lock text-stone-300 dark:text-stone-600 opacity-60'; 
                 
                 const menuId = `action-menu-${c.id}`;
                 let actions = '';
@@ -2199,7 +2198,7 @@
                 }
 
                 const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
-                let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIcon} text-coffee-200 dark:text-[#34302e]"></i></td>`;
+                let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIcon}"></i></td>`;
                 if(columnPreferences.roaster !== false) rowHTML += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
                 if(columnPreferences.origin !== false) rowHTML += `<td class="px-3 py-1 text-sm">${displayOrigin}</td>`;
                 if(columnPreferences.farmer !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.farmer || '-'}</td>`;
@@ -2219,13 +2218,13 @@
                 if(columnPreferences.date !== false) rowHTML += `<td class="px-3 py-1 text-xs font-mono text-coffee-500">${displayDate}</td>`;
                 rowHTML += `<td class="px-3 py-1 text-center w-16" onclick="event.stopPropagation()">${actions}</td>`;
                 const r = document.createElement('tr'); r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-50 dark:border-[#44403c] last:border-b-0 cursor-pointer'; r.ondblclick = (e) => openCoffeeCard(c.id, e);
-                r.setAttribute('data-id', c.id); // Add ID to row for SortableJS
+                r.setAttribute('data-id', c.id); 
                 r.innerHTML = rowHTML; t.appendChild(r);
                 if(c.isActive) {
                     hasActive = true; const rActive = document.createElement('tr'); rActive.className='bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-green-50 dark:border-green-900/10 last:border-b-0 cursor-pointer'; rActive.ondblclick = (e) => openCoffeeCard(c.id, e);
                     rActive.setAttribute('data-id', c.id);
-                    // ACTIVE ROW GRIP: Use drag handle if applicable
-                    const activeGripIcon = isActiveDraggable ? 'fa-grip-vertical text-green-500 drag-handle cursor-grab' : 'fa-lock opacity-30';
+                    // ACTIVE ROW GRIP: Visible stone grey grip
+                    const activeGripIcon = isActiveDraggable ? 'fa-grip-vertical text-stone-400 dark:text-stone-500 drag-handle cursor-grab' : 'fa-lock text-stone-300 dark:text-stone-600 opacity-60';
                     rActive.innerHTML = rowHTML.replace(gripIcon, activeGripIcon);
                     activeT.appendChild(rActive);
                 }
@@ -2233,8 +2232,11 @@
             const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length;
             if(hasActive) {
                 const activeHeader = document.createElement('tr'); activeHeader.className = "bg-green-50/50 dark:bg-green-900/20"; activeHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; activeT.insertBefore(activeHeader, activeT.firstChild);
-                const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild); activeT.classList.remove('hidden');
-            } else { activeT.classList.add('hidden'); }
+                const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b] border-t border-coffee-100 dark:border-[#44403c]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild); activeT.classList.remove('hidden');
+            } else { 
+                activeT.classList.add('hidden'); 
+                const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b] border-t border-coffee-100 dark:border-[#44403c]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild);
+            }
             
             // Initialize Sortable
             initSortable();
