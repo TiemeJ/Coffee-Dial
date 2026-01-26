@@ -2143,8 +2143,8 @@
                 const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
                 const displayRoaster = c.roaster || c.name || '-'; const displayOrigin = c.origin || c.beanType || '-'; const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
                 
-                // HISTORY ROW LOCK ICON (Visible grey)
-                const gripIcon = 'fa-lock text-stone-300 dark:text-stone-600 opacity-60'; 
+                // HISTORY ROW CLOCK ICON
+                const gripIcon = 'fa-clock text-stone-300 dark:text-stone-600 opacity-60'; 
                 
                 const menuId = `action-menu-${c.id}`;
                 let actions = '';
@@ -2235,7 +2235,6 @@
                 const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b] border-t border-coffee-100 dark:border-[#44403c]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild); activeT.classList.remove('hidden');
             } else { 
                 activeT.classList.add('hidden'); 
-                const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b] border-t border-coffee-100 dark:border-[#44403c]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild);
             }
             
             // Initialize Sortable
