@@ -368,7 +368,7 @@
                             <th scope="col" class="px-3 py-1.5 text-center w-16 whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="activeCoffeeTableBody" class="divide-y divide-green-50 dark:divide-green-900/10 border-b-2 border-coffee-100 dark:border-[#44403c] hidden"></tbody>
+                    <tbody id="activeCoffeeTableBody" class="border-b-2 border-coffee-100 dark:border-[#44403c] hidden"></tbody>
                     <tbody id="coffeeTableBody"></tbody>
                 </table>
             </div>
@@ -2224,7 +2224,10 @@
                 r.setAttribute('data-id', c.id); 
                 r.innerHTML = rowHTML; t.appendChild(r);
                 if(c.isActive) {
-                    hasActive = true; const rActive = document.createElement('tr'); rActive.className='bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-green-50 dark:border-green-900/10 last:border-b-0 cursor-pointer'; rActive.ondblclick = (e) => openCoffeeCard(c.id, e);
+                    hasActive = true; const rActive = document.createElement('tr'); 
+                    // Changed border-green-50 to border-coffee-100 for consistency with main table
+                    rActive.className='bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer'; 
+                    rActive.ondblclick = (e) => openCoffeeCard(c.id, e);
                     rActive.setAttribute('data-id', c.id);
                     // ACTIVE ROW GRIP: Visible stone grey grip
                     const activeGripIcon = isActiveDraggable ? 'fa-grip-vertical text-stone-400 dark:text-stone-500 drag-handle cursor-grab' : 'fa-lock text-stone-300 dark:text-stone-600 opacity-60';
@@ -2234,7 +2237,8 @@
             });
             const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length;
             if(hasActive) {
-                const activeHeader = document.createElement('tr'); activeHeader.className = "bg-green-50/50 dark:bg-green-900/20"; activeHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; activeT.insertBefore(activeHeader, activeT.firstChild);
+                // Added border-b border-coffee-100 to header to separate it from the first active row clearly
+                const activeHeader = document.createElement('tr'); activeHeader.className = "bg-green-50/50 dark:bg-green-900/20 border-b border-coffee-100 dark:border-[#44403c]"; activeHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; activeT.insertBefore(activeHeader, activeT.firstChild);
                 // Added border-y instead of border-t to ensure separation from history rows below
                 const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b] border-y border-coffee-100 dark:border-[#44403c]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild); activeT.classList.remove('hidden');
             } else { 
