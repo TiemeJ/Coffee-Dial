@@ -2159,7 +2159,8 @@
             
             // 2. Split into Active and History
             let activeBrews = filteredCoffees.filter(c => c.isActive);
-            let historyBrews = filteredCoffees.filter(c => !c.isActive);
+            // Modified: History shows everything (both active and inactive)
+            let historyBrews = [...filteredCoffees]; 
 
             // 3. Apply Context-Specific Sorting
             // Only apply split sorting if the user hasn't clicked a specific column header
@@ -2171,8 +2172,7 @@
                 historyBrews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             }
             // Note: If currentSort.key IS set (e.g. user clicked "Roaster"), 
-            // getFilteredCoffees() has already sorted 'filteredCoffees' by that key,
-            // so activeBrews and historyBrews inherit that sort order, which is correct.
+            // getFilteredCoffees() has already sorted 'filteredCoffees' by that key.
 
             // Allow drag only when no specific sort/filter is active and viewing own profile
             const isActiveDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v=>v!==null);
@@ -2184,12 +2184,21 @@
                 const displayOrigin = c.origin || c.beanType || '-'; 
                 const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
                 
-                // Setup Grip Icon
-                let gripIconClass = 'fa-clock text-stone-300 dark:text-stone-600 opacity-60'; // Default History Icon
+                // Setup Grip Icon / Pin Icon
+                let gripIconClass = '';
                 if (isForActiveTable) {
                     gripIconClass = isActiveDraggable 
                         ? 'fa-grip-vertical text-stone-400 dark:text-stone-500 drag-handle cursor-grab' 
                         : 'fa-lock text-stone-300 dark:text-stone-600 opacity-60';
+                } else {
+                    // History Section Logic: Show Pin status
+                    if (c.isActive) {
+                        // Active/Pinned: Green Filled Pin
+                        gripIconClass = 'fa-thumbtack text-green-600';
+                    } else {
+                        // Inactive/Unpinned: Gray Faint Pin
+                        gripIconClass = 'fa-thumbtack text-stone-300 dark:text-stone-600 opacity-40';
+                    }
                 }
 
                 const menuId = `action-menu-${c.id}`;
