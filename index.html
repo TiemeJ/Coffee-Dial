@@ -1070,7 +1070,8 @@
             const q = collection(db, 'users', targetUid, 'coffees');
             unsubscribeData = onSnapshot(q, (snapshot) => {
                 coffees = []; snapshot.forEach(doc => coffees.push({ id: doc.id, ...doc.data() }));
-                if (!currentSort.key) coffees.sort((a,b) => (a.customOrder || 0) - (b.customOrder || 0));
+                // Default to Date Descending (Newest first) for the raw data
+                if (!currentSort.key) coffees.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderTable(); updateAutocompleteLists();
             }, (error) => {
                 console.error(error);
@@ -2130,22 +2131,67 @@
         };
 
         const renderTable = () => { 
-            const t = document.getElementById('coffeeTableBody'); const activeT = document.getElementById('activeCoffeeTableBody'); const e = document.getElementById('emptyState'); 
-            columnDefs.forEach(col => { const th = document.getElementById(`th-${col.id}`); if(th) { if(columnPreferences[col.id] === false) th.classList.add('hidden'); else th.classList.remove('hidden'); } });
-            t.innerHTML=''; activeT.innerHTML=''; const filteredCoffees = getFilteredCoffees();
-            if(coffees.length === 0){ e.classList.remove('hidden'); activeT.classList.add('hidden'); return; } e.classList.add('hidden');
+            const t = document.getElementById('coffeeTableBody'); 
+            const activeT = document.getElementById('activeCoffeeTableBody'); 
+            const e = document.getElementById('emptyState'); 
             
+            // Toggle column visibility
+            columnDefs.forEach(col => { 
+                const th = document.getElementById(`th-${col.id}`); 
+                if(th) { 
+                    if(columnPreferences[col.id] === false) th.classList.add('hidden'); 
+                    else th.classList.remove('hidden'); 
+                } 
+            });
+
+            t.innerHTML=''; 
+            activeT.innerHTML=''; 
+            
+            // 1. Get Filtered Data
+            let filteredCoffees = getFilteredCoffees();
+
+            if(filteredCoffees.length === 0){ 
+                e.classList.remove('hidden'); 
+                activeT.classList.add('hidden'); 
+                return; 
+            } 
+            e.classList.add('hidden');
+            
+            // 2. Split into Active and History
+            let activeBrews = filteredCoffees.filter(c => c.isActive);
+            let historyBrews = filteredCoffees.filter(c => !c.isActive);
+
+            // 3. Apply Context-Specific Sorting
+            // Only apply split sorting if the user hasn't clicked a specific column header
+            if (currentSort.key === null) {
+                // Active: Sort by Custom Manual Order
+                activeBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
+                
+                // History: Sort by Date (Newest First)
+                historyBrews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+            // Note: If currentSort.key IS set (e.g. user clicked "Roaster"), 
+            // getFilteredCoffees() has already sorted 'filteredCoffees' by that key,
+            // so activeBrews and historyBrews inherit that sort order, which is correct.
+
             // Allow drag only when no specific sort/filter is active and viewing own profile
             const isActiveDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v=>v!==null);
             
-            let hasActive = false;
-            filteredCoffees.forEach((c, index) => {
+            // Helper function to generate Row HTML (Refactored to avoid code duplication)
+            const generateRow = (c, isForActiveTable) => {
                 const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
-                const displayRoaster = c.roaster || c.name || '-'; const displayOrigin = c.origin || c.beanType || '-'; const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
+                const displayRoaster = c.roaster || c.name || '-'; 
+                const displayOrigin = c.origin || c.beanType || '-'; 
+                const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
                 
-                // HISTORY ROW CLOCK ICON
-                const gripIcon = 'fa-clock text-stone-300 dark:text-stone-600 opacity-60'; 
-                
+                // Setup Grip Icon
+                let gripIconClass = 'fa-clock text-stone-300 dark:text-stone-600 opacity-60'; // Default History Icon
+                if (isForActiveTable) {
+                    gripIconClass = isActiveDraggable 
+                        ? 'fa-grip-vertical text-stone-400 dark:text-stone-500 drag-handle cursor-grab' 
+                        : 'fa-lock text-stone-300 dark:text-stone-600 opacity-60';
+                }
+
                 const menuId = `action-menu-${c.id}`;
                 let actions = '';
                 
@@ -2164,7 +2210,7 @@
                                 <button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate
                                 </button>
-                                 <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                    <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}
                                 </button>
                                 <button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
@@ -2183,10 +2229,10 @@
                 } else { 
                     actions = `
                         <div class="relative">
-                             <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
+                                <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
                                 <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                             </button>
-                             <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                                <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
                                 <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card
                                 </button>
@@ -2198,7 +2244,8 @@
                 }
 
                 const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
-                let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIcon}"></i></td>`;
+                
+                let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIconClass}"></i></td>`;
                 if(columnPreferences.roaster !== false) rowHTML += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
                 if(columnPreferences.origin !== false) rowHTML += `<td class="px-3 py-1 text-sm">${displayOrigin}</td>`;
                 if(columnPreferences.farmer !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.farmer || '-'}</td>`;
@@ -2217,35 +2264,52 @@
                 if(columnPreferences.rating !== false) rowHTML += `<td class="px-3 py-1 whitespace-nowrap">${getStarDisplay(c.rating)}</td>`;
                 if(columnPreferences.date !== false) rowHTML += `<td class="px-3 py-1 text-xs font-mono text-coffee-500">${displayDate}</td>`;
                 rowHTML += `<td class="px-3 py-1 text-center w-16" onclick="event.stopPropagation()">${actions}</td>`;
+
                 const r = document.createElement('tr'); 
-                // Changed border-coffee-50 to border-coffee-100 to fix first row lightness and consistency
-                r.className='bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer'; 
+                r.className = isForActiveTable 
+                    ? 'bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer'
+                    : 'bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer';
+                
                 r.ondblclick = (e) => openCoffeeCard(c.id, e);
                 r.setAttribute('data-id', c.id); 
-                r.innerHTML = rowHTML; t.appendChild(r);
-                if(c.isActive) {
-                    hasActive = true; const rActive = document.createElement('tr'); 
-                    // Changed border-green-50 to border-coffee-100 for consistency with main table
-                    rActive.className='bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer'; 
-                    rActive.ondblclick = (e) => openCoffeeCard(c.id, e);
-                    rActive.setAttribute('data-id', c.id);
-                    // ACTIVE ROW GRIP: Visible stone grey grip
-                    const activeGripIcon = isActiveDraggable ? 'fa-grip-vertical text-stone-400 dark:text-stone-500 drag-handle cursor-grab' : 'fa-lock text-stone-300 dark:text-stone-600 opacity-60';
-                    rActive.innerHTML = rowHTML.replace(gripIcon, activeGripIcon);
-                    activeT.appendChild(rActive);
-                }
-            });
-            const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length;
-            if(hasActive) {
-                // Added border-b border-coffee-100 to header to separate it from the first active row clearly
-                const activeHeader = document.createElement('tr'); activeHeader.className = "bg-green-50/50 dark:bg-green-900/20 border-b border-coffee-100 dark:border-[#44403c]"; activeHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; activeT.insertBefore(activeHeader, activeT.firstChild);
-                // Added border-y instead of border-t to ensure separation from history rows below
-                const histHeader = document.createElement('tr'); histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b] border-y border-coffee-100 dark:border-[#44403c]"; histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; t.insertBefore(histHeader, t.firstChild); activeT.classList.remove('hidden');
-            } else { 
-                activeT.classList.add('hidden'); 
+                r.innerHTML = rowHTML;
+                return r;
+            };
+
+            // 4. Render Active Brews
+            if (activeBrews.length > 0) {
+                // Active Header
+                const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length;
+                const activeHeader = document.createElement('tr'); 
+                activeHeader.className = "bg-green-50/50 dark:bg-green-900/20 border-b border-coffee-100 dark:border-[#44403c]"; 
+                activeHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; 
+                activeT.appendChild(activeHeader);
+
+                activeBrews.forEach(c => {
+                    activeT.appendChild(generateRow(c, true));
+                });
+                activeT.classList.remove('hidden');
+            } else {
+                activeT.classList.add('hidden');
             }
-            
-            // Initialize Sortable
+
+            // 5. Render History Brews
+            if (historyBrews.length > 0) {
+                // History Header (Only if there are active brews above it)
+                if (activeBrews.length > 0) {
+                    const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length;
+                    const histHeader = document.createElement('tr'); 
+                    histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b] border-y border-coffee-100 dark:border-[#44403c]"; 
+                    histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; 
+                    t.appendChild(histHeader);
+                }
+
+                historyBrews.forEach(c => {
+                    t.appendChild(generateRow(c, false));
+                });
+            }
+
+            // Initialize Sortable (Drag and Drop) only on active table
             initSortable();
         };
 
