@@ -744,6 +744,14 @@
                 
                 <div class="space-y-4">
                     <div>
+                        <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Type</label>
+                        <select id="exportType" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
+                            <option value="brews">Brews (Brew Log)</option>
+                            <option value="coffees">Coffees (Beans)</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Format</label>
                         <select id="exportFormat" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
                             <option value="csv">CSV (.csv)</option>
@@ -1770,6 +1778,7 @@
         };
 
         const performExport = () => {
+            const exportType = document.getElementById('exportType').value;
             const format = document.getElementById('exportFormat').value;
             const brews = getFilteredCoffees();
 
@@ -1778,10 +1787,18 @@
                 return;
             }
 
-            if (format === 'csv') {
-                exportAsCSV(brews);
-            } else if (format === 'json') {
-                exportAsJSON(brews);
+            if (exportType === 'brews') {
+                if (format === 'csv') {
+                    exportAsCSV(brews);
+                } else if (format === 'json') {
+                    exportAsJSON(brews);
+                }
+            } else if (exportType === 'coffees') {
+                if (format === 'csv') {
+                    exportCoffeesAsCSV(brews);
+                } else if (format === 'json') {
+                    exportCoffeesAsJSON(brews);
+                }
             }
 
             closeExportModal();
@@ -1830,6 +1847,96 @@
             const link = document.createElement("a");
             link.setAttribute("href", jsonContent);
             link.setAttribute("download", "coffee_log.json");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        const exportCoffeesAsCSV = (brews) => {
+            // Define the headers in the exact order specified
+            const headers = ["Name", "Roaster", "Roast date", "Roast type", "Degree of Roast", "Custom degree of Roast", "Blend", "Weight", "Cost", "Flavour profile", "Cupping points", "Decaffeinated", "Website", "EAN / Articlenumber", "Notes", "Rating", "Archived", "Frozen Date", "Unfrozen Date", "Freezing Storage Type", "Frozen Note", "1. Country", "1. Region", "1. Farm", "1. Farmer", "1. Elevation", "1. Variety", "1. Processing", "1. Harvested", "1. Percentage", "1. Bean certification", "1. Fob Price", "1. Purchasing Price"];
+
+            // Create unique coffees map to avoid duplicates (keyed by all exported fields)
+            const coffeeMap = new Map();
+
+            brews.forEach(brew => {
+                const key = `${brew.roaster || ''}|${brew.farmer || ''}|${brew.roastType || ''}|${brew.origin || ''}|${brew.variety || ''}|${brew.processing || ''}`;
+                if (!coffeeMap.has(key)) {
+                    coffeeMap.set(key, brew);
+                }
+            });
+
+            // Convert map to array and create rows
+            const uniqueCoffees = Array.from(coffeeMap.values());
+            
+            const esc = (t) => { 
+                if (t === null || t === undefined) return ''; 
+                const str = String(t); 
+                if (str.includes(';') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; 
+                return str; 
+            };
+
+            const rows = uniqueCoffees.map(coffee => [
+                esc(coffee.farmer || ''),                              // Name (Blend/farmer field)
+                esc(coffee.roaster || ''),                             // Roaster
+                '',                                                     // Roast date
+                '',                                                     // Roast type
+                esc(coffee.roastType || ''),                           // Degree of Roast
+                '',                                                     // Custom degree of Roast
+                '',                                                     // Blend
+                '',                                                     // Weight
+                '',                                                     // Cost
+                '',                                                     // Flavour profile
+                '',                                                     // Cupping points
+                '',                                                     // Decaffeinated
+                '',                                                     // Website
+                '',                                                     // EAN / Articlenumber
+                '',                                                     // Notes
+                '',                                                     // Rating
+                '',                                                     // Archived
+                '',                                                     // Frozen Date
+                '',                                                     // Unfrozen Date
+                '',                                                     // Freezing Storage Type
+                '',                                                     // Frozen Note
+                esc(coffee.origin || ''),                               // 1. Country
+                '',                                                     // 1. Region
+                '',                                                     // 1. Farm
+                '',                                                     // 1. Farmer
+                '',                                                     // 1. Elevation
+                esc(coffee.variety || ''),                             // 1. Variety
+                esc(coffee.processing || ''),                          // 1. Processing
+                '',                                                     // 1. Harvested
+                '',                                                     // 1. Percentage
+                '',                                                     // 1. Bean certification
+                '',                                                     // 1. Fob Price
+                ''                                                      // 1. Purchasing Price
+            ]);
+
+            const csvContent = "data:text/csv;charset=utf-8," + headers.join(";") + "\n" + rows.map(e => e.join(";")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "coffee_beans.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        const exportCoffeesAsJSON = (brews) => {
+            const coffeeMap = new Map();
+
+            brews.forEach(brew => {
+                const key = `${brew.roaster || ''}|${brew.farmer || ''}|${brew.roastType || ''}|${brew.origin || brew.beanType || ''}|${brew.variety || ''}|${brew.processing || ''}`;
+                if (!coffeeMap.has(key)) {
+                    coffeeMap.set(key, brew);
+                }
+            });
+
+            const uniqueCoffees = Array.from(coffeeMap.values());
+            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(uniqueCoffees, null, 2));
+            const link = document.createElement("a");
+            link.setAttribute("href", jsonContent);
+            link.setAttribute("download", "coffee_beans.json");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -2446,7 +2553,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData
         });
 
         initTheme();
