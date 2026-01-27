@@ -110,7 +110,10 @@
                         <button onclick="openFriendsModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#34302e] hover:bg-coffee-100 dark:hover:bg-[#44403c] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]">
                             <i class="fa-solid fa-user-group"></i> Friends
                         </button>
-                        <img id="userAvatar" src="" alt="User" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]">
+                        <div class="relative">
+                            <img id="userAvatar" src="" alt="User" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]">
+                            <div id="avatarBadge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-[#292524] shadow-md"></div>
+                        </div>
                     </div>
                 </div>
                 
@@ -152,6 +155,14 @@
             </div>
         </div>
     </header>
+
+    <div id="coffeeWithdrawalNotification" class="hidden bg-red-50 dark:bg-red-900/20 border-l-4 border-red-600 text-red-700 dark:text-red-300 p-4 mx-auto max-w-[95%] mt-4 rounded shadow-md flex items-start gap-3">
+        <i class="fa-solid fa-triangle-exclamation text-xl mt-0.5 flex-shrink-0"></i>
+        <div class="flex-1">
+            <p class="font-bold">Coffee Withdrawal Alert!</p>
+            <p class="text-sm">You have been without coffee for <span id="withdrawalHours">-</span> hours. Time for a brew?</p>
+        </div>
+    </div>
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
         
@@ -1632,6 +1643,7 @@
             const firstDate = new Date(Math.min(...dataToUse.map(c => new Date(c.createdAt || now)))); const diffDays = Math.max(1, Math.round(Math.abs((now - firstDate) / oneDay))); const avg = (total / diffDays).toFixed(1);
             const lastBrewDate = new Date(Math.max(...dataToUse.map(c => new Date(c.createdAt || now)))); const hoursSinceLastBrew = Math.round((now - lastBrewDate) / (60 * 60 * 1000));
             document.getElementById('statTotalBrews').innerText = total; document.getElementById('statMonthBrews').innerText = hoursSinceLastBrew; document.getElementById('statWeekBrews').innerText = last7; document.getElementById('statAvgBrews').innerText = avg;
+            const badge = document.getElementById('avatarBadge'); if(badge) { badge.innerText = hoursSinceLastBrew; if(hoursSinceLastBrew > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); } updateCoffeeWithdrawalNotification(hoursSinceLastBrew);
             const agg = (key) => dataToUse.reduce((acc, c) => { const val = c[key] || 'Unknown'; acc[val] = (acc[val] || 0) + 1; return acc; }, {});
             const roastData = agg('roastType'); const methodData = agg('method'); const drinkData = agg('drink');
             const ratingData = dataToUse.reduce((acc, c) => { const r = c.rating || 0; if(r > 0) acc[r] = (acc[r] || 0) + 1; return acc; }, {});
@@ -2406,7 +2418,16 @@
             setTimeout(() => { if(icon) icon.classList.remove('fa-spin'); }, 800);
         };
 
+        const updateCoffeeWithdrawalNotification = (hoursSinceLastBrew) => {
+            const notif = document.getElementById('coffeeWithdrawalNotification'); if(!notif) return; if(hoursSinceLastBrew > 10) { document.getElementById('withdrawalHours').innerText = hoursSinceLastBrew; notif.classList.remove('hidden'); } else { notif.classList.add('hidden'); }
+        };
+
+        const updateAvatarBadge = () => {
+            if (currentView !== 'mine' || coffees.length === 0) return; const now = new Date(); const lastBrewDate = new Date(Math.max(...coffees.map(c => new Date(c.createdAt || now)))); const hoursSinceLastBrew = Math.round((now - lastBrewDate) / (60 * 60 * 1000)); const badge = document.getElementById('avatarBadge'); if(badge) { badge.innerText = hoursSinceLastBrew; if(hoursSinceLastBrew > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); } updateCoffeeWithdrawalNotification(hoursSinceLastBrew);
+        };
+
         const renderTable = () => { 
+            updateAvatarBadge();
             const t = document.getElementById('coffeeTableBody'); 
             const activeT = document.getElementById('activeCoffeeTableBody'); 
             const e = document.getElementById('emptyState'); 
@@ -2601,7 +2622,7 @@
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
             if (user) {
-                document.getElementById('authContainer').innerHTML = `<div class="flex items-center gap-3"><button onclick="openFriendsModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#34302e] hover:bg-coffee-100 dark:hover:bg-[#44403c] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-solid fa-user-group"></i> Friends</button><img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}"></div>`;
+                document.getElementById('authContainer').innerHTML = `<div class="flex items-center gap-3"><button onclick="openFriendsModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#34302e] hover:bg-coffee-100 dark:hover:bg-[#44403c] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-solid fa-user-group"></i> Friends</button><button onclick="openStats()" class="relative flex-shrink-0 hover:opacity-80 transition-opacity"><img src="${user.photoURL}" class="w-8 h-8 flex-shrink-0 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}"><div id="avatarBadge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-[#292524] shadow-md"></div></button></div>`;
                 document.getElementById('syncStatus').classList.remove('hidden'); document.getElementById('viewSelectorContainer').classList.remove('hidden'); 
                 await initUserData(user); loadFollowingList(); changeView('mine'); initNotificationListener(user.uid);
                 const hasSeen = localStorage.getItem(`tutorialSeen_${user.uid}`); if (!hasSeen) openHelp();
