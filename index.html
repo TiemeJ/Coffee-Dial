@@ -47,7 +47,7 @@
         th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
         
         #filterDropdown, #mainMenuDropdown, #aiMenuDropdown, .action-menu { z-index: 50; animation: fadeIn 0.1s ease-out; }
-        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #helpModal, #aboutModal { animation: fadeIn 0.2s ease-out; }
+        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #exportModal, #helpModal, #aboutModal { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
@@ -143,8 +143,8 @@
                         <button onclick="openStats(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-chart-pie"></i> <span>Statistics</span>
                         </button>
-                        <button onclick="exportCSV(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                            <i class="fa-solid fa-file-csv"></i> <span>Export CSV</span>
+                        <button onclick="openExportModal(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv"></i> <span>Export</span>
                         </button>
                     </div>
                 </div>
@@ -728,6 +728,38 @@
                 <button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button>
                 <button onclick="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">
                     Save Preferences
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exportModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
+                <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-file-csv mr-2"></i>Export Brew Log</h3>
+                <button onclick="closeExportModal()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <p class="text-sm text-coffee-600 dark:text-[#a8a29e] mb-6">Choose your export options:</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Format</label>
+                        <select id="exportFormat" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
+                            <option value="csv">CSV (.csv)</option>
+                            <option value="json">JSON (.json)</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 p-3 rounded-lg">
+                        <p class="text-xs text-blue-800 dark:text-blue-300"><i class="fa-solid fa-info-circle mr-1"></i>You have <span id="exportBrewCount">0</span> brews to export.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2">
+                <button onclick="closeExportModal()" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button>
+                <button onclick="performExport()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                    <i class="fa-solid fa-download"></i> Export
                 </button>
             </div>
         </div>
@@ -1727,6 +1759,82 @@
         const setRating = (r) => { const c=document.getElementById('starContainer'); document.getElementById('ratingInput').value=r; for(let i=0;i<c.children.length;i++){ if(i<r)c.children[i].classList.add('active'); else c.children[i].classList.remove('active'); } };
         const getStarDisplay = (r) => { if(!r)return'-'; let h=''; for(let i=0;i<r;i++)h+='<i class="fa-solid fa-star text-xs text-yellow-400"></i>'; return h; };
         
+        const openExportModal = () => {
+            const brews = getFilteredCoffees();
+            document.getElementById('exportBrewCount').textContent = brews.length;
+            document.getElementById('exportModal').classList.remove('hidden');
+        };
+
+        const closeExportModal = () => {
+            document.getElementById('exportModal').classList.add('hidden');
+        };
+
+        const performExport = () => {
+            const format = document.getElementById('exportFormat').value;
+            const brews = getFilteredCoffees();
+
+            if (!brews.length) {
+                alert("No data to export");
+                return;
+            }
+
+            if (format === 'csv') {
+                exportAsCSV(brews);
+            } else if (format === 'json') {
+                exportAsJSON(brews);
+            }
+
+            closeExportModal();
+        };
+
+        const exportAsCSV = (brews) => {
+            const esc = (t) => { 
+                if (t === null || t === undefined) return ''; 
+                const str = String(t); 
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; 
+                return str; 
+            };
+            const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grinder","Grind","In(g)","Out(g)","Time(s)","Temp","Drink","Rating","Notes","Improve"]; 
+            const r = brews.map(c => [ 
+                c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '', 
+                esc(c.roaster || c.name), 
+                esc(c.origin || c.beanType), 
+                esc(c.farmer), 
+                esc(c.variety), 
+                esc(c.processing), 
+                esc(c.roastType), 
+                esc(c.method), 
+                esc(c.grinder), 
+                esc(c.grind), 
+                esc(c.weight), 
+                (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', 
+                esc(c.time), 
+                esc(c.temp), 
+                esc(c.drink), 
+                esc(c.rating), 
+                esc(c.notes), 
+                esc(c.improve) 
+            ]); 
+            const csvContent = "data:text/csv;charset=utf-8," + h.join(",") + "\n" + r.map(e => e.join(",")).join("\n"); 
+            const encodedUri = encodeURI(csvContent); 
+            const link = document.createElement("a"); 
+            link.setAttribute("href", encodedUri); 
+            link.setAttribute("download", "coffee_log.csv"); 
+            document.body.appendChild(link); 
+            link.click(); 
+            document.body.removeChild(link); 
+        };
+
+        const exportAsJSON = (brews) => {
+            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(brews, null, 2));
+            const link = document.createElement("a");
+            link.setAttribute("href", jsonContent);
+            link.setAttribute("download", "coffee_log.json");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
         const exportCSV = () => { 
             const d = getFilteredCoffees(); if(!d.length) return alert("No data"); 
             const esc = (t) => { if (t === null || t === undefined) return ''; const str = String(t); if (str.includes(',') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; return str; };
@@ -2338,7 +2446,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, getFilteredCoffees, setRating, exportCSV, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData
         });
 
         initTheme();
