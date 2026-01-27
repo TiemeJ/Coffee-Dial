@@ -506,12 +506,12 @@
                 <div id="statsGeneralView" class="space-y-8">
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
-                            <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Total Brews</div>
-                            <div id="statTotalBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                            <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Hours Without Coffee</div>
+                            <div id="statMonthBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
                         </div>
                         <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
-                            <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Last 30 Days</div>
-                            <div id="statMonthBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                            <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Total Brews</div>
+                            <div id="statTotalBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
                         </div>
                         <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
                             <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Last 7 Days</div>
@@ -1622,16 +1622,16 @@
         const calculateStats = (dataToUse) => {
             currentStatsData = dataToUse; const total = dataToUse.length; 
             if(total === 0) {
-                 document.getElementById('statTotalBrews').innerText = '0'; document.getElementById('statMonthBrews').innerText = '0'; document.getElementById('statWeekBrews').innerText = '0'; document.getElementById('statAvgBrews').innerText = '0';
+                 document.getElementById('statTotalBrews').innerText = '0'; document.getElementById('statMonthBrews').innerText = '∞'; document.getElementById('statWeekBrews').innerText = '0'; document.getElementById('statAvgBrews').innerText = '0';
                  document.getElementById('statUniqueCoffees').innerText = '0'; document.getElementById('mostBrewedName').innerText = '-'; document.getElementById('mostBrewedCount').innerText = '0 brews';
                  document.getElementById('topCoffeesList').innerHTML = '<p class="text-sm text-gray-400 italic">No brews found.</p>'; document.getElementById('uniqueLeaderboardBody').innerHTML = "<tr><td colspan='4' class='text-center py-4 italic text-coffee-400'>No data.</td></tr>";
                  renderCharts({}, {}, {}, {}); return;
             }
             const now = new Date(); const oneDay = 24 * 60 * 60 * 1000;
-            const last30 = dataToUse.filter(c => (now - new Date(c.createdAt)) < 30 * oneDay).length;
             const last7 = dataToUse.filter(c => (now - new Date(c.createdAt)) < 7 * oneDay).length;
             const firstDate = new Date(Math.min(...dataToUse.map(c => new Date(c.createdAt || now)))); const diffDays = Math.max(1, Math.round(Math.abs((now - firstDate) / oneDay))); const avg = (total / diffDays).toFixed(1);
-            document.getElementById('statTotalBrews').innerText = total; document.getElementById('statMonthBrews').innerText = last30; document.getElementById('statWeekBrews').innerText = last7; document.getElementById('statAvgBrews').innerText = avg;
+            const lastBrewDate = new Date(Math.max(...dataToUse.map(c => new Date(c.createdAt || now)))); const hoursSinceLastBrew = Math.round((now - lastBrewDate) / (60 * 60 * 1000));
+            document.getElementById('statTotalBrews').innerText = total; document.getElementById('statMonthBrews').innerText = hoursSinceLastBrew; document.getElementById('statWeekBrews').innerText = last7; document.getElementById('statAvgBrews').innerText = avg;
             const agg = (key) => dataToUse.reduce((acc, c) => { const val = c[key] || 'Unknown'; acc[val] = (acc[val] || 0) + 1; return acc; }, {});
             const roastData = agg('roastType'); const methodData = agg('method'); const drinkData = agg('drink');
             const ratingData = dataToUse.reduce((acc, c) => { const r = c.rating || 0; if(r > 0) acc[r] = (acc[r] || 0) + 1; return acc; }, {});
