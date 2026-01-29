@@ -52,13 +52,33 @@
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
         
-        /* Drag Handle Styles */
+        /* Drag Handle Styles - IMPROVED */
         .drag-handle { cursor: grab; touch-action: none; }
         .drag-handle:active { cursor: grabbing; }
-        .sortable-ghost { opacity: 0.4; background-color: #e6dfd9; }
-        .dark .sortable-ghost { background-color: #44403c; }
-        .sortable-drag { opacity: 0.8; background-color: #f5f5f4; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .dark .sortable-drag { background-color: #292524; }
+        
+        /* The ghost (the hole where the item was) */
+        .sortable-ghost { 
+            opacity: 0.4; 
+            background-color: #f5f5f4; 
+            border: 2px dashed #d6ccc2;
+        }
+        .dark .sortable-ghost { 
+            background-color: #292524; 
+            border: 2px dashed #57534e;
+        }
+
+        /* The item being dragged */
+        .sortable-drag { 
+            opacity: 1 !important; 
+            background-color: white;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            transform: scale(1.05) rotate(2deg);
+            z-index: 1000;
+        }
+        .dark .sortable-drag {
+            background-color: #292524;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
 
         /* Star Rating Styles */
         .star-rating i { cursor: pointer; transition: color 0.2s; }
@@ -155,14 +175,6 @@
             </div>
         </div>
     </header>
-
-    <div id="coffeeWithdrawalNotification" class="hidden bg-red-50 dark:bg-red-900/20 border-l-4 border-red-600 text-red-700 dark:text-red-300 p-4 mx-auto max-w-[95%] mt-4 rounded shadow-md flex items-start gap-3">
-        <i class="fa-solid fa-triangle-exclamation text-xl mt-0.5 flex-shrink-0"></i>
-        <div class="flex-1">
-            <p class="font-bold">Coffee Withdrawal Alert!</p>
-            <p class="text-sm">You have been without coffee for <span id="withdrawalHours">-</span> hours. Time for a brew?</p>
-        </div>
-    </div>
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
         
@@ -350,6 +362,16 @@
             </div>
         </div>
 
+        <!-- Active Brews Section (New Pinned Tiles) -->
+        <div id="pinnedSection" class="hidden mb-8">
+            <h3 class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase tracking-wide mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-thumbtack text-green-600"></i> Pinned Brews
+            </h3>
+            <div id="pinnedGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                <!-- Tiles injected here -->
+            </div>
+        </div>
+
         <div id="activeFiltersContainer" class="hidden mb-4 p-3 bg-coffee-100 dark:bg-[#292524] rounded-lg border border-coffee-200 dark:border-[#44403c] flex items-center justify-between">
             <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
             <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap ml-2">Clear All</button>
@@ -381,7 +403,6 @@
                             <th scope="col" class="px-3 py-1.5 text-center w-16 whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="activeCoffeeTableBody" class="border-b-2 border-coffee-100 dark:border-[#44403c] hidden"></tbody>
                     <tbody id="coffeeTableBody"></tbody>
                 </table>
             </div>
@@ -396,7 +417,7 @@
         <div class="mt-3 text-xs text-coffee-500 dark:text-[#78716c] italic flex flex-col gap-1 px-1">
             <span><i class="fa-solid fa-filter mr-1"></i> Double tap Headers to filter.</span>
             <span><i class="fa-solid fa-hand-pointer mr-1"></i> Double tap any row to view Card.</span>
-            <span><i class="fa-solid fa-info-circle mr-1"></i> Drag rows to reorder.</span>
+            <span><i class="fa-solid fa-info-circle mr-1"></i> Drag Active Brews to reorder.</span>
         </div>
     </main>
 
@@ -817,7 +838,7 @@
                             <i class="fa-solid fa-thumbtack"></i>
                         </div>
                         <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">
-                            Found a recipe you love? Click the <strong>Pin icon</strong> (<i class="fa-solid fa-thumbtack text-xs"></i>) to move it to the top <strong>"Active Brews"</strong> section. This keeps your daily drivers separated from your experiment history.
+                            Found a recipe you love? Click the <strong>Pin icon</strong> (<i class="fa-solid fa-thumbtack text-xs"></i>) to move it to the <strong>"Pinned Brews"</strong> tiles. This keeps your daily drivers separated from your experiment history.
                         </p>
                     </div>
                 </div>
@@ -829,7 +850,7 @@
                             <i class="fa-solid fa-id-card text-2xl text-coffee-700 dark:text-[#d6ccc2]"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">This is the magic feature. <strong>Double tap any row</strong> in your table to open the "Coffee Card".</p>
+                            <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">This is the magic feature. <strong>Double tap any row (or active tile)</strong> to open the "Coffee Card".</p>
                             <p class="text-xs text-coffee-500 dark:text-[#78716c] mt-1">This presents a beautiful, summarized view of the recipe, perfect for quickly replicating a brew without scrolling through the table.</p>
                         </div>
                     </div>
@@ -1195,23 +1216,25 @@
 
             if (!isDraggable) return;
 
-            // ONLY TARGET THE ACTIVE BREWS TABLE NOW
-            const activeBody = document.getElementById('activeCoffeeTableBody');
+            // Target the pinned grid
+            const pinnedGrid = document.getElementById('pinnedGrid');
 
-            if (activeBody && !activeBody.classList.contains('hidden')) {
-                const sortable = new Sortable(activeBody, {
+            if (pinnedGrid) {
+                const sortable = new Sortable(pinnedGrid, {
                     handle: '.drag-handle', // Handle on the grip icon
-                    animation: 150,
+                    animation: 200,
                     ghostClass: 'sortable-ghost',
                     dragClass: 'sortable-drag',
                     delay: 100, // Slight delay to prevent accidental drags
                     delayOnTouchOnly: true,
+                    forceFallback: true, // IMPORTANT: Creates a clone for consistent drag physics
+                    fallbackClass: 'sortable-drag',
                     onEnd: async function(evt) {
                         if (evt.oldIndex === evt.newIndex) return;
                         
                         // Get current order of IDs from the DOM
-                        const rows = Array.from(activeBody.querySelectorAll('tr'));
-                        const newOrderIds = rows.map(row => row.getAttribute('data-id')).filter(id => id);
+                        const tiles = Array.from(pinnedGrid.children);
+                        const newOrderIds = tiles.map(tile => tile.getAttribute('data-id')).filter(id => id);
 
                         // Update customOrder in Firebase
                         const batch = writeBatch(db);
@@ -1643,7 +1666,7 @@
             const firstDate = new Date(Math.min(...dataToUse.map(c => new Date(c.createdAt || now)))); const diffDays = Math.max(1, Math.round(Math.abs((now - firstDate) / oneDay))); const avg = (total / diffDays).toFixed(1);
             const lastBrewDate = new Date(Math.max(...dataToUse.map(c => new Date(c.createdAt || now)))); const hoursSinceLastBrew = Math.round((now - lastBrewDate) / (60 * 60 * 1000));
             document.getElementById('statTotalBrews').innerText = total; document.getElementById('statMonthBrews').innerText = hoursSinceLastBrew; document.getElementById('statWeekBrews').innerText = last7; document.getElementById('statAvgBrews').innerText = avg;
-            const badge = document.getElementById('avatarBadge'); if(badge) { badge.innerText = hoursSinceLastBrew; if(hoursSinceLastBrew > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); } updateCoffeeWithdrawalNotification(hoursSinceLastBrew);
+            const badge = document.getElementById('avatarBadge'); if(badge) { badge.innerText = hoursSinceLastBrew; if(hoursSinceLastBrew > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); }
             const agg = (key) => dataToUse.reduce((acc, c) => { const val = c[key] || 'Unknown'; acc[val] = (acc[val] || 0) + 1; return acc; }, {});
             const roastData = agg('roastType'); const methodData = agg('method'); const drinkData = agg('drink');
             const ratingData = dataToUse.reduce((acc, c) => { const r = c.rating || 0; if(r > 0) acc[r] = (acc[r] || 0) + 1; return acc; }, {});
@@ -2418,18 +2441,8 @@
             setTimeout(() => { if(icon) icon.classList.remove('fa-spin'); }, 800);
         };
 
-        const updateCoffeeWithdrawalNotification = (hoursSinceLastBrew) => {
-            const notif = document.getElementById('coffeeWithdrawalNotification'); if(!notif) return; if(hoursSinceLastBrew > 10) { document.getElementById('withdrawalHours').innerText = hoursSinceLastBrew; notif.classList.remove('hidden'); } else { notif.classList.add('hidden'); }
-        };
-
-        const updateAvatarBadge = () => {
-            if (currentView !== 'mine' || coffees.length === 0) return; const now = new Date(); const lastBrewDate = new Date(Math.max(...coffees.map(c => new Date(c.createdAt || now)))); const hoursSinceLastBrew = Math.round((now - lastBrewDate) / (60 * 60 * 1000)); const badge = document.getElementById('avatarBadge'); if(badge) { badge.innerText = hoursSinceLastBrew; if(hoursSinceLastBrew > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); } updateCoffeeWithdrawalNotification(hoursSinceLastBrew);
-        };
-
         const renderTable = () => { 
-            updateAvatarBadge();
             const t = document.getElementById('coffeeTableBody'); 
-            const activeT = document.getElementById('activeCoffeeTableBody'); 
             const e = document.getElementById('emptyState'); 
             
             // Toggle column visibility
@@ -2442,81 +2455,69 @@
             });
 
             t.innerHTML=''; 
-            activeT.innerHTML=''; 
             
             // 1. Get Filtered Data
             let filteredCoffees = getFilteredCoffees();
 
             if(filteredCoffees.length === 0){ 
                 e.classList.remove('hidden'); 
-                activeT.classList.add('hidden'); 
                 return; 
             } 
             e.classList.add('hidden');
             
             // 2. Split into Active and History
             let activeBrews = filteredCoffees.filter(c => c.isActive);
-            // Modified: History shows everything (both active and inactive)
             let historyBrews = [...filteredCoffees]; 
 
-            // 3. Apply Context-Specific Sorting
-            // Only apply split sorting if the user hasn't clicked a specific column header
-            if (currentSort.key === null) {
-                // Active: Sort by Custom Manual Order
-                activeBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
-                
-                // History: Sort by Date (Newest First)
-                historyBrews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            }
-            // Note: If currentSort.key IS set (e.g. user clicked "Roaster"), 
-            // getFilteredCoffees() has already sorted 'filteredCoffees' by that key.
+            // 3. Handle Active Brews (Pinned Tiles)
+            const pinnedSection = document.getElementById('pinnedSection');
+            const pinnedGrid = document.getElementById('pinnedGrid');
+            pinnedGrid.innerHTML = '';
 
-            // Allow drag only when no specific sort/filter is active and viewing own profile
-            const isActiveDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v=>v!==null);
-            
-            // Helper function to generate Row HTML (Refactored to avoid code duplication)
-            const generateRow = (c, isForActiveTable) => {
-                const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
-                const displayRoaster = c.roaster || c.name || '-'; 
-                const displayOrigin = c.origin || c.beanType || '-'; 
-                const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
-                
-                // Setup Grip Icon / Pin Icon
-                let gripIconClass = '';
-                if (isForActiveTable) {
-                    gripIconClass = isActiveDraggable 
-                        ? 'fa-grip-vertical text-stone-400 dark:text-stone-500 drag-handle cursor-grab' 
-                        : 'fa-lock text-stone-300 dark:text-stone-600 opacity-60';
-                } else {
-                    // History Section Logic: Show Pin status
-                    if (c.isActive) {
-                        // Active/Pinned: Green Filled Pin
-                        gripIconClass = 'fa-thumbtack text-green-600';
-                    } else {
-                        // Inactive/Unpinned: Gray Faint Pin
-                        gripIconClass = 'fa-thumbtack text-stone-300 dark:text-stone-600 opacity-40';
-                    }
+            if (activeBrews.length > 0) {
+                 // Sort active by customOrder if no other sort is applied
+                if (currentSort.key === null) {
+                    activeBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
                 }
-
-                const menuId = `action-menu-${c.id}`;
-                let actions = '';
                 
-                if(currentView === 'mine') {
-                    const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
-                    const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
-                    actions = `
-                        <div class="relative">
-                            <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
-                                <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
-                            </button>
-                            <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                activeBrews.forEach(c => {
+                    const tile = document.createElement('div');
+                    // Compact styling
+                    tile.className = "bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
+                    tile.setAttribute('data-id', c.id);
+                    tile.ondblclick = (ev) => openCoffeeCard(c.id, ev);
+                    
+                    const roaster = c.roaster || c.name || 'Unknown Roaster';
+                    const farmer = c.farmer || '-';
+                    const method = c.method || '-';
+                    const drink = c.drink || '-';
+
+                    // Drag handle logic
+                    const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v => v !== null);
+                    const dragIcon = isDraggable 
+                        ? `<div class="absolute top-1 right-1 text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e] drag-handle p-2"><i class="fa-solid fa-grip-vertical text-base"></i></div>` 
+                        : '';
+
+                    // Menu Button for Tile
+                    const menuId = `tile-menu-${c.id}`;
+                    const menuBtn = currentView === 'mine' 
+                        ? `<button onclick="toggleActionMenu('${menuId}', event)" class="absolute bottom-1 right-1 p-2 text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e] transition-colors"><i class="fa-solid fa-ellipsis-vertical text-base"></i></button>`
+                        : '';
+                    
+                    // Unified Actions Menu (Same as Table)
+                    let menu = '';
+                    if(currentView === 'mine') {
+                        const pinLabel = 'Unpin';
+                        const pinIcon = 'fa-thumbtack text-green-600';
+                        menu = `
+                            <div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
                                 <button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit
                                 </button>
                                 <button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate
                                 </button>
-                                    <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}
                                 </button>
                                 <button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
@@ -2530,93 +2531,139 @@
                                     <i class="fa-solid fa-trash w-4"></i> Delete
                                 </button>
                             </div>
-                        </div>
-                    `;
-                } else { 
-                    actions = `
-                        <div class="relative">
-                                <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
-                                <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
-                            </button>
-                                <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                                <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                    <i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card
-                                </button>
-                                <button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                    <i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews
-                                </button>
+                        `;
+                    }
+
+                    tile.innerHTML = `
+                        ${dragIcon}
+                        <div class="pr-4">
+                            <h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3>
+                            <p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p>
+                            <div class="flex flex-col gap-0.5 items-start">
+                                <span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-[9px] font-bold px-1.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] uppercase tracking-wide">${method}</span>
+                                <span class="text-[10px] text-coffee-700 dark:text-[#d6ccc2] font-medium truncate max-w-full leading-tight">${drink}</span>
                             </div>
-                        </div>`; 
-                }
-
-                const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
-                
-                let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIconClass}"></i></td>`;
-                if(columnPreferences.roaster !== false) rowHTML += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
-                if(columnPreferences.origin !== false) rowHTML += `<td class="px-3 py-1 text-sm">${displayOrigin}</td>`;
-                if(columnPreferences.farmer !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.farmer || '-'}</td>`;
-                if(columnPreferences.variety !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.variety || '-'}</td>`;
-                if(columnPreferences.processing !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.processing || '-'}</td>`;
-                if(columnPreferences.roastType !== false) rowHTML += `<td class="px-3 py-1">${getRoastBadge(c.roastType)}</td>`;
-                if(columnPreferences.method !== false) rowHTML += `<td class="px-3 py-1"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>`;
-                if(columnPreferences.grinder !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.grinder || '-'}</td>`;
-                if(columnPreferences.grind !== false) rowHTML += `<td class="px-3 py-1 font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
-                if(columnPreferences.recipe !== false) rowHTML += `<td class="px-3 py-1">${recipeCol}</td>`;
-                if(columnPreferences.time !== false) rowHTML += `<td class="px-3 py-1 text-right">${formatTime(c.time)}</td>`;
-                if(columnPreferences.temp !== false) rowHTML += `<td class="px-3 py-1 text-center">${getTempBadge(c.temp)}</td>`;
-                if(columnPreferences.drink !== false) rowHTML += `<td class="px-3 py-1 text-sm font-medium">${c.drink || '-'}</td>`;
-                if(columnPreferences.notes !== false) rowHTML += `<td class="px-3 py-1 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>`;
-                if(columnPreferences.improve !== false) rowHTML += `<td class="px-3 py-1 text-sm italic text-red-400 dark:text-red-400/80 max-w-xs truncate" title="${c.improve || ''}">${c.improve || '-'}</td>`;
-                if(columnPreferences.rating !== false) rowHTML += `<td class="px-3 py-1 whitespace-nowrap">${getStarDisplay(c.rating)}</td>`;
-                if(columnPreferences.date !== false) rowHTML += `<td class="px-3 py-1 text-xs font-mono text-coffee-500">${displayDate}</td>`;
-                rowHTML += `<td class="px-3 py-1 text-center w-16" onclick="event.stopPropagation()">${actions}</td>`;
-
-                const r = document.createElement('tr'); 
-                r.className = isForActiveTable 
-                    ? 'bg-white dark:bg-[#292524] hover:bg-green-50 dark:hover:bg-green-900/20 border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer'
-                    : 'bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer';
-                
-                r.ondblclick = (e) => openCoffeeCard(c.id, e);
-                r.setAttribute('data-id', c.id); 
-                r.innerHTML = rowHTML;
-                return r;
-            };
-
-            // 4. Render Active Brews
-            if (activeBrews.length > 0) {
-                // Active Header
-                const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length;
-                const activeHeader = document.createElement('tr'); 
-                activeHeader.className = "bg-green-50/50 dark:bg-green-900/20 border-b border-coffee-100 dark:border-[#44403c]"; 
-                activeHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-green-700 dark:text-green-400 text-xs uppercase tracking-wide"><i class="fa-solid fa-thumbtack mr-2"></i>Active Brews</td>`; 
-                activeT.appendChild(activeHeader);
-
-                activeBrews.forEach(c => {
-                    activeT.appendChild(generateRow(c, true));
+                        </div>
+                        ${menuBtn}
+                        ${menu}
+                    `;
+                    pinnedGrid.appendChild(tile);
                 });
-                activeT.classList.remove('hidden');
+                pinnedSection.classList.remove('hidden');
+                // Init sortable on grid
+                initSortable();
             } else {
-                activeT.classList.add('hidden');
+                pinnedSection.classList.add('hidden');
             }
 
-            // 5. Render History Brews
-            if (historyBrews.length > 0) {
-                // History Header (Only if there are active brews above it)
-                if (activeBrews.length > 0) {
-                    const totalCols = 2 + columnDefs.filter(c => columnPreferences[c.id] !== false).length;
-                    const histHeader = document.createElement('tr'); 
-                    histHeader.className = "bg-coffee-50/50 dark:bg-[#201d1b] border-y border-coffee-100 dark:border-[#44403c]"; 
-                    histHeader.innerHTML = `<td colspan="${totalCols}" class="px-3 py-1 font-bold text-coffee-600 dark:text-[#a8a29e] text-xs uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-2"></i>History</td>`; 
-                    t.appendChild(histHeader);
-                }
+            // 4. Render History Brews (Table)
+            if (currentSort.key === null) {
+                // History: Sort by Date (Newest First) default
+                historyBrews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
 
+            if (historyBrews.length > 0) {
                 historyBrews.forEach(c => {
-                    t.appendChild(generateRow(c, false));
+                    t.appendChild(generateRow(c));
                 });
             }
+        };
 
-            // Initialize Sortable (Drag and Drop) only on active table
-            initSortable();
+        // Helper for Table Row Generation
+        const generateRow = (c) => {
+            const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
+            const displayRoaster = c.roaster || c.name || '-'; 
+            const displayOrigin = c.origin || c.beanType || '-'; 
+            const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
+            
+            let gripIconClass = '';
+            // In history table, use Pin icon state
+            if (c.isActive) {
+                gripIconClass = 'fa-thumbtack text-green-600';
+            } else {
+                gripIconClass = 'fa-thumbtack text-stone-300 dark:text-stone-600 opacity-40';
+            }
+
+            const menuId = `action-menu-${c.id}`;
+            let actions = '';
+            
+            if(currentView === 'mine') {
+                const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
+                const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
+                actions = `
+                    <div class="relative">
+                        <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
+                            <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                        </button>
+                        <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit
+                            </button>
+                            <button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate
+                            </button>
+                                <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}
+                            </button>
+                            <button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo
+                            </button>
+                            <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card
+                            </button>
+                            <hr class="border-coffee-100 dark:border-[#44403c]">
+                            <button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                                <i class="fa-solid fa-trash w-4"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else { 
+                actions = `
+                    <div class="relative">
+                            <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
+                            <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                        </button>
+                            <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card
+                            </button>
+                            <button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews
+                            </button>
+                        </div>
+                    </div>`; 
+            }
+
+            const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
+            
+            let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIconClass}"></i></td>`;
+            if(columnPreferences.roaster !== false) rowHTML += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
+            if(columnPreferences.origin !== false) rowHTML += `<td class="px-3 py-1 text-sm">${displayOrigin}</td>`;
+            if(columnPreferences.farmer !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.farmer || '-'}</td>`;
+            if(columnPreferences.variety !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.variety || '-'}</td>`;
+            if(columnPreferences.processing !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.processing || '-'}</td>`;
+            if(columnPreferences.roastType !== false) rowHTML += `<td class="px-3 py-1">${getRoastBadge(c.roastType)}</td>`;
+            if(columnPreferences.method !== false) rowHTML += `<td class="px-3 py-1"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>`;
+            if(columnPreferences.grinder !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.grinder || '-'}</td>`;
+            if(columnPreferences.grind !== false) rowHTML += `<td class="px-3 py-1 font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
+            if(columnPreferences.recipe !== false) rowHTML += `<td class="px-3 py-1">${recipeCol}</td>`;
+            if(columnPreferences.time !== false) rowHTML += `<td class="px-3 py-1 text-right">${formatTime(c.time)}</td>`;
+            if(columnPreferences.temp !== false) rowHTML += `<td class="px-3 py-1 text-center">${getTempBadge(c.temp)}</td>`;
+            if(columnPreferences.drink !== false) rowHTML += `<td class="px-3 py-1 text-sm font-medium">${c.drink || '-'}</td>`;
+            if(columnPreferences.notes !== false) rowHTML += `<td class="px-3 py-1 text-sm max-w-xs truncate" title="${c.notes}">${c.notes || '-'}</td>`;
+            if(columnPreferences.improve !== false) rowHTML += `<td class="px-3 py-1 text-sm italic text-red-400 dark:text-red-400/80 max-w-xs truncate" title="${c.improve || ''}">${c.improve || '-'}</td>`;
+            if(columnPreferences.rating !== false) rowHTML += `<td class="px-3 py-1 whitespace-nowrap">${getStarDisplay(c.rating)}</td>`;
+            if(columnPreferences.date !== false) rowHTML += `<td class="px-3 py-1 text-xs font-mono text-coffee-500">${displayDate}</td>`;
+            rowHTML += `<td class="px-3 py-1 text-center w-16" onclick="event.stopPropagation()">${actions}</td>`;
+
+            const r = document.createElement('tr'); 
+            r.className = 'bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer';
+            
+            r.ondblclick = (e) => openCoffeeCard(c.id, e);
+            r.setAttribute('data-id', c.id); 
+            r.innerHTML = rowHTML;
+            return r;
         };
 
         onAuthStateChanged(auth, async (user) => {
