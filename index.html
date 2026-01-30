@@ -175,22 +175,39 @@
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
         
-        <div id="viewSelectorContainer" class="hidden mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-4 w-full sm:w-auto">
-                <div class="flex items-center gap-2">
-                    <select id="viewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
-                        <option value="mine">My Brews</option>
-                        </select>
-                </div>
-                <div class="relative flex-1 sm:flex-initial">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <i class="fa-solid fa-search text-coffee-400"></i>
+        <div id="viewSelectorContainer" class="hidden mb-6 flex flex-col gap-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-4 w-full sm:w-auto">
+                    <div class="flex items-center gap-2">
+                        <select id="viewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
+                            <option value="mine">My Brews</option>
+                            </select>
                     </div>
-                    <input type="text" id="globalSearch" class="block w-full sm:w-64 p-2.5 pl-10 pr-10 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all" placeholder="Search brews...">
-                    <button id="searchClearBtn" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 flex items-center pr-3 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <div class="relative flex-1 sm:flex-initial">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fa-solid fa-search text-coffee-400"></i>
+                        </div>
+                        <input type="text" id="globalSearch" class="block w-full sm:w-64 p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all" placeholder="Search brews...">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                            <button id="searchClearBtn" onclick="clearSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                            <button onclick="toggleQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                                <i class="fa-solid fa-filter"></i>
+                            </button>
+                        </div>
+                        <div id="quickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                        </div>
+                        <div id="quickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto">
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <div id="activeFiltersContainer" class="hidden flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
+                <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
             </div>
         </div>
 
@@ -405,30 +422,25 @@
             </div>
         </div>
 
-        <div id="activeFiltersContainer" class="hidden mb-4 p-3 bg-coffee-100 dark:bg-[#292524] rounded-lg border border-coffee-200 dark:border-[#44403c] flex items-center justify-between">
-            <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
-            <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap ml-2">Clear All</button>
-        </div>
-
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] overflow-hidden transition-colors duration-300 relative">
             <div class="overflow-x-auto min-h-[300px]">
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
                             <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" onclick="refreshTableData(this)" title="Reset Table"><i class="fa-solid fa-arrow-rotate-left"></i></th>
-                            <th id="th-roaster" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable" onclick="sortBy('roaster')" ondblclick="openFilterMenu(event,'roaster')">Roaster</th>
-                            <th id="th-origin" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('origin')" ondblclick="openFilterMenu(event, 'origin')">Origin</th>
-                            <th id="th-farmer" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('farmer')" ondblclick="openFilterMenu(event, 'farmer')">Blend/Farmer</th>
-                            <th id="th-variety" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('variety')" ondblclick="openFilterMenu(event, 'variety')">Variety</th>
-                            <th id="th-processing" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('processing')" ondblclick="openFilterMenu(event, 'processing')">Process</th>
-                            <th id="th-roastType" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('roastType')" ondblclick="openFilterMenu(event, 'roastType')">Roast</th>
-                            <th id="th-method" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('method')" ondblclick="openFilterMenu(event, 'method')">Method</th>
-                            <th id="th-grinder" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('grinder')" ondblclick="openFilterMenu(event, 'grinder')">Grinder</th>
+                            <th id="th-roaster" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable" onclick="sortBy('roaster')">Roaster</th>
+                            <th id="th-origin" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('origin')">Origin</th>
+                            <th id="th-farmer" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('farmer')">Blend/Farmer</th>
+                            <th id="th-variety" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('variety')">Variety</th>
+                            <th id="th-processing" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap" onclick="sortBy('processing')">Process</th>
+                            <th id="th-roastType" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('roastType')">Roast</th>
+                            <th id="th-method" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('method')">Method</th>
+                            <th id="th-grinder" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap" onclick="sortBy('grinder')">Grinder</th>
                             <th id="th-grind" scope="col" class="px-3 py-1.5 whitespace-nowrap" onclick="sortBy('grind')">Grind</th>
                             <th id="th-recipe" scope="col" class="px-3 py-1.5 whitespace-nowrap">Recipe</th>
                             <th id="th-time" scope="col" class="px-3 py-1.5 text-right whitespace-nowrap" onclick="sortBy('time')">Time</th>
-                            <th id="th-temp" scope="col" class="px-3 py-1.5 text-center filterable whitespace-nowrap" onclick="sortBy('temp')" ondblclick="openFilterMenu(event, 'temp')">Temp</th>
-                            <th id="th-drink" scope="col" class="px-3 py-1.5 filterable whitespace-nowrap" onclick="sortBy('drink')" ondblclick="openFilterMenu(event, 'drink')">Drink</th>
+                            <th id="th-temp" scope="col" class="px-3 py-1.5 text-center filterable whitespace-nowrap" onclick="sortBy('temp')">Temp</th>
+                            <th id="th-drink" scope="col" class="px-3 py-1.5 filterable whitespace-nowrap" onclick="sortBy('drink')">Drink</th>
                             <th id="th-notes" scope="col" class="px-3 py-1.5 whitespace-nowrap">Notes</th>
                             <th id="th-improve" scope="col" class="px-3 py-1.5 whitespace-nowrap">Improve</th>
                             <th id="th-rating" scope="col" class="px-3 py-1.5 cursor-pointer hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap" onclick="sortBy('rating')">Rating</th>
@@ -454,9 +466,7 @@
         </div>
 
         <div class="mt-3 text-xs text-coffee-500 dark:text-[#78716c] italic flex flex-col gap-1 px-1">
-            <span><i class="fa-solid fa-filter mr-1"></i> Double tap Headers to filter.</span>
             <span><i class="fa-solid fa-hand-pointer mr-1"></i> Double tap any row to view Card.</span>
-            <span><i class="fa-solid fa-info-circle mr-1"></i> Drag Active Brews to reorder.</span>
         </div>
     </main>
     
@@ -2443,6 +2453,83 @@
         const clearAllFilters = () => { activeFilters={method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null,drink:null,grinder:null}; displayedBrewsCount = BREWS_PER_PAGE; renderTable(); renderActiveFilters(); }
         const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${k}:</span><b>${v}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
         
+        const toggleQuickFilter = (e) => {
+            e.stopPropagation();
+            const dropdown = document.getElementById('quickFilterDropdown');
+            const valuesDropdown = document.getElementById('quickFilterValuesDropdown');
+            valuesDropdown.classList.add('hidden');
+            
+            if (dropdown.classList.contains('hidden')) {
+                // Build filter category menu
+                const filterCategories = [
+                    { key: 'method', label: 'Method' },
+                    { key: 'drink', label: 'Drink' },
+                    { key: 'roaster', label: 'Roaster' },
+                    { key: 'origin', label: 'Origin' },
+                    { key: 'farmer', label: 'Blend/Farmer' },
+                    { key: 'variety', label: 'Variety' },
+                    { key: 'processing', label: 'Process' },
+                    { key: 'roastType', label: 'Roast Type' },
+                    { key: 'grinder', label: 'Grinder' },
+                    { key: 'temp', label: 'Temperature' }
+                ];
+                
+                let html = '<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>';
+                filterCategories.forEach(cat => {
+                    const isActive = activeFilters[cat.key] !== null;
+                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e] font-semibold' : '';
+                    html += `<button onclick="openQuickFilterValues(event, '${cat.key}', '${cat.label}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] flex items-center justify-between ${activeClass}">
+                        <span>${cat.label}</span>
+                        ${isActive ? '<i class="fa-solid fa-check text-coffee-600 dark:text-[#a8a29e] text-xs"></i>' : '<i class="fa-solid fa-chevron-right text-coffee-300 dark:text-[#57534e] text-xs"></i>'}
+                    </button>`;
+                });
+                dropdown.innerHTML = html;
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        };
+        
+        const openQuickFilterValues = (e, key, label) => {
+            e.stopPropagation();
+            const valuesDropdown = document.getElementById('quickFilterValuesDropdown');
+            const mainDropdown = document.getElementById('quickFilterDropdown');
+            
+            // Get unique values for this filter key
+            const vals = coffees.map(c => key === 'roaster' ? (c.roaster || c.name) : (key === 'origin' ? (c.origin || c.beanType) : c[key]));
+            const uniqueVals = [...new Set(vals)].filter(v => v).sort();
+            
+            if (!uniqueVals.length) {
+                valuesDropdown.innerHTML = '<div class="px-4 py-3 text-sm text-coffee-400 dark:text-[#78716c] italic">No values available</div>';
+            } else {
+                let html = `<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] flex items-center justify-between">
+                    <span>${label}</span>
+                    <button onclick="toggleQuickFilter(event)" class="text-coffee-400 hover:text-coffee-600 dark:hover:text-white">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                </div>`;
+                html += `<button onclick="applyFilterFromQuick('${key}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`;
+                uniqueVals.forEach(val => {
+                    const isActive = activeFilters[key] === val;
+                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
+                    const escapedVal = String(val).replace(/'/g, "\\'");
+                    html += `<button onclick="applyFilterFromQuick('${key}', '${escapedVal}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
+                        ${val}
+                    </button>`;
+                });
+                valuesDropdown.innerHTML = html;
+            }
+            
+            mainDropdown.classList.add('hidden');
+            valuesDropdown.classList.remove('hidden');
+        };
+        
+        const applyFilterFromQuick = (key, value) => {
+            applyFilter(key, value);
+            document.getElementById('quickFilterDropdown').classList.add('hidden');
+            document.getElementById('quickFilterValuesDropdown').classList.add('hidden');
+        };
+        
         const getFilteredCoffees = () => { 
             let f=coffees; const searchInput = document.getElementById('globalSearch');
             if (searchInput && searchInput.value) { const term = searchInput.value.toLowerCase(); f = f.filter(c => { const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||'', c.grinder||''].join(' ').toLowerCase(); return searchable.includes(term); }); }
@@ -2498,6 +2585,10 @@
             if(!document.getElementById('mainMenuDropdown').contains(e.target) && !e.target.closest('button[onclick*="toggleMainMenu"]')) document.getElementById('mainMenuDropdown').classList.add('hidden');
             if(!document.getElementById('aiMenuDropdown').contains(e.target) && !e.target.closest('button[onclick*="toggleAiMenu"]')) document.getElementById('aiMenuDropdown').classList.add('hidden');
             if(!e.target.closest('.action-menu') && !e.target.closest('button[onclick*="toggleActionMenu"]')) { document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden')); }
+            if(!e.target.closest('#quickFilterDropdown') && !e.target.closest('#quickFilterValuesDropdown') && !e.target.closest('button[onclick*="toggleQuickFilter"]')) { 
+                document.getElementById('quickFilterDropdown').classList.add('hidden'); 
+                document.getElementById('quickFilterValuesDropdown').classList.add('hidden'); 
+            }
         };
         const toggleMainMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('mainMenuDropdown').classList.toggle('hidden'); };
         
@@ -2743,7 +2834,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, deleteBean, syncLegacyBeans
         });
