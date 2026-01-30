@@ -1805,9 +1805,10 @@
             updateBeanMeter('day');
             const uniqueMap = {}; 
             dataToUse.forEach(c => { 
-                const roaster = c.roaster || c.name || '-'; const origin = c.origin || c.beanType || '-'; const farmer = c.farmer || '-'; const key = `${roaster}|${origin}|${farmer}`; 
-                if(!uniqueMap[key]) uniqueMap[key] = { count: 0, roaster, origin, farmer, totalRating: 0, ratingCount: 0 }; uniqueMap[key].count++; 
-                if (c.rating > 0) { uniqueMap[key].totalRating += c.rating; uniqueMap[key].ratingCount++; }
+                const beanId = c.beanId || '-';
+                const roaster = c.roaster || c.name || '-'; const origin = c.origin || c.beanType || '-'; const farmer = c.farmer || '-'; 
+                if(!uniqueMap[beanId]) uniqueMap[beanId] = { count: 0, roaster, origin, farmer, totalRating: 0, ratingCount: 0 }; uniqueMap[beanId].count++; 
+                if (c.rating > 0) { uniqueMap[beanId].totalRating += c.rating; uniqueMap[beanId].ratingCount++; }
             });
             document.getElementById('statUniqueCoffees').innerText = Object.keys(uniqueMap).length;
             let maxKey = null; Object.keys(uniqueMap).forEach(k => { if(!maxKey || uniqueMap[k].count > uniqueMap[maxKey].count) maxKey = k; });
