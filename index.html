@@ -47,16 +47,15 @@
         th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
         
         #filterDropdown, #mainMenuDropdown, #aiMenuDropdown, .action-menu { z-index: 50; animation: fadeIn 0.1s ease-out; }
-        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #exportModal, #helpModal, #aboutModal { animation: fadeIn 0.2s ease-out; }
+        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #exportModal, #helpModal, #aboutModal, #beansModal { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
         
-        /* Drag Handle Styles - IMPROVED */
+        /* Drag Handle Styles */
         .drag-handle { cursor: grab; touch-action: none; }
         .drag-handle:active { cursor: grabbing; }
         
-        /* The ghost (the hole where the item was) */
         .sortable-ghost { 
             opacity: 0.4; 
             background-color: #f5f5f4; 
@@ -67,7 +66,6 @@
             border: 2px dashed #57534e;
         }
 
-        /* The item being dragged */
         .sortable-drag { 
             opacity: 1 !important; 
             background-color: white;
@@ -150,6 +148,9 @@
                             <i class="fa-solid fa-circle-info"></i> <span>About</span>
                         </button>
                         <hr class="my-1 border-coffee-100 dark:border-[#44403c]">
+                         <button onclick="openBeans(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-seedling"></i> <span>Beans</span>
+                        </button>
                         <button onclick="openGallery(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-images"></i> <span>Photo Gallery</span>
@@ -205,22 +206,6 @@
                     </h2>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <button type="button" onclick="toggleAiMenu(event)" id="aiScanBtn" class="hidden flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Scan Bag
-                        </button>
-                        <!-- AI Menu -->
-                        <div id="aiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                            <button onclick="triggerAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
-                                <i class="fa-solid fa-camera w-4"></i> Take Photo
-                            </button>
-                            <button onclick="triggerAIScan('library')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2">
-                                <i class="fa-solid fa-images w-4"></i> From Gallery
-                            </button>
-                        </div>
-                    </div>
-                    <input type="file" id="aiFileInput" accept="image/*" class="hidden" onchange="handleAIFile(event)">
-                    
                     <button id="cancelEditBtn" onclick="resetFormState(event)" class="hidden text-xs text-red-500 hover:text-red-700 dark:text-red-400 underline z-10 relative">
                         Cancel Edit
                     </button>
@@ -229,135 +214,187 @@
             </div>
 
             <div id="formContent" class="hidden px-6 pb-6 border-t border-coffee-100 dark:border-[#44403c] relative">
-                <form id="coffeeForm" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                <form id="coffeeForm" onsubmit="handleFormSubmit(event)" class="mt-4 space-y-6">
                     <input type="hidden" id="editId" name="editId" value="">
                     
-                    <div>
-                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roaster</label>
-                        <input type="text" id="roaster" name="roaster" list="roasterList" placeholder="e.g. La Cabra" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
-                        <datalist id="roasterList"></datalist>
+                    <!-- SECTION 1: COFFEE DETAILS -->
+                    <div class="bg-coffee-50 dark:bg-[#1c1917]/50 p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] relative">
+                         <div class="flex justify-between items-center mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c]">
+                             <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                                <i class="fa-solid fa-seedling text-coffee-600 dark:text-[#a8a29e]"></i> Coffee Details
+                             </h3>
+                            <!-- AI & Saved Beans Controls -->
+                            <div class="flex items-center gap-2">
+                                 <div class="relative">
+                                    <button type="button" onclick="toggleAiMenu(event)" id="aiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Scan Bag
+                                    </button>
+                                    <!-- AI Menu -->
+                                    <div id="aiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                                        <button type="button" onclick="triggerAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
+                                            <i class="fa-solid fa-camera w-4"></i> Take Photo
+                                        </button>
+                                        <button type="button" onclick="triggerAIScan('library')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2">
+                                            <i class="fa-solid fa-images w-4"></i> From Gallery
+                                        </button>
+                                    </div>
+                                    <input type="file" id="aiFileInput" accept="image/*" class="hidden" onchange="handleAIFile(event)">
+                                </div>
+                            </div>
+                         </div>
+                         
+                         <!-- Saved Beans Dropdown -->
+                         <div class="mb-4">
+                             <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Select Saved Bean</label>
+                             <select id="savedBeanSelect" onchange="fillBeanDetails(this.value)" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 cursor-pointer shadow-sm">
+                                 <option value="">-- Create New / Custom --</option>
+                             </select>
+                         </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roaster</label>
+                                <input type="text" id="roaster" name="roaster" list="roasterList" placeholder="e.g. La Cabra" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
+                                <datalist id="roasterList"></datalist>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Blend/Farmer</label>
+                                <input type="text" id="farmer" name="farmer" list="farmerList" placeholder="e.g. Felipe Arcila" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
+                                <datalist id="farmerList"></datalist>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Origin</label>
+                                <input type="text" id="origin" name="origin" list="originList" placeholder="e.g. Ethiopia" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
+                                <datalist id="originList"></datalist>
+                            </div>
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Variety</label><input type="text" id="variety" name="variety" placeholder="e.g. Geisha" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"></div>
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Processing</label><input type="text" id="processing" name="processing" placeholder="e.g. Natural" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"></div>
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roast Type</label><select id="roastType" name="roastType" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 cursor-pointer"><option value="" disabled selected>Select Roast</option><option value="Light">Light</option><option value="Medium">Medium</option><option value="Medium-Dark">Medium-Dark</option><option value="Dark">Dark</option></select></div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Blend/Farmer</label>
-                        <input type="text" id="farmer" name="farmer" list="farmerList" placeholder="e.g. Felipe Arcila" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
-                        <datalist id="farmerList"></datalist>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Origin</label>
-                        <input type="text" id="origin" name="origin" list="originList" placeholder="e.g. Ethiopia" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
-                        <datalist id="originList"></datalist>
-                    </div>
-                    
-                    <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Variety</label><input type="text" id="variety" name="variety" placeholder="e.g. Geisha" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors"></div>
-                    <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Processing</label><input type="text" id="processing" name="processing" placeholder="e.g. Natural" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors"></div>
-                    <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roast Type</label><select id="roastType" name="roastType" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer"><option value="" disabled selected>Select Roast</option><option value="Light">Light</option><option value="Medium">Medium</option><option value="Medium-Dark">Medium-Dark</option><option value="Dark">Dark</option></select></div>
-                    <div>
-                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Brewing Method</label>
-                        <select id="method" name="method" onchange="toggleMethodOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
-                            <option value="" disabled selected>Select Method</option>
-                            <option value="Espresso">Espresso</option>
-                            <option value="V60">V60</option>
-                            <option value="Hario Switch">Hario Switch</option>
-                            <option value="Clever Dripper">Clever Dripper</option>
-                            <option value="Aeropress">Aeropress</option>
-                            <option value="OXO Rapid Brewer">OXO Rapid Brewer</option>
-                            <option value="French Press">French Press</option>
-                            <option value="Chemex">Chemex</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <input type="text" id="methodOther" name="methodOther" placeholder="e.g. Moka Pot" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
-                    </div>
-                    <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grind Size</label><input type="number" step="any" id="grind" name="grind" placeholder="e.g. 14" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]"></div>
-                    <div>
-                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grinder</label>
-                        <input type="text" id="grinder" name="grinder" list="grinderList" placeholder="e.g. Niche Zero" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
-                        <datalist id="grinderList"></datalist>
-                    </div>
-                    <div class="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-3 gap-2 bg-coffee-50/50 dark:bg-[#201d1b] p-2 rounded-lg border border-coffee-100 dark:border-[#44403c]">
-                        <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">In (g)</label><input type="number" step="any" id="inputWeight" name="weight" oninput="handleRecipeInput('weight')" placeholder="18" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
-                        <div class="relative"><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label><input type="number" step="any" id="inputRatio" name="ratio" oninput="handleRecipeInput('ratio')" placeholder="16" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
-                        <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label><input type="number" step="any" id="inputYield" name="yield" oninput="handleRecipeInput('yield')" placeholder="288" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
-                    </div>
-                    <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Time (Sec)</label><input type="number" step="any" id="time" name="time" placeholder="e.g. 180" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]"></div>
-                    <div class="relative">
-                        <div class="flex justify-between items-end mb-1">
-                            <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Temp</label>
-                            <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
-                                <button type="button" onclick="setTempMode('numeric')" id="btnTempNumeric" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">°C</button>
-                                <button type="button" onclick="setTempMode('profile')" id="btnTempProfile" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">Prof</button>
+
+                    <!-- SECTION 2: BREW PARAMETERS -->
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                         <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] flex items-center gap-2">
+                             <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Brew Parameters
+                         </h3>
+                         
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                             <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Brewing Method</label>
+                                <select id="method" name="method" onchange="toggleMethodOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                    <option value="" disabled selected>Select Method</option>
+                                    <option value="Espresso">Espresso</option>
+                                    <option value="V60">V60</option>
+                                    <option value="Hario Switch">Hario Switch</option>
+                                    <option value="Clever Dripper">Clever Dripper</option>
+                                    <option value="Aeropress">Aeropress</option>
+                                    <option value="OXO Rapid Brewer">OXO Rapid Brewer</option>
+                                    <option value="French Press">French Press</option>
+                                    <option value="Chemex">Chemex</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="text" id="methodOther" name="methodOther" placeholder="e.g. Moka Pot" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grinder</label>
+                                <input type="text" id="grinder" name="grinder" list="grinderList" placeholder="e.g. Niche Zero" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                                <datalist id="grinderList"></datalist>
+                            </div>
+                             <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grind Size</label><input type="number" step="any" id="grind" name="grind" placeholder="e.g. 14" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]"></div>
+                            
+                            <!-- Recipe Block -->
+                             <div class="grid grid-cols-3 gap-2 bg-coffee-50/50 dark:bg-[#201d1b] p-2 rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                                <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">In (g)</label><input type="number" step="any" id="inputWeight" name="weight" oninput="handleRecipeInput('weight')" placeholder="18" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
+                                <div class="relative"><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label><input type="number" step="any" id="inputRatio" name="ratio" oninput="handleRecipeInput('ratio')" placeholder="16" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
+                                <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label><input type="number" step="any" id="inputYield" name="yield" oninput="handleRecipeInput('yield')" placeholder="288" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
+                            </div>
+                            
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Time (Sec)</label><input type="number" step="any" id="time" name="time" placeholder="e.g. 180" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]"></div>
+                            
+                            <div class="relative">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Temp</label>
+                                    <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
+                                        <button type="button" onclick="setTempMode('numeric')" id="btnTempNumeric" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">°C</button>
+                                        <button type="button" onclick="setTempMode('profile')" id="btnTempProfile" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">Prof</button>
+                                    </div>
+                                </div>
+                                <div id="tempNumericContainer">
+                                    <input type="number" step="any" id="tempNumeric" name="tempNumeric" placeholder="e.g. 93" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
+                                </div>
+                                <div id="tempProfileContainer" class="hidden">
+                                    <select id="tempProfile" name="tempProfile" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="L4">L4 (Very Low)</option>
+                                        <option value="L3">L3 (Low)</option>
+                                        <option value="L2">L2</option>
+                                        <option value="L1">L1</option>
+                                        <option value="M">M (Medium)</option>
+                                        <option value="H1">H1</option>
+                                        <option value="H2">H2</option>
+                                        <option value="H3">H3 (High)</option>
+                                        <option value="H4">H4 (Very High)</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" id="tempMode" name="tempMode" value="numeric">
+                            </div>
+                            
+                             <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Drink</label>
+                                <select id="drinkType" name="drinkType" onchange="toggleDrinkOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                    <option value="" disabled selected>Select Drink</option>
+                                    <option value="Espresso">Espresso</option>
+                                    <option value="Lungo">Lungo</option>
+                                    <option value="Americano">Americano</option>
+                                    <option value="Cappuccino">Cappuccino</option>
+                                    <option value="Flat White">Flat White</option>
+                                    <option value="Macchiato">Macchiato</option>
+                                    <option value="Latte Macchiato">Latte Macchiato</option>
+                                    <option value="Filter Coffee">Filter Coffee</option>
+                                    <option value="Soup">Soup</option>
+                                    <option value="Long Soup">Long Soup</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="text" id="drinkOther" name="drinkOther" placeholder="e.g. Cortado" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                            </div>
+                            
+                            <!-- Notes & Ratings -->
+                            <div class="col-span-1 md:col-span-2 lg:col-span-4">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Tasting Notes</label>
+                                    <button type="button" onclick="openImageModal()" class="text-xs text-blue-500 hover:underline dark:text-blue-400 mr-auto ml-2"><i class="fa-solid fa-image mr-1"></i>View Wheel</button>
+                                    <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
+                                        <button type="button" onclick="setNotesMode('manual')" id="btnNotesManual" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">Text</button>
+                                        <button type="button" onclick="setNotesMode('sca')" id="btnNotesSCA" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">SCA Wheel</button>
+                                    </div>
+                                </div>
+                                <div id="notesManualContainer">
+                                    <input type="text" id="notes" name="notes" placeholder="e.g. Floral, fruity acidity, clean finish" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
+                                </div>
+                                <div id="notesSCAContainer" class="hidden mt-2 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-3">
+                                    <div id="scaSelectionDisplay" class="text-sm font-bold text-coffee-800 dark:text-white mb-2 min-h-[1.25rem]"></div>
+                                    <div id="scaButtonsContainer" class="flex flex-wrap gap-2"></div>
+                                </div>
+                                <input type="hidden" id="notesMode" name="notesMode" value="manual">
+                            </div>
+
+                             <div class="col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="flex flex-col items-start gap-1">
+                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Rating</label>
+                                    <div class="star-rating flex text-2xl text-gray-300 dark:text-gray-600" id="starContainer"><i class="fa-solid fa-star" onclick="setRating(1)"></i><i class="fa-solid fa-star" onclick="setRating(2)"></i><i class="fa-solid fa-star" onclick="setRating(3)"></i><i class="fa-solid fa-star" onclick="setRating(4)"></i><i class="fa-solid fa-star" onclick="setRating(5)"></i></div>
+                                    <input type="hidden" id="ratingInput" name="rating" value="0">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Improve / Next Time</label>
+                                    <input type="text" id="improve" name="improve" placeholder="e.g. Grind finer, hotter water" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                                </div>
                             </div>
                         </div>
-                        <div id="tempNumericContainer">
-                            <input type="number" step="any" id="tempNumeric" name="tempNumeric" placeholder="e.g. 93" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
-                        </div>
-                        <div id="tempProfileContainer" class="hidden">
-                            <select id="tempProfile" name="tempProfile" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
-                                <option value="" disabled selected>Select</option>
-                                <option value="L4">L4 (Very Low)</option>
-                                <option value="L3">L3 (Low)</option>
-                                <option value="L2">L2</option>
-                                <option value="L1">L1</option>
-                                <option value="M">M (Medium)</option>
-                                <option value="H1">H1</option>
-                                <option value="H2">H2</option>
-                                <option value="H3">H3 (High)</option>
-                                <option value="H4">H4 (Very High)</option>
-                            </select>
-                        </div>
-                        <input type="hidden" id="tempMode" name="tempMode" value="numeric">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Drink</label>
-                        <select id="drinkType" name="drinkType" onchange="toggleDrinkOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
-                            <option value="" disabled selected>Select Drink</option>
-                            <option value="Espresso">Espresso</option>
-                            <option value="Lungo">Lungo</option>
-                            <option value="Americano">Americano</option>
-                            <option value="Cappuccino">Cappuccino</option>
-                            <option value="Flat White">Flat White</option>
-                            <option value="Macchiato">Macchiato</option>
-                            <option value="Latte Macchiato">Latte Macchiato</option>
-                            <option value="Filter Coffee">Filter Coffee</option>
-                            <option value="Soup">Soup</option>
-                            <option value="Long Soup">Long Soup</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <input type="text" id="drinkOther" name="drinkOther" placeholder="e.g. Cortado" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
                     </div>
 
-                    <div class="col-span-1 md:col-span-2 lg:col-span-4">
-                        <div class="flex justify-between items-end mb-1">
-                            <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Tasting Notes</label>
-                            <button type="button" onclick="openImageModal()" class="text-xs text-blue-500 hover:underline dark:text-blue-400 mr-auto ml-2"><i class="fa-solid fa-image mr-1"></i>View Wheel</button>
-                            <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
-                                <button type="button" onclick="setNotesMode('manual')" id="btnNotesManual" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">Text</button>
-                                <button type="button" onclick="setNotesMode('sca')" id="btnNotesSCA" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">SCA Wheel</button>
-                            </div>
-                        </div>
-                        <div id="notesManualContainer">
-                            <input type="text" id="notes" name="notes" placeholder="e.g. Floral, fruity acidity, clean finish" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
-                        </div>
-                        <div id="notesSCAContainer" class="hidden mt-2 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-3">
-                            <div id="scaSelectionDisplay" class="text-sm font-bold text-coffee-800 dark:text-white mb-2 min-h-[1.25rem]"></div>
-                            <div id="scaButtonsContainer" class="flex flex-wrap gap-2"></div>
-                        </div>
-                        <input type="hidden" id="notesMode" name="notesMode" value="manual">
-                    </div>
-
-                    <div class="col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="flex flex-col items-start gap-1">
-                            <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Rating</label>
-                            <div class="star-rating flex text-2xl text-gray-300 dark:text-gray-600" id="starContainer"><i class="fa-solid fa-star" onclick="setRating(1)"></i><i class="fa-solid fa-star" onclick="setRating(2)"></i><i class="fa-solid fa-star" onclick="setRating(3)"></i><i class="fa-solid fa-star" onclick="setRating(4)"></i><i class="fa-solid fa-star" onclick="setRating(5)"></i></div>
-                            <input type="hidden" id="ratingInput" name="rating" value="0">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Improve / Next Time</label>
-                            <input type="text" id="improve" name="improve" placeholder="e.g. Grind finer, hotter water" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
-                        </div>
-                    </div>
-
-                    <div class="col-span-1 md:col-span-2 lg:col-span-4 flex justify-between items-center mt-2 border-t border-coffee-100 dark:border-[#44403c] pt-4"><div class="flex items-center gap-2"><div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" name="isActive" id="isActiveToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="isActiveToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div><label for="isActiveToggle" class="text-xs font-bold text-coffee-600 dark:text-[#a8a29e] cursor-pointer">Add to Active Brews</label></div><div class="flex gap-3"><button type="button" onclick="discardForm()" class="text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] px-4 py-2.5 rounded-lg font-medium transition-colors">Discard</button><button type="submit" id="submitBtn" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"><i class="fa-solid fa-check"></i> <span>Save Brew</span></button></div></div>
+                    <!-- FOOTER ACTIONS -->
+                    <div class="flex justify-between items-center pt-2"><div class="flex items-center gap-2"><div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" name="isActive" id="isActiveToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="isActiveToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div><label for="isActiveToggle" class="text-xs font-bold text-coffee-600 dark:text-[#a8a29e] cursor-pointer">Add to Active Brews</label></div><div class="flex gap-3"><button type="button" onclick="discardForm()" class="text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] px-4 py-2.5 rounded-lg font-medium transition-colors">Discard</button><button type="submit" id="submitBtn" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"><i class="fa-solid fa-check"></i> <span>Save Brew</span></button></div></div>
                 </form>
             </div>
         </div>
@@ -420,11 +457,51 @@
             <span><i class="fa-solid fa-info-circle mr-1"></i> Drag Active Brews to reorder.</span>
         </div>
     </main>
+    
+    <!-- Beans Management Modal -->
+    <div id="beansModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917]">
+                <h3 class="font-bold text-xl text-coffee-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-jar text-coffee-600 dark:text-[#d6ccc2]"></i> Coffee Beans
+                </h3>
+                <div class="flex items-center gap-2">
+                     <button onclick="syncLegacyBeans()" class="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded font-bold transition-colors border border-indigo-200 dark:border-indigo-800">
+                        <i class="fa-solid fa-sync-alt mr-1"></i> Scan & Link Legacy Brews
+                    </button>
+                    <button onclick="closeBeans()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white ml-2">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
+                 <div class="overflow-x-auto rounded-lg border border-coffee-200 dark:border-[#44403c]">
+                    <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+                        <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
+                            <tr>
+                                <th class="px-4 py-3">Roaster / Farmer</th>
+                                <th class="px-4 py-3">Origin / Region</th>
+                                <th class="px-4 py-3">Process / Variety</th>
+                                <th class="px-4 py-3 text-center">Roast</th>
+                                <th class="px-4 py-3 text-center w-24">Stock (g)</th>
+                                <th class="px-4 py-3 text-center w-24">Stock Left</th>
+                                <th class="px-4 py-3 text-center w-20">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="beansTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
+                    </table>
+                </div>
+                <div id="beansEmpty" class="hidden text-center py-8 text-coffee-400 dark:text-[#57534e]">
+                    <p>No beans saved yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Coffee Card Overlay -->
     <div id="coffeeCardOverlay" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCoffeeCard(event)">
+        <!-- Same as original -->
         <div class="flex flex-col gap-2 w-full max-w-sm">
-             <!-- Share Controls Bar -->
             <div id="shareControls" class="hidden bg-white dark:bg-[#292524] rounded-lg p-2 shadow-lg border border-coffee-200 dark:border-[#44403c] flex justify-between items-center transition-all animate-in fade-in zoom-in duration-200" onclick="event.stopPropagation()">
                 <div class="flex gap-2 bg-coffee-100 dark:bg-[#1c1917] rounded p-1">
                     <button onclick="toggleCardMode('stats')" id="btnCardStats" class="px-3 py-1.5 text-xs font-bold rounded shadow-sm bg-white dark:bg-[#292524] text-coffee-800 dark:text-white transition-all">Stats</button>
@@ -437,7 +514,6 @@
                 </div>
             </div>
 
-            <!-- Card Content -->
             <div id="coffeeCardContent" class="bg-white dark:bg-[#292524] w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
                 <div class="bg-coffee-100 dark:bg-[#1c1917] p-5 border-b border-coffee-200 dark:border-[#44403c] relative">
                     <button id="cardCloseBtn" onclick="closeCoffeeCard(null)" class="absolute top-4 right-4 text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -453,7 +529,6 @@
                         <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Method</span><span id="cardMethod" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                     </div>
                     
-                    <!-- Stats Section (Default) -->
                     <div id="cardStatsSection" class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-4 border border-coffee-100 dark:border-[#44403c]">
                         <div class="flex justify-between items-center mb-3"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew Stats</span></div>
                         <div class="grid grid-cols-3 gap-2 text-center mb-3">
@@ -468,7 +543,6 @@
                         </div>
                     </div>
 
-                    <!-- Photo Section (Hidden by default) -->
                     <div id="cardPhotoSection" class="hidden relative h-64 bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group cursor-pointer" onclick="triggerCardPhoto()">
                         <img id="cardDisplayedPhoto" class="absolute hidden" src="" alt="Brew Photo" style="max-width: none;">
                         <div id="cardPhotoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4">
@@ -495,7 +569,7 @@
         </div>
     </div>
 
-    <!-- Statistics Modal -->
+    <!-- Re-used Modals from original -->
     <div id="statsModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col my-8 max-h-[90vh]">
             <div class="p-4 sm:p-6 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917]">
@@ -640,7 +714,7 @@
         </div>
     </div>
 
-    <!-- Modals (Profile, Upload, Gallery, etc.) remain largely unchanged, just ensuring structure is intact -->
+    <!-- Other Modals -->
     <div id="modalOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
             <div class="flex border-b border-coffee-200 dark:border-[#44403c]">
@@ -651,13 +725,9 @@
                 <div class="flex items-center justify-between mb-4"><span class="text-sm font-medium text-coffee-900 dark:text-white">Public Profile</span><button id="togglePublicBtn" onclick="togglePublicProfile()" class="bg-gray-200 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative"><div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform"></div></button></div>
                 <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-4">When enabled, anyone with your Share ID can see your brews.</p>
                 <div id="shareIdContainer" class="hidden"><label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase">Your Share ID</label><div class="flex gap-2"><input type="text" id="myShareId" readonly class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1 text-sm font-mono text-coffee-900 dark:text-white select-all"><button onclick="copyShareId()" class="bg-coffee-200 dark:bg-[#44403c] hover:bg-coffee-300 px-3 rounded text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-regular fa-copy"></i></button></div></div>
-                
                 <hr class="my-6 border-coffee-200 dark:border-[#44403c]">
                 <div class="text-xs font-semibold text-coffee-500 dark:text-[#78716c] uppercase mb-2">Followers</div>
-                <div id="followersList" class="space-y-2 max-h-48 overflow-y-auto mb-4">
-                     <p class="text-xs text-gray-400 italic">No followers yet.</p>
-                </div>
-
+                <div id="followersList" class="space-y-2 max-h-48 overflow-y-auto mb-4"></div>
                 <hr class="my-6 border-coffee-200 dark:border-[#44403c]">
                 <button onclick="googleLogout()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-300 py-2 rounded-lg text-sm font-medium">Sign Out</button>
             </div>
@@ -670,17 +740,14 @@
         </div>
     </div>
 
-    <!-- Image Modal with Zoom & Pan -->
     <div id="imageModalOverlay" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden relative flex flex-col h-[80vh]">
             <div class="absolute top-0 right-0 p-4 z-20">
                 <button onclick="closeImageModal(null)" class="bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors">&times;</button>
             </div>
-            
             <div class="flex-1 overflow-hidden relative bg-coffee-50 dark:bg-[#1c1917] flex items-center justify-center" id="imageContainer" style="touch-action: none;">
                 <img id="zoomableImage" src="img/SCA_wheel.png" alt="SCA Flavor Wheel" class="max-w-full max-h-full object-contain cursor-grab" style="transform-origin: center center;">
             </div>
-
             <div class="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
                  <span class="bg-black/50 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm">Drag to Pan • Pinch/Wheel to Zoom • Double Tap to Reset</span>
             </div>
@@ -688,7 +755,7 @@
     </div>
 
     <div id="uploadPhotoModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
                 <h3 class="font-bold text-coffee-900 dark:text-white">Upload Brew Photo</h3>
                 <button onclick="closeUploadModal()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
@@ -725,234 +792,13 @@
         </div>
     </div>
 
-    <div id="galleryModal" class="hidden fixed inset-0 z-[75] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
-            <div class="flex border-b border-coffee-200 dark:border-[#44403c]">
-                <button onclick="switchGalleryTab('mine')" id="tabGalleryMine" class="flex-1 py-3 text-sm font-semibold text-coffee-700 dark:text-[#d6ccc2] bg-coffee-50 dark:bg-[#1c1917]">My Photos</button>
-                <button onclick="switchGalleryTab('shared')" id="tabGalleryShared" class="flex-1 py-3 text-sm font-semibold text-coffee-500 dark:text-[#78716c] hover:bg-coffee-50 dark:hover:bg-[#1c1917]">Friends' Photos</button>
-                <button onclick="document.getElementById('galleryModal').classList.add('hidden')" class="px-4 text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="galleryContent" class="p-4 overflow-y-auto flex-1 bg-coffee-50 dark:bg-[#1c1917]">
-                <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
-                <div id="galleryLoadMore" class="text-center py-4 hidden">
-                    <button onclick="loadMoreGallery()" class="bg-coffee-100 dark:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] px-6 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-coffee-200 dark:hover:bg-[#44403c] transition-colors">
-                        Load More <i class="fa-solid fa-chevron-down ml-2"></i>
-                    </button>
-                </div>
-                <div id="galleryEmpty" class="hidden text-center py-10 text-coffee-400 dark:text-[#57534e]">
-                    <i class="fa-solid fa-images text-4xl mb-2"></i>
-                    <p>No photos found.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="preferencesModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
-            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
-                <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-sliders mr-2"></i>Table Preferences</h3>
-                <button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-6 max-h-[60vh] overflow-y-auto">
-                <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-4">Select the columns you want to see in your brew log.</p>
-                <div id="preferencesList" class="space-y-3">
-                    </div>
-            </div>
-            <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2">
-                <button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button>
-                <button onclick="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">
-                    Save Preferences
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="exportModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
-            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
-                <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-file-csv mr-2"></i>Export Brew Log</h3>
-                <button onclick="closeExportModal()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-6 max-h-[60vh] overflow-y-auto">
-                <p class="text-sm text-coffee-600 dark:text-[#a8a29e] mb-6">Choose your export options:</p>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Type</label>
-                        <select id="exportType" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
-                            <option value="brews">Brews (Coffee Dial format)</option>
-                            <option value="brews-beanconqueror">Brews (Bean Conqueror format)</option>
-                            <option value="coffees">Coffee beans (Bean Conqueror format)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Format</label>
-                        <select id="exportFormat" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
-                            <option value="csv">CSV (.csv)</option>
-                            <option value="json">JSON (.json)</option>
-                        </select>
-                    </div>
-
-                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 p-3 rounded-lg">
-                        <p class="text-xs text-blue-800 dark:text-blue-300"><i class="fa-solid fa-info-circle mr-1"></i>You have <span id="exportBrewCount">0</span> brews to export.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2">
-                <button onclick="closeExportModal()" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button>
-                <button onclick="performExport()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                    <i class="fa-solid fa-download"></i> Export
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="helpModal" class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
-            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
-                <h3 class="font-bold text-xl text-coffee-900 dark:text-white"><i class="fa-solid fa-circle-question mr-2 text-coffee-600 dark:text-[#d6ccc2]"></i>How to Use Coffee Dial</h3>
-                <button onclick="closeHelp()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto space-y-8 bg-coffee-50 dark:bg-[#1c1917]">
-                
-                <div class="space-y-2">
-                    <h4 class="font-bold text-coffee-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-hand-sparkles text-yellow-500"></i> Your Brew, Your Way</h4>
-                    <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Coffee Dial is flexible. You can use it to log <strong>every single shot</strong> you make to track consistency, OR you can just save your <strong>favourite recipes</strong> (Golden Cups) and update them as you dial in a new bean. It's your laboratory!</p>
-                </div>
-
-                <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
-                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">1. Adding & Editing Brews</h4>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                        <div class="flex-shrink-0 text-coffee-500 text-4xl">
-                            <i class="fa-solid fa-plus-circle"></i>
-                        </div>
-                        <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Tap the <strong>"Add New Brew"</strong> bar at the top to open the form. Fill in your details (Roaster, Grind, Ratio, etc.). You can use the SCA Flavor Wheel for notes! To edit, simply tap the <i class="fa-solid fa-ellipsis-vertical text-blue-500 text-xs"></i> icon on any row.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
-                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">2. Pinning & Active Brews</h4>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                        <div class="flex-shrink-0 text-green-600 text-3xl">
-                            <i class="fa-solid fa-thumbtack"></i>
-                        </div>
-                        <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">
-                            Found a recipe you love? Click the <strong>Pin icon</strong> (<i class="fa-solid fa-thumbtack text-xs"></i>) to move it to the <strong>"Pinned Brews"</strong> tiles. This keeps your daily drivers separated from your experiment history.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
-                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">3. The Coffee Card (Double Tap!)</h4>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                        <div class="flex-shrink-0 bg-coffee-100 dark:bg-[#44403c] p-3 rounded-lg border border-coffee-200 dark:border-[#57534e]">
-                            <i class="fa-solid fa-id-card text-2xl text-coffee-700 dark:text-[#d6ccc2]"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">This is the magic feature. <strong>Double tap any row (or active tile)</strong> to open the "Coffee Card".</p>
-                            <p class="text-xs text-coffee-500 dark:text-[#78716c] mt-1">This presents a beautiful, summarized view of the recipe, perfect for quickly replicating a brew without scrolling through the table.</p>
-                        </div>
-                    </div>
-                </div>
-
-                 <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
-                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">4. Social & Sharing</h4>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                         <div class="flex-shrink-0 text-blue-500 text-3xl">
-                            <i class="fa-solid fa-user-group"></i>
-                        </div>
-                        <div class="flex-1">
-                             <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Want to see what your friends are brewing? Click the <strong>"Friends"</strong> button.</p>
-                             <ul class="list-disc list-inside text-xs text-coffee-500 dark:text-[#78716c] mt-1 space-y-1">
-                                <li>Enable "Public Profile" to get a Share ID.</li>
-                                <li>Send your ID to a friend so they can follow you.</li>
-                                <li>Enter a friend's ID to follow them.</li>
-                                <li>Use the dropdown menu (top left) to switch views between "My Brews" and your friends' lists.</li>
-                             </ul>
-                        </div>
-                    </div>
-                </div>
-
-                 <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
-                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">5. Photo Gallery</h4>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                        <div class="flex-shrink-0 text-purple-500 text-3xl">
-                            <i class="fa-solid fa-camera"></i>
-                        </div>
-                        <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Use the camera icon on any brew row to upload a photo (latte art, bean bag, setup). You can share these photos specifically with friends, and view them in the global <strong>Photo Gallery</strong> via the main menu.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
-                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">6. Statistics & Insights</h4>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                        <div class="flex-shrink-0 text-indigo-500 text-3xl">
-                            <i class="fa-solid fa-chart-pie"></i>
-                        </div>
-                        <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">
-                            Open the <strong>Statistics</strong> menu to visualize your brewing habits. See charts for roast types, methods, and your personal "Hall of Fame" (top-rated beans). You can even view stats for your friends!
-                        </p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm">
-                    <h4 class="font-bold text-coffee-800 dark:text-white mb-2">7. AI Power <span class="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-0.5 rounded-full ml-2">New!</span></h4>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                        <div class="flex-shrink-0 text-amber-500 text-3xl">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        </div>
-                        <div class="flex-1">
-                            <ul class="list-disc list-inside text-sm text-coffee-600 dark:text-[#a8a29e] space-y-1">
-                                <li><strong>Scan Bag:</strong> When adding a brew, click "AI Scan Bag" to auto-fill details from a photo of your coffee packaging.</li>
-                                <li><strong>Brew Sommelier:</strong> In the Statistics view, click "AI Profile" to get a personalized analysis of your taste preferences.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end border-t border-coffee-200 dark:border-[#44403c]">
-                <button onclick="closeHelp()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-6 py-2 rounded-lg text-sm font-medium">Got it!</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="aboutModal" class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c] relative">
-            <button onclick="closeAbout()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="p-8 text-center flex flex-col items-center">
-                <div class="w-16 h-16 bg-coffee-100 dark:bg-[#44403c] rounded-full flex items-center justify-center mb-4 shadow-inner">
-                    <i class="fa-solid fa-heart text-3xl text-red-500 animate-pulse"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-coffee-900 dark:text-white mb-2">About Coffee Dial</h3>
-                <div class="w-12 h-1 bg-coffee-300 dark:bg-[#57534e] rounded-full mb-6"></div>
-                
-                <p class="text-coffee-700 dark:text-[#d6ccc2] mb-6 leading-relaxed text-sm">
-                    This app is made by two amateur brewers, <strong>Tieme & Robert</strong>, who wanted some method to their madness of home coffee experimentation.
-                </p>
-                <p class="text-coffee-600 dark:text-[#a8a29e] text-sm italic mb-6">
-                    Feel free to spread our love for coffee and share the link to this app with friends and follow each other's brews.
-                </p>
-
-                <div class="text-xs text-coffee-400 dark:text-[#57534e]">
-                    Version 1.2.0 (BETA)
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="easterEggModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-300" onclick="closeEasterEgg(event)">
-        <div class="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/20">
-            <button onclick="closeEasterEgg(null)" class="absolute top-4 right-4 text-white/70 hover:text-white z-10 transition-colors">
-                <i class="fa-solid fa-xmark text-2xl drop-shadow-md"></i>
-            </button>
-            <video id="easterEggVideo" class="w-full h-full object-contain" controls>
-                <source src="img/Cozy_and_Funky_Video_Generation.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </div>
-    </div>
+    <!-- Gallery, Preferences, Export, Help, About Modals -->
+    <div id="galleryModal" class="hidden fixed inset-0 z-[75] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col"><div class="flex border-b border-coffee-200 dark:border-[#44403c]"><button onclick="switchGalleryTab('mine')" id="tabGalleryMine" class="flex-1 py-3 text-sm font-semibold text-coffee-700 dark:text-[#d6ccc2] bg-coffee-50 dark:bg-[#1c1917]">My Photos</button><button onclick="switchGalleryTab('shared')" id="tabGalleryShared" class="flex-1 py-3 text-sm font-semibold text-coffee-500 dark:text-[#78716c] hover:bg-coffee-50 dark:hover:bg-[#1c1917]">Friends' Photos</button><button onclick="document.getElementById('galleryModal').classList.add('hidden')" class="px-4 text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></div><div id="galleryContent" class="p-4 overflow-y-auto flex-1 bg-coffee-50 dark:bg-[#1c1917]"><div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div><div id="galleryLoadMore" class="text-center py-4 hidden"><button onclick="loadMoreGallery()" class="bg-coffee-100 dark:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] px-6 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-coffee-200 dark:hover:bg-[#44403c] transition-colors">Load More <i class="fa-solid fa-chevron-down ml-2"></i></button></div><div id="galleryEmpty" class="hidden text-center py-10 text-coffee-400 dark:text-[#57534e]"><i class="fa-solid fa-images text-4xl mb-2"></i><p>No photos found.</p></div></div></div></div>
+    <div id="preferencesModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]"><div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center"><h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-sliders mr-2"></i>Table Preferences</h3><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 max-h-[60vh] overflow-y-auto"><p class="text-xs text-coffee-500 dark:text-[#78716c] mb-4">Select the columns you want to see in your brew log.</p><div id="preferencesList" class="space-y-3"></div></div><div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2"><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button><button onclick="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Save Preferences</button></div></div></div>
+    <div id="exportModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]"><div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center"><h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-file-csv mr-2"></i>Export Brew Log</h3><button onclick="closeExportModal()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 max-h-[60vh] overflow-y-auto"><p class="text-sm text-coffee-600 dark:text-[#a8a29e] mb-6">Choose your export options:</p><div class="space-y-4"><div><label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Type</label><select id="exportType" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm"><option value="brews">Brews (Coffee Dial format)</option><option value="brews-beanconqueror">Brews (Bean Conqueror format)</option><option value="coffees">Coffee beans (Bean Conqueror format)</option></select></div><div><label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Format</label><select id="exportFormat" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm"><option value="csv">CSV (.csv)</option><option value="json">JSON (.json)</option></select></div><div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 p-3 rounded-lg"><p class="text-xs text-blue-800 dark:text-blue-300"><i class="fa-solid fa-info-circle mr-1"></i>You have <span id="exportBrewCount">0</span> brews to export.</p></div></div></div><div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2"><button onclick="closeExportModal()" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button><button onclick="performExport()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><i class="fa-solid fa-download"></i> Export</button></div></div></div>
+    <div id="helpModal" class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col"><div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center"><h3 class="font-bold text-xl text-coffee-900 dark:text-white"><i class="fa-solid fa-circle-question mr-2 text-coffee-600 dark:text-[#d6ccc2]"></i>How to Use Coffee Dial</h3><button onclick="closeHelp()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 overflow-y-auto space-y-8 bg-coffee-50 dark:bg-[#1c1917]"><div class="space-y-2"><h4 class="font-bold text-coffee-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-hand-sparkles text-yellow-500"></i> Your Brew, Your Way</h4><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Coffee Dial is flexible. You can use it to log <strong>every single shot</strong> you make to track consistency, OR you can just save your <strong>favourite recipes</strong> (Golden Cups) and update them as you dial in a new bean. It's your laboratory!</p></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">1. Adding & Editing Brews</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-coffee-500 text-4xl"><i class="fa-solid fa-plus-circle"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Tap the <strong>"Add New Brew"</strong> bar at the top to open the form. Fill in your details (Roaster, Grind, Ratio, etc.). You can use the SCA Flavor Wheel for notes! To edit, simply tap the <i class="fa-solid fa-ellipsis-vertical text-blue-500 text-xs"></i> icon on any row.</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">2. Pinning & Active Brews</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-green-600 text-3xl"><i class="fa-solid fa-thumbtack"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Found a recipe you love? Click the <strong>Pin icon</strong> (<i class="fa-solid fa-thumbtack text-xs"></i>) to move it to the <strong>"Pinned Brews"</strong> tiles. This keeps your daily drivers separated from your experiment history.</p></div></div></div><div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end border-t border-coffee-200 dark:border-[#44403c]"><button onclick="closeHelp()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-6 py-2 rounded-lg text-sm font-medium">Got it!</button></div></div></div>
+    <div id="aboutModal" class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c] relative"><button onclick="closeAbout()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button><div class="p-8 text-center flex flex-col items-center"><div class="w-16 h-16 bg-coffee-100 dark:bg-[#44403c] rounded-full flex items-center justify-center mb-4 shadow-inner"><i class="fa-solid fa-heart text-3xl text-red-500 animate-pulse"></i></div><h3 class="text-2xl font-bold text-coffee-900 dark:text-white mb-2">About Coffee Dial</h3><div class="w-12 h-1 bg-coffee-300 dark:bg-[#57534e] rounded-full mb-6"></div><p class="text-coffee-700 dark:text-[#d6ccc2] mb-6 leading-relaxed text-sm">This app is made by two amateur brewers, <strong>Tieme & Robert</strong>, who wanted some method to their madness of home coffee experimentation.</p><p class="text-coffee-600 dark:text-[#a8a29e] text-sm italic mb-6">Feel free to spread our love for coffee and share the link to this app with friends and follow each other's brews.</p><div class="text-xs text-coffee-400 dark:text-[#57534e]">Version 1.2.0 (BETA)</div></div></div></div>
+    <div id="easterEggModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-300" onclick="closeEasterEgg(event)"><div class="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/20"><button onclick="closeEasterEgg(null)" class="absolute top-4 right-4 text-white/70 hover:text-white z-10 transition-colors"><i class="fa-solid fa-xmark text-2xl drop-shadow-md"></i></button><video id="easterEggVideo" class="w-full h-full object-contain" controls><source src="img/Cozy_and_Funky_Video_Generation.mp4" type="video/mp4">Your browser does not support the video tag.</video></div></div>
 
     <script type="module">
         // --- CONFIG ---
@@ -982,26 +828,25 @@
         let currentUser = null;
         let currentView = 'mine'; 
         let coffees = [];
+        let beans = []; // Store saved beans
         let following = [];
         let followers = []; 
         let unsubscribeData = null; 
+        let unsubscribeBeans = null; // Listener for saved beans
         let unsubscribeNotifications = null;
         let isPublic = false;
-        let sortableInstances = []; // Array to store Sortable instances
+        let sortableInstances = []; 
         let currentUploadCoffeeId = null;
-        let currentShareMode = 'stats'; // 'stats' or 'photo'
+        let currentShareMode = 'stats'; 
         let currentCardCoffee = null;
 
-        // --- Stats Specific Tracker ---
         let currentStatsData = [];
         let currentBeanMeterPeriod = 'day';
 
-        // --- Gallery Pagination State ---
         let lastGalleryDoc = null;
         let currentGalleryMode = 'mine';
         let isGalleryLoading = false;
 
-        // --- PREFERENCES CONFIG ---
         const columnDefs = [
             { id: 'roaster', label: 'Roaster' },
             { id: 'origin', label: 'Origin' },
@@ -1022,10 +867,8 @@
             { id: 'date', label: 'Date' }
         ];
 
-        // Default: All true
         let columnPreferences = columnDefs.reduce((acc, col) => ({...acc, [col.id]: true}), {});
 
-        // --- SCA Wheel Data ---
         const scaData = {
           "Fruity": { c: "bg-red-400 text-white", s: { "Berry": ["Blackberry", "Raspberry", "Blueberry", "Strawberry"], "Dried Fruit": ["Raisin", "Prune"], "Other Fruit": ["Coconut", "Cherry", "Pomegranate", "Pineapple", "Grape", "Apple", "Peach", "Pear"], "Citrus Fruit": ["Grapefruit", "Orange", "Lemon", "Lime"] }},
           "Sour/Fermented": { c: "bg-yellow-400 text-black", s: { "Sour": ["Sour Aromatics", "Acetic Acid", "Butyric Acid", "Isovaleric Acid", "Citric Acid", "Malic Acid"], "Alcohol/Fermented": ["Winey", "Whiskey", "Fermented", "Overripe"] }},
@@ -1042,7 +885,6 @@
 
         // --- Functions ---
         
-        // AI SCAN FUNCTIONS
         const triggerAIScan = (mode = null) => {
             if (!currentUser) return alert("Please sign in to use AI scanning.");
             const input = document.getElementById('aiFileInput');
@@ -1086,6 +928,7 @@
                         setTimeout(() => el.classList.remove('ai-flash-effect'), 2000);
                     }
                 });
+                // Ensure form is open
                 toggleForm(true);
             } catch (error) { console.error(error); alert("Error scanning bag: " + error.message); } finally {
                 btn.disabled = false; btn.innerHTML = originalContent; btn.classList.remove('ai-loading-pulse'); event.target.value = '';
@@ -1138,20 +981,74 @@
         const changeView = (uid) => {
             currentView = uid;
             if(unsubscribeData) unsubscribeData(); 
+            if(unsubscribeBeans) unsubscribeBeans();
+
             const targetUid = uid === 'mine' ? currentUser.uid : uid;
             const isMine = uid === 'mine';
             const formContainer = document.getElementById('formContainer');
             if (isMine) { formContainer.classList.remove('hidden'); toggleForm(false); } else { formContainer.classList.add('hidden'); toggleForm(false); }
+            
+            // Listen to Brews
             const q = collection(db, 'users', targetUid, 'coffees');
             unsubscribeData = onSnapshot(q, (snapshot) => {
                 coffees = []; snapshot.forEach(doc => coffees.push({ id: doc.id, ...doc.data() }));
-                // Default to Date Descending (Newest first) for the raw data
                 if (!currentSort.key) coffees.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderTable(); updateAutocompleteLists();
             }, (error) => {
                 console.error(error);
                 if(error.code === 'permission-denied') { alert("⚠️ Access Denied: This user's profile is private."); document.getElementById('viewSelect').value = 'mine'; changeView('mine'); }
             });
+
+            // Listen to Beans (Only for current user)
+            if(isMine) {
+                 const beanQ = collection(db, 'users', currentUser.uid, 'beans');
+                 unsubscribeBeans = onSnapshot(beanQ, (snapshot) => {
+                     beans = [];
+                     snapshot.forEach(doc => beans.push({ id: doc.id, ...doc.data() }));
+                     updateBeanDropdown();
+                     // If beans modal is open, refresh it
+                     if(!document.getElementById('beansModal').classList.contains('hidden')) {
+                         renderBeansTable();
+                     }
+                 });
+            }
+        };
+
+        const updateBeanDropdown = () => {
+            const select = document.getElementById('savedBeanSelect');
+            select.innerHTML = '<option value="">-- Create New / Custom --</option>';
+            // Sort beans by Roaster name
+            beans.sort((a,b) => (a.roaster || '').localeCompare(b.roaster || ''));
+            beans.forEach(bean => {
+                const option = document.createElement('option');
+                option.value = bean.id;
+                // Construct display text
+                const roaster = bean.roaster || 'Unknown';
+                const farmer = bean.farmer ? ` - ${bean.farmer}` : '';
+                const origin = bean.origin ? ` (${bean.origin})` : '';
+                option.text = `${roaster}${farmer}${origin}`;
+                select.appendChild(option);
+            });
+        };
+
+        const fillBeanDetails = (beanId) => {
+            if(!beanId) return; // "Create New" selected
+            const bean = beans.find(b => b.id === beanId);
+            if(bean) {
+                document.getElementById('roaster').value = bean.roaster || '';
+                document.getElementById('farmer').value = bean.farmer || '';
+                document.getElementById('origin').value = bean.origin || '';
+                document.getElementById('variety').value = bean.variety || '';
+                document.getElementById('processing').value = bean.processing || '';
+                document.getElementById('roastType').value = bean.roastType || '';
+                
+                // Add flash effect
+                ['roaster','farmer','origin','variety','processing','roastType'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.classList.add('ai-flash-effect');
+                    setTimeout(() => el.classList.remove('ai-flash-effect'), 1000);
+                });
+            }
         };
 
         const updateAutocompleteLists = () => {
@@ -1189,15 +1086,72 @@
             const rawMethod = f.get('method'); const rawMethodOther = f.get('methodOther');
             const finalMethod = rawMethod === 'Other' ? (rawMethodOther || 'Other') : rawMethod;
             let newOrder = 0; if (coffees.length > 0) { const minOrder = Math.min(...coffees.map(c => c.customOrder || 0)); newOrder = minOrder - 1; }
+            
+            // Selected Bean ID from dropdown
+            let selectedBeanId = document.getElementById('savedBeanSelect').value;
+
+            // Brew Data
             const d = { 
                 roaster: f.get('roaster'), farmer: f.get('farmer'), origin: f.get('origin'), variety: f.get('variety'), processing: f.get('processing'),
                 roastType: f.get('roastType'), method: finalMethod, grinder: f.get('grinder'), grind: parseNum(f.get('grind')), weight: parseNum(f.get('weight')), 
                 ratio: parseNum(f.get('ratio')), time: parseNum(f.get('time')), temp: finalTemp, drink: finalDrink, notes: finalNotes, 
                 improve: f.get('improve') || '', rating: parseInt(f.get('rating')) || 0, isActive: isActiveChecked, updatedAt: new Date().toISOString() 
             };
+
+            // Bean Data (for creating new or updating)
+            const beanData = {
+                roaster: d.roaster,
+                farmer: d.farmer,
+                origin: d.origin,
+                variety: d.variety,
+                processing: d.processing,
+                roastType: d.roastType,
+                updatedAt: new Date().toISOString()
+            };
+
             try {
+                // Handle Bean Logic
+                // 1. If user selected a bean from dropdown, use that ID.
+                // 2. If dropdown is empty (Create New), check if a bean with these attributes already exists in the local 'beans' array to avoid duplicates.
+                // 3. If not exists, create new doc with auto-ID.
+                
+                const clean = (s) => (s || '').toLowerCase().trim();
+                
+                if (!selectedBeanId) {
+                    // Check for existing bean with same signature in client cache to prevent duplicates
+                    const existingBean = beans.find(b => 
+                        clean(b.roaster) === clean(beanData.roaster) &&
+                        clean(b.farmer) === clean(beanData.farmer) &&
+                        clean(b.origin) === clean(beanData.origin) &&
+                        clean(b.processing) === clean(beanData.processing) &&
+                        clean(b.variety) === clean(beanData.variety) &&
+                        clean(b.roastType) === clean(beanData.roastType)
+                    );
+                    
+                    if (existingBean) {
+                        selectedBeanId = existingBean.id;
+                        // Optionally update updatedTimestamp
+                        await updateDoc(doc(db, 'users', currentUser.uid, 'beans', selectedBeanId), { updatedAt: beanData.updatedAt });
+                    } else {
+                        // Create New Bean with Auto-ID
+                        if (beanData.roaster || beanData.origin) { // Only create if minimal data exists
+                            beanData.createdAt = new Date().toISOString();
+                            const newBeanRef = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
+                            selectedBeanId = newBeanRef.id;
+                        }
+                    }
+                } else {
+                    // Update existing bean timestamp
+                     await updateDoc(doc(db, 'users', currentUser.uid, 'beans', selectedBeanId), { updatedAt: beanData.updatedAt });
+                }
+
+                // Add beanId to brew data
+                if (selectedBeanId) d.beanId = selectedBeanId;
+
+                // Save Brew
                 const col = collection(db, 'users', currentUser.uid, 'coffees');
                 if(eid) { await updateDoc(doc(col, eid), d); } else { d.customOrder = newOrder; d.createdAt = new Date().toISOString(); await addDoc(col, d); }
+
                 resetFormState(); toggleForm(false);
             } catch(err){ alert(err.message); }
         };
@@ -1206,58 +1160,249 @@
         const toggleActive = async (id, ev) => { if(ev) ev.stopPropagation(); if(currentView !== 'mine') return; const c = coffees.find(x => x.id === id); if(!c) return; try { await updateDoc(doc(db, 'users', currentUser.uid, 'coffees', id), { isActive: !c.isActive }); } catch(e) { console.error(e); } };
 
         const initSortable = () => {
-            // Destroy existing instances to prevent memory leaks/duplication
             sortableInstances.forEach(instance => instance.destroy());
             sortableInstances = [];
-
-            // Check if dragging should be enabled
-            // Only enable sorting on 'mine' view when no filters/sort are active
             const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v => v !== null);
 
             if (!isDraggable) return;
-
-            // Target the pinned grid
             const pinnedGrid = document.getElementById('pinnedGrid');
 
             if (pinnedGrid) {
                 const sortable = new Sortable(pinnedGrid, {
-                    handle: '.drag-handle', // Handle on the grip icon
+                    handle: '.drag-handle',
                     animation: 200,
                     ghostClass: 'sortable-ghost',
                     dragClass: 'sortable-drag',
-                    delay: 100, // Slight delay to prevent accidental drags
+                    delay: 100,
                     delayOnTouchOnly: true,
-                    forceFallback: true, // IMPORTANT: Creates a clone for consistent drag physics
+                    forceFallback: true, 
                     fallbackClass: 'sortable-drag',
                     onEnd: async function(evt) {
                         if (evt.oldIndex === evt.newIndex) return;
-                        
-                        // Get current order of IDs from the DOM
                         const tiles = Array.from(pinnedGrid.children);
                         const newOrderIds = tiles.map(tile => tile.getAttribute('data-id')).filter(id => id);
-
-                        // Update customOrder in Firebase
                         const batch = writeBatch(db);
                         newOrderIds.forEach((id, index) => {
-                            // Find the item in our local array to get its current data
                             const item = coffees.find(c => c.id === id);
                             if (item) {
-                                item.customOrder = index; // Update local state immediately
+                                item.customOrder = index; 
                                 const ref = doc(db, 'users', currentUser.uid, 'coffees', id);
                                 batch.update(ref, { customOrder: index });
                             }
                         });
-                        
-                        try {
-                            await batch.commit();
-                        } catch(err) {
-                            console.error("Reorder failed", err);
-                            alert("Failed to save new order.");
-                            renderTable(); // Revert visual change on error
-                        }
+                        try { await batch.commit(); } catch(err) { console.error("Reorder failed", err); alert("Failed to save new order."); renderTable(); }
                     }
                 });
                 sortableInstances.push(sortable);
+            }
+        };
+
+        // --- Beans Management Functions ---
+        const openBeans = () => {
+            if (!currentUser) return alert("Please sign in.");
+            document.getElementById('beansModal').classList.remove('hidden');
+            renderBeansTable();
+        };
+
+        const closeBeans = () => {
+            document.getElementById('beansModal').classList.add('hidden');
+        };
+
+        const renderBeansTable = () => {
+            const tbody = document.getElementById('beansTableBody');
+            const empty = document.getElementById('beansEmpty');
+            tbody.innerHTML = '';
+            
+            if (beans.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            // Map beans to include calculated remaining stock
+            const beansWithStock = beans.map(bean => {
+                let remaining = null;
+                if (bean.stock !== undefined && bean.stock !== null) {
+                    const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
+                    // Filter brews: match beanId, and created AFTER stock date
+                    const usedAmount = coffees
+                        .filter(c => c.beanId === bean.id && new Date(c.createdAt) > stockDate)
+                        .reduce((sum, c) => sum + (c.weight || 0), 0);
+                    remaining = parseFloat(bean.stock) - usedAmount;
+                }
+                return { ...bean, calculatedStock: remaining };
+            });
+
+            // Split into In-Stock and Out-Of-Stock/Unspecified
+            const inStockBeans = beansWithStock
+                .filter(b => b.calculatedStock !== null && b.calculatedStock > 0)
+                .sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+            const otherBeans = beansWithStock
+                .filter(b => b.calculatedStock === null || b.calculatedStock <= 0)
+                .sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+            const createRow = (bean) => {
+                const tr = document.createElement('tr');
+                tr.className = "bg-white dark:bg-[#292524] border-b border-coffee-50 dark:border-[#34302e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors";
+                
+                let stockLeftDisplay = '-';
+                if (bean.calculatedStock !== null) {
+                     stockLeftDisplay = bean.calculatedStock.toFixed(1) + 'g';
+                }
+
+                const roaster = bean.roaster || 'Unknown';
+                const farmer = bean.farmer ? `<br><span class="text-xs text-coffee-500">${bean.farmer}</span>` : '';
+                const origin = bean.origin || '-';
+                const process = bean.processing || '-';
+                const variety = bean.variety ? `<br><span class="text-xs text-coffee-500">${bean.variety}</span>` : '';
+                
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-coffee-900 dark:text-white">${roaster}${farmer}</td>
+                    <td class="px-4 py-3">${origin}</td>
+                    <td class="px-4 py-3">${process}${variety}</td>
+                    <td class="px-4 py-3 text-center">${getRoastBadge(bean.roastType)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="number" step="1" value="${bean.stock || ''}" 
+                            onchange="saveBeanStock('${bean.id}', this.value)"
+                            class="w-20 text-center text-sm border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500" placeholder="-">
+                    </td>
+                    <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${stockLeftDisplay}</td>
+                    <td class="px-4 py-3 text-center">
+                         <button onclick="deleteBean('${bean.id}')" class="text-red-500 hover:text-red-700 p-2"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                return tr;
+            };
+
+            // Render In Stock Section
+            if (inStockBeans.length > 0) {
+                const headerRow = document.createElement('tr');
+                headerRow.className = "bg-green-50 dark:bg-green-900/20";
+                headerRow.innerHTML = `<td colspan="7" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>`;
+                tbody.appendChild(headerRow);
+                inStockBeans.forEach(bean => tbody.appendChild(createRow(bean)));
+            }
+
+            // Render Archive/Out of Stock Section
+            if (otherBeans.length > 0) {
+                 if(inStockBeans.length > 0) {
+                    const headerRow = document.createElement('tr');
+                    headerRow.className = "bg-gray-50 dark:bg-[#34302e]";
+                    headerRow.innerHTML = `<td colspan="7" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>`;
+                    tbody.appendChild(headerRow);
+                 }
+                 otherBeans.forEach(bean => tbody.appendChild(createRow(bean)));
+            }
+        };
+
+        const saveBeanStock = async (beanId, amount) => {
+            if (!currentUser) return;
+            try {
+                const stockVal = amount === '' ? null : parseFloat(amount);
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                    stock: stockVal,
+                    stockUpdatedAt: new Date().toISOString()
+                });
+                // Table will auto-refresh via snapshot listener
+            } catch (err) {
+                console.error("Error saving stock:", err);
+                alert("Failed to save stock.");
+            }
+        };
+
+        const deleteBean = async (beanId) => {
+            if(!confirm("Are you sure? This will not delete brews, but will unlink them from this bean.")) return;
+            try {
+                await deleteDoc(doc(db, 'users', currentUser.uid, 'beans', beanId));
+            } catch(e) { alert(e.message); }
+        };
+
+        const syncLegacyBeans = async () => {
+            if (!currentUser) return;
+            const btn = document.querySelector('#beansModal button i.fa-sync-alt').parentNode;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Scanning...';
+
+            try {
+                const batchLimit = 450;
+                let batches = [];
+                let currentBatch = writeBatch(db);
+                let opCount = 0;
+
+                const uniqueMap = new Map();
+                
+                // 1. Identify all unique beans from existing brews
+                coffees.forEach(c => {
+                    const clean = (s) => (s || '').toLowerCase().trim();
+                    // Create signature
+                    const key = `${clean(c.roaster)}|${clean(c.farmer)}|${clean(c.origin)}|${clean(c.processing)}|${clean(c.variety)}|${clean(c.roastType)}`;
+                    
+                    if (!uniqueMap.has(key)) {
+                        // Check if this bean already exists in the 'beans' collection
+                        const existingBean = beans.find(b => 
+                             clean(b.roaster) === clean(c.roaster) &&
+                             clean(b.farmer) === clean(c.farmer) &&
+                             clean(b.origin) === clean(c.origin) &&
+                             clean(b.processing) === clean(c.processing) &&
+                             clean(b.variety) === clean(c.variety) &&
+                             clean(b.roastType) === clean(c.roastType)
+                        );
+                        
+                        uniqueMap.set(key, {
+                            data: {
+                                roaster: c.roaster,
+                                farmer: c.farmer,
+                                origin: c.origin || c.beanType,
+                                variety: c.variety,
+                                processing: c.processing,
+                                roastType: c.roastType
+                            },
+                            id: existingBean ? existingBean.id : null,
+                            isNew: !existingBean
+                        });
+                    }
+                });
+
+                // 2. Create missing beans
+                for (const [key, val] of uniqueMap.entries()) {
+                    if (val.isNew && (val.data.roaster || val.data.origin)) {
+                        const newRef = doc(collection(db, 'users', currentUser.uid, 'beans'));
+                        val.id = newRef.id;
+                        currentBatch.set(newRef, { ...val.data, createdAt: new Date().toISOString() });
+                        opCount++;
+                        if (opCount >= batchLimit) { batches.push(currentBatch); currentBatch = writeBatch(db); opCount = 0; }
+                    }
+                }
+
+                // 3. Link brews to bean IDs
+                coffees.forEach(c => {
+                    if (!c.beanId) {
+                         const clean = (s) => (s || '').toLowerCase().trim();
+                         const key = `${clean(c.roaster)}|${clean(c.farmer)}|${clean(c.origin)}|${clean(c.processing)}|${clean(c.variety)}|${clean(c.roastType)}`;
+                         const mapEntry = uniqueMap.get(key);
+                         
+                         if (mapEntry && mapEntry.id) {
+                             const brewRef = doc(db, 'users', currentUser.uid, 'coffees', c.id);
+                             currentBatch.update(brewRef, { beanId: mapEntry.id });
+                             opCount++;
+                             if (opCount >= batchLimit) { batches.push(currentBatch); currentBatch = writeBatch(db); opCount = 0; }
+                         }
+                    }
+                });
+
+                batches.push(currentBatch);
+                
+                await Promise.all(batches.map(b => b.commit()));
+                alert("Legacy scan complete! Brews linked to Beans.");
+                
+            } catch (err) {
+                console.error(err);
+                alert("Scan failed: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         };
 
@@ -1506,7 +1651,6 @@
         const openEasterEgg = () => { const m = document.getElementById('easterEggModal'); const v = document.getElementById('easterEggVideo'); m.classList.remove('hidden'); v.currentTime = 0; v.play().catch(e => console.log("Autoplay failed", e)); };
         const closeEasterEgg = (e) => { if(!e || e.target.id === 'easterEggModal' || e.target.closest('button')) { const m = document.getElementById('easterEggModal'); const v = document.getElementById('easterEggVideo'); m.classList.add('hidden'); v.pause(); } };
 
-        // --- NEW ZOOM LOGIC ---
         let zoomState = { scale: 1, x: 0, y: 0 };
         let panStart = { x: 0, y: 0 }; 
         let isPanning = false;
@@ -1540,10 +1684,7 @@
             const container = document.getElementById('imageContainer');
             const img = document.getElementById('zoomableImage');
             if(!container || !img) return;
-
-            // --- MOUSE EVENTS (Desktop) ---
             
-            // Wheel Zoom
             container.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const delta = e.deltaY * -0.002;
@@ -1552,7 +1693,6 @@
                 updateImage();
             }, { passive: false });
 
-            // Mouse Down (Start Pan)
             container.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 isPanning = true;
@@ -1560,7 +1700,6 @@
                 img.style.cursor = 'grabbing';
             });
 
-            // Mouse Move (Panning)
             window.addEventListener('mousemove', (e) => {
                 if (!isPanning) return;
                 e.preventDefault();
@@ -1569,7 +1708,6 @@
                 updateImage();
             });
 
-            // Mouse Up (End Pan)
             window.addEventListener('mouseup', () => {
                 if(isPanning) {
                     isPanning = false;
@@ -1577,20 +1715,16 @@
                 }
             });
 
-            // Double Click Reset
             container.addEventListener('dblclick', (e) => {
                 e.preventDefault();
                 resetZoom();
             });
-
-            // --- TOUCH EVENTS (Mobile) ---
             
             let initialDist = 0;
             let initialScale = 1;
 
             container.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
-                    // Start Pinch
                     e.preventDefault();
                     initialDist = Math.hypot(
                         e.touches[0].pageX - e.touches[1].pageX,
@@ -1598,7 +1732,6 @@
                     );
                     initialScale = zoomState.scale;
                 } else if (e.touches.length === 1) {
-                    // Start Pan
                     isPanning = true;
                     panStart = { x: e.touches[0].pageX - zoomState.x, y: e.touches[0].pageY - zoomState.y };
                 }
@@ -1606,7 +1739,6 @@
 
             container.addEventListener('touchmove', (e) => {
                 if (e.touches.length === 2) {
-                    // Pinching
                     e.preventDefault();
                     const dist = Math.hypot(
                         e.touches[0].pageX - e.touches[1].pageX,
@@ -1618,7 +1750,6 @@
                         updateImage();
                     }
                 } else if (e.touches.length === 1 && isPanning) {
-                    // Panning
                     e.preventDefault(); 
                     zoomState.x = e.touches[0].pageX - panStart.x;
                     zoomState.y = e.touches[0].pageY - panStart.y;
@@ -1949,65 +2080,24 @@
         };
 
         const exportCoffeesAsCSV = (brews) => {
-            // Define the headers in the exact order specified
             const headers = ["Name", "Roaster", "Roast date", "Roast type", "Degree of Roast", "Custom degree of Roast", "Blend", "Weight", "Cost", "Flavour profile", "Cupping points", "Decaffeinated", "Website", "EAN / Articlenumber", "Notes", "Rating", "Archived", "Frozen Date", "Unfrozen Date", "Freezing Storage Type", "Frozen Note", "1. Country", "1. Region", "1. Farm", "1. Farmer", "1. Elevation", "1. Variety", "1. Processing", "1. Harvested", "1. Percentage", "1. Bean certification", "1. Fob Price", "1. Purchasing Price"];
-
-            // Create unique coffees map to avoid duplicates (keyed by all exported fields)
             const coffeeMap = new Map();
-
             brews.forEach(brew => {
                 const key = `${brew.roaster || ''}|${brew.farmer || ''}|${brew.roastType || ''}|${brew.origin || ''}|${brew.variety || ''}|${brew.processing || ''}`;
                 if (!coffeeMap.has(key)) {
                     coffeeMap.set(key, brew);
                 }
             });
-
-            // Convert map to array and create rows
             const uniqueCoffees = Array.from(coffeeMap.values());
-            
             const esc = (t) => { 
                 if (t === null || t === undefined) return ''; 
                 const str = String(t); 
                 if (str.includes(';') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; 
                 return str; 
             };
-
             const rows = uniqueCoffees.map(coffee => [
-                esc(coffee.farmer || ''),                              // Name (Blend/farmer field)
-                esc(coffee.roaster || ''),                             // Roaster
-                '',                                                     // Roast date
-                '',                                                     // Roast type
-                esc(coffee.roastType || ''),                           // Degree of Roast
-                '',                                                     // Custom degree of Roast
-                '',                                                     // Blend
-                '',                                                     // Weight
-                '',                                                     // Cost
-                '',                                                     // Flavour profile
-                '',                                                     // Cupping points
-                '',                                                     // Decaffeinated
-                '',                                                     // Website
-                '',                                                     // EAN / Articlenumber
-                '',                                                     // Notes
-                '',                                                     // Rating
-                '',                                                     // Archived
-                '',                                                     // Frozen Date
-                '',                                                     // Unfrozen Date
-                '',                                                     // Freezing Storage Type
-                '',                                                     // Frozen Note
-                esc(coffee.origin || ''),                               // 1. Country
-                '',                                                     // 1. Region
-                '',                                                     // 1. Farm
-                '',                                                     // 1. Farmer
-                '',                                                     // 1. Elevation
-                esc(coffee.variety || ''),                             // 1. Variety
-                esc(coffee.processing || ''),                          // 1. Processing
-                '',                                                     // 1. Harvested
-                '',                                                     // 1. Percentage
-                '',                                                     // 1. Bean certification
-                '',                                                     // 1. Fob Price
-                ''                                                      // 1. Purchasing Price
+                esc(coffee.farmer || ''), esc(coffee.roaster || ''), '', '', esc(coffee.roastType || ''), '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', esc(coffee.origin || ''), '', '', '', '', esc(coffee.variety || ''), esc(coffee.processing || ''), '', '', '', '', ''
             ]);
-
             const csvContent = "data:text/csv;charset=utf-8," + headers.join(";") + "\n" + rows.map(e => e.join(";")).join("\n");
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
@@ -2020,14 +2110,12 @@
 
         const exportCoffeesAsJSON = (brews) => {
             const coffeeMap = new Map();
-
             brews.forEach(brew => {
                 const key = `${brew.roaster || ''}|${brew.farmer || ''}|${brew.roastType || ''}|${brew.origin || brew.beanType || ''}|${brew.variety || ''}|${brew.processing || ''}`;
                 if (!coffeeMap.has(key)) {
                     coffeeMap.set(key, brew);
                 }
             });
-
             const uniqueCoffees = Array.from(coffeeMap.values());
             const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(uniqueCoffees, null, 2));
             const link = document.createElement("a");
@@ -2055,8 +2143,8 @@
         };
         
         const toggleForm = (f=null) => { 
-            const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; const aiBtn = document.getElementById('aiScanBtn');
-            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); aiBtn.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); } else { o.classList.add('hidden'); aiBtn.classList.add('hidden'); } 
+            const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
+            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); } else { o.classList.add('hidden'); } 
         };
         
         const populateCardData = (c) => {
@@ -2087,21 +2175,19 @@
         };
 
         const resetCardPhotoState = () => {
-             // Reset Photo View
              const img = document.getElementById('cardDisplayedPhoto');
              const ph = document.getElementById('cardPhotoPlaceholder');
              const input = document.getElementById('cardPhotoInput');
              img.src = '';
              img.classList.add('hidden');
              ph.classList.remove('hidden');
-             input.value = ''; // Clear file selection
+             input.value = ''; 
         };
 
         const openCoffeeCard = (id, e) => {
             if(window.getSelection().toString().length > 0) return;
             const c = coffees.find(x => x.id === id); if(!c) return;
-            resetCardPhotoState(); // Clear previous photo state
-            // Always default to 'stats' view when opening normally (not share mode)
+            resetCardPhotoState(); 
             toggleCardMode('stats');
             document.getElementById('shareControls').classList.add('hidden');
             populateCardData(c); 
@@ -2111,8 +2197,7 @@
         const shareCoffeeCard = (id, e) => {
             if(e) e.stopPropagation(); 
             const c = coffees.find(x => x.id === id); if(!c) return;
-            resetCardPhotoState(); // Clear previous photo state
-            // Reset to Stats Mode initially
+            resetCardPhotoState(); 
             toggleCardMode('stats');
             document.getElementById('shareControls').classList.remove('hidden');
             populateCardData(c);
@@ -2156,32 +2241,24 @@
                     const container = document.getElementById('cardPhotoSection');
                     
                     img.onload = () => {
-                        // Manual JS Geometry Calculation to simulate object-fit: cover
-                        // This guarantees no stretching and high res in html2canvas
                         const containerW = container.offsetWidth;
                         const containerH = container.offsetHeight;
                         const imgW = img.naturalWidth;
                         const imgH = img.naturalHeight;
-                        
                         const containerRatio = containerW / containerH;
                         const imgRatio = imgW / imgH;
-                        
                         let finalW, finalH, finalTop, finalLeft;
-                        
                         if (imgRatio > containerRatio) {
-                            // Image is wider than container: Match height, crop width
                             finalH = containerH;
                             finalW = imgW * (containerH / imgH);
                             finalTop = 0;
                             finalLeft = (containerW - finalW) / 2;
                         } else {
-                            // Image is taller: Match width, crop height
                             finalW = containerW;
                             finalH = imgH * (containerW / imgW);
                             finalLeft = 0;
                             finalTop = (containerH - finalH) / 2;
                         }
-                        
                         img.style.width = `${finalW}px`;
                         img.style.height = `${finalH}px`;
                         img.style.top = `${finalTop}px`;
@@ -2189,7 +2266,6 @@
                         img.classList.remove('hidden');
                         ph.classList.add('hidden');
                     };
-                    
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
@@ -2204,51 +2280,38 @@
             const bottomBar = document.getElementById('cardBottomBar');
             const improveContainer = document.getElementById('cardImproveContainer');
             
-            // 1. Prepare UI for Snapshot
             shareControls.classList.add('hidden');
             closeBtn.classList.add('hidden'); 
             bottomBar.style.display = 'none';
-            
-            // Hide Improve Container if it's visible (optional, based on your preference)
             const wasImproveVisible = !improveContainer.classList.contains('hidden');
             if (wasImproveVisible) improveContainer.classList.add('hidden');
             
-            // Disable transforms temporarily to avoid blurry text during capture
             const originalTransform = content.style.transform;
             content.style.transform = 'none';
 
             try {
-                // 2. Wait for UI repaint efficiently (Replaces setTimeout)
                 await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-                // 3. Generate Canvas
-                // iOS Fix: Reduced scale from 4 to 2. Scale 4 hits iOS memory limits and causes timeouts.
-                // Scale 2 is sufficient for Retina displays.
                 const canvas = await html2canvas(content, { 
                     scale: 2, 
                     backgroundColor: getComputedStyle(content).backgroundColor, 
                     useCORS: true,
-                    logging: false, // Turn off logging for performance
-                    allowTaint: false // formatting fix: allowTaint: true prevents export
+                    logging: false, 
+                    allowTaint: false 
                 });
                 
-                // 4. Restore UI immediately so user doesn't see a glitch
                 shareControls.classList.remove('hidden');
                 closeBtn.classList.remove('hidden'); 
                 bottomBar.style.display = '';
                 content.style.transform = originalTransform;
                 if (wasImproveVisible) improveContainer.classList.remove('hidden');
 
-                // 5. Convert to Blob and Share
                 canvas.toBlob(async (blob) => {
                     if (!blob) return alert('Failed to generate image data');
-                    
                     const fileName = `brew_${(c.roaster || 'coffee').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
                     const file = new File([blob], fileName, { type: 'image/png' });
 
                     if (navigator.share) {
                         try {
-                            // Check if we can share files
                             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                                 await navigator.share({
                                     files: [file],
@@ -2259,10 +2322,8 @@
                                 throw new Error('Device does not support file sharing.');
                             }
                         } catch (err) {
-                            // Ignore AbortError (user cancelled)
                             if (err.name !== 'AbortError') {
                                 console.error('Share failed:', err);
-                                // iOS Fallback: If share fails (timeout), open image in new tab
                                 const dataUrl = canvas.toDataURL();
                                 const win = window.open();
                                 if(win) {
@@ -2274,17 +2335,14 @@
                             }
                         }
                     } else {
-                        // Desktop/Non-supported fallback
                         const link = document.createElement('a'); 
                         link.download = fileName; 
                         link.href = canvas.toDataURL(); 
                         link.click();
                     }
-                }, 'image/png', 0.9); // 0.9 quality compression
-
+                }, 'image/png', 0.9);
             } catch (err) {
                 console.error("Card generation failed", err); 
-                // Restore UI in case of error
                 shareControls.classList.remove('hidden');
                 closeBtn.classList.remove('hidden'); 
                 bottomBar.style.display = '';
@@ -2308,23 +2366,25 @@
             else if (mVal) { document.getElementById('method').value = 'Other'; document.getElementById('methodOther').value = mVal; document.getElementById('methodOther').classList.remove('hidden'); } 
             else { document.getElementById('method').value = ""; document.getElementById('methodOther').classList.add('hidden'); }
             setRating(c.rating||0); setNotesMode('manual'); document.getElementById('isActiveToggle').checked = c.isActive || false; 
+            
+            // Set saved bean dropdown if beanId is present
+            if (c.beanId) {
+                document.getElementById('savedBeanSelect').value = c.beanId;
+            } else {
+                document.getElementById('savedBeanSelect').value = ""; 
+            }
         }
 
         const editCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; document.getElementById('editId').value=c.id; populateForm(c); document.getElementById('formContainer').classList.add('editing-mode'); toggleForm(true); document.getElementById('formTitle').innerHTML='<span class="text-orange-500">Edit Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Update</span>'; document.getElementById('submitBtn').className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); };
         
-        // --- NEW FUNCTION: Fast Duplicate (No Menu, No Active) ---
         const fastDuplicateFromCard = async () => {
             const c = currentCardCoffee;
             if(!c) return;
-            
-            // Create copy
             const d = { ...c };
-            delete d.id; // Remove ID
-            d.isActive = false; // Requirement: Not active
+            delete d.id; 
+            d.isActive = false; 
             d.createdAt = new Date().toISOString();
             d.updatedAt = d.createdAt;
-            
-            // Calculate Order
             let newOrder = 0; 
             if (coffees.length > 0) { 
                 const minOrder = Math.min(...coffees.map(item => item.customOrder || 0)); 
@@ -2412,40 +2472,24 @@
             const menu = document.getElementById(menuId); if(menu) menu.classList.toggle('hidden');
         };
         
-        // --- NEW FUNCTION: Refresh Table with Full Reset ---
         const refreshTableData = (el) => {
-            // 1. Visual Spin
             const icon = el.querySelector('i');
             if(icon) icon.classList.add('fa-spin');
-
-            // 2. Reset Sort to default (which enables drag handles in My Brews)
             currentSort = { key: null, direction: 'asc' };
-
-            // 3. Reset Filters
             activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null };
-
-            // 4. Reset Search Input
             const searchInput = document.getElementById('globalSearch');
             if(searchInput) {
                 searchInput.value = '';
                 document.getElementById('searchClearBtn').classList.add('hidden');
             }
-
-            // 5. Update Filter UI (remove pills)
             renderActiveFilters();
-
-            // 6. Re-fetch/Re-render
             changeView(currentView);
-
-            // 7. Remove Spin after delay
             setTimeout(() => { if(icon) icon.classList.remove('fa-spin'); }, 800);
         };
 
         const renderTable = () => { 
             const t = document.getElementById('coffeeTableBody'); 
             const e = document.getElementById('emptyState'); 
-            
-            // Toggle column visibility
             columnDefs.forEach(col => { 
                 const th = document.getElementById(`th-${col.id}`); 
                 if(th) { 
@@ -2453,112 +2497,54 @@
                     else th.classList.remove('hidden'); 
                 } 
             });
-
             t.innerHTML=''; 
-            
-            // 1. Get Filtered Data
             let filteredCoffees = getFilteredCoffees();
-
-            if(filteredCoffees.length === 0){ 
-                e.classList.remove('hidden'); 
-                return; 
-            } 
+            if(filteredCoffees.length === 0){ e.classList.remove('hidden'); return; } 
             e.classList.add('hidden');
             
-            // 2. Split into Active and History
             let activeBrews = filteredCoffees.filter(c => c.isActive);
             let historyBrews = [...filteredCoffees]; 
 
-            // 3. Handle Active Brews (Pinned Tiles)
             const pinnedSection = document.getElementById('pinnedSection');
             const pinnedGrid = document.getElementById('pinnedGrid');
             pinnedGrid.innerHTML = '';
 
             if (activeBrews.length > 0) {
-                 // Sort active by customOrder if no other sort is applied
                 if (currentSort.key === null) {
                     activeBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
                 }
-                
                 activeBrews.forEach(c => {
                     const tile = document.createElement('div');
-                    // Compact styling
                     tile.className = "bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
                     tile.setAttribute('data-id', c.id);
                     tile.ondblclick = (ev) => openCoffeeCard(c.id, ev);
-                    
                     const roaster = c.roaster || c.name || 'Unknown Roaster';
                     const farmer = c.farmer || '-';
                     const method = c.method || '-';
                     const drink = c.drink || '-';
-
-                    // Drag handle logic
                     const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v => v !== null);
-                    const dragIcon = isDraggable 
-                        ? `<div class="absolute top-1 right-1 text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e] drag-handle p-2"><i class="fa-solid fa-grip-vertical text-base"></i></div>` 
-                        : '';
-
-                    // Menu Button for Tile
+                    const dragIcon = isDraggable ? `<div class="absolute top-1 right-1 text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e] drag-handle p-2"><i class="fa-solid fa-grip-vertical text-base"></i></div>` : '';
                     const menuId = `tile-menu-${c.id}`;
                     const menuBtn = currentView === 'mine' 
                         ? `<button onclick="toggleActionMenu('${menuId}', event)" class="absolute bottom-1 right-1 p-2 text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e] transition-colors"><i class="fa-solid fa-ellipsis-vertical text-base"></i></button>`
                         : '';
-                    
-                    // Unified Actions Menu (Same as Table)
                     let menu = '';
                     if(currentView === 'mine') {
                         const pinLabel = 'Unpin';
                         const pinIcon = 'fa-thumbtack text-green-600';
-                        menu = `
-                            <div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                                <button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                    <i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit
-                                </button>
-                                <button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                    <i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate
-                                </button>
-                                <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                    <i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}
-                                </button>
-                                <button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                    <i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo
-                                </button>
-                                <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                    <i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card
-                                </button>
-                                <hr class="border-coffee-100 dark:border-[#44403c]">
-                                <button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
-                                    <i class="fa-solid fa-trash w-4"></i> Delete
-                                </button>
-                            </div>
-                        `;
+                        menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
                     }
 
-                    tile.innerHTML = `
-                        ${dragIcon}
-                        <div class="pr-4">
-                            <h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3>
-                            <p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p>
-                            <div class="flex flex-col gap-0.5 items-start">
-                                <span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-[9px] font-bold px-1.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] uppercase tracking-wide">${method}</span>
-                                <span class="text-[10px] text-coffee-700 dark:text-[#d6ccc2] font-medium truncate max-w-full leading-tight">${drink}</span>
-                            </div>
-                        </div>
-                        ${menuBtn}
-                        ${menu}
-                    `;
+                    tile.innerHTML = `${dragIcon}<div class="pr-4"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-0.5 items-start"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-[9px] font-bold px-1.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] uppercase tracking-wide">${method}</span><span class="text-[10px] text-coffee-700 dark:text-[#d6ccc2] font-medium truncate max-w-full leading-tight">${drink}</span></div></div>${menuBtn}${menu}`;
                     pinnedGrid.appendChild(tile);
                 });
                 pinnedSection.classList.remove('hidden');
-                // Init sortable on grid
                 initSortable();
             } else {
                 pinnedSection.classList.add('hidden');
             }
 
-            // 4. Render History Brews (Table)
             if (currentSort.key === null) {
-                // History: Sort by Date (Newest First) default
                 historyBrews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             }
 
@@ -2569,20 +2555,13 @@
             }
         };
 
-        // Helper for Table Row Generation
         const generateRow = (c) => {
             const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
             const displayRoaster = c.roaster || c.name || '-'; 
             const displayOrigin = c.origin || c.beanType || '-'; 
             const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
-            
             let gripIconClass = '';
-            // In history table, use Pin icon state
-            if (c.isActive) {
-                gripIconClass = 'fa-thumbtack text-green-600';
-            } else {
-                gripIconClass = 'fa-thumbtack text-stone-300 dark:text-stone-600 opacity-40';
-            }
+            if (c.isActive) { gripIconClass = 'fa-thumbtack text-green-600'; } else { gripIconClass = 'fa-thumbtack text-stone-300 dark:text-stone-600 opacity-40'; }
 
             const menuId = `action-menu-${c.id}`;
             let actions = '';
@@ -2590,49 +2569,9 @@
             if(currentView === 'mine') {
                 const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
                 const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
-                actions = `
-                    <div class="relative">
-                        <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
-                            <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
-                        </button>
-                        <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                            <button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                <i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit
-                            </button>
-                            <button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                <i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate
-                            </button>
-                                <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                <i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}
-                            </button>
-                            <button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                <i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo
-                            </button>
-                            <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                <i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card
-                            </button>
-                            <hr class="border-coffee-100 dark:border-[#44403c]">
-                            <button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
-                                <i class="fa-solid fa-trash w-4"></i> Delete
-                            </button>
-                        </div>
-                    </div>
-                `;
+                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
             } else { 
-                actions = `
-                    <div class="relative">
-                            <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
-                            <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
-                        </button>
-                            <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                            <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                <i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card
-                            </button>
-                            <button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                <i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews
-                            </button>
-                        </div>
-                    </div>`; 
+                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews</button></div></div>`; 
             }
 
             const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
@@ -2644,7 +2583,8 @@
             if(columnPreferences.variety !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.variety || '-'}</td>`;
             if(columnPreferences.processing !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.processing || '-'}</td>`;
             if(columnPreferences.roastType !== false) rowHTML += `<td class="px-3 py-1">${getRoastBadge(c.roastType)}</td>`;
-            if(columnPreferences.method !== false) rowHTML += `<td class="px-3 py-1"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>`;
+            if(columnPreferences.method !== false) rowHTML += `<td class="px-3 py-1"><span class="bg-coffee-100 dark:bg-[#44403c]
+            text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>`;
             if(columnPreferences.grinder !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.grinder || '-'}</td>`;
             if(columnPreferences.grind !== false) rowHTML += `<td class="px-3 py-1 font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
             if(columnPreferences.recipe !== false) rowHTML += `<td class="px-3 py-1">${recipeCol}</td>`;
@@ -2665,7 +2605,6 @@
             r.innerHTML = rowHTML;
             return r;
         };
-
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
             if (user) {
@@ -2673,7 +2612,7 @@
                 document.getElementById('syncStatus').classList.remove('hidden'); document.getElementById('viewSelectorContainer').classList.remove('hidden'); 
                 await initUserData(user); loadFollowingList(); changeView('mine'); initNotificationListener(user.uid);
                 const hasSeen = localStorage.getItem(`tutorialSeen_${user.uid}`); if (!hasSeen) openHelp();
-                initZoomListeners(); // Initialize Zoom Listeners on Load
+                initZoomListeners(); 
             } else {
                 document.getElementById('authContainer').innerHTML = `<button onclick="googleLogin()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button>`;
                 document.getElementById('viewSelectorContainer').classList.add('hidden'); document.getElementById('coffeeTableBody').innerHTML = ''; document.getElementById('emptyState').classList.remove('hidden');
@@ -2682,14 +2621,15 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails,
+            // New Beans Functions
+            openBeans, closeBeans, saveBeanStock, deleteBean, syncLegacyBeans
         });
 
         initTheme();
         const searchInput = document.getElementById('globalSearch'); 
         if(searchInput) { searchInput.addEventListener('input', (e) => { const clearBtn = document.getElementById('searchClearBtn'); if(e.target.value.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden'); renderTable(); }); }
     </script>
-<!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
