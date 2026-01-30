@@ -1346,15 +1346,17 @@
                              clean(b.roastType) === clean(c.roastType)
                         );
                         
+                        // Build data object with only defined fields
+                        const beanData = {};
+                        if (c.roaster) beanData.roaster = c.roaster;
+                        if (c.farmer) beanData.farmer = c.farmer;
+                        if (c.origin || c.beanType) beanData.origin = c.origin || c.beanType;
+                        if (c.variety) beanData.variety = c.variety;
+                        if (c.processing) beanData.processing = c.processing;
+                        if (c.roastType) beanData.roastType = c.roastType;
+                        
                         uniqueMap.set(key, {
-                            data: {
-                                roaster: c.roaster,
-                                farmer: c.farmer,
-                                origin: c.origin || c.beanType,
-                                variety: c.variety,
-                                processing: c.processing,
-                                roastType: c.roastType
-                            },
+                            data: beanData,
                             id: existingBean ? existingBean.id : null,
                             isNew: !existingBean
                         });
