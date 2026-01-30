@@ -111,7 +111,7 @@
 </head>
 <body class="bg-[#fcfbf9] text-coffee-900 dark:bg-[#1c1917] dark:text-[#e7e5e4] min-h-screen pb-20" onclick="closeMenus(event)">
 
-    <header class="bg-white dark:bg-[#292524] shadow-sm border-b border-coffee-200 dark:border-[#44403c] sticky top-0 z-20 transition-colors duration-300">
+    <header class="bg-white dark:bg-[#292524] shadow-sm border-b border-coffee-200 dark:border-[#44403c] sticky top-0 z-[60] transition-colors duration-300">
         <div class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer select-none group" ondblclick="openEasterEgg()" title="Double click for a surprise!">
                 <i class="fa-solid fa-mug-hot text-coffee-700 dark:text-[#d6ccc2] text-2xl group-hover:scale-110 transition-transform duration-300"></i>
@@ -159,10 +159,6 @@
                         </button>
                         <button onclick="openPreferences(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-sliders"></i> <span>Preferences</span>
-                        </button>
-                        <button onclick="toggleTheme(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                            <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i> 
-                            <span>Toggle Theme</span>
                         </button>
                         <button onclick="openStats(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-chart-pie"></i> <span>Statistics</span>
@@ -1010,6 +1006,7 @@
                      if(!document.getElementById('beansModal').classList.contains('hidden')) {
                          renderBeansTable();
                      }
+                     renderTable(); 
                  });
             }
         };
@@ -2492,9 +2489,6 @@
         };
         const toggleMainMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('mainMenuDropdown').classList.toggle('hidden'); };
         
-        const initTheme = () => { const s=localStorage.getItem('theme'); if(s==='light')document.documentElement.classList.remove('dark'); else {document.documentElement.classList.add('dark');localStorage.setItem('theme','dark');} };
-        const toggleTheme = () => { const h=document.documentElement; if(h.classList.contains('dark')){h.classList.remove('dark');localStorage.setItem('theme','light');}else{h.classList.add('dark');localStorage.setItem('theme','dark');} };
-
         const toggleActionMenu = (menuId, e) => {
             e.stopPropagation(); document.querySelectorAll('.action-menu').forEach(el => { if(el.id !== menuId) el.classList.add('hidden'); });
             const menu = document.getElementById(menuId); if(menu) menu.classList.toggle('hidden');
@@ -2546,15 +2540,82 @@
                     tile.className = "bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
                     tile.setAttribute('data-id', c.id);
                     tile.ondblclick = (ev) => openCoffeeCard(c.id, ev);
+
+                    // Stock Visualization Logic
+                    let stockOverlay = '';
+                    let linkedBean = c.beanId ? beans.find(b => b.id === c.beanId) : null;
+                    let dragIconClass = 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]';
+                    let menuBtnClass = 'text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e]';
+                    
+                    if (!linkedBean) {
+                         const clean = (s) => (s || '').toLowerCase().trim();
+                         linkedBean = beans.find(b => 
+                             clean(b.roaster) === clean(c.roaster) &&
+                             clean(b.farmer) === clean(c.farmer) &&
+                             clean(b.origin) === clean(c.origin) &&
+                             clean(b.processing) === clean(c.processing) &&
+                             clean(b.variety) === clean(c.variety) &&
+                             clean(b.roastType) === clean(c.roastType)
+                        );
+                    }
+
+                    if (linkedBean && linkedBean.stock) {
+                        const bean = linkedBean;
+                        const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
+                        const clean = (s) => (s || '').toLowerCase().trim();
+                        
+                        const usedAmount = coffees
+                            .filter(refC => {
+                                if (refC.beanId && refC.beanId === bean.id) return new Date(refC.createdAt) > stockDate;
+                                if (!refC.beanId) {
+                                     const match = clean(bean.roaster) === clean(refC.roaster) &&
+                                         clean(bean.farmer) === clean(refC.farmer) &&
+                                         clean(bean.origin) === clean(refC.origin) &&
+                                         clean(bean.processing) === clean(refC.processing) &&
+                                         clean(bean.variety) === clean(refC.variety) &&
+                                         clean(bean.roastType) === clean(refC.roastType);
+                                     return match && new Date(refC.createdAt) > stockDate;
+                                }
+                                return false;
+                            })
+                            .reduce((sum, refC) => sum + (refC.weight || 0), 0);
+
+                        const initialStock = parseFloat(bean.stock);
+                        const currentStock = Math.max(0, initialStock - usedAmount);
+                        const stockPercentage = Math.min(100, Math.max(0, (currentStock / initialStock) * 100));
+                        
+                        if (stockPercentage < 100) {
+                             const emptyHeight = 100 - stockPercentage;
+                             // SVG Sine Wave Data URI (Fill: #57534e)
+                             const waveSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L0 10 Q 25 20 50 10 T 100 10 L 100 0 Z' fill='%2357534e'/%3E%3C/svg%3E";
+                             
+                             stockOverlay = `
+                                <div class="absolute top-0 left-0 w-full z-0 pointer-events-none hidden dark:flex flex-col justify-end transition-all duration-500" style="height: ${emptyHeight}%;">
+                                    <div class="w-full flex-1 bg-[#57534e]"></div>
+                                    <div class="w-full h-3 bg-repeat-x" style="background-image: url(&quot;${waveSvg}&quot;); background-size: 50% 100%;"></div>
+                                </div>`;
+
+                             // Adjust icon colors for contrast if they fall in the empty zone
+                             // Drag Icon is at top (~0-10%)
+                             if (emptyHeight > 10) {
+                                 dragIconClass = 'text-white drop-shadow-md hover:text-coffee-100';
+                             }
+                             // Menu Icon is at bottom (~90-100%)
+                             if (emptyHeight > 90) {
+                                 menuBtnClass = 'text-white drop-shadow-md hover:text-coffee-100';
+                             }
+                        }
+                    }
+
                     const roaster = c.roaster || c.name || 'Unknown Roaster';
                     const farmer = c.farmer || '-';
                     const method = c.method || '-';
                     const drink = c.drink || '-';
                     const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v => v !== null);
-                    const dragIcon = isDraggable ? `<div class="absolute top-1 right-1 text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e] drag-handle p-2"><i class="fa-solid fa-grip-vertical text-base"></i></div>` : '';
+                    const dragIcon = isDraggable ? `<div class="absolute top-1 right-1 ${dragIconClass} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>` : '';
                     const menuId = `tile-menu-${c.id}`;
                     const menuBtn = currentView === 'mine' 
-                        ? `<button onclick="toggleActionMenu('${menuId}', event)" class="absolute bottom-1 right-1 p-2 text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e] transition-colors"><i class="fa-solid fa-ellipsis-vertical text-base"></i></button>`
+                        ? `<button onclick="toggleActionMenu('${menuId}', event)" class="absolute bottom-1 right-1 p-2 ${menuBtnClass} transition-colors z-20 duration-200"><i class="fa-solid fa-ellipsis-vertical text-base"></i></button>`
                         : '';
                     let menu = '';
                     if(currentView === 'mine') {
@@ -2563,7 +2624,10 @@
                         menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
                     }
 
-                    tile.innerHTML = `${dragIcon}<div class="pr-4"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(method,'method')}${getTileBadge(drink,'drink')}</div></div>${menuBtn}${menu}`;
+                    // Background Layer Wrapper (Clip Overlay)
+                    const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
+
+                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(method,'method')}${getTileBadge(drink,'drink')}</div></div>${menuBtn}${menu}`;
                     pinnedGrid.appendChild(tile);
                 });
                 pinnedSection.classList.remove('hidden');
@@ -2648,12 +2712,11 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, initTheme, toggleTheme, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, deleteBean, syncLegacyBeans
         });
 
-        initTheme();
         const searchInput = document.getElementById('globalSearch'); 
         if(searchInput) { searchInput.addEventListener('input', (e) => { const clearBtn = document.getElementById('searchClearBtn'); if(e.target.value.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden'); renderTable(); }); }
     </script>
