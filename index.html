@@ -558,7 +558,7 @@
                     <span id="cardDate"></span>
                     <div class="flex items-center gap-2">
                         <span class="font-bold text-coffee-600 dark:text-[#a8a29e]">Duplicate:</span>
-                        <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
+                        <div class="flex gap-3 bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
                              <button onclick="fastDuplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Fast</button>
                              <div class="w-px bg-coffee-200 dark:bg-[#57534e] my-0.5"></div>
                              <button onclick="duplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Adjust</button>
@@ -1797,7 +1797,6 @@
             const firstDate = new Date(Math.min(...dataToUse.map(c => new Date(c.createdAt || now)))); const diffDays = Math.max(1, Math.round(Math.abs((now - firstDate) / oneDay))); const avg = (total / diffDays).toFixed(1);
             const lastBrewDate = new Date(Math.max(...dataToUse.map(c => new Date(c.createdAt || now)))); const hoursSinceLastBrew = Math.round((now - lastBrewDate) / (60 * 60 * 1000));
             document.getElementById('statTotalBrews').innerText = total; document.getElementById('statMonthBrews').innerText = hoursSinceLastBrew; document.getElementById('statWeekBrews').innerText = last7; document.getElementById('statAvgBrews').innerText = avg;
-            const badge = document.getElementById('avatarBadge'); if(badge) { badge.innerText = hoursSinceLastBrew; if(hoursSinceLastBrew > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); }
             const agg = (key) => dataToUse.reduce((acc, c) => { const val = c[key] || 'Unknown'; acc[val] = (acc[val] || 0) + 1; return acc; }, {});
             const roastData = agg('roastType'); const methodData = agg('method'); const drinkData = agg('drink');
             const ratingData = dataToUse.reduce((acc, c) => { const r = c.rating || 0; if(r > 0) acc[r] = (acc[r] || 0) + 1; return acc; }, {});
