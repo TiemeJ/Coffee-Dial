@@ -225,42 +225,6 @@
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
         
-        <div id="viewSelectorContainer" class="hidden mb-6 flex flex-col gap-3">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div class="flex items-center gap-4 w-full sm:w-auto">
-                    <div class="flex items-center gap-2">
-                        <select id="viewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
-                            <option value="mine">My Brews</option>
-                            </select>
-                    </div>
-                    <div class="relative flex-1 sm:flex-initial">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <i class="fa-solid fa-search text-coffee-400"></i>
-                        </div>
-                        <input type="text" id="globalSearch" class="block w-full sm:w-64 p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all" placeholder="Search brews...">
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
-                            <button id="searchClearBtn" onclick="clearSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                            <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
-                            <button onclick="toggleQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
-                                <i class="fa-solid fa-filter"></i>
-                            </button>
-                        </div>
-                        <div id="quickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
-                        </div>
-                        <div id="quickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div id="activeFiltersContainer" class="hidden flex items-center gap-2 flex-wrap">
-                <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
-                <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
-            </div>
-        </div>
-
         <div id="formContainer" class="hidden bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-all duration-300 overflow-hidden group" aria-expanded="false">
              <div class="p-6 flex justify-between items-center bg-coffee-50/50 dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c]">
                 <div onclick="toggleForm()" class="flex-1 cursor-pointer flex items-center gap-2">
@@ -469,6 +433,42 @@
             </h3>
             <div id="pinnedGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                 <!-- Tiles injected here -->
+            </div>
+        </div>
+
+        <div id="viewSelectorContainer" class="hidden mb-6 flex flex-col gap-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-4 w-full sm:w-auto">
+                    <div class="flex items-center gap-2">
+                        <select id="viewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
+                            <option value="mine">My Brews</option>
+                            </select>
+                    </div>
+                    <div class="relative flex-1 sm:flex-initial">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fa-solid fa-search text-coffee-400"></i>
+                        </div>
+                        <input type="text" id="globalSearch" class="block w-full sm:w-64 p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all" placeholder="Search brews...">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                            <button id="searchClearBtn" onclick="clearSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                            <button onclick="toggleQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                                <i class="fa-solid fa-filter"></i>
+                            </button>
+                        </div>
+                        <div id="quickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                        </div>
+                        <div id="quickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="activeFiltersContainer" class="hidden flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
+                <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
             </div>
         </div>
 
