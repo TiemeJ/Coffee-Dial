@@ -1025,8 +1025,7 @@
                 // Construct display text
                 const roaster = bean.roaster || 'Unknown';
                 const farmer = bean.farmer ? ` - ${bean.farmer}` : '';
-                const origin = bean.origin ? ` (${bean.origin})` : '';
-                option.text = `${roaster}${farmer}${origin}`;
+                option.text = `${roaster}${farmer}`;
                 select.appendChild(option);
             });
         };
@@ -2454,6 +2453,35 @@
         
         const formatTime = (s) => { if(!s && s !== 0) return '-'; const m=Math.floor(s/60), sc=s%60; return m>0?`${m}m ${sc}s`:`${sc}s`; };
         const getRoastBadge = (r) => { if(!r)return''; const m={'Light':'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800','Medium':'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-800','Medium-Dark':'bg-[#d6ccc2] text-[#5e4b41] border-[#c0b4aa] dark:bg-[#57534e]/50 dark:text-gray-200 dark:border-[#57534e]','Dark':'bg-gray-800 text-gray-100 border-gray-700 dark:bg-black dark:text-gray-300 dark:border-gray-800'}; return `<span class="${m[r]||'bg-gray-100 dark:bg-gray-800'} text-xs font-medium px-2 py-0.5 rounded-full border pointer-events-none select-none">${r}</span>`; };
+
+        const getTileBadge = (text, kind) => {
+            if(!text) return `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded-full border bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 truncate">-</span>`;
+            const maps = {
+                method: {
+                    'Espresso':'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-200',
+                    'V60':'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-200',
+                    'Hario Switch':'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-200',
+                    'Clever Dripper':'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/40 dark:text-teal-200',
+                    'Aeropress':'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/40 dark:text-purple-200',
+                    'OXO Rapid Brewer':'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/40 dark:text-pink-200',
+                    'French Press':'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-200',
+                    'Chemex':'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/40 dark:text-sky-200',
+                    'Other':'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200'
+                },
+                drink: {
+                    'Espresso':'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-900/30 dark:text-amber-200',
+                    'Americano':'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-200',
+                    'Cappuccino':'bg-pink-50 text-pink-800 border-pink-100 dark:bg-pink-900/30 dark:text-pink-200',
+                    'Flat White':'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-900/30 dark:text-rose-200',
+                    'Latte Macchiato':'bg-yellow-50 text-yellow-800 border-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-200',
+                    'Filter Coffee':'bg-blue-50 text-blue-800 border-blue-100 dark:bg-blue-900/30 dark:text-blue-200',
+                    'Macchiato':'bg-purple-50 text-purple-800 border-purple-100 dark:bg-purple-900/30 dark:text-purple-200',
+                    'Other':'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200'
+                }
+            };
+            const map = (maps[kind] && maps[kind][text]) ? maps[kind][text] : 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200';
+            return `<span class="min-w-[64px] inline-flex items-center justify-center ${map} text-xs font-medium px-2.5 py-0.5 rounded border pointer-events-none select-none truncate">${text}</span>`;
+        };
         const getTempBadge = (t) => { if(!t) return '-'; if(!isNaN(parseFloat(t))&&isFinite(t)){ let c='bg-gray-100 dark:bg-gray-800';if(t<90)c='bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';else if(t<94)c='bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300';else c='bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';return `<span class="inline-flex items-center justify-center px-2 py-1 rounded-md ${c} text-xs font-bold shadow-sm pointer-events-none select-none font-mono">${t}°C</span>`;} const m={'L4':'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300','L3':'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300','L2':'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-200','L1':'bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/20 dark:text-cyan-200','M':'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-200','H1':'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/20 dark:text-orange-200','H2':'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200','H3':'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300','H4':'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300'}; return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${m[t]||'bg-gray-100'} text-xs font-bold shadow-sm pointer-events-none select-none">${t}</span>`; };
         const closeMenus = (e) => { 
             if(!document.getElementById('modalOverlay').contains(e.target) && !document.getElementById('modalOverlay').classList.contains('hidden') && e.target.id==='modalOverlay') closeModal(); 
@@ -2535,7 +2563,7 @@
                         menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
                     }
 
-                    tile.innerHTML = `${dragIcon}<div class="pr-4"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-0.5 items-start"><span class="bg-coffee-100 dark:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] text-[9px] font-bold px-1.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] uppercase tracking-wide">${method}</span><span class="text-[10px] text-coffee-700 dark:text-[#d6ccc2] font-medium truncate max-w-full leading-tight">${drink}</span></div></div>${menuBtn}${menu}`;
+                    tile.innerHTML = `${dragIcon}<div class="pr-4"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(method,'method')}${getTileBadge(drink,'drink')}</div></div>${menuBtn}${menu}`;
                     pinnedGrid.appendChild(tile);
                 });
                 pinnedSection.classList.remove('hidden');
@@ -2582,9 +2610,8 @@
             if(columnPreferences.farmer !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.farmer || '-'}</td>`;
             if(columnPreferences.variety !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.variety || '-'}</td>`;
             if(columnPreferences.processing !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.processing || '-'}</td>`;
-            if(columnPreferences.roastType !== false) rowHTML += `<td class="px-3 py-1">${getRoastBadge(c.roastType)}</td>`;
-            if(columnPreferences.method !== false) rowHTML += `<td class="px-3 py-1"><span class="bg-coffee-100 dark:bg-[#44403c]
-            text-coffee-800 dark:text-[#d6ccc2] text-xs font-medium px-2.5 py-0.5 rounded border border-coffee-200 dark:border-[#57534e] pointer-events-none select-none">${c.method || '-'}</span></td>`;
+            if(columnPreferences.roastType !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.roastType || '-'}</td>`;
+            if(columnPreferences.method !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.method || '-'}</td>`;
             if(columnPreferences.grinder !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.grinder || '-'}</td>`;
             if(columnPreferences.grind !== false) rowHTML += `<td class="px-3 py-1 font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
             if(columnPreferences.recipe !== false) rowHTML += `<td class="px-3 py-1">${recipeCol}</td>`;
