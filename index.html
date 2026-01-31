@@ -225,8 +225,22 @@
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
         
-        <div id="formContainer" class="hidden bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-all duration-300 overflow-hidden group" aria-expanded="false">
-             <div class="p-6 flex justify-between items-center bg-coffee-50/50 dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c]">
+        <!-- Active Brews Section (New Pinned Tiles) -->
+        <div id="pinnedSection" class="hidden mb-8">
+            <h3 class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase tracking-wide mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-thumbtack text-green-600"></i> Pinned Brews
+            </h3>
+            <div id="pinnedGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                <!-- Tiles injected here -->
+            </div>
+        </div>
+
+        <!-- Unified Brew Management Container -->
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-colors duration-300">
+            
+            <!-- Add New Brew Form Section -->
+            <div id="formContainer" class="hidden transition-all duration-300 group overflow-hidden" aria-expanded="false">
+                <div class="p-6 flex justify-between items-center bg-coffee-50/50 dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] rounded-t-xl">
                 <div onclick="toggleForm()" class="flex-1 cursor-pointer flex items-center gap-2">
                     <h2 id="formTitle" class="text-lg font-semibold flex items-center gap-2 text-coffee-900 dark:text-white select-none">
                         <i class="fa-solid fa-plus-circle text-coffee-700 dark:text-[#d6ccc2]"></i> <span>Add New Brew</span>
@@ -424,19 +438,10 @@
                     <div class="flex justify-between items-center pt-2"><div class="flex items-center gap-2"><div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" name="isActive" id="isActiveToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="isActiveToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div><label for="isActiveToggle" class="text-xs font-bold text-coffee-600 dark:text-[#a8a29e] cursor-pointer">Add to Active Brews</label></div><div class="flex gap-3"><button type="button" onclick="discardForm()" class="text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] px-4 py-2.5 rounded-lg font-medium transition-colors">Discard</button><button type="submit" id="submitBtn" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"><i class="fa-solid fa-check"></i> <span>Save Brew</span></button></div></div>
                 </form>
             </div>
-        </div>
-
-        <!-- Active Brews Section (New Pinned Tiles) -->
-        <div id="pinnedSection" class="hidden mb-8">
-            <h3 class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase tracking-wide mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-thumbtack text-green-600"></i> Pinned Brews
-            </h3>
-            <div id="pinnedGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                <!-- Tiles injected here -->
             </div>
-        </div>
-
-        <div id="viewSelectorContainer" class="hidden mb-6 flex flex-col gap-3">
+            
+            <!-- Brew Selector & Search/Filter Section -->
+            <div id="viewSelectorContainer" class="hidden p-6 flex flex-col gap-3 rounded-t-xl">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-4 w-full sm:w-auto">
                     <div class="flex items-center gap-2">
@@ -470,6 +475,8 @@
                 <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
                 <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
             </div>
+            </div>
+            
         </div>
 
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] overflow-hidden transition-colors duration-300 relative">
@@ -1059,7 +1066,7 @@
             unsubscribeData = onSnapshot(q, (snapshot) => {
                 coffees = []; snapshot.forEach(doc => coffees.push({ id: doc.id, ...doc.data() }));
                 if (!currentSort.key) coffees.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                renderTable(); updateAutocompleteLists();
+                renderPinnedTiles(); renderTable(); updateAutocompleteLists();
             }, (error) => {
                 console.error(error);
                 if(error.code === 'permission-denied') { alert("⚠️ Access Denied: This user's profile is private."); document.getElementById('viewSelect').value = 'mine'; changeView('mine'); }
@@ -1076,7 +1083,7 @@
                      if(!document.getElementById('beansModal').classList.contains('hidden')) {
                          renderBeansTable();
                      }
-                     renderTable(); 
+                     renderPinnedTiles(); renderTable(); 
                  });
             }
         };
@@ -2457,6 +2464,40 @@
         const fastDuplicateFromCard = async () => {
             const c = currentCardCoffee;
             if(!c) return;
+            
+            // If viewing a friend's brew, switch to own view first
+            if(currentView !== 'mine') {
+                closeCoffeeCard(null);
+                document.getElementById('viewSelect').value = 'mine';
+                changeView('mine');
+                
+                // Wait for view to change, then add the brew
+                setTimeout(async () => {
+                    const d = { ...c };
+                    delete d.id;
+                    d.isActive = false;
+                    d.createdAt = new Date().toISOString();
+                    d.updatedAt = d.createdAt;
+                    let newOrder = 0;
+                    if (coffees.length > 0) {
+                        const minOrder = Math.min(...coffees.map(item => item.customOrder || 0));
+                        newOrder = minOrder - 1;
+                    }
+                    d.customOrder = newOrder;
+
+                    try {
+                        const col = collection(db, 'users', currentUser.uid, 'coffees');
+                        await addDoc(col, d);
+                        alert("Brew added to your collection!");
+                    } catch(err) {
+                        console.error(err);
+                        alert("Error adding brew: " + err.message);
+                    }
+                }, 500);
+                return;
+            }
+            
+            // Original logic for own brews
             const d = { ...c };
             delete d.id; 
             d.isActive = false; 
@@ -2484,6 +2525,25 @@
             const c = currentCardCoffee;
             if(!c) return;
             closeCoffeeCard(null);
+            
+            // If viewing a friend's brew, switch to own view first
+            if(currentView !== 'mine') {
+                document.getElementById('viewSelect').value = 'mine';
+                changeView('mine');
+                
+                setTimeout(() => {
+                    document.getElementById('editId').value='';
+                    populateForm(c);
+                    toggleForm(true);
+                    document.getElementById('formContainer').classList.remove('editing-mode');
+                    document.getElementById('formTitle').innerHTML='<span>Add Friend\'s Brew</span>';
+                    document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>';
+                    window.scrollTo({top:0,behavior:'smooth'});
+                }, 500);
+                return;
+            }
+            
+            // Original logic for own brews
             setTimeout(() => {
                 document.getElementById('editId').value='';
                 populateForm(c);
@@ -2672,33 +2732,19 @@
             setTimeout(() => { if(icon) icon.classList.remove('fa-spin'); }, 800);
         };
 
-        const renderTable = () => { 
-            const t = document.getElementById('coffeeTableBody'); 
-            const e = document.getElementById('emptyState'); 
-            columnDefs.forEach(col => { 
-                const th = document.getElementById(`th-${col.id}`); 
-                if(th) { 
-                    if(columnPreferences[col.id] === false) th.classList.add('hidden'); 
-                    else th.classList.remove('hidden'); 
-                } 
-            });
-            t.innerHTML=''; 
-            let filteredCoffees = getFilteredCoffees();
-            if(filteredCoffees.length === 0){ e.classList.remove('hidden'); return; } 
-            e.classList.add('hidden');
-            
-            let activeBrews = filteredCoffees.filter(c => c.isActive);
-            let historyBrews = [...filteredCoffees]; 
+        const renderPinnedTiles = () => {
+            // Pinned brews should always show ALL active brews (not affected by search/filter/sort)
+            let allActiveBrews = coffees.filter(c => c.isActive);
 
             const pinnedSection = document.getElementById('pinnedSection');
             const pinnedGrid = document.getElementById('pinnedGrid');
             pinnedGrid.innerHTML = '';
 
-            if (activeBrews.length > 0) {
-                if (currentSort.key === null) {
-                    activeBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
-                }
-                activeBrews.forEach(c => {
+            if (allActiveBrews.length > 0) {
+                // Pinned brews use their custom order only (never affected by table sorting)
+                allActiveBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
+                
+                allActiveBrews.forEach(c => {
                     const tile = document.createElement('div');
                     tile.className = "bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
                     tile.setAttribute('data-id', c.id);
@@ -2805,10 +2851,24 @@
             } else {
                 pinnedSection.classList.add('hidden');
             }
+        };
 
-            if (currentSort.key === null) {
-                historyBrews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            }
+        const renderTable = () => { 
+            const t = document.getElementById('coffeeTableBody'); 
+            const e = document.getElementById('emptyState'); 
+            columnDefs.forEach(col => { 
+                const th = document.getElementById(`th-${col.id}`); 
+                if(th) { 
+                    if(columnPreferences[col.id] === false) th.classList.add('hidden'); 
+                    else th.classList.remove('hidden'); 
+                } 
+            });
+            t.innerHTML=''; 
+            let filteredCoffees = getFilteredCoffees();
+            if(filteredCoffees.length === 0){ e.classList.remove('hidden'); return; } 
+            e.classList.add('hidden');
+            
+            let historyBrews = [...filteredCoffees];
 
             if (historyBrews.length > 0) {
                 const displayLimit = Math.min(displayedBrewsCount, historyBrews.length);
