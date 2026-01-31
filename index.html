@@ -2827,6 +2827,14 @@
                     const farmer = c.farmer || '-';
                     const method = c.method || '-';
                     const drink = c.drink || '-';
+                    
+                    // Check if 'decaf' appears in any bean field
+                    const isDecaf = [c.roaster, c.name, c.farmer, c.origin, c.variety, c.processing, c.roastType, c.notes]
+                        .some(field => field && field.toLowerCase().includes('decaf'));
+                    const decafIcon = isDecaf 
+                        ? `<img src="img/decaf.png" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` 
+                        : '';
+                    
                     const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v => v !== null);
                     const dragIcon = isDraggable ? `<div class="absolute top-1 right-1 ${dragIconClass} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>` : '';
                     const menuId = `tile-menu-${c.id}`;
@@ -2843,7 +2851,7 @@
                     // Background Layer Wrapper (Clip Overlay)
                     const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
 
-                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(method,'method')}${getTileBadge(drink,'drink')}</div></div>${menuBtn}${menu}`;
+                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(method,'method')}<div class="flex gap-1 items-center">${getTileBadge(drink,'drink')}${decafIcon}</div></div></div>${menuBtn}${menu}`;
                     pinnedGrid.appendChild(tile);
                 });
                 pinnedSection.classList.remove('hidden');
