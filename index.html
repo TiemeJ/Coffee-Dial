@@ -2755,6 +2755,7 @@
                     let linkedBean = c.beanId ? beans.find(b => b.id === c.beanId) : null;
                     let dragIconClass = 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]';
                     let menuBtnClass = 'text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e]';
+                    let decafIconSrc = 'img/decaf_dark.png'; // Default to dark icon
                     
                     if (!linkedBean) {
                          const clean = (s) => (s || '').toLowerCase().trim();
@@ -2820,6 +2821,10 @@
                              if (emptyHeight > 90) {
                                  menuBtnClass = 'text-stone-300 drop-shadow-md hover:text-stone-100';
                              }
+                             // Decaf Icon is near bottom (~70-100%), adjust if empty space crosses it
+                             if (emptyHeight > 70) {
+                                 decafIconSrc = 'img/decaf_light.png';
+                             }
                         }
                     }
 
@@ -2832,7 +2837,7 @@
                     const isDecaf = [c.roaster, c.name, c.farmer, c.origin, c.variety, c.processing, c.roastType, c.notes]
                         .some(field => field && field.toLowerCase().includes('decaf'));
                     const decafIcon = isDecaf 
-                        ? `<img src="img/decaf.png" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` 
+                        ? `<img src="${decafIconSrc}" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` 
                         : '';
                     
                     const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v => v !== null);
