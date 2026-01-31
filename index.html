@@ -239,7 +239,7 @@
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-colors duration-300">
             
             <!-- Add New Brew Form Section -->
-            <div id="formContainer" class="hidden transition-all duration-300 group overflow-hidden" aria-expanded="false">
+            <div id="formContainer" class="hidden transition-all duration-300 group overflow-hidden rounded-b-xl" aria-expanded="false">
                 <div class="p-6 flex justify-between items-center bg-coffee-50/50 dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] rounded-t-xl">
                 <div onclick="toggleForm()" class="flex-1 cursor-pointer flex items-center gap-2">
                     <h2 id="formTitle" class="text-lg font-semibold flex items-center gap-2 text-coffee-900 dark:text-white select-none">
@@ -440,8 +440,11 @@
             </div>
             </div>
             
+        </div>
+
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] overflow-hidden transition-colors duration-300 relative">
             <!-- Brew Selector & Search/Filter Section -->
-            <div id="viewSelectorContainer" class="hidden p-6 flex flex-col gap-3 rounded-t-xl">
+            <div id="viewSelectorContainer" class="hidden p-6 flex flex-col gap-3 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-100/50 dark:bg-[#1c1917]">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-4 w-full sm:w-auto">
                     <div class="flex items-center gap-2">
@@ -476,10 +479,6 @@
                 <button onclick="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
             </div>
             </div>
-            
-        </div>
-
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] overflow-hidden transition-colors duration-300 relative">
             <div class="overflow-x-auto min-h-[300px]">
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
