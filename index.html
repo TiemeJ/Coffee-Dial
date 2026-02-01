@@ -1261,23 +1261,91 @@
             if (pinnedGrid) {
                 const sortable = new Sortable(pinnedGrid, {
                     handle: '.drag-handle',
-                    animation: 200,
+                    animation: 300,
+                    easing: 'cubic-bezier(0.25, 0.8, 0.25, 1)',
                     ghostClass: 'sortable-ghost',
                     dragClass: 'sortable-drag',
+                    chosenClass: 'sortable-drag',
                     delay: 100,
                     delayOnTouchOnly: true,
-                    forceFallback: true, 
-                    fallbackClass: 'sortable-drag',
                     onEnd: async function(evt) {
                         if (evt.oldIndex === evt.newIndex) return;
                         const tiles = Array.from(pinnedGrid.children);
+                        
+                        // Check if we're reordering within a bean group and update collapse button position
+                        const movedTile = evt.item;
+                        const movedBrewId = movedTile.querySelector('[data-id]')?.getAttribute('data-id');
+                        if (movedBrewId) {
+                            // Find if this brew belongs to an expanded bean group
+                            const movedBrew = coffees.find(c => c.id === movedBrewId);
+                            if (movedBrew) {
+                                let linkedBean = movedBrew.beanId ? beans.find(b => b.id === movedBrew.beanId) : null;
+                                if (!linkedBean) {
+                                    const clean = (s) => (s || '').toLowerCase().trim();
+                                    linkedBean = beans.find(b => 
+                                        clean(b.roaster) === clean(movedBrew.roaster) &&
+                                        clean(b.farmer) === clean(movedBrew.farmer) &&
+                                        clean(b.origin) === clean(movedBrew.origin) &&
+                                        clean(b.processing) === clean(movedBrew.processing) &&
+                                        clean(b.variety) === clean(movedBrew.variety) &&
+                                        clean(b.roastType) === clean(movedBrew.roastType)
+                                    );
+                                }
+                                const beanKey = linkedBean ? linkedBean.id : `no-bean-${movedBrew.id}`;
+                                
+                                // Check if this bean is expanded
+                                if (expandedBeans.has(beanKey)) {
+                                    // Find all tiles in this bean group
+                                    const groupTiles = tiles.filter(tile => {
+                                        const tileBrewId = tile.querySelector('[data-id]')?.getAttribute('data-id');
+                                        if (!tileBrewId) return false;
+                                        const tileBrew = coffees.find(c => c.id === tileBrewId);
+                                        if (!tileBrew) return false;
+                                        
+                                        let tileBean = tileBrew.beanId ? beans.find(b => b.id === tileBrew.beanId) : null;
+                                        if (!tileBean) {
+                                            const clean = (s) => (s || '').toLowerCase().trim();
+                                            tileBean = beans.find(b => 
+                                                clean(b.roaster) === clean(tileBrew.roaster) &&
+                                                clean(b.farmer) === clean(tileBrew.farmer) &&
+                                                clean(b.origin) === clean(tileBrew.origin) &&
+                                                clean(b.processing) === clean(tileBrew.processing) &&
+                                                clean(b.variety) === clean(tileBrew.variety) &&
+                                                clean(b.roastType) === clean(tileBrew.roastType)
+                                            );
+                                        }
+                                        const tileBeanKey = tileBean ? tileBean.id : `no-bean-${tileBrew.id}`;
+                                        return tileBeanKey === beanKey;
+                                    });
+                                    
+                                    // Remove collapse button from all tiles in this group
+                                    groupTiles.forEach(tile => {
+                                        const existingBtn = tile.querySelector('.fa-minus')?.closest('.absolute');
+                                        if (existingBtn) existingBtn.remove();
+                                    });
+                                    
+                                    // Add collapse button to the last tile in the group
+                                    if (groupTiles.length > 0) {
+                                        const lastTile = groupTiles[groupTiles.length - 1];
+                                        const collapseBtn = document.createElement('div');
+                                        collapseBtn.className = "absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30";
+                                        collapseBtn.onclick = (e) => {
+                                            e.stopPropagation();
+                                            toggleBeanExpansion(beanKey);
+                                        };
+                                        collapseBtn.innerHTML = `<i class="fa-solid fa-minus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i>`;
+                                        lastTile.appendChild(collapseBtn);
+                                    }
+                                }
+                            }
+                        }
                         
                         // Handle both individual brew tiles (data-id) and bean group tiles (data-bean-key)
                         const batch = writeBatch(db);
                         let orderIndex = 0;
                         
                         tiles.forEach(tile => {
-                            const brewId = tile.getAttribute('data-id');
+                            const brewId = tile.querySelector('[data-id]')?.getAttribute('data-id');
                             const beanKey = tile.getAttribute('data-bean-key');
                             
                             if (brewId) {
