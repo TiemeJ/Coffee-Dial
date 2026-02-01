@@ -1615,6 +1615,7 @@
         };
 
         const openUploadModal = (coffeeId) => {
+            document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden'));
             currentUploadCoffeeId = coffeeId; document.getElementById('uploadPhotoModal').classList.remove('hidden');
             document.getElementById('photoInput').value = ''; document.getElementById('photoMessage').value = ''; document.getElementById('uploadProgress').classList.add('hidden');
             const list = document.getElementById('shareWithList'); list.innerHTML = '';
