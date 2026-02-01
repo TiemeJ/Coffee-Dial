@@ -3077,6 +3077,7 @@
             brews.forEach((c, index) => {
                 const tileWrapper = document.createElement('div');
                 tileWrapper.className = "relative h-full";
+                tileWrapper.setAttribute('data-id', c.id); // Add data-id to wrapper for sortable
                 tileWrappers.push(tileWrapper);
                 
                 // Add subtle gray background behind the tile
