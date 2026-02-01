@@ -2632,12 +2632,12 @@
         const clearSearch = () => { const input = document.getElementById('globalSearch'); input.value = ''; displayedBrewsCount = BREWS_PER_PAGE; renderTable(); document.getElementById('searchClearBtn').classList.add('hidden'); input.focus(); };
         
         let currentSort = { key: null, direction: 'asc' };
-        let activeFilters = { method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null };
+        let activeFilters = { bean: null, method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null };
         const sortBy = (k) => { if(currentSort.key===k)currentSort.direction=currentSort.direction==='asc'?'desc':'asc'; else {currentSort.key=k;currentSort.direction='asc';} displayedBrewsCount = BREWS_PER_PAGE; renderTable(); };
         const openFilterMenu = (e,k) => { e.stopPropagation(); const m=document.getElementById('filterDropdown'); const vals = coffees.map(c => k==='roaster' ? (c.roaster||c.name) : (k==='origin' ? (c.origin||c.beanType) : c[k])); const v=[...new Set(vals)].sort(); if(!v.length)return; let h=`<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] mb-1">Filter ${k}</div><button onclick="applyFilter('${k}',null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`; v.forEach(val=>{h+=`<button onclick="applyFilter('${k}','${val}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e]">${val}</button>`}); m.innerHTML=h; const r=e.currentTarget.getBoundingClientRect(); const c=e.currentTarget.closest('.relative').getBoundingClientRect(); m.style.top=(r.bottom-c.top+5)+'px'; m.style.left=(r.left-c.left)+'px'; m.classList.remove('hidden'); }
         const applyFilter = (k,v) => { activeFilters[k]=v; document.getElementById('filterDropdown').classList.add('hidden'); displayedBrewsCount = BREWS_PER_PAGE; renderTable(); renderActiveFilters(); };
         const clearAllFilters = () => { activeFilters={method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null,drink:null,grinder:null}; displayedBrewsCount = BREWS_PER_PAGE; renderTable(); renderActiveFilters(); }
-        const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${k}:</span><b>${v}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
+        const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; let displayValue = v; if(k === 'bean'){ const bean = beans.find(b => b.id === v); if(bean) displayValue = `${bean.roaster || 'Unknown'}${bean.farmer ? ' - ' + bean.farmer : ''}`; } l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${k}:</span><b>${displayValue}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
         
         const toggleQuickFilter = (e) => {
             e.stopPropagation();
@@ -2648,6 +2648,7 @@
             if (dropdown.classList.contains('hidden')) {
                 // Build filter category menu
                 const filterCategories = [
+                    { key: 'bean', label: 'Bean' },
                     { key: 'method', label: 'Method' },
                     { key: 'drink', label: 'Drink' },
                     { key: 'roaster', label: 'Roaster' },
@@ -2682,8 +2683,17 @@
             const mainDropdown = document.getElementById('quickFilterDropdown');
             
             // Get unique values for this filter key
-            const vals = coffees.map(c => key === 'roaster' ? (c.roaster || c.name) : (key === 'origin' ? (c.origin || c.beanType) : c[key]));
-            const uniqueVals = [...new Set(vals)].filter(v => v).sort();
+            let uniqueVals;
+            if (key === 'bean') {
+                // For bean filter, show saved beans with their display names
+                uniqueVals = beans.map(b => ({
+                    id: b.id,
+                    display: `${b.roaster || 'Unknown'}${b.farmer ? ' - ' + b.farmer : ''}`
+                }));
+            } else {
+                const vals = coffees.map(c => key === 'roaster' ? (c.roaster || c.name) : (key === 'origin' ? (c.origin || c.beanType) : c[key]));
+                uniqueVals = [...new Set(vals)].filter(v => v).sort();
+            }
             
             if (!uniqueVals.length) {
                 valuesDropdown.innerHTML = '<div class="px-4 py-3 text-sm text-coffee-400 dark:text-[#78716c] italic">No values available</div>';
@@ -2695,14 +2705,26 @@
                     </button>
                 </div>`;
                 html += `<button onclick="applyFilterFromQuick('${key}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`;
-                uniqueVals.forEach(val => {
-                    const isActive = activeFilters[key] === val;
-                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
-                    const escapedVal = String(val).replace(/'/g, "\\'");
-                    html += `<button onclick="applyFilterFromQuick('${key}', '${escapedVal}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
-                        ${val}
-                    </button>`;
-                });
+                if (key === 'bean') {
+                    uniqueVals.forEach(bean => {
+                        const isActive = activeFilters[key] === bean.id;
+                        const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
+                        const escapedId = String(bean.id).replace(/'/g, "\\'");
+                        const escapedDisplay = String(bean.display).replace(/'/g, "\\'");
+                        html += `<button onclick="applyFilterFromQuick('${key}', '${escapedId}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
+                            ${bean.display}
+                        </button>`;
+                    });
+                } else {
+                    uniqueVals.forEach(val => {
+                        const isActive = activeFilters[key] === val;
+                        const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
+                        const escapedVal = String(val).replace(/'/g, "\\'");
+                        html += `<button onclick="applyFilterFromQuick('${key}', '${escapedVal}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
+                            ${val}
+                        </button>`;
+                    });
+                }
                 valuesDropdown.innerHTML = html;
             }
             
@@ -2721,8 +2743,8 @@
             if (searchInput && searchInput.value) { const term = searchInput.value.toLowerCase(); f = f.filter(c => { const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||'', c.grinder||''].join(' ').toLowerCase(); return searchable.includes(term); }); }
             f=f.filter(c=>{ 
                 const cRoaster = c.roaster || c.name; const cOrigin = c.origin || c.beanType;
-                const m=!activeFilters.method||c.method===activeFilters.method; const t=!activeFilters.temp||String(c.temp)===String(activeFilters.temp); const r=!activeFilters.roastType||c.roastType===activeFilters.roastType; const rost=!activeFilters.roaster||cRoaster===activeFilters.roaster; const orig=!activeFilters.origin||cOrigin===activeFilters.origin; const farm=!activeFilters.farmer||c.farmer===activeFilters.farmer; const varr=!activeFilters.variety||c.variety===activeFilters.variety; const proc=!activeFilters.processing||c.processing===activeFilters.processing; const dr=!activeFilters.drink||c.drink===activeFilters.drink; const gri=!activeFilters.grinder||c.grinder===activeFilters.grinder;
-                return m&&t&&r&&rost&&orig&&farm&&varr&&proc&&dr&&gri; 
+                const m=!activeFilters.method||c.method===activeFilters.method; const t=!activeFilters.temp||String(c.temp)===String(activeFilters.temp); const r=!activeFilters.roastType||c.roastType===activeFilters.roastType; const rost=!activeFilters.roaster||cRoaster===activeFilters.roaster; const orig=!activeFilters.origin||cOrigin===activeFilters.origin; const farm=!activeFilters.farmer||c.farmer===activeFilters.farmer; const varr=!activeFilters.variety||c.variety===activeFilters.variety; const proc=!activeFilters.processing||c.processing===activeFilters.processing; const dr=!activeFilters.drink||c.drink===activeFilters.drink; const gri=!activeFilters.grinder||c.grinder===activeFilters.grinder; const beanMatch=!activeFilters.bean||c.beanId===activeFilters.bean;
+                return m&&t&&r&&rost&&orig&&farm&&varr&&proc&&dr&&gri&&beanMatch; 
             }); 
             if(currentSort.key){ f.sort((a,b)=>{ 
                 let va=a[currentSort.key], vb=b[currentSort.key]; 
