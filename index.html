@@ -2735,37 +2735,70 @@
                     // Reset to default before measuring
                     menu.style.top = '';
                     menu.style.bottom = '';
+                    menu.style.left = '';
+                    menu.style.right = '';
                     menu.style.marginTop = '';
                     menu.style.marginBottom = '';
                     
                     setTimeout(() => {
                         const rect = menu.getBoundingClientRect();
+                        const viewportWidth = window.innerWidth;
                         const viewportHeight = window.innerHeight;
                         const headerHeight = 70; // Approx header height
                         
-                        // Check if menu goes off the bottom
-                        const overflowsBottom = rect.bottom > viewportHeight - 20;
+                        // Check if this is a table menu (has right-0 class indicating table layout)
+                        const isTableMenu = menuId.startsWith('action-menu-');
+                        const isTileMenu = menuId.startsWith('tile-menu-');
                         
-                        // Check if flipping up would go off the top (behind header)
-                        // rect.top is current top. If we flip up, new top would be approx rect.top - rect.height
-                        const wouldOverflowTop = (rect.top - rect.height) < headerHeight;
-                        
-                        // Only flip UP if it overflows bottom AND wouldn't overflow top
-                        if (overflowsBottom && !wouldOverflowTop) {
-                            menu.style.top = 'auto';
-                            menu.style.bottom = '100%'; 
-                            menu.style.marginTop = '0';
-                            menu.style.marginBottom = '0.5rem';
-                            menu.classList.remove('origin-top-right');
-                            menu.classList.add('origin-bottom-right');
-                        } else {
-                            // Otherwise keep it DOWN (default)
+                        // For table menus: always position below, never flip up
+                        // This prevents clipping behind sticky table headers
+                        if (isTableMenu) {
                             menu.style.top = '100%';
                             menu.style.bottom = 'auto';
-                            menu.style.marginTop = '0.5rem';
+                            menu.style.marginTop = '0.25rem';
                             menu.style.marginBottom = '0';
                             menu.classList.remove('origin-bottom-right');
                             menu.classList.add('origin-top-right');
+                        } else {
+                            // For tile menus: check if menu goes off the bottom
+                            const overflowsBottom = rect.bottom > viewportHeight - 20;
+                            
+                            // Check if flipping up would go off the top (behind header)
+                            const wouldOverflowTop = (rect.top - rect.height) < headerHeight;
+                            
+                            // Only flip UP if it overflows bottom AND wouldn't overflow top
+                            if (overflowsBottom && !wouldOverflowTop) {
+                                menu.style.top = 'auto';
+                                menu.style.bottom = '100%'; 
+                                menu.style.marginTop = '0';
+                                menu.style.marginBottom = '0.5rem';
+                                menu.classList.remove('origin-top-right');
+                                menu.classList.add('origin-bottom-right');
+                            } else {
+                                // Otherwise keep it DOWN (default)
+                                menu.style.top = '100%';
+                                menu.style.bottom = 'auto';
+                                menu.style.marginTop = '0.5rem';
+                                menu.style.marginBottom = '0';
+                                menu.classList.remove('origin-bottom-right');
+                                menu.classList.add('origin-top-right');
+                            }
+                        }
+                        
+                        // Check horizontal positioning - if menu would be clipped on left, open to the right
+                        const menuWidth = rect.width;
+                        const menuLeft = rect.left;
+                        
+                        if (menuLeft < 10) {
+                            // Menu is too close to left edge, flip to open on the right
+                            menu.style.right = 'auto';
+                            menu.style.left = '0';
+                            menu.classList.remove('origin-top-right', 'origin-bottom-right');
+                            menu.classList.add(menu.style.bottom === '100%' ? 'origin-bottom-left' : 'origin-top-left');
+                        } else if (menuLeft + menuWidth > viewportWidth - 10) {
+                            // Menu is too close to right edge, keep it on the left (default)
+                            menu.style.left = 'auto';
+                            menu.style.right = '0';
                         }
                     }, 0);
                 }
