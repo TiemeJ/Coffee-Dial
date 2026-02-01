@@ -1377,12 +1377,15 @@
                                     return key === beanKey;
                                 });
                                 
+                                // Sort group brews by their current customOrder to maintain internal order
+                                groupBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
+                                
                                 groupBrews.forEach(brew => {
                                     brew.customOrder = orderIndex;
                                     const ref = doc(db, 'users', currentUser.uid, 'coffees', brew.id);
                                     batch.update(ref, { customOrder: orderIndex });
+                                    orderIndex++;
                                 });
-                                orderIndex += groupBrews.length;
                             }
                         });
                         
@@ -2990,40 +2993,102 @@
                         beanGroups.set(beanKey, {
                             bean: linkedBean,
                             brews: [],
-                            minOrder: brew.customOrder || 0
+                            minOrder: brew.customOrder || 0,
+                            maxOrder: brew.customOrder || 0
                         });
                     }
                     
-                    beanGroups.get(beanKey).brews.push(brew);
-                    beanGroups.get(beanKey).minOrder = Math.min(beanGroups.get(beanKey).minOrder, brew.customOrder || 0);
+                    const group = beanGroups.get(beanKey);
+                    group.brews.push(brew);
+                    group.minOrder = Math.min(group.minOrder, brew.customOrder || 0);
+                    group.maxOrder = Math.max(group.maxOrder, brew.customOrder || 0);
                 });
                 
-                // Sort bean groups by the minimum customOrder of their brews
-                const sortedBeanGroups = Array.from(beanGroups.entries())
-                    .sort((a, b) => a[1].minOrder - b[1].minOrder);
+                // Create a flat list of items to render in order
+                // Each item is either a collapsed group or individual brews from expanded/single-brew groups
+                const renderItems = [];
                 
-                sortedBeanGroups.forEach(([beanKey, group]) => {
-                    const isExpanded = expandedBeans.has(beanKey);
+                beanGroups.forEach((group, beanKey) => {
                     const { bean, brews } = group;
-                    
-                    // Sort brews within the group by customOrder
                     brews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
+                    
+                    const isExpanded = expandedBeans.has(beanKey);
                     
                     // Only render as a group if there is a bean AND more than one brew
                     if (bean && brews.length > 1) {
                         if (!isExpanded) {
-                            // Render collapsed bean tile
-                            renderBeanTile(beanKey, bean, brews, pinnedGrid);
+                            // Collapsed group: add as single item with minOrder
+                            renderItems.push({
+                                type: 'collapsed-group',
+                                order: group.minOrder,
+                                beanKey,
+                                bean,
+                                brews
+                            });
                         } else {
-                            // Render expanded bean group with border and collapse button
-                            renderExpandedBeanGroup(beanKey, bean, brews, pinnedGrid);
+                            // Expanded group: add each brew individually with its own order
+                            brews.forEach(brew => {
+                                renderItems.push({
+                                    type: 'expanded-brew',
+                                    order: brew.customOrder || 0,
+                                    brew,
+                                    bean,
+                                    beanKey
+                                });
+                            });
                         }
                     } else {
-                        // No bean OR only one brew - render individual brew tiles without grouping logic
-                        brews.forEach(c => {
-                            renderBrewTile(c, pinnedGrid, bean);
+                        // Standalone brew: add with its own order
+                        brews.forEach(brew => {
+                            renderItems.push({
+                                type: 'standalone-brew',
+                                order: brew.customOrder || 0,
+                                brew,
+                                bean
+                            });
                         });
                     }
+                });
+                
+                // Sort all items by their order
+                renderItems.sort((a, b) => a.order - b.order);
+                
+                // Track expanded groups to add collapse button to last brew
+                const expandedGroupLastBrews = new Map();
+                
+                // Render items in order
+                renderItems.forEach((item, index) => {
+                    if (item.type === 'collapsed-group') {
+                        renderBeanTile(item.beanKey, item.bean, item.brews, pinnedGrid);
+                    } else if (item.type === 'expanded-brew') {
+                        const tileWrapper = document.createElement('div');
+                        tileWrapper.className = "relative h-full";
+                        
+                        const bgLayer = document.createElement('div');
+                        bgLayer.className = "absolute inset-0 bg-coffee-100/30 dark:bg-[#1c1917]/40 rounded-lg -z-10";
+                        tileWrapper.appendChild(bgLayer);
+                        
+                        renderBrewTile(item.brew, tileWrapper, item.bean);
+                        pinnedGrid.appendChild(tileWrapper);
+                        
+                        // Track the last brew of each expanded group
+                        expandedGroupLastBrews.set(item.beanKey, tileWrapper);
+                    } else {
+                        // standalone-brew
+                        renderBrewTile(item.brew, pinnedGrid, item.bean);
+                    }
+                });
+                
+                // Add collapse buttons to the last brew of each expanded group
+                expandedGroupLastBrews.forEach((lastTileWrapper, beanKey) => {
+                    const collapseBtn = document.createElement('div');
+                    collapseBtn.className = "absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30";
+                    collapseBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleBeanExpansion(beanKey);
+                    };
+                    collapseBtn.innerHTML = `<i class="fa-solid fa-minus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i>`;
+                    lastTileWrapper.appendChild(collapseBtn);
                 });
                 }
                 
