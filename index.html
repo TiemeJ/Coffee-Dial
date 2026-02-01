@@ -239,7 +239,7 @@
         </div>
 
         <!-- Unified Brew Management Container -->
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-colors duration-300">
+        <div id="formWrapper" class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-colors duration-300">
             
             <!-- Add New Brew Form Section -->
             <div id="formContainer" class="hidden transition-all duration-300 group overflow-hidden rounded-b-xl" aria-expanded="false">
@@ -1064,7 +1064,8 @@
             const targetUid = uid === 'mine' ? currentUser.uid : uid;
             const isMine = uid === 'mine';
             const formContainer = document.getElementById('formContainer');
-            if (isMine) { formContainer.classList.remove('hidden'); toggleForm(false); } else { formContainer.classList.add('hidden'); toggleForm(false); }
+            const formWrapper = document.getElementById('formWrapper');
+            if (isMine) { formWrapper.classList.remove('hidden'); formContainer.classList.remove('hidden'); toggleForm(false); } else { formWrapper.classList.add('hidden'); formContainer.classList.add('hidden'); toggleForm(false); }
             
             // Listen to Brews
             const q = collection(db, 'users', targetUid, 'coffees');
