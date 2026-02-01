@@ -2980,9 +2980,15 @@
                             renderExpandedBeanGroup(beanKey, bean, brews, pinnedGrid);
                         }
                     } else {
-                        // No bean OR only one brew - render individual brew tiles without grouping logic
+                        // Single brew - render in collapsed container similar to grouped brews
                         brews.forEach(c => {
-                            renderBrewTile(c, pinnedGrid, bean);
+                            if (!isExpanded) {
+                                // Render collapsed single brew tile
+                                renderSingleBrewCollapsed(beanKey, c, bean, pinnedGrid);
+                            } else {
+                                // Render expanded single brew
+                                renderSingleBrewExpanded(beanKey, c, bean, pinnedGrid);
+                            }
                         });
                     }
                 });
@@ -2995,16 +3001,17 @@
             }
         };
         
-        const renderBeanTile = (beanKey, bean, brews, container) => {
+        const renderSingleBrewCollapsed = (beanKey, brew, bean, container) => {
             const tile = document.createElement('div');
             tile.className = "w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
             tile.setAttribute('data-bean-key', beanKey);
             tile.onclick = () => toggleBeanExpansion(beanKey);
             
-            // Calculate aggregated stock visualization for all brews in this bean
+            // Calculate stock visualization for this single brew
             let stockOverlay = '';
             let dragIconClass = 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]';
             let plusBtnClass = 'text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e]';
+            let decafIconSrc = 'img/decaf_dark.png';
             
             if (bean && bean.stock) {
                 const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
@@ -3052,6 +3059,125 @@
                     if (fullHeight > 25) {
                         plusBtnClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
                     }
+                    // Decaf icon is near bottom (~70-100%), adjust if empty space crosses it
+                    if (fullHeight > 30) {
+                        decafIconSrc = 'img/decaf_light.png';
+                    }
+                }
+            }
+            
+            const roaster = brew.roaster || brew.name || 'Unknown Roaster';
+            const farmer = brew.farmer || '-';
+            
+            // Check if this brew is decaf
+            const isDecaf = [brew.roaster, brew.name, brew.farmer, brew.origin, brew.variety, brew.processing, brew.roastType, brew.notes]
+                .some(field => field && field.toLowerCase().includes('decaf'));
+            const decafIcon = isDecaf 
+                ? `<img src="${decafIconSrc}" alt="Decaf" class="inline-block w-6 h-6" title="Decaffeinated">` 
+                : '';
+            
+            // Add drag functionality for single brew tiles
+            const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some(v => v !== null);
+            const dragIcon = isDraggable ? `<div class="absolute top-1 right-1 ${dragIconClass} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>` : '';
+            
+            const plusBtn = `<div class="absolute bottom-1 right-1 p-2 ${plusBtnClass} transition-colors z-20 duration-200 pointer-events-none"><i class="fa-solid fa-plus text-lg"></i></div>`;
+            const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
+            
+            // "1 brews" badge with stack icon (matching bean tile structure)
+            const brewCountBadge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>1 brew</span>`;
+            const placeholderBadge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border border-transparent invisible">-</span>`;
+            
+            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${brewCountBadge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
+            container.appendChild(tile);
+        };
+        
+        const renderSingleBrewExpanded = (beanKey, brew, bean, container) => {
+            const tileWrapper = document.createElement('div');
+            tileWrapper.className = "relative h-full";
+            tileWrapper.setAttribute('data-id', brew.id);
+            
+            // Add subtle gray background behind the tile
+            const bgLayer = document.createElement('div');
+            bgLayer.className = "absolute inset-0 bg-coffee-100/30 dark:bg-[#1c1917]/40 rounded-lg -z-10";
+            tileWrapper.appendChild(bgLayer);
+            
+            renderBrewTile(brew, tileWrapper, bean);
+            container.appendChild(tileWrapper);
+            
+            // Add small collapse button overlapping the bottom-right corner
+            const collapseBtn = document.createElement('div');
+            collapseBtn.className = "absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30";
+            collapseBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleBeanExpansion(beanKey);
+            };
+            collapseBtn.innerHTML = `<i class="fa-solid fa-minus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i>`;
+            
+            tileWrapper.appendChild(collapseBtn);
+        };
+        
+        const renderBeanTile = (beanKey, bean, brews, container) => {
+            const tile = document.createElement('div');
+            tile.className = "w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
+            tile.setAttribute('data-bean-key', beanKey);
+            tile.onclick = () => toggleBeanExpansion(beanKey);
+            
+            // Calculate aggregated stock visualization for all brews in this bean
+            let stockOverlay = '';
+            let dragIconClass = 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]';
+            let plusBtnClass = 'text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e]';
+            let decafIconSrc = 'img/decaf_dark.png';
+            
+            if (bean && bean.stock) {
+                const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
+                const clean = (s) => (s || '').toLowerCase().trim();
+                
+                const usedAmount = coffees
+                    .filter(refC => {
+                        if (refC.beanId && refC.beanId === bean.id) return new Date(refC.createdAt) > stockDate;
+                        if (!refC.beanId) {
+                            const match = clean(bean.roaster) === clean(refC.roaster) &&
+                                clean(bean.farmer) === clean(refC.farmer) &&
+                                clean(bean.origin) === clean(refC.origin) &&
+                                clean(bean.processing) === clean(refC.processing) &&
+                                clean(bean.variety) === clean(refC.variety) &&
+                                clean(bean.roastType) === clean(refC.roastType);
+                            return match && new Date(refC.createdAt) > stockDate;
+                        }
+                        return false;
+                    })
+                    .reduce((sum, refC) => sum + (refC.weight || 0), 0);
+
+                const initialStock = parseFloat(bean.stock);
+                const currentStock = Math.max(0, initialStock - usedAmount);
+                const stockPercentage = Math.min(100, Math.max(0, (currentStock / initialStock) * 100));
+                
+                if (stockPercentage < 100) {
+                    const fullHeight = stockPercentage;
+                    const waveSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20 L0 10 Q 25 0 50 10 T 100 10 L 100 20 Z' fill='%2357534e'/%3E%3C/svg%3E";
+                    
+                    let boatElement = '';
+                    const boatDelay = Math.random() * 18;
+                    const colors = ['text-amber-700', 'text-blue-500', 'text-green-600', 'text-purple-500'];
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    boatElement = `<div class="absolute top-1/2 boat-right pointer-events-none z-10" style="animation-delay: -${boatDelay}s;"><i class="fa-solid fa-mug-hot ${randomColor} text-lg drop-shadow-lg"></i></div>`;
+                    
+                    stockOverlay = `
+                        <div class="absolute bottom-0 left-0 w-full z-0 pointer-events-none hidden dark:flex flex-col justify-start transition-all duration-500" style="height: ${fullHeight}%;">
+                            <div class="w-full h-3 bg-repeat-x wave-animate relative" style="background-image: url(&quot;${waveSvg}&quot;); background-size: 50% 100%;">${boatElement}</div>
+                            <div class="w-full flex-1 bg-[#57534e]"></div>
+                        </div>`;
+
+                    if (fullHeight > 25) {
+                        dragIconClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
+                    }
+                    if (fullHeight > 25) {
+                        plusBtnClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
+                    }
+                    // Decaf icon is near bottom (~70-100%), adjust if empty space crosses it
+                    if (fullHeight > 30) {
+                        decafIconSrc = 'img/decaf_light.png';
+                    }
                 }
             }
             
@@ -3064,15 +3190,8 @@
                 [brew.roaster, brew.name, brew.farmer, brew.origin, brew.variety, brew.processing, brew.roastType, brew.notes]
                     .some(field => field && field.toLowerCase().includes('decaf'))
             );
-            let decafIconSrc = 'img/decaf_dark.png';
-            if (stockOverlay && stockOverlay.includes('height:')) {
-                const match = stockOverlay.match(/height: (\d+)%/);
-                if (match && parseInt(match[1]) > 30) {
-                    decafIconSrc = 'img/decaf_light.png';
-                }
-            }
             const decafIcon = isDecaf 
-                ? `<img src="${decafIconSrc}" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` 
+                ? `<img src="${decafIconSrc}" alt="Decaf" class="inline-block w-6 h-6" title="Decaffeinated">` 
                 : '';
             
             // Add drag functionality for bean tiles
