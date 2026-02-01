@@ -2736,23 +2736,36 @@
                     menu.style.top = '';
                     menu.style.bottom = '';
                     menu.style.marginTop = '';
+                    menu.style.marginBottom = '';
                     
                     setTimeout(() => {
                         const rect = menu.getBoundingClientRect();
                         const viewportHeight = window.innerHeight;
+                        const headerHeight = 70; // Approx header height
                         
-                        // If menu goes off the bottom of the screen, flip it UP
-                        if (rect.bottom > viewportHeight - 20) {
+                        // Check if menu goes off the bottom
+                        const overflowsBottom = rect.bottom > viewportHeight - 20;
+                        
+                        // Check if flipping up would go off the top (behind header)
+                        // rect.top is current top. If we flip up, new top would be approx rect.top - rect.height
+                        const wouldOverflowTop = (rect.top - rect.height) < headerHeight;
+                        
+                        // Only flip UP if it overflows bottom AND wouldn't overflow top
+                        if (overflowsBottom && !wouldOverflowTop) {
                             menu.style.top = 'auto';
                             menu.style.bottom = '100%'; 
                             menu.style.marginTop = '0';
                             menu.style.marginBottom = '0.5rem';
+                            menu.classList.remove('origin-top-right');
+                            menu.classList.add('origin-bottom-right');
                         } else {
                             // Otherwise keep it DOWN (default)
                             menu.style.top = '100%';
                             menu.style.bottom = 'auto';
                             menu.style.marginTop = '0.5rem';
                             menu.style.marginBottom = '0';
+                            menu.classList.remove('origin-bottom-right');
+                            menu.classList.add('origin-top-right');
                         }
                     }, 0);
                 }
@@ -2956,7 +2969,13 @@
             const plusBtn = `<div class="absolute bottom-1 right-1 p-2 ${plusBtnClass} transition-colors z-20 duration-200 pointer-events-none"><i class="fa-solid fa-plus text-lg"></i></div>`;
             const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
             
-            tile.innerHTML = `${backgroundLayer}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start"><div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-solid fa-layer-group"></i> ${brewCount} brew${brewCount !== 1 ? 's' : ''}</div><div class="flex gap-1 items-center">${decafIcon}</div></div></div>${plusBtn}`;
+            // Use same badge structure as brew tiles for consistent height
+            // First row: brew count badge (same size as method badge)
+            // Second row: invisible placeholder + decaf icon (same structure as drink badge row)
+            const brewCountBadge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>${brewCount} brew${brewCount !== 1 ? 's' : ''}</span>`;
+            const placeholderBadge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border border-transparent invisible">-</span>`;
+            
+            tile.innerHTML = `${backgroundLayer}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${brewCountBadge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
             container.appendChild(tile);
         };
         
@@ -3234,9 +3253,9 @@
             if(currentView === 'mine') {
                 const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
                 const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
-                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
+                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
             } else { 
-                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews</button></div></div>`; 
+                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews</button></div></div>`; 
             }
 
             const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
