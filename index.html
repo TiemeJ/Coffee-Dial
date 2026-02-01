@@ -1078,20 +1078,25 @@
                 if(error.code === 'permission-denied') { alert("⚠️ Access Denied: This user's profile is private."); document.getElementById('viewSelect').value = 'mine'; changeView('mine'); }
             });
 
-            // Listen to Beans (Only for current user)
-            if(isMine) {
-                 const beanQ = collection(db, 'users', currentUser.uid, 'beans');
-                 unsubscribeBeans = onSnapshot(beanQ, (snapshot) => {
-                     beans = [];
-                     snapshot.forEach(doc => beans.push({ id: doc.id, ...doc.data() }));
-                     updateBeanDropdown();
-                     // If beans modal is open, refresh it
-                     if(!document.getElementById('beansModal').classList.contains('hidden')) {
-                         renderBeansTable();
-                     }
-                     renderPinnedTiles(); renderTable(); 
-                 });
-            }
+            // Listen to Beans - load for whoever we're viewing
+            const beanQ = collection(db, 'users', targetUid, 'beans');
+            unsubscribeBeans = onSnapshot(beanQ, (snapshot) => {
+                beans = [];
+                snapshot.forEach(doc => beans.push({ id: doc.id, ...doc.data() }));
+                if(isMine) {
+                    updateBeanDropdown();
+                    // If beans modal is open, refresh it
+                    if(!document.getElementById('beansModal').classList.contains('hidden')) {
+                        renderBeansTable();
+                    }
+                }
+                renderPinnedTiles(); renderTable(); 
+            }, (error) => {
+                console.error("Error loading beans:", error);
+                // If we can't load beans (e.g., permission denied), continue with empty array
+                beans = [];
+                renderPinnedTiles(); renderTable();
+            });
         };
 
         const updateBeanDropdown = () => {
