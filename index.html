@@ -1318,7 +1318,14 @@
                             }
                         });
                         
-                        try { await batch.commit(); } catch(err) { console.error("Reorder failed", err); alert("Failed to save new order."); renderTable(); }
+                        try { 
+                            await batch.commit(); 
+                            renderPinnedTiles(); // Re-render immediately to update min icon position
+                        } catch(err) { 
+                            console.error("Reorder failed", err); 
+                            alert("Failed to save new order."); 
+                            renderTable(); 
+                        }
                     }
                 });
                 sortableInstances.push(sortable);
