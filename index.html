@@ -2348,6 +2348,8 @@
         const shareCoffeeCard = (id, e) => {
             if(e) e.stopPropagation(); 
             const c = coffees.find(x => x.id === id); if(!c) return;
+            // Close any open action menus
+            document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden'));
             resetCardPhotoState(); 
             toggleCardMode('stats');
             document.getElementById('shareControls').classList.remove('hidden');
