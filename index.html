@@ -2968,7 +2968,7 @@
         
         const renderBeanTile = (beanKey, bean, brews, container) => {
             const tile = document.createElement('div');
-            tile.className = "bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
+            tile.className = "w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
             tile.setAttribute('data-bean-key', beanKey);
             tile.onclick = () => toggleBeanExpansion(beanKey);
             
@@ -3069,7 +3069,7 @@
             // Render brew tiles with subtle gray background
             brews.forEach((c, index) => {
                 const tileWrapper = document.createElement('div');
-                tileWrapper.className = "relative";
+                tileWrapper.className = "relative h-full";
                 tileWrappers.push(tileWrapper);
                 
                 // Add subtle gray background behind the tile
@@ -3165,7 +3165,7 @@
         
         const renderBrewTile = (c, container, linkedBean) => {
             const tile = document.createElement('div');
-            tile.className = "bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
+            tile.className = "w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all";
             tile.setAttribute('data-id', c.id);
             tile.ondblclick = (ev) => openCoffeeCard(c.id, ev);
 
