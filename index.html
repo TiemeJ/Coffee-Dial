@@ -326,7 +326,11 @@
                              <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
                                  <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Brew Parameters
                              </h3>
-                             <div class="flex items-center gap-2">
+                             <div class="flex items-center gap-3">
+                                 <div id="brewTimerReadout" class="hidden items-center gap-2 text-xs text-coffee-600 dark:text-[#a8a29e]">
+                                     <span id="brewTimerValue" class="font-mono">0:00</span>
+                                     <span id="brewWeightValue" class="font-mono w-14 text-right">--.-</span>
+                                 </div>
                                  <button id="brewWeighBtn" type="button" title="Weigh" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
                                      <i class="fa-solid fa-scale-balanced"></i>
                                  </button>
