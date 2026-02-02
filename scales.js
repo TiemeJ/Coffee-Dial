@@ -158,6 +158,7 @@ export function initCoffeeScale() {
   function setTimerRunningState(running) {
     timerRunning = running;
     timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
+    updateTimerIcon();
   }
 
   function handleAcaiaTimerEvent(data) {
@@ -384,6 +385,7 @@ export function initCoffeeScale() {
     timerBtn.textContent = "Start Timer";
     timerRunning = false;
     isConnected = false;
+    updateTimerIcon();
     weightEl.textContent = "--.- g";
     stopHeartbeat();
   }
@@ -463,6 +465,48 @@ export function initCoffeeScale() {
     }
   }
 
+  async function handleTimerIconClick() {
+    if (!isConnected) {
+      if (typeof window.openCoffeeScaleModal === "function") {
+        window.openCoffeeScaleModal();
+      }
+      return;
+    }
+
+    if (!writeChar) return;
+
+    try {
+      if (scaleType === "OLD" || scaleType === "NEW") {
+        await enqueueWrite(timerRunning ? STOP_TIMER_ACAIA : START_TIMER_ACAIA);
+      } else if (scaleType === "GENERIC") {
+        await enqueueWrite(timerRunning ? STOP_TIMER_BOOKOO : START_TIMER_BOOKOO);
+      } else {
+        return;
+      }
+
+      timerRunning = !timerRunning;
+      timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
+      updateTimerIcon();
+    } catch (err) {
+      console.warn("Timer icon command failed", err);
+    }
+  }
+
+  function updateTimerIcon() {
+    const timerIcon = document.querySelector("#brewTimerBtn i");
+    const timerButton = document.getElementById("brewTimerBtn");
+    if (!timerIcon || !timerButton) return;
+    if (timerRunning) {
+      timerIcon.classList.remove("fa-play");
+      timerIcon.classList.add("fa-pause");
+      timerButton.title = "Stop timer";
+    } else {
+      timerIcon.classList.remove("fa-pause");
+      timerIcon.classList.add("fa-play");
+      timerButton.title = "Start timer";
+    }
+  }
+
   const weighBtn = document.getElementById("brewWeighBtn");
   if (weighBtn) {
     weighBtn.addEventListener("click", handleWeighClick);
@@ -471,6 +515,11 @@ export function initCoffeeScale() {
   const resetScaleBtn = document.getElementById("brewResetScaleBtn");
   if (resetScaleBtn) {
     resetScaleBtn.addEventListener("click", handleResetScaleClick);
+  }
+
+  const timerIconBtn = document.getElementById("brewTimerBtn");
+  if (timerIconBtn) {
+    timerIconBtn.addEventListener("click", handleTimerIconClick);
   }
 
   const inField = document.getElementById("inputWeight");
