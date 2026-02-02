@@ -484,9 +484,18 @@ export function initCoffeeScale() {
         return;
       }
 
+      const wasRunning = timerRunning;
       timerRunning = !timerRunning;
       timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
       updateTimerIcon();
+
+      if (wasRunning && !timerRunning && Number.isFinite(lastWeight)) {
+        const outField = document.getElementById("inputYield");
+        if (outField) {
+          outField.value = lastWeight.toFixed(1);
+          outField.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
     } catch (err) {
       console.warn("Timer icon command failed", err);
     }
