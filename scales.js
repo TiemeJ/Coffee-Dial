@@ -22,6 +22,9 @@ export function initCoffeeScale() {
   let acaiaBuffer = new Uint8Array(0);
   let writeQueue = Promise.resolve();
   let writeInProgress = false;
+  let lastWeight = null;
+  let isConnected = false;
+  let lastFocusedField = null;
 
   /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
   const ACAIA_SERVICE_UUID = "00001820-0000-1000-8000-00805f9b34fb";
@@ -58,6 +61,7 @@ export function initCoffeeScale() {
 
   function setWeight(value) {
     weightEl.textContent = value.toFixed(1) + " g";
+    lastWeight = value;
   }
 
   function enqueueWrite(data) {
@@ -281,6 +285,7 @@ export function initCoffeeScale() {
       startHeartbeat();
     }
 
+    isConnected = true;
     setStatus(`Connected to ${device.name} (${scaleType})`);
   }
 
@@ -378,6 +383,7 @@ export function initCoffeeScale() {
     resetTimerBtn.disabled = true;
     timerBtn.textContent = "Start Timer";
     timerRunning = false;
+    isConnected = false;
     weightEl.textContent = "--.- g";
     stopHeartbeat();
   }
@@ -405,4 +411,83 @@ export function initCoffeeScale() {
       heartbeatTimer = null;
     }
   }
+
+  function handleWeighClick() {
+    if (!isConnected) {
+      if (typeof window.openCoffeeScaleModal === "function") {
+        window.openCoffeeScaleModal();
+      }
+      return;
+    }
+
+    if (!Number.isFinite(lastWeight)) {
+      return;
+    }
+
+    const outField = document.getElementById("inputYield");
+    const inField = document.getElementById("inputWeight");
+    if (lastFocusedField === "out" || document.activeElement === outField) {
+      outField.value = lastWeight.toFixed(1);
+      outField.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+
+    if (inField) {
+      inField.value = lastWeight.toFixed(1);
+      inField.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }
+
+  async function handleResetScaleClick() {
+    if (!isConnected) {
+      if (typeof window.openCoffeeScaleModal === "function") {
+        window.openCoffeeScaleModal();
+      }
+      return;
+    }
+
+    if (!writeChar) return;
+
+    try {
+      await enqueueWrite(scaleType === "GENERIC" ? TARE_GENERIC : TARE_ACAIA);
+      if (scaleType === "OLD" || scaleType === "NEW") {
+        await enqueueWrite(RESET_TIMER_ACAIA);
+      } else if (scaleType === "GENERIC") {
+        await enqueueWrite(RESET_TIMER_BOOKOO);
+      }
+
+      timerRunning = false;
+      timerBtn.textContent = "Start Timer";
+    } catch (err) {
+      console.warn("Reset scale failed", err);
+    }
+  }
+
+  const weighBtn = document.getElementById("brewWeighBtn");
+  if (weighBtn) {
+    weighBtn.addEventListener("click", handleWeighClick);
+  }
+
+  const resetScaleBtn = document.getElementById("brewResetScaleBtn");
+  if (resetScaleBtn) {
+    resetScaleBtn.addEventListener("click", handleResetScaleClick);
+  }
+
+  const inField = document.getElementById("inputWeight");
+  const outField = document.getElementById("inputYield");
+  if (inField) {
+    inField.addEventListener("focus", () => {
+      lastFocusedField = "in";
+    });
+  }
+  if (outField) {
+    outField.addEventListener("focus", () => {
+      lastFocusedField = "out";
+    });
+  }
+
+  window.coffeeScale = {
+    isConnected: () => isConnected,
+    getLastWeight: () => lastWeight
+  };
 }
