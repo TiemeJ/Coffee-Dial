@@ -322,9 +322,22 @@
 
                     <!-- SECTION 2: BREW PARAMETERS -->
                     <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c]">
-                         <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] flex items-center gap-2">
-                             <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Brew Parameters
-                         </h3>
+                         <div class="mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] flex items-center justify-between">
+                             <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                                 <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Brew Parameters
+                             </h3>
+                             <div class="flex items-center gap-2">
+                                 <button id="brewWeighBtn" type="button" title="Weigh" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-scale-balanced"></i>
+                                 </button>
+                                 <button type="button" title="Start timer" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-play"></i>
+                                 </button>
+                                 <button type="button" title="Reset scale" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-rotate-left"></i>
+                                 </button>
+                             </div>
+                         </div>
                          
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                              <div>
