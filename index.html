@@ -2102,7 +2102,12 @@
             const format = document.getElementById('exportFormat').value;
             const brews = getFilteredCoffees();
 
-            if (!brews.length) {
+            if (exportType === 'coffees') {
+                if (!beans.length) {
+                    alert("No data to export");
+                    return;
+                }
+            } else if (!brews.length) {
                 alert("No data to export");
                 return;
             }
@@ -2121,9 +2126,9 @@
                 }
             } else if (exportType === 'coffees') {
                 if (format === 'csv') {
-                    exportCoffeesAsCSV(brews);
+                    exportCoffeesAsCSV(beans);
                 } else if (format === 'json') {
-                    exportCoffeesAsJSON(brews);
+                    exportCoffeesAsJSON(beans);
                 }
             }
 
@@ -2232,21 +2237,14 @@
 
         const exportCoffeesAsCSV = (brews) => {
             const headers = ["Name", "Roaster", "Roast date", "Roast type", "Degree of Roast", "Custom degree of Roast", "Blend", "Weight", "Cost", "Flavour profile", "Cupping points", "Decaffeinated", "Website", "EAN / Articlenumber", "Notes", "Rating", "Archived", "Frozen Date", "Unfrozen Date", "Freezing Storage Type", "Frozen Note", "1. Country", "1. Region", "1. Farm", "1. Farmer", "1. Elevation", "1. Variety", "1. Processing", "1. Harvested", "1. Percentage", "1. Bean certification", "1. Fob Price", "1. Purchasing Price"];
-            const coffeeMap = new Map();
-            brews.forEach(brew => {
-                const key = `${brew.roaster || ''}|${brew.farmer || ''}|${brew.roastType || ''}|${brew.origin || ''}|${brew.variety || ''}|${brew.processing || ''}`;
-                if (!coffeeMap.has(key)) {
-                    coffeeMap.set(key, brew);
-                }
-            });
-            const uniqueCoffees = Array.from(coffeeMap.values());
+            const sourceBeans = beans;
             const esc = (t) => { 
                 if (t === null || t === undefined) return ''; 
                 const str = String(t); 
                 if (str.includes(';') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; 
                 return str; 
             };
-            const rows = uniqueCoffees.map(coffee => [
+            const rows = sourceBeans.map(coffee => [
                 esc(coffee.farmer || ''), esc(coffee.roaster || ''), '', '', esc(coffee.roastType || ''), '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', esc(coffee.origin || ''), '', '', '', '', esc(coffee.variety || ''), esc(coffee.processing || ''), '', '', '', '', ''
             ]);
             const csvContent = "data:text/csv;charset=utf-8," + headers.join(";") + "\n" + rows.map(e => e.join(";")).join("\n");
@@ -2260,15 +2258,8 @@
         };
 
         const exportCoffeesAsJSON = (brews) => {
-            const coffeeMap = new Map();
-            brews.forEach(brew => {
-                const key = `${brew.roaster || ''}|${brew.farmer || ''}|${brew.roastType || ''}|${brew.origin || brew.beanType || ''}|${brew.variety || ''}|${brew.processing || ''}`;
-                if (!coffeeMap.has(key)) {
-                    coffeeMap.set(key, brew);
-                }
-            });
-            const uniqueCoffees = Array.from(coffeeMap.values());
-            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(uniqueCoffees, null, 2));
+            const sourceBeans = beans;
+            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sourceBeans, null, 2));
             const link = document.createElement("a");
             link.setAttribute("href", jsonContent);
             link.setAttribute("download", "coffee_beans.json");
