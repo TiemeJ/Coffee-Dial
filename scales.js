@@ -34,6 +34,7 @@ export function initCoffeeScale() {
   let lastWeight = null;
   let isConnected = false;
   let lastFocusedField = null;
+  let autoConnectInProgress = false;
   let weighClickFromOut = false;
 
   /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
@@ -255,6 +256,46 @@ export function initCoffeeScale() {
     return false;
   }
 
+  function applyConnectedState() {
+    tareBtn.disabled = false;
+    timerBtn.disabled = false;
+    resetTimerBtn.disabled = false;
+    timerBtn.textContent = "Start Timer";
+    if (connectTareBtn) connectTareBtn.disabled = false;
+    if (connectTimerBtn) connectTimerBtn.disabled = false;
+    if (connectResetTimerBtn) connectResetTimerBtn.disabled = false;
+    if (connectTimerBtn) connectTimerBtn.textContent = "Start Timer";
+    timerRunning = false;
+  }
+
+  async function connectToCurrentDevice() {
+    if (!device) return;
+    server = await device.gatt.connect();
+    setStatus("Connected to " + device.name);
+    await setupGatt();
+    applyConnectedState();
+  }
+
+  async function attemptAutoConnect() {
+    if (isConnected || autoConnectInProgress) return;
+    if (!device || !device.gatt) return;
+    if (device.gatt.connected) {
+      isConnected = true;
+      return;
+    }
+
+    autoConnectInProgress = true;
+    try {
+      setStatus("Connecting...");
+      await connectToCurrentDevice();
+    } catch (err) {
+      console.warn("Auto connect failed", err);
+      setStatus("Disconnected");
+    } finally {
+      autoConnectInProgress = false;
+    }
+  }
+
   /* ---- Connect ---- */
   const handleConnectClick = async () => {
     if (!navigator.bluetooth) {
@@ -291,19 +332,7 @@ export function initCoffeeScale() {
 
       device.addEventListener("gattserverdisconnected", onDisconnected);
 
-      server = await device.gatt.connect();
-      setStatus("Connected to " + device.name);
-
-      await setupGatt();
-      tareBtn.disabled = false;
-      timerBtn.disabled = false;
-      resetTimerBtn.disabled = false;
-      timerBtn.textContent = "Start Timer";
-      if (connectTareBtn) connectTareBtn.disabled = false;
-      if (connectTimerBtn) connectTimerBtn.disabled = false;
-      if (connectResetTimerBtn) connectResetTimerBtn.disabled = false;
-      if (connectTimerBtn) connectTimerBtn.textContent = "Start Timer";
-      timerRunning = false;
+      await connectToCurrentDevice();
     } catch (err) {
       console.error(err);
       setStatus("Connection failed");
@@ -663,6 +692,7 @@ export function initCoffeeScale() {
 
   window.coffeeScale = {
     isConnected: () => isConnected,
-    getLastWeight: () => lastWeight
+    getLastWeight: () => lastWeight,
+    autoConnect: attemptAutoConnect
   };
 }

@@ -2161,6 +2161,7 @@
 
         window.openCoffeeScaleModal = () => {
             document.getElementById('coffeeScaleModal').classList.remove('hidden');
+            if (window.coffeeScale?.autoConnect) window.coffeeScale.autoConnect();
         };
 
         window.closeCoffeeScaleModal = () => {
@@ -2169,6 +2170,7 @@
 
         window.openConnectScaleModal = () => {
             document.getElementById('connectScaleModal').classList.remove('hidden');
+            if (window.coffeeScale?.autoConnect) window.coffeeScale.autoConnect();
         };
 
         window.closeConnectScaleModal = () => {
@@ -2374,7 +2376,7 @@
         
         const toggleForm = (f=null) => { 
             const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
-            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); } else { o.classList.add('hidden'); } 
+            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (window.coffeeScale?.autoConnect) window.coffeeScale.autoConnect(); } else { o.classList.add('hidden'); } 
         };
         
         const populateCardData = (c) => {
