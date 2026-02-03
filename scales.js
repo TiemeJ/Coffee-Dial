@@ -4,10 +4,10 @@ export function initCoffeeScale() {
   const tareBtn = document.getElementById("tare");
   const timerBtn = document.getElementById("timer");
   const resetTimerBtn = document.getElementById("resetTimer");
-  const connectBtn = document.getElementById("connect");
-  const headerTimerReadout = document.getElementById("brewTimerReadout");
-  const headerTimerValue = document.getElementById("brewTimerValue");
-  const headerWeightValue = document.getElementById("brewWeightValue");
+  const connectBtn = document.getElementById("connect");  
+  let liveTimerInterval = null;
+  let liveTimerStartAt = null;
+  let liveTimerElapsedMs = 0;
 
   if (!statusEl || !weightEl || !tareBtn || !timerBtn || !resetTimerBtn || !connectBtn) {
     return;
@@ -28,9 +28,7 @@ export function initCoffeeScale() {
   let lastWeight = null;
   let isConnected = false;
   let lastFocusedField = null;
-  let headerTimerInterval = null;
-  let headerStartAt = null;
-  let headerElapsedMs = 0;
+  let weighClickFromOut = false;
 
   /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
   const ACAIA_SERVICE_UUID = "00001820-0000-1000-8000-00805f9b34fb";
@@ -68,78 +66,67 @@ export function initCoffeeScale() {
   function setWeight(value) {
     weightEl.textContent = value.toFixed(1) + " g";
     lastWeight = value;
-    updateHeaderWeight(value);
+    updateLiveWeight(value);
   }
 
-  function updateHeaderWeight(value) {
-    if (!headerWeightValue) return;
-    if (!Number.isFinite(value)) {
-      headerWeightValue.textContent = "--.-";
-      return;
-    }
-    headerWeightValue.textContent = value.toFixed(1);
+  function updateLiveWeight(value) {
+    if (!timerRunning) return;
+    if (!Number.isFinite(value)) return;
+    const outField = document.getElementById("inputYield");
+    if (!outField) return;
+    outField.value = value.toFixed(1);
+    outField.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  function formatHeaderTime(ms) {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  function formatLiveTime(ms) {
+    return Math.round(ms / 1000);
   }
 
-  function updateHeaderTime() {
-    if (!headerTimerValue) return;
+  function updateLiveTime() {
+    const timeField = document.getElementById("time");
+    if (!timeField) return;
     const now = Date.now();
-    const elapsed = headerElapsedMs + (headerStartAt ? (now - headerStartAt) : 0);
-    headerTimerValue.textContent = formatHeaderTime(elapsed);
+    const elapsed = liveTimerElapsedMs + (liveTimerStartAt ? (now - liveTimerStartAt) : 0);
+    timeField.value = formatLiveTime(elapsed);
+    timeField.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  function getHeaderDisplayedSeconds() {
-    if (!headerTimerValue) return null;
-    const text = headerTimerValue.textContent || "";
-    const parts = text.split(":");
-    if (parts.length !== 2) return null;
-    const minutes = parseInt(parts[0], 10);
-    const seconds = parseInt(parts[1], 10);
-    if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return null;
-    return minutes * 60 + seconds;
+  function startLiveTimer() {
+    liveTimerStartAt = Date.now();
+    updateLiveTime();
+    if (liveTimerInterval) clearInterval(liveTimerInterval);
+    liveTimerInterval = setInterval(updateLiveTime, 250);
   }
 
-  function startHeaderTimer() {
-    if (!headerTimerReadout) return;
-    headerTimerReadout.classList.remove("hidden");
-    headerTimerReadout.classList.add("flex");
-    headerStartAt = Date.now();
-    updateHeaderTime();
-    if (headerTimerInterval) clearInterval(headerTimerInterval);
-    headerTimerInterval = setInterval(updateHeaderTime, 250);
-  }
-
-  function stopHeaderTimer() {
-    if (!headerTimerReadout) return;
-    if (headerTimerInterval) {
-      clearInterval(headerTimerInterval);
-      headerTimerInterval = null;
+  function stopLiveTimer() {
+    if (liveTimerInterval) {
+      clearInterval(liveTimerInterval);
+      liveTimerInterval = null;
     }
-    if (headerStartAt) {
-      headerElapsedMs += Date.now() - headerStartAt;
-      headerStartAt = null;
+    if (liveTimerStartAt) {
+      liveTimerElapsedMs += Date.now() - liveTimerStartAt;
+      liveTimerStartAt = null;
     }
-    updateHeaderTime();
+    updateLiveTime();
   }
 
-  function resetHeaderTimer() {
-    if (!headerTimerReadout) return;
-    headerElapsedMs = 0;
-    headerStartAt = null;
-    if (headerTimerInterval) {
-      clearInterval(headerTimerInterval);
-      headerTimerInterval = null;
+  function resetLiveTimer() {
+    liveTimerElapsedMs = 0;
+    liveTimerStartAt = null;
+    if (liveTimerInterval) {
+      clearInterval(liveTimerInterval);
+      liveTimerInterval = null;
     }
-    headerTimerValue.textContent = "0:00";
-    headerTimerReadout.classList.add("hidden");
-    headerTimerReadout.classList.remove("flex");
-    updateHeaderWeight(null);
+    const timeField = document.getElementById("time");
+    if (timeField) {
+      timeField.value = 0;
+      timeField.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    const outField = document.getElementById("inputYield");
+    if (outField) {
+      outField.value = 0;
+      outField.dispatchEvent(new Event("input", { bubbles: true }));
+    }
   }
 
   function enqueueWrite(data) {
@@ -182,11 +169,6 @@ export function initCoffeeScale() {
 
       if (start < 0) {
         acaiaBuffer = new Uint8Array(0);
-        return;
-      }
-
-      if (acaiaBuffer.length - start < 6) {
-        consumeAcaiaBuffer(start);
         return;
       }
 
@@ -238,9 +220,9 @@ export function initCoffeeScale() {
     timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
     updateTimerIcon();
     if (timerRunning) {
-      startHeaderTimer();
+      startLiveTimer();
     } else {
-      stopHeaderTimer();
+      stopLiveTimer();
     }
   }
 
@@ -436,9 +418,9 @@ export function initCoffeeScale() {
       timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
       updateTimerIcon();
       if (timerRunning) {
-        startHeaderTimer();
+        startLiveTimer();
       } else {
-        stopHeaderTimer();
+        stopLiveTimer();
       }
     } catch (err) {
       console.warn("Timer command failed", err);
@@ -461,7 +443,7 @@ export function initCoffeeScale() {
       timerRunning = false;
       timerBtn.textContent = "Start Timer";
       updateTimerIcon();
-      resetHeaderTimer();
+      resetLiveTimer();
     } catch (err) {
       console.warn("Reset timer failed", err);
     }
@@ -477,7 +459,7 @@ export function initCoffeeScale() {
     timerRunning = false;
     isConnected = false;
     updateTimerIcon();
-    resetHeaderTimer();
+    resetLiveTimer();
     weightEl.textContent = "--.- g";
     stopHeartbeat();
   }
@@ -520,7 +502,7 @@ export function initCoffeeScale() {
 
     const outField = document.getElementById("inputYield");
     const inField = document.getElementById("inputWeight");
-    if (lastFocusedField === "out" || document.activeElement === outField) {
+    if (timerRunning || weighClickFromOut) {
       outField.value = lastWeight.toFixed(1);
       outField.dispatchEvent(new Event("input", { bubbles: true }));
       return;
@@ -528,7 +510,6 @@ export function initCoffeeScale() {
 
     if (inField) {
       inField.value = lastWeight.toFixed(1);
-      inField.dispatchEvent(new Event("input", { bubbles: true }));
     }
   }
 
@@ -553,7 +534,7 @@ export function initCoffeeScale() {
       timerRunning = false;
       timerBtn.textContent = "Start Timer";
       updateTimerIcon();
-      resetHeaderTimer();
+      resetLiveTimer();
     } catch (err) {
       console.warn("Reset scale failed", err);
     }
@@ -578,31 +559,13 @@ export function initCoffeeScale() {
         return;
       }
 
-      const wasRunning = timerRunning;
       timerRunning = !timerRunning;
       timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
       updateTimerIcon();
       if (timerRunning) {
-        startHeaderTimer();
+        startLiveTimer();
       } else {
-        stopHeaderTimer();
-      }
-
-      if (wasRunning && !timerRunning && Number.isFinite(lastWeight)) {
-        const outField = document.getElementById("inputYield");
-        if (outField) {
-          outField.value = lastWeight.toFixed(1);
-          outField.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-      }
-
-      if (wasRunning && !timerRunning) {
-        const timeField = document.getElementById("time");
-        const headerSeconds = getHeaderDisplayedSeconds();
-        if (timeField && headerSeconds !== null) {
-          timeField.value = headerSeconds;
-          timeField.dispatchEvent(new Event("input", { bubbles: true }));
-        }
+        stopLiveTimer();
       }
     } catch (err) {
       console.warn("Timer icon command failed", err);
@@ -626,6 +589,10 @@ export function initCoffeeScale() {
 
   const weighBtn = document.getElementById("brewWeighBtn");
   if (weighBtn) {
+    weighBtn.addEventListener("pointerdown", () => {
+      const outField = document.getElementById("inputYield");
+      weighClickFromOut = document.activeElement === outField;
+    });
     weighBtn.addEventListener("click", handleWeighClick);
   }
 
