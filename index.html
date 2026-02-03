@@ -1257,6 +1257,13 @@
                 improve: f.get('improve') || '', rating: parseInt(f.get('rating')) || 0, isActive: isActiveChecked, updatedAt: new Date().toISOString() 
             };
 
+            const scaleCaptureData = window.coffeeScale?.getCaptureData?.();
+            if (scaleCaptureData) {
+                d.scaleCapture = scaleCaptureData.capture;
+                d.scaleFlowCapture = scaleCaptureData.flowCapture;
+                d.scaleRawCapture = scaleCaptureData.rawCapture;
+            }
+
             // Bean Data (for creating new or updating)
             const beanData = {
                 roaster: d.roaster,
@@ -2610,6 +2617,16 @@
             } else {
                 document.getElementById('savedBeanSelect').value = ""; 
             }
+
+            if (window.coffeeScale?.setCaptureData) {
+                const graphData = (c.scaleCapture || c.scaleFlowCapture || c.scaleRawCapture) ? {
+                    capture: c.scaleCapture || { startAt: null, samples: [] },
+                    flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
+                    rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] }
+                } : null;
+                window.coffeeScale.setCaptureData(graphData);
+            }
+            if (window.coffeeScale?.syncGraphFormFields) window.coffeeScale.syncGraphFormFields();
         }
 
         const editCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; document.getElementById('editId').value=c.id; populateForm(c); document.getElementById('formContainer').classList.add('editing-mode'); toggleForm(true); document.getElementById('formTitle').innerHTML='<span class="text-orange-500">Edit Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Update</span>'; document.getElementById('submitBtn').className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); };
@@ -2627,6 +2644,7 @@
                 // Wait for view to change, then add the brew
                 setTimeout(async () => {
                     const d = { ...c };
+                    delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
                     delete d.id;
                     d.isActive = false;
                     d.createdAt = new Date().toISOString();
@@ -2652,6 +2670,7 @@
             
             // Original logic for own brews
             const d = { ...c };
+            delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
             delete d.id; 
             d.isActive = false; 
             d.createdAt = new Date().toISOString();
@@ -2686,7 +2705,9 @@
                 
                 setTimeout(() => {
                     document.getElementById('editId').value='';
-                    populateForm(c);
+                    const d = { ...c };
+                    delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
+                    populateForm(d);
                     toggleForm(true);
                     document.getElementById('formContainer').classList.remove('editing-mode');
                     document.getElementById('formTitle').innerHTML='<span>Add Friend\'s Brew</span>';
@@ -2699,7 +2720,9 @@
             // Original logic for own brews
             setTimeout(() => {
                 document.getElementById('editId').value='';
-                populateForm(c);
+                const d = { ...c };
+                delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
+                populateForm(d);
                 toggleForm(true);
                 document.getElementById('formContainer').classList.remove('editing-mode');
                 document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';
@@ -2707,12 +2730,14 @@
                 window.scrollTo({top:0,behavior:'smooth'});
             }, 200);
         };
-        const duplicateCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; if(currentView!=='mine'){const d={...c};document.getElementById('viewSelect').value='mine';changeView('mine');setTimeout(()=>{document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});},500);}else{document.getElementById('editId').value='';populateForm(c);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});} };
+        const duplicateCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; if(currentView!=='mine'){const d={...c};delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture; document.getElementById('viewSelect').value='mine';changeView('mine');setTimeout(()=>{document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});},500);}else{const d={...c};delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture; document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});} };
         const cloneBrew = (id) => duplicateCoffee(id);
 
         const deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); };
         const resetFormState = (e) => { 
             if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('numeric'); setNotesMode('manual'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); document.getElementById('isActiveToggle').checked = false; document.getElementById('drinkOther').classList.add('hidden'); document.getElementById('methodOther').classList.add('hidden');
+            if (window.coffeeScale?.resetCaptureData) window.coffeeScale.resetCaptureData();
+            if (window.coffeeScale?.syncGraphFormFields) window.coffeeScale.syncGraphFormFields();
         };
 
         const clearSearch = () => { const input = document.getElementById('globalSearch'); input.value = ''; displayedBrewsCount = BREWS_PER_PAGE; renderTable(); document.getElementById('searchClearBtn').classList.add('hidden'); input.focus(); };
@@ -3696,20 +3721,6 @@
                     <button id="graphResetScaleBtn" type="button" class="px-3 py-2 rounded-lg border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] bg-white dark:bg-[#1c1917] hover:bg-coffee-50 dark:hover:bg-[#34302e] text-sm font-medium flex items-center gap-2">
                         <i class="fa-solid fa-rotate-left"></i> Reset
                     </button>
-                </div>
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Weight capture (JSON)</label>
-                        <textarea id="captureOutput" rows="3" readonly class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-xs font-mono text-coffee-800 dark:text-[#d6ccc2]"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Flow capture (g/s, JSON)</label>
-                        <textarea id="flowOutput" rows="3" readonly class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-xs font-mono text-coffee-800 dark:text-[#d6ccc2]"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Raw notifications (JSON)</label>
-                        <textarea id="rawOutput" rows="3" readonly class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-xs font-mono text-coffee-800 dark:text-[#d6ccc2]"></textarea>
-                    </div>
                 </div>
                 <!-- Content will go here -->
             </div>

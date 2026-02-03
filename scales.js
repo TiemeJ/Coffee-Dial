@@ -388,6 +388,44 @@ export function initCoffeeScale() {
     renderGraph();
   }
 
+  function setCaptureData(data) {
+    if (!data) {
+      resetCaptureData();
+      return;
+    }
+
+    capture = data.capture || { startAt: null, samples: [] };
+    flowCapture = data.flowCapture || { startAt: capture.startAt, samples: [] };
+    rawSamples = (data.rawCapture && data.rawCapture.samples) ? data.rawCapture.samples : [];
+    flowPrevWeight = null;
+    lastInterpolatedWeight = null;
+    flowHistory = [];
+
+    if (timerRunning && flowCapture.samples && flowCapture.samples.length) {
+      const lastFlow = [...flowCapture.samples].reverse().find((s) => Number.isFinite(s.flow));
+      setFlow(lastFlow ? lastFlow.flow : NaN);
+    } else {
+      setFlow(NaN);
+    }
+
+    updateCaptureOutput();
+    updateFlowOutput();
+    updateRawOutput();
+    renderGraph();
+  }
+
+  function getCaptureData() {
+    if (!capture || (!capture.samples.length && !flowCapture.samples.length && !rawSamples.length)) {
+      return null;
+    }
+    const rawCapture = { startAt: capture.startAt, samples: rawSamples };
+    return JSON.parse(JSON.stringify({
+      capture,
+      flowCapture,
+      rawCapture
+    }));
+  }
+
   function formatLiveTime(ms) {
     return Math.round(ms / 1000);
   }
@@ -1022,10 +1060,21 @@ export function initCoffeeScale() {
     if (graphInputRatioEl && ratioField) graphInputRatioEl.value = ratioField.value;
     if (graphInputYieldEl && outField) graphInputYieldEl.value = outField.value;
   };
+  const syncGraphTimeFromForm = () => {
+    if (!graphTimeEl) return;
+    const timeField = document.getElementById("time");
+    const timeValue = timeField ? (timeField.value || 0) : 0;
+    graphTimeEl.textContent = `${timeValue} s`;
+  };
+  const syncGraphFormFields = () => {
+    syncGraphRecipeFields();
+    syncGraphTimeFromForm();
+  };
   if (inField) inField.addEventListener("input", syncGraphRecipeFields);
   if (ratioField) ratioField.addEventListener("input", syncGraphRecipeFields);
   if (outField) outField.addEventListener("input", syncGraphRecipeFields);
   syncGraphRecipeFields();
+  syncGraphTimeFromForm();
   if (inField) {
     inField.addEventListener("focus", () => {
       lastFocusedField = "in";
@@ -1040,6 +1089,10 @@ export function initCoffeeScale() {
   window.coffeeScale = {
     isConnected: () => isConnected,
     getLastWeight: () => lastWeight,
-    autoConnect: attemptAutoConnect
+    autoConnect: attemptAutoConnect,
+    getCaptureData,
+    setCaptureData,
+    resetCaptureData,
+    syncGraphFormFields
   };
 }
