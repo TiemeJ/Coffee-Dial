@@ -270,6 +270,10 @@ export function initCoffeeScale() {
 
   async function connectToCurrentDevice() {
     if (!device) return;
+    device.addEventListener(
+      "gattserverdisconnected",
+      onDisconnected
+    );
     server = await device.gatt.connect();
     setStatus("Connected to " + device.name);
     await setupGatt();
