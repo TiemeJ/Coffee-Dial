@@ -11,6 +11,15 @@ export function initCoffeeScale() {
   const connectTimerBtn = document.getElementById("connectScaleTimer");
   const connectResetTimerBtn = document.getElementById("connectScaleResetTimer");
   const connectConnectBtn = document.getElementById("connectScaleConnect");
+  const flowEl = document.getElementById("flow");
+  const graphTimeEl = document.getElementById("graphTime");
+  const captureOutputEl = document.getElementById("captureOutput");
+  const flowOutputEl = document.getElementById("flowOutput");
+  const rawOutputEl = document.getElementById("rawOutput");
+  const graphEl = document.getElementById("graph");
+  const graphInputWeightEl = document.getElementById("graphInputWeight");
+  const graphInputRatioEl = document.getElementById("graphInputRatio");
+  const graphInputYieldEl = document.getElementById("graphInputYield");
   let liveTimerInterval = null;
   let liveTimerStartAt = null;
   let liveTimerElapsedMs = 0;
@@ -36,6 +45,20 @@ export function initCoffeeScale() {
   let lastFocusedField = null;
   let autoConnectInProgress = false;
   let weighClickFromOut = false;
+  let capture = {
+    startAt: null,
+    samples: [],
+  };
+  let captureInterval = null;
+  let flowCapture = {
+    startAt: null,
+    samples: [],
+  };
+  let flowPrevWeight = null;
+  let rawSamples = [];
+  let lastInterpolatedWeight = null;
+  let flowHistory = [];
+  const FLOW_WINDOW_MS = 2000;
 
   /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
   const ACAIA_SERVICE_UUID = "00001820-0000-1000-8000-00805f9b34fb";
@@ -76,6 +99,18 @@ export function initCoffeeScale() {
     if (connectWeightEl) connectWeightEl.textContent = value.toFixed(1) + " g";
     lastWeight = value;
     updateLiveWeight(value);
+    if (timerRunning) {
+      addRawSample(value, Date.now());
+    }
+  }
+
+  function setFlow(value) {
+    if (!flowEl) return;
+    if (!Number.isFinite(value)) {
+      flowEl.textContent = "--.- g/s";
+      return;
+    }
+    flowEl.textContent = value.toFixed(1) + " g/s";
   }
 
   function updateLiveWeight(value) {
@@ -87,17 +122,288 @@ export function initCoffeeScale() {
     outField.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
+  function updateCaptureOutput() {
+    if (!captureOutputEl) return;
+    captureOutputEl.value = JSON.stringify(capture);
+  }
+
+  function updateFlowOutput() {
+    if (!flowOutputEl) return;
+    flowOutputEl.value = JSON.stringify(flowCapture);
+  }
+
+  function updateRawOutput() {
+    if (!rawOutputEl) return;
+    rawOutputEl.value = JSON.stringify({
+      startAt: capture.startAt,
+      samples: rawSamples,
+    });
+  }
+
+  function renderGraph() {
+    if (!graphEl) return;
+    const ctx = graphEl.getContext("2d");
+    const width = graphEl.clientWidth || 320;
+    const height = graphEl.clientHeight || 220;
+    if (graphEl.width !== width) graphEl.width = width;
+    if (graphEl.height !== height) graphEl.height = height;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = { left: 40, right: 40, top: 20, bottom: 30 };
+    const plotW = width - padding.left - padding.right;
+    const plotH = height - padding.top - padding.bottom;
+
+    const samples = capture.samples;
+    const flowSamples = flowCapture.samples;
+    if (!samples.length && !flowSamples.length) {
+      ctx.fillStyle = "#999";
+      ctx.font = "12px system-ui";
+      ctx.fillText("No data", padding.left, padding.top + 12);
+      return;
+    }
+
+    const allTimes = samples.map((s) => s.tMs).concat(flowSamples.map((s) => s.tMs));
+    const minT = Math.min(...allTimes);
+    const maxT = Math.max(...allTimes);
+    const spanT = Math.max(1, maxT - minT);
+
+    const weightVals = samples.map((s) => s.w).filter((v) => Number.isFinite(v));
+    const flowVals = flowSamples.map((s) => s.flow).filter((v) => Number.isFinite(v));
+
+    let minW = weightVals.length ? Math.min(...weightVals) : 0;
+    let maxW = weightVals.length ? Math.max(...weightVals) : 1;
+    let minF = flowVals.length ? Math.min(...flowVals) : 0;
+    let maxF = flowVals.length ? Math.max(...flowVals) : 1;
+
+    if (minW === maxW) {
+      minW -= 0.5;
+      maxW += 0.5;
+    }
+    if (minF === maxF) {
+      minF -= 0.5;
+      maxF += 0.5;
+    }
+
+    const xFor = (t) => padding.left + ((t - minT) / spanT) * plotW;
+    const yForW = (w) => padding.top + (1 - (w - minW) / (maxW - minW)) * plotH;
+    const yForF = (f) => padding.top + (1 - (f - minF) / (maxF - minF)) * plotH;
+
+    ctx.strokeStyle = "#eee";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top + plotH);
+    ctx.lineTo(padding.left + plotW, padding.top + plotH);
+    ctx.moveTo(padding.left, padding.top);
+    ctx.lineTo(padding.left, padding.top + plotH);
+    ctx.moveTo(padding.left + plotW, padding.top);
+    ctx.lineTo(padding.left + plotW, padding.top + plotH);
+    ctx.stroke();
+
+    ctx.fillStyle = "#666";
+    ctx.font = "12px system-ui";
+    ctx.fillText(`${minW.toFixed(1)} g`, 4, padding.top + plotH);
+    ctx.fillText(`${maxW.toFixed(1)} g`, 4, padding.top + 10);
+    ctx.fillText(`${maxF.toFixed(1)} g/s`, width - 50, padding.top + 10);
+    ctx.fillText(`${minF.toFixed(1)} g/s`, width - 50, padding.top + plotH);
+
+    if (samples.length) {
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      samples.forEach((s, i) => {
+        if (!Number.isFinite(s.w)) return;
+        const x = xFor(s.tMs);
+        const y = yForW(s.w);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    if (flowSamples.length) {
+      ctx.strokeStyle = "#16a34a";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      flowSamples.forEach((s, i) => {
+        if (!Number.isFinite(s.flow)) return;
+        const x = xFor(s.tMs);
+        const y = yForF(s.flow);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#2563eb";
+    ctx.fillRect(padding.left, height - 18, 10, 2);
+    ctx.fillStyle = "#16a34a";
+    ctx.fillRect(padding.left + 70, height - 18, 10, 2);
+    ctx.fillStyle = "#444";
+    ctx.fillText("Weight", padding.left + 15, height - 14);
+    ctx.fillText("Flow", padding.left + 85, height - 14);
+  }
+
+  function startCapture() {
+    capture = {
+      startAt: Date.now(),
+      samples: [],
+    };
+    flowCapture = {
+      startAt: capture.startAt,
+      samples: [],
+    };
+    flowPrevWeight = null;
+    rawSamples = [];
+    lastInterpolatedWeight = null;
+    flowHistory = [];
+    updateCaptureOutput();
+    updateFlowOutput();
+    updateRawOutput();
+    renderGraph();
+
+    if (captureInterval) {
+      clearInterval(captureInterval);
+    }
+
+    captureInterval = setInterval(() => {
+      if (!capture.startAt) return;
+      const elapsedMs = Date.now() - capture.startAt;
+      const targetTime = capture.startAt + elapsedMs;
+      const resampledWeight = getInterpolatedWeight(targetTime);
+
+      capture.samples.push({
+        tMs: elapsedMs,
+        w: Number.isFinite(resampledWeight)
+          ? Number(resampledWeight.toFixed(1))
+          : null,
+      });
+
+      let flow = null;
+      if (Number.isFinite(resampledWeight)) {
+        flowHistory.push({ tMs: elapsedMs, w: resampledWeight });
+        const cutoff = elapsedMs - FLOW_WINDOW_MS;
+        while (flowHistory.length && flowHistory[0].tMs < cutoff) {
+          flowHistory.shift();
+        }
+
+        if (flowHistory.length >= 2) {
+          let sumT = 0;
+          let sumW = 0;
+          let sumTT = 0;
+          let sumTW = 0;
+          for (const p of flowHistory) {
+            const t = p.tMs / 1000;
+            sumT += t;
+            sumW += p.w;
+            sumTT += t * t;
+            sumTW += t * p.w;
+          }
+          const n = flowHistory.length;
+          const denom = n * sumTT - sumT * sumT;
+          if (denom !== 0) {
+            const slope = (n * sumTW - sumT * sumW) / denom;
+            flow = Number(slope.toFixed(1));
+          }
+        }
+      }
+      flowCapture.samples.push({
+        tMs: elapsedMs,
+        flow,
+      });
+      setFlow(flow);
+
+      updateCaptureOutput();
+      updateFlowOutput();
+      updateRawOutput();
+      renderGraph();
+    }, 100);
+  }
+
+  function stopCapture() {
+    if (captureInterval) {
+      clearInterval(captureInterval);
+      captureInterval = null;
+    }
+    updateCaptureOutput();
+    updateFlowOutput();
+    renderGraph();
+  }
+
+  function pauseCapture() {
+    if (captureInterval) {
+      clearInterval(captureInterval);
+      captureInterval = null;
+    }
+  }
+
+  function addRawSample(weight, timeMs) {
+    rawSamples.push({ t: timeMs, w: weight });
+    if (rawSamples.length > 2000) {
+      rawSamples.splice(0, rawSamples.length - 2000);
+    }
+    updateRawOutput();
+    renderGraph();
+  }
+
+  function getInterpolatedWeight(targetTime) {
+    if (rawSamples.length === 0) return lastInterpolatedWeight;
+    if (targetTime <= rawSamples[0].t) {
+      lastInterpolatedWeight = rawSamples[0].w;
+      return lastInterpolatedWeight;
+    }
+    if (targetTime >= rawSamples[rawSamples.length - 1].t) {
+      lastInterpolatedWeight = rawSamples[rawSamples.length - 1].w;
+      return lastInterpolatedWeight;
+    }
+
+    let i = 1;
+    while (i < rawSamples.length && rawSamples[i].t < targetTime) {
+      i++;
+    }
+    const prev = rawSamples[i - 1];
+    const next = rawSamples[i];
+    const span = next.t - prev.t;
+    if (span <= 0) {
+      lastInterpolatedWeight = prev.w;
+      return lastInterpolatedWeight;
+    }
+
+    const ratio = (targetTime - prev.t) / span;
+    lastInterpolatedWeight = prev.w + (next.w - prev.w) * ratio;
+    return lastInterpolatedWeight;
+  }
+
+  function resetCaptureData() {
+    capture = { startAt: null, samples: [] };
+    flowCapture = { startAt: null, samples: [] };
+    flowPrevWeight = null;
+    rawSamples = [];
+    lastInterpolatedWeight = null;
+    flowHistory = [];
+    setFlow(NaN);
+    updateCaptureOutput();
+    updateFlowOutput();
+    updateRawOutput();
+    renderGraph();
+  }
+
   function formatLiveTime(ms) {
     return Math.round(ms / 1000);
   }
 
   function updateLiveTime() {
     const timeField = document.getElementById("time");
-    if (!timeField) return;
     const now = Date.now();
     const elapsed = liveTimerElapsedMs + (liveTimerStartAt ? (now - liveTimerStartAt) : 0);
-    timeField.value = formatLiveTime(elapsed);
-    timeField.dispatchEvent(new Event("input", { bubbles: true }));
+    if (timeField) {
+      timeField.value = formatLiveTime(elapsed);
+      timeField.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (graphTimeEl) {
+      const timeValue = timeField ? timeField.value : formatLiveTime(elapsed);
+      graphTimeEl.textContent = `${timeValue} s`;
+    }
   }
 
   function startLiveTimer() {
@@ -130,6 +436,9 @@ export function initCoffeeScale() {
     if (timeField) {
       timeField.value = 0;
       timeField.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (graphTimeEl) {
+      graphTimeEl.textContent = "0 s";
     }
     const outField = document.getElementById("inputYield");
     if (outField) {
@@ -228,10 +537,16 @@ export function initCoffeeScale() {
     timerRunning = running;
     timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
     updateTimerIcon();
+    if (connectTimerBtn) {
+      connectTimerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
+    }
     if (timerRunning) {
       startLiveTimer();
+      startCapture();
     } else {
       stopLiveTimer();
+      stopCapture();
+      setFlow(NaN);
     }
   }
 
@@ -466,17 +781,7 @@ export function initCoffeeScale() {
         return;
       }
 
-      timerRunning = !timerRunning;
-      timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
-      updateTimerIcon();
-      if (timerRunning) {
-        startLiveTimer();
-      } else {
-        stopLiveTimer();
-      }
-      if (connectTimerBtn) {
-        connectTimerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
-      }
+      setTimerRunningState(!timerRunning);
     } catch (err) {
       console.warn("Timer command failed", err);
     }
@@ -499,11 +804,9 @@ export function initCoffeeScale() {
         return;
       }
 
-      timerRunning = false;
-      timerBtn.textContent = "Start Timer";
-      updateTimerIcon();
+      setTimerRunningState(false);
       resetLiveTimer();
-      if (connectTimerBtn) connectTimerBtn.textContent = "Start Timer";
+      resetCaptureData();
     } catch (err) {
       console.warn("Reset timer failed", err);
     }
@@ -524,6 +827,7 @@ export function initCoffeeScale() {
     timerRunning = false;
     isConnected = false;
     updateTimerIcon();
+    pauseCapture();
     
     if (wasRunning) {
         stopLiveTimer();
@@ -586,6 +890,7 @@ export function initCoffeeScale() {
 
     if (inField) {
       inField.value = lastWeight.toFixed(1);
+      inField.dispatchEvent(new Event("input", { bubbles: true }));
     }
   }
 
@@ -609,10 +914,9 @@ export function initCoffeeScale() {
         await enqueueWrite(RESET_TIMER_BOOKOO);
       }
 
-      timerRunning = false;
-      timerBtn.textContent = "Start Timer";
-      updateTimerIcon();
+      setTimerRunningState(false);
       resetLiveTimer();
+      resetCaptureData();
     } catch (err) {
       console.warn("Reset scale failed", err);
     }
@@ -639,32 +943,37 @@ export function initCoffeeScale() {
         return;
       }
 
-      timerRunning = !timerRunning;
-      timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
-      updateTimerIcon();
-      if (timerRunning) {
-        startLiveTimer();
-      } else {
-        stopLiveTimer();
-      }
+      setTimerRunningState(!timerRunning);
     } catch (err) {
       console.warn("Timer icon command failed", err);
     }
   }
 
   function updateTimerIcon() {
-    const timerIcon = document.querySelector("#brewTimerBtn i");
-    const timerButton = document.getElementById("brewTimerBtn");
-    if (!timerIcon || !timerButton) return;
-    if (timerRunning) {
-      timerIcon.classList.remove("fa-play");
-      timerIcon.classList.add("fa-pause");
-      timerButton.title = "Stop timer";
-    } else {
-      timerIcon.classList.remove("fa-pause");
-      timerIcon.classList.add("fa-play");
-      timerButton.title = "Start timer";
-    }
+    const timerTargets = [
+      { button: document.getElementById("brewTimerBtn"), label: null },
+      { button: document.getElementById("graphTimerBtn"), label: "span" }
+    ];
+
+    timerTargets.forEach(({ button, label }) => {
+      if (!button) return;
+      const timerIcon = button.querySelector("i");
+      if (!timerIcon) return;
+      if (timerRunning) {
+        timerIcon.classList.remove("fa-play");
+        timerIcon.classList.add("fa-pause");
+        button.title = "Stop timer";
+      } else {
+        timerIcon.classList.remove("fa-pause");
+        timerIcon.classList.add("fa-play");
+        button.title = "Start timer";
+      }
+
+      if (label) {
+        const labelEl = button.querySelector(label);
+        if (labelEl) labelEl.textContent = timerRunning ? "Stop Timer" : "Start Timer";
+      }
+    });
   }
 
   const weighBtn = document.getElementById("brewWeighBtn");
@@ -686,8 +995,37 @@ export function initCoffeeScale() {
     timerIconBtn.addEventListener("click", handleTimerIconClick);
   }
 
+  const graphWeighBtn = document.getElementById("graphWeighBtn");
+  if (graphWeighBtn) {
+    graphWeighBtn.addEventListener("pointerdown", () => {
+      const outField = document.getElementById("inputYield");
+      weighClickFromOut = document.activeElement === outField;
+    });
+    graphWeighBtn.addEventListener("click", handleWeighClick);
+  }
+
+  const graphResetScaleBtn = document.getElementById("graphResetScaleBtn");
+  if (graphResetScaleBtn) {
+    graphResetScaleBtn.addEventListener("click", handleResetScaleClick);
+  }
+
+  const graphTimerBtn = document.getElementById("graphTimerBtn");
+  if (graphTimerBtn) {
+    graphTimerBtn.addEventListener("click", handleTimerIconClick);
+  }
+
   const inField = document.getElementById("inputWeight");
   const outField = document.getElementById("inputYield");
+  const ratioField = document.getElementById("inputRatio");
+  const syncGraphRecipeFields = () => {
+    if (graphInputWeightEl && inField) graphInputWeightEl.value = inField.value;
+    if (graphInputRatioEl && ratioField) graphInputRatioEl.value = ratioField.value;
+    if (graphInputYieldEl && outField) graphInputYieldEl.value = outField.value;
+  };
+  if (inField) inField.addEventListener("input", syncGraphRecipeFields);
+  if (ratioField) ratioField.addEventListener("input", syncGraphRecipeFields);
+  if (outField) outField.addEventListener("input", syncGraphRecipeFields);
+  syncGraphRecipeFields();
   if (inField) {
     inField.addEventListener("focus", () => {
       lastFocusedField = "in";

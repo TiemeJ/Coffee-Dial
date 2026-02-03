@@ -327,6 +327,9 @@
                                  <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Brew Parameters
                              </h3>
                              <div class="flex items-center gap-2">
+                                 <button id="brewGraphBtn" type="button" title="Graph" onclick="openGraphModal()" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-chart-line"></i>
+                                 </button>
                                  <button id="brewWeighBtn" type="button" title="Weigh" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
                                      <i class="fa-solid fa-scale-balanced"></i>
                                  </button>
@@ -3645,6 +3648,86 @@
             .catch(err => console.log('Service Worker Failed', err));
         });
       }
+    </script>
+    <!-- Graph Modal -->
+    <div id="graphModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[70] flex items-center justify-center p-4" onclick="closeGraphModal()">
+        <div class="bg-white dark:bg-[#292524] rounded-2xl shadow-2xl w-full max-w-lg mx-auto border border-coffee-200 dark:border-[#44403c] max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center p-5 border-b border-coffee-100 dark:border-[#44403c]">
+                <h2 class="text-xl font-bold text-coffee-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-chart-line text-coffee-700 dark:text-[#d6ccc2]"></i> Graph</h2>
+                <button onclick="closeGraphModal()" class="w-8 h-8 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 text-coffee-800 dark:text-[#d6ccc2] space-y-4 overflow-y-auto ios-scroll">
+                <div class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-2">
+                    <canvas id="graph" class="w-full h-40"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-200 dark:border-[#44403c] p-3 flex items-center justify-between">
+                        <div class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">Flow</div>
+                        <div id="flow" class="text-lg font-semibold text-coffee-900 dark:text-white">--.- g/s</div>
+                    </div>
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-200 dark:border-[#44403c] p-3 flex items-center justify-between">
+                        <div class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">Time</div>
+                        <div id="graphTime" class="text-lg font-semibold text-coffee-900 dark:text-white">0 s</div>
+                    </div>
+                </div>
+                <div class="bg-coffee-50/50 dark:bg-[#201d1b] p-3 rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">In (g)</label>
+                            <input type="number" step="any" id="graphInputWeight" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                        <div class="relative">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label>
+                            <input type="number" step="any" id="graphInputRatio" readonly tabindex="-1" class="w-full text-center font-mono bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label>
+                            <input type="number" step="any" id="graphInputYield" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="graphWeighBtn" type="button" class="px-3 py-2 rounded-lg border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] bg-white dark:bg-[#1c1917] hover:bg-coffee-50 dark:hover:bg-[#34302e] text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-scale-balanced"></i> Weigh IN
+                    </button>
+                    <button id="graphTimerBtn" type="button" class="px-3 py-2 rounded-lg border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] bg-white dark:bg-[#1c1917] hover:bg-coffee-50 dark:hover:bg-[#34302e] text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-play"></i> <span>Start Timer</span>
+                    </button>
+                    <button id="graphResetScaleBtn" type="button" class="px-3 py-2 rounded-lg border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] bg-white dark:bg-[#1c1917] hover:bg-coffee-50 dark:hover:bg-[#34302e] text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Weight capture (JSON)</label>
+                        <textarea id="captureOutput" rows="3" readonly class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-xs font-mono text-coffee-800 dark:text-[#d6ccc2]"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Flow capture (g/s, JSON)</label>
+                        <textarea id="flowOutput" rows="3" readonly class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-xs font-mono text-coffee-800 dark:text-[#d6ccc2]"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Raw notifications (JSON)</label>
+                        <textarea id="rawOutput" rows="3" readonly class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-xs font-mono text-coffee-800 dark:text-[#d6ccc2]"></textarea>
+                    </div>
+                </div>
+                <!-- Content will go here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ...existing code...
+        // MODAL VISIBILITY
+        function openStats() { document.getElementById('statsModal').classList.remove('hidden'); }
+        function closeStats() { document.getElementById('statsModal').classList.add('hidden'); }
+
+        function openGraphModal() { document.getElementById('graphModal').classList.remove('hidden'); }
+        function closeGraphModal() { document.getElementById('graphModal').classList.add('hidden'); }
+
+        function openImageModal() { document.getElementById('imageModalOverlay').classList.remove('hidden'); }
+        function closeImageModal() { document.getElementById('imageModalOverlay').classList.add('hidden'); }
+    // ...existing code...
     </script>
 </body>
 </html>
