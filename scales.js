@@ -140,13 +140,13 @@ export function initCoffeeScale() {
     });
   }
 
-  function renderGraph() {
-    if (!graphEl) return;
-    const ctx = graphEl.getContext("2d");
-    const width = graphEl.clientWidth || 320;
-    const height = graphEl.clientHeight || 220;
-    if (graphEl.width !== width) graphEl.width = width;
-    if (graphEl.height !== height) graphEl.height = height;
+  function renderGraphTo(targetEl, dataOverride = null) {
+    if (!targetEl) return;
+    const ctx = targetEl.getContext("2d");
+    const width = targetEl.clientWidth || 320;
+    const height = targetEl.clientHeight || 220;
+    if (targetEl.width !== width) targetEl.width = width;
+    if (targetEl.height !== height) targetEl.height = height;
 
     ctx.clearRect(0, 0, width, height);
 
@@ -154,8 +154,10 @@ export function initCoffeeScale() {
     const plotW = width - padding.left - padding.right;
     const plotH = height - padding.top - padding.bottom;
 
-    const samples = capture.samples;
-    const flowSamples = flowCapture.samples;
+    const captureData = dataOverride?.capture || capture;
+    const flowData = dataOverride?.flowCapture || flowCapture;
+    const samples = captureData.samples || [];
+    const flowSamples = flowData.samples || [];
     if (!samples.length && !flowSamples.length) {
       ctx.fillStyle = "#999";
       ctx.font = "12px system-ui";
@@ -242,6 +244,10 @@ export function initCoffeeScale() {
     ctx.fillStyle = "#444";
     ctx.fillText("Weight", padding.left + 15, height - 14);
     ctx.fillText("Flow", padding.left + 85, height - 14);
+  }
+
+  function renderGraph() {
+    renderGraphTo(graphEl);
   }
 
   function startCapture() {
@@ -1093,6 +1099,7 @@ export function initCoffeeScale() {
     getCaptureData,
     setCaptureData,
     resetCaptureData,
-    syncGraphFormFields
+    syncGraphFormFields,
+    renderGraphTo
   };
 }

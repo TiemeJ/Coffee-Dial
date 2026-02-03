@@ -620,7 +620,12 @@
                     </div>
                     
                     <div id="cardStatsSection" class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-4 border border-coffee-100 dark:border-[#44403c]">
-                        <div class="flex justify-between items-center mb-3"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew Stats</span></div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew Stats</span>
+                            <button id="cardGraphBtn" onclick="openCardGraphModal(event)" class="hidden text-coffee-400 hover:text-coffee-700 dark:text-[#78716c] dark:hover:text-white transition-colors" title="View Graph">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </button>
+                        </div>
                         <div class="grid grid-cols-3 gap-2 text-center mb-3">
                             <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">In</div><div id="cardWeight" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
                             <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Ratio</div><div id="cardRatio" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
@@ -654,6 +659,26 @@
                              <button onclick="duplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Adjust</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Graph Modal -->
+    <div id="cardGraphModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCardGraphModal(event)">
+        <div class="bg-white dark:bg-[#292524] rounded-2xl shadow-2xl w-full max-w-lg border border-coffee-200 dark:border-[#44403c] flex flex-col" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center p-4 border-b border-coffee-100 dark:border-[#44403c]">
+                <h3 class="text-lg font-bold text-coffee-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-coffee-700 dark:text-[#d6ccc2]"></i>
+                    <span>Brew Graph</span>
+                </h3>
+                <button onclick="closeCardGraphModal(event)" class="w-8 h-8 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-4 bg-coffee-50/50 dark:bg-[#1c1917]">
+                <div class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-2">
+                    <canvas id="cardGraphCanvas" class="w-full h-52"></canvas>
                 </div>
             </div>
         </div>
@@ -983,6 +1008,7 @@
         let currentUploadCoffeeId = null;
         let currentShareMode = 'stats'; 
         let currentCardCoffee = null;
+        let currentCardGraphData = null;
 
         let currentStatsData = [];
         let currentBeanMeterPeriod = 'day';
@@ -2391,6 +2417,14 @@
         
         const populateCardData = (c) => {
             currentCardCoffee = c;
+            const hasGraph = !!((c.scaleCapture && c.scaleCapture.samples && c.scaleCapture.samples.length) || (c.scaleFlowCapture && c.scaleFlowCapture.samples && c.scaleFlowCapture.samples.length) || (c.scaleRawCapture && c.scaleRawCapture.samples && c.scaleRawCapture.samples.length));
+            const graphBtn = document.getElementById('cardGraphBtn');
+            if (graphBtn) graphBtn.classList.toggle('hidden', !hasGraph);
+            currentCardGraphData = hasGraph ? {
+                capture: c.scaleCapture || { startAt: null, samples: [] },
+                flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
+                rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] }
+            } : null;
             document.getElementById('cardRoaster').textContent = c.roaster || c.name || 'Unknown Roaster';
             document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
             document.getElementById('cardOrigin').textContent = c.origin || c.beanType || '-';
@@ -2596,7 +2630,32 @@
             }
         };
 
-        const closeCoffeeCard = (e) => { if(!e || e.target.id === 'coffeeCardOverlay') { document.getElementById('coffeeCardOverlay').classList.add('hidden'); } };
+        const closeCoffeeCard = (e) => { 
+            if(!e || e.target.id === 'coffeeCardOverlay') { 
+                document.getElementById('coffeeCardOverlay').classList.add('hidden');
+                const graphModal = document.getElementById('cardGraphModal');
+                if (graphModal) graphModal.classList.add('hidden');
+            } 
+        };
+
+        const openCardGraphModal = (e) => {
+            if (e) e.stopPropagation();
+            if (!currentCardGraphData) return;
+            const modal = document.getElementById('cardGraphModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            const canvas = document.getElementById('cardGraphCanvas');
+            if (window.coffeeScale?.renderGraphTo) {
+                window.coffeeScale.renderGraphTo(canvas, currentCardGraphData);
+            }
+        };
+
+        const closeCardGraphModal = (e) => {
+            if (!e || e.target.id === 'cardGraphModal' || e.target.closest('button')) {
+                const modal = document.getElementById('cardGraphModal');
+                if (modal) modal.classList.add('hidden');
+            }
+        };
 
         const populateForm = (c) => { 
             document.getElementById('roaster').value=c.roaster||c.name||''; document.getElementById('farmer').value=c.farmer||''; document.getElementById('origin').value=c.origin||c.beanType||''; document.getElementById('variety').value=c.variety||''; document.getElementById('processing').value=c.processing||''; document.getElementById('roastType').value=c.roastType||''; document.getElementById('grinder').value=c.grinder||''; document.getElementById('grind').value=c.grind||''; document.getElementById('inputWeight').value=c.weight||''; document.getElementById('inputRatio').value=c.ratio||''; document.getElementById('inputYield').value=(c.weight&&c.ratio)?(c.weight*c.ratio).toFixed(1):''; document.getElementById('time').value=c.time||''; document.getElementById('notes').value=c.notes||''; document.getElementById('improve').value=c.improve||'';
@@ -3657,7 +3716,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, deleteBean, syncLegacyBeans
         });
