@@ -5,6 +5,12 @@ export function initCoffeeScale() {
   const timerBtn = document.getElementById("timer");
   const resetTimerBtn = document.getElementById("resetTimer");
   const connectBtn = document.getElementById("connect");  
+  const connectStatusEl = document.getElementById("connectScaleStatus");
+  const connectWeightEl = document.getElementById("connectScaleWeight");
+  const connectTareBtn = document.getElementById("connectScaleTare");
+  const connectTimerBtn = document.getElementById("connectScaleTimer");
+  const connectResetTimerBtn = document.getElementById("connectScaleResetTimer");
+  const connectConnectBtn = document.getElementById("connectScaleConnect");
   let liveTimerInterval = null;
   let liveTimerStartAt = null;
   let liveTimerElapsedMs = 0;
@@ -61,10 +67,12 @@ export function initCoffeeScale() {
   /* ---- UI helpers ---- */
   function setStatus(text) {
     statusEl.textContent = text;
+    if (connectStatusEl) connectStatusEl.textContent = text;
   }
 
   function setWeight(value) {
     weightEl.textContent = value.toFixed(1) + " g";
+    if (connectWeightEl) connectWeightEl.textContent = value.toFixed(1) + " g";
     lastWeight = value;
     updateLiveWeight(value);
   }
@@ -248,7 +256,7 @@ export function initCoffeeScale() {
   }
 
   /* ---- Connect ---- */
-  connectBtn.onclick = async () => {
+  const handleConnectClick = async () => {
     if (!navigator.bluetooth) {
       alert("Web Bluetooth not supported");
       return;
@@ -291,12 +299,19 @@ export function initCoffeeScale() {
       timerBtn.disabled = false;
       resetTimerBtn.disabled = false;
       timerBtn.textContent = "Start Timer";
+      if (connectTareBtn) connectTareBtn.disabled = false;
+      if (connectTimerBtn) connectTimerBtn.disabled = false;
+      if (connectResetTimerBtn) connectResetTimerBtn.disabled = false;
+      if (connectTimerBtn) connectTimerBtn.textContent = "Start Timer";
       timerRunning = false;
     } catch (err) {
       console.error(err);
       setStatus("Connection failed");
     }
   };
+
+  connectBtn.onclick = handleConnectClick;
+  if (connectConnectBtn) connectConnectBtn.onclick = handleConnectClick;
 
   /* ---- GATT setup ---- */
   async function setupGatt() {
@@ -401,6 +416,10 @@ export function initCoffeeScale() {
     }
   };
 
+  if (connectTareBtn) {
+    connectTareBtn.onclick = () => tareBtn.onclick();
+  }
+
   /* ---- Timer ---- */
   timerBtn.onclick = async () => {
     if (!writeChar) return;
@@ -422,10 +441,17 @@ export function initCoffeeScale() {
       } else {
         stopLiveTimer();
       }
+      if (connectTimerBtn) {
+        connectTimerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
+      }
     } catch (err) {
       console.warn("Timer command failed", err);
     }
   };
+
+  if (connectTimerBtn) {
+    connectTimerBtn.onclick = () => timerBtn.onclick();
+  }
 
   /* ---- Reset Timer ---- */
   resetTimerBtn.onclick = async () => {
@@ -444,10 +470,15 @@ export function initCoffeeScale() {
       timerBtn.textContent = "Start Timer";
       updateTimerIcon();
       resetLiveTimer();
+      if (connectTimerBtn) connectTimerBtn.textContent = "Start Timer";
     } catch (err) {
       console.warn("Reset timer failed", err);
     }
   };
+
+  if (connectResetTimerBtn) {
+    connectResetTimerBtn.onclick = () => resetTimerBtn.onclick();
+  }
 
   /* ---- Disconnect ---- */
   function onDisconnected() {
@@ -461,6 +492,11 @@ export function initCoffeeScale() {
     updateTimerIcon();
     resetLiveTimer();
     weightEl.textContent = "--.- g";
+    if (connectWeightEl) connectWeightEl.textContent = "--.- g";
+    if (connectTareBtn) connectTareBtn.disabled = true;
+    if (connectTimerBtn) connectTimerBtn.disabled = true;
+    if (connectResetTimerBtn) connectResetTimerBtn.disabled = true;
+    if (connectTimerBtn) connectTimerBtn.textContent = "Start Timer";
     stopHeartbeat();
   }
 
@@ -490,7 +526,9 @@ export function initCoffeeScale() {
 
   function handleWeighClick() {
     if (!isConnected) {
-      if (typeof window.openCoffeeScaleModal === "function") {
+      if (typeof window.openConnectScaleModal === "function") {
+        window.openConnectScaleModal();
+      } else if (typeof window.openCoffeeScaleModal === "function") {
         window.openCoffeeScaleModal();
       }
       return;
@@ -515,7 +553,9 @@ export function initCoffeeScale() {
 
   async function handleResetScaleClick() {
     if (!isConnected) {
-      if (typeof window.openCoffeeScaleModal === "function") {
+      if (typeof window.openConnectScaleModal === "function") {
+        window.openConnectScaleModal();
+      } else if (typeof window.openCoffeeScaleModal === "function") {
         window.openCoffeeScaleModal();
       }
       return;
@@ -542,7 +582,9 @@ export function initCoffeeScale() {
 
   async function handleTimerIconClick() {
     if (!isConnected) {
-      if (typeof window.openCoffeeScaleModal === "function") {
+      if (typeof window.openConnectScaleModal === "function") {
+        window.openConnectScaleModal();
+      } else if (typeof window.openCoffeeScaleModal === "function") {
         window.openCoffeeScaleModal();
       }
       return;

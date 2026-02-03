@@ -50,7 +50,7 @@
         th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
         
         #filterDropdown, #mainMenuDropdown, #aiMenuDropdown, .action-menu { z-index: 50; animation: fadeIn 0.1s ease-out; }
-        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #coffeeScaleModal, #exportModal, #helpModal, #aboutModal, #beansModal { animation: fadeIn 0.2s ease-out; }
+        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #coffeeScaleModal, #connectScaleModal, #exportModal, #helpModal, #aboutModal, #beansModal { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
@@ -905,6 +905,28 @@
                     </button>
                     <button id="resetTimer" disabled class="col-span-2 bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                         Reset Timer
+                    </button>
+                </div>
+                <div class="text-[11px] text-coffee-500 dark:text-[#78716c] bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c] rounded-lg p-3">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Web Bluetooth works in Chrome-based browsers. Safari is not supported.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="connectScaleModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
+                <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-scale-balanced mr-2"></i>Connect scale</h3>
+                <button onclick="closeConnectScaleModal()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-4 text-center">
+                    <div id="connectScaleWeight" class="text-5xl font-semibold text-coffee-900 dark:text-white">--.- g</div>
+                    <div id="connectScaleStatus" class="text-xs text-coffee-500 dark:text-[#a8a29e] mt-2">Disconnected</div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="connectScaleConnect" class="col-span-2 bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-link"></i> Connect
                     </button>
                 </div>
                 <div class="text-[11px] text-coffee-500 dark:text-[#78716c] bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c] rounded-lg p-3">
@@ -2143,6 +2165,14 @@
 
         window.closeCoffeeScaleModal = () => {
             document.getElementById('coffeeScaleModal').classList.add('hidden');
+        };
+
+        window.openConnectScaleModal = () => {
+            document.getElementById('connectScaleModal').classList.remove('hidden');
+        };
+
+        window.closeConnectScaleModal = () => {
+            document.getElementById('connectScaleModal').classList.add('hidden');
         };
         
         const openExportModal = () => {
