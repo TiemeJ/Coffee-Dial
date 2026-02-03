@@ -511,6 +511,7 @@ export function initCoffeeScale() {
 
   /* ---- Disconnect ---- */
   function onDisconnected() {
+    const wasRunning = timerRunning;
     setStatus("Disconnected");
     tareBtn.disabled = true;
     timerBtn.disabled = true;
@@ -519,7 +520,11 @@ export function initCoffeeScale() {
     timerRunning = false;
     isConnected = false;
     updateTimerIcon();
-    resetLiveTimer();
+    
+    if (wasRunning) {
+        stopLiveTimer();
+    }
+
     weightEl.textContent = "--.- g";
     if (connectWeightEl) connectWeightEl.textContent = "--.- g";
     if (connectTareBtn) connectTareBtn.disabled = true;
