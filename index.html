@@ -668,12 +668,21 @@
                 </div>
                 <div id="cardBottomBar" class="bg-coffee-50 dark:bg-[#1c1917] p-4 border-t border-coffee-200 dark:border-[#44403c] flex justify-between items-center text-xs text-coffee-400 dark:text-[#57534e]">
                     <span id="cardDate"></span>
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-coffee-600 dark:text-[#a8a29e]">Duplicate:</span>
-                        <div class="flex gap-3 bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
-                             <button onclick="fastDuplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Fast</button>
-                             <div class="w-px bg-coffee-200 dark:bg-[#57534e] my-0.5"></div>
-                             <button onclick="duplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Adjust</button>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-3 bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
+                                   <button onclick="fastDuplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Fast repeat</button>
+                                 <div class="w-px bg-coffee-200 dark:bg-[#57534e] my-0.5"></div>
+                                   <button onclick="duplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Repeat</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="coffeeCardPrevBtn" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" onclick="navigateCoffeeCard(-1)">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <button id="coffeeCardNextBtn" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" onclick="navigateCoffeeCard(1)">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1171,6 +1180,7 @@
         let currentUploadCoffeeId = null;
         let currentShareMode = 'stats'; 
         let currentCardCoffee = null;
+        let currentCoffeeCardId = null;
         let currentCardGraphData = null;
 
         let pendingAIBeanImageFile = null;
@@ -3234,7 +3244,7 @@
             if(c.notes) { notesEl.textContent = '"' + c.notes + '"'; notesEl.classList.remove('hidden'); } else { notesEl.classList.add('hidden'); }
             const improveEl = document.getElementById('cardImprove'); const improveCon = document.getElementById('cardImproveContainer');
             if(c.improve) { improveEl.textContent = '"' + c.improve + '"'; improveCon.classList.remove('hidden'); } else { improveCon.classList.add('hidden'); }
-            document.getElementById('cardDate').textContent = 'Brewed: ' + (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-');
+            document.getElementById('cardDate').textContent = (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-');
         };
 
         const resetCardPhotoState = () => {
@@ -3247,19 +3257,28 @@
              input.value = ''; 
         };
 
+        const getBrewTableOrder = () => {
+            const filteredCoffees = getFilteredCoffees();
+            const displayLimit = Math.min(displayedBrewsCount, filteredCoffees.length);
+            return filteredCoffees.slice(0, displayLimit).map(c => c.id);
+        };
+
         const openCoffeeCard = (id, e) => {
             if(window.getSelection().toString().length > 0) return;
             const c = coffees.find(x => x.id === id); if(!c) return;
+            currentCoffeeCardId = id;
             resetCardPhotoState(); 
             toggleCardMode('stats');
             document.getElementById('shareControls').classList.add('hidden');
             populateCardData(c); 
             document.getElementById('coffeeCardOverlay').classList.remove('hidden');
+            updateCoffeeCardNav();
         };
 
         const shareCoffeeCard = (id, e) => {
             if(e) e.stopPropagation(); 
             const c = coffees.find(x => x.id === id); if(!c) return;
+            currentCoffeeCardId = id;
             // Close any open action menus
             document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden'));
             resetCardPhotoState(); 
@@ -3267,6 +3286,29 @@
             document.getElementById('shareControls').classList.remove('hidden');
             populateCardData(c);
             document.getElementById('coffeeCardOverlay').classList.remove('hidden');
+            updateCoffeeCardNav();
+        };
+
+        const updateCoffeeCardNav = () => {
+            const order = getBrewTableOrder();
+            const idx = order.indexOf(currentCoffeeCardId);
+            const prevBtn = document.getElementById('coffeeCardPrevBtn');
+            const nextBtn = document.getElementById('coffeeCardNextBtn');
+            if (!prevBtn || !nextBtn) return;
+            prevBtn.disabled = idx <= 0;
+            nextBtn.disabled = idx === -1 || idx >= order.length - 1;
+            prevBtn.classList.toggle('opacity-40', prevBtn.disabled);
+            prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
+            nextBtn.classList.toggle('opacity-40', nextBtn.disabled);
+            nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
+        };
+
+        const navigateCoffeeCard = (direction) => {
+            const order = getBrewTableOrder();
+            const idx = order.indexOf(currentCoffeeCardId);
+            const nextIdx = idx + direction;
+            if (nextIdx < 0 || nextIdx >= order.length) return;
+            openCoffeeCard(order[nextIdx]);
         };
 
         const toggleCardMode = (mode) => {
@@ -4510,7 +4552,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans
         });
