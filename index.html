@@ -569,13 +569,15 @@
                     <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                         <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                             <tr>
-                                <th class="px-4 py-3">Roaster / Farmer</th>
+                                <th class="px-4 py-3">Farmer / Roaster</th>
                                 <th class="px-4 py-3">Origin / Region</th>
                                 <th class="px-4 py-3">Process / Variety</th>
                                 <th class="px-4 py-3 text-center">Roast</th>
                                 <th class="px-4 py-3 text-center w-24">Stock (g)</th>
                                 <th class="px-4 py-3 text-center w-24">Stock Left</th>
-                                <th class="px-4 py-3 text-center w-20">Actions</th>
+                                <th class="px-4 py-3 text-center w-24">Opened Date</th>
+                                <th class="px-4 py-3 text-center w-24">Roast Date</th>
+                                <th class="px-4 py-3 text-center w-24">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="beansTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
@@ -1204,8 +1206,10 @@
             const select = document.getElementById('savedBeanSelect');
             select.innerHTML = '<option value="">-- Create New / Custom --</option>';
             // Sort beans by Roaster name
-            beans.sort((a,b) => (a.roaster || '').localeCompare(b.roaster || ''));
-            beans.forEach(bean => {
+            beans
+                .filter(bean => !bean.archived && !bean.frozen)
+                .sort((a,b) => (a.roaster || '').localeCompare(b.roaster || ''))
+                .forEach(bean => {
                 const option = document.createElement('option');
                 option.value = bean.id;
                 // Construct display text
@@ -1334,7 +1338,14 @@
                     } else {
                         // Create New Bean with Auto-ID
                         if (beanData.roaster || beanData.origin) { // Only create if minimal data exists
-                            beanData.createdAt = new Date().toISOString();
+                            const nowIso = new Date().toISOString();
+                            beanData.createdAt = nowIso;
+                            beanData.updatedAt = nowIso;
+                            beanData.archived = false;
+                            beanData.frozen = false;
+                            beanData.stock = 250;
+                            beanData.stockUpdatedAt = nowIso;
+                            beanData.openedDate = nowIso;
                             const newBeanRef = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
                             selectedBeanId = newBeanRef.id;
                         }
@@ -1483,14 +1494,38 @@
                 return { ...bean, calculatedStock: remaining };
             });
 
-            // Split into In-Stock and Out-Of-Stock/Unspecified
+            // Split into In-Stock, Frozen, and Out-Of-Stock/Unspecified
             const inStockBeans = beansWithStock
-                .filter(b => b.calculatedStock !== null && b.calculatedStock > 0)
+                .filter(b => !b.archived && !b.frozen && b.calculatedStock !== null && b.calculatedStock > 0)
+                .sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+            const frozenBeans = beansWithStock
+                .filter(b => !b.archived && b.frozen)
                 .sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
             const otherBeans = beansWithStock
-                .filter(b => b.calculatedStock === null || b.calculatedStock <= 0)
+                .filter(b => b.archived || (!b.frozen && (b.calculatedStock === null || b.calculatedStock <= 0)))
                 .sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+            const formatBeanDate = (value) => {
+                if (!value) return '-';
+                const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+                if (isNaN(dateObj)) return '-';
+                const dd = String(dateObj.getDate()).padStart(2, '0');
+                const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const yy = String(dateObj.getFullYear()).slice(-2);
+                return `${dd}/${mm}/${yy}`;
+            };
+
+            const formatBeanDateForInput = (value) => {
+                if (!value) return '';
+                const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+                if (isNaN(dateObj)) return '';
+                const yyyy = dateObj.getFullYear();
+                const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const dd = String(dateObj.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            };
 
             const createRow = (bean) => {
                 const tr = document.createElement('tr');
@@ -1502,13 +1537,20 @@
                 }
 
                 const roaster = bean.roaster || 'Unknown';
-                const farmer = bean.farmer ? `<br><span class="text-xs text-coffee-500">${bean.farmer}</span>` : '';
+                const farmer = bean.farmer || '-';
                 const origin = bean.origin || '-';
                 const process = bean.processing || '-';
                 const variety = bean.variety ? `<br><span class="text-xs text-coffee-500">${bean.variety}</span>` : '';
+                const openedDateInputValue = formatBeanDateForInput(bean.openedDate);
+                const roastDateInputValue = formatBeanDateForInput(bean.roastDate);
+                const menuId = `beans-action-menu-${bean.id}`;
+                const freezeLabel = bean.frozen ? 'Unfreeze' : 'Freeze';
+                const freezeIcon = bean.frozen ? 'fa-sun text-amber-500' : 'fa-snowflake text-sky-500';
+                const archiveLabel = bean.archived ? 'Unarchive' : 'Archive';
+                const archiveIcon = bean.archived ? 'fa-box-open text-amber-600' : 'fa-box-archive text-amber-600';
                 
                 tr.innerHTML = `
-                    <td class="px-4 py-3 font-medium text-coffee-900 dark:text-white">${roaster}${farmer}</td>
+                    <td class="px-4 py-3 font-medium text-coffee-900 dark:text-white">${farmer}<br><span class="text-xs text-coffee-500">${roaster}</span></td>
                     <td class="px-4 py-3">${origin}</td>
                     <td class="px-4 py-3">${process}${variety}</td>
                     <td class="px-4 py-3 text-center">${getRoastBadge(bean.roastType)}</td>
@@ -1519,7 +1561,36 @@
                     </td>
                     <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${stockLeftDisplay}</td>
                     <td class="px-4 py-3 text-center">
-                         <button onclick="deleteBean('${bean.id}')" class="text-red-500 hover:text-red-700 p-2"><i class="fa-solid fa-trash-can"></i></button>
+                        <input type="date" value="${openedDateInputValue}"
+                            onchange="saveBeanOpenedDate('${bean.id}', this.value)"
+                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="date" value="${roastDateInputValue}"
+                            onchange="saveBeanRoastDate('${bean.id}', this.value)"
+                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                         <div class="relative inline-block">
+                             <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
+                                 <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                             </button>
+                             <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden">
+                                 <button onclick="openNewBag('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                     <i class="fa-solid fa-bag-shopping text-green-600 w-4"></i> Open new bag
+                                 </button>
+                                 <button onclick="toggleBeanFrozen('${bean.id}', ${bean.frozen ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                     <i class="fa-solid ${freezeIcon} w-4"></i> ${freezeLabel}
+                                 </button>
+                                 <button onclick="toggleBeanArchive('${bean.id}', ${bean.archived ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                     <i class="fa-solid ${archiveIcon} w-4"></i> ${archiveLabel}
+                                 </button>
+                                 <hr class="border-coffee-100 dark:border-[#44403c]">
+                                 <button onclick="deleteBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                                     <i class="fa-solid fa-trash w-4"></i> Delete
+                                 </button>
+                             </div>
+                         </div>
                     </td>
                 `;
                 return tr;
@@ -1529,17 +1600,28 @@
             if (inStockBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = "bg-green-50 dark:bg-green-900/20";
-                headerRow.innerHTML = `<td colspan="7" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>`;
+                headerRow.innerHTML = `<td colspan="9" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>`;
                 tbody.appendChild(headerRow);
                 inStockBeans.forEach(bean => tbody.appendChild(createRow(bean)));
             }
 
+            // Render Frozen Section
+            if (frozenBeans.length > 0) {
+                if(inStockBeans.length > 0) {
+                    const headerRow = document.createElement('tr');
+                    headerRow.className = "bg-blue-50 dark:bg-blue-900/20";
+                    headerRow.innerHTML = `<td colspan="9" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>`;
+                    tbody.appendChild(headerRow);
+                }
+                frozenBeans.forEach(bean => tbody.appendChild(createRow(bean)));
+            }
+
             // Render Archive/Out of Stock Section
             if (otherBeans.length > 0) {
-                 if(inStockBeans.length > 0) {
+                 if(inStockBeans.length > 0 || frozenBeans.length > 0) {
                     const headerRow = document.createElement('tr');
                     headerRow.className = "bg-gray-50 dark:bg-[#34302e]";
-                    headerRow.innerHTML = `<td colspan="7" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>`;
+                          headerRow.innerHTML = `<td colspan="9" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>`;
                     tbody.appendChild(headerRow);
                  }
                  otherBeans.forEach(bean => tbody.appendChild(createRow(bean)));
@@ -1558,6 +1640,91 @@
             } catch (err) {
                 console.error("Error saving stock:", err);
                 alert("Failed to save stock.");
+            }
+        };
+
+        const saveBeanRoastDate = async (beanId, dateValue) => {
+            if (!currentUser) return;
+            try {
+                const roastDateVal = dateValue ? new Date(dateValue).toISOString() : null;
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                    roastDate: roastDateVal,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error("Error saving roast date:", err);
+                alert("Failed to save roast date.");
+            }
+        };
+
+        const saveBeanOpenedDate = async (beanId, dateValue) => {
+            if (!currentUser) return;
+            try {
+                const openedDateVal = dateValue ? new Date(dateValue).toISOString() : null;
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                    openedDate: openedDateVal,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error("Error saving opened date:", err);
+                alert("Failed to save opened date.");
+            }
+        };
+
+        const toggleBeanArchive = async (beanId, isArchived) => {
+            if (!currentUser) return;
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                    archived: !isArchived,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error("Error updating archive state:", err);
+                alert("Failed to update archive state.");
+            }
+        };
+
+        const toggleBeanFrozen = async (beanId, isFrozen) => {
+            if (!currentUser) return;
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                    frozen: !isFrozen,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error("Error updating frozen state:", err);
+                alert("Failed to update frozen state.");
+            }
+        };
+
+        const openNewBag = async (beanId) => {
+            if (!currentUser) return;
+            const sourceBean = beans.find(b => b.id === beanId);
+            if (!sourceBean) return;
+
+            const newBeanData = { ...sourceBean };
+            delete newBeanData.id;
+            delete newBeanData.stock;
+            delete newBeanData.stockUpdatedAt;
+            delete newBeanData.openedDate;
+            delete newBeanData.roastDate;
+            delete newBeanData.frozen;
+            delete newBeanData.archived;
+            delete newBeanData.calculatedStock;
+
+            newBeanData.stock = 250;
+            newBeanData.stockUpdatedAt = new Date().toISOString();
+            newBeanData.frozen = false;
+            newBeanData.archived = false;
+            newBeanData.openedDate = new Date().toISOString();
+            newBeanData.createdAt = new Date().toISOString();
+            newBeanData.updatedAt = new Date().toISOString();
+
+            try {
+                await addDoc(collection(db, 'users', currentUser.uid, 'beans'), newBeanData);
+            } catch (err) {
+                console.error("Error opening new bag:", err);
+                alert("Failed to open new bag.");
             }
         };
 
@@ -1622,7 +1789,7 @@
                     if (val.isNew && (val.data.roaster || val.data.origin)) {
                         const newRef = doc(collection(db, 'users', currentUser.uid, 'beans'));
                         val.id = newRef.id;
-                        currentBatch.set(newRef, { ...val.data, createdAt: new Date().toISOString() });
+                        currentBatch.set(newRef, { ...val.data, createdAt: new Date().toISOString(), archived: false, frozen: false });
                         opCount++;
                         if (opCount >= batchLimit) { batches.push(currentBatch); currentBatch = writeBatch(db); opCount = 0; }
                     }
@@ -3731,7 +3898,7 @@
         Object.assign(window, { 
             triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
-            openBeans, closeBeans, saveBeanStock, deleteBean, syncLegacyBeans
+            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans
         });
 
         const searchInput = document.getElementById('globalSearch'); 
