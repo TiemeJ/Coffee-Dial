@@ -559,6 +559,20 @@
                      <button onclick="syncLegacyBeans()" class="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded font-bold transition-colors border border-indigo-200 dark:border-indigo-800">
                         <i class="fa-solid fa-sync-alt mr-1"></i> Scan & Link Legacy Brews
                     </button>
+                    <div class="relative">
+                        <button type="button" onclick="toggleBeansAiMenu(event)" id="beansAiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Scan Bag
+                        </button>
+                        <div id="beansAiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <button type="button" onclick="triggerBeansAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
+                                <i class="fa-solid fa-camera w-4"></i> Take Photo
+                            </button>
+                            <button type="button" onclick="triggerBeansAIScan('library')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-images w-4"></i> From Gallery
+                            </button>
+                        </div>
+                        <input type="file" id="beansAiFileInput" accept="image/*" class="hidden" onchange="handleBeansAIFile(event)">
+                    </div>
                     <button onclick="closeBeans()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white ml-2">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
@@ -1080,6 +1094,20 @@
             document.getElementById('aiMenuDropdown').classList.toggle('hidden');
         };
 
+        const toggleBeansAiMenu = (e) => {
+            if(e) e.stopPropagation();
+            document.getElementById('beansAiMenuDropdown').classList.toggle('hidden');
+        };
+
+        const triggerBeansAIScan = (mode = null) => {
+            if (!currentUser) return alert("Please sign in to use AI scanning.");
+            const input = document.getElementById('beansAiFileInput');
+            if (mode === 'camera') input.setAttribute('capture', 'environment');
+            else if (mode === 'library') input.removeAttribute('capture');
+            document.getElementById('beansAiMenuDropdown').classList.add('hidden');
+            input.click();
+        };
+
         const handleAIFile = async (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -1111,6 +1139,51 @@
                 });
                 // Ensure form is open
                 toggleForm(true);
+            } catch (error) { console.error(error); alert("Error scanning bag: " + error.message); } finally {
+                btn.disabled = false; btn.innerHTML = originalContent; btn.classList.remove('ai-loading-pulse'); event.target.value = '';
+            }
+        };
+
+        const handleBeansAIFile = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const btn = document.getElementById('beansAiScanBtn');
+            const originalContent = btn.innerHTML;
+            try {
+                btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning...'; btn.classList.add('ai-loading-pulse');
+                const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true };
+                const compressedFile = await imageCompression(file, options);
+                const base64String = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(compressedFile);
+                });
+                const response = await fetch(BAG_AI_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base64Image: base64String })
+                });
+                if (!response.ok) throw new Error("AI Analysis Failed.");
+                const data = await response.json();
+
+                const nowIso = new Date().toISOString();
+                const beanData = {
+                    roaster: data.roaster || '',
+                    farmer: data.farmer || '',
+                    origin: data.origin || '',
+                    variety: data.variety || '',
+                    processing: data.processing || '',
+                    roastType: data.roastType || '',
+                    createdAt: nowIso,
+                    updatedAt: nowIso,
+                    archived: false,
+                    frozen: false,
+                    stock: 250,
+                    stockUpdatedAt: nowIso,
+                    openedDate: nowIso
+                };
+
+                await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
             } catch (error) { console.error(error); alert("Error scanning bag: " + error.message); } finally {
                 btn.disabled = false; btn.innerHTML = originalContent; btn.classList.remove('ai-loading-pulse'); event.target.value = '';
             }
@@ -3896,7 +3969,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans
         });
