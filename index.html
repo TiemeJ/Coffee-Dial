@@ -851,6 +851,15 @@
             <div class="p-4 bg-coffee-50/50 dark:bg-[#1c1917]">
                 <div class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-2">
                     <canvas id="cardGraphCanvas" class="w-full h-52"></canvas>
+                    <div id="cardGraphEmpty" class="hidden text-xs text-center text-coffee-400 dark:text-[#78716c] py-3">No graph data for this brew.</div>
+                </div>
+                <div class="flex justify-end gap-2 mt-3">
+                    <button id="cardGraphPrevBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" onclick="navigateCoffeeCardFromGraph(-1)">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button id="cardGraphNextBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" onclick="navigateCoffeeCardFromGraph(1)">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -3467,16 +3476,23 @@
             } 
         };
 
-        const openCardGraphModal = (e) => {
+        const openCardGraphModal = (e, forceOpen = false) => {
             if (e) e.stopPropagation();
-            if (!currentCardGraphData) return;
+            if (!currentCardGraphData && !forceOpen) return;
             const modal = document.getElementById('cardGraphModal');
             if (!modal) return;
             modal.classList.remove('hidden');
             const canvas = document.getElementById('cardGraphCanvas');
-            if (window.coffeeScale?.renderGraphTo) {
+            const emptyEl = document.getElementById('cardGraphEmpty');
+            if (window.coffeeScale?.renderGraphTo && currentCardGraphData) {
+                if (emptyEl) emptyEl.classList.add('hidden');
                 window.coffeeScale.renderGraphTo(canvas, currentCardGraphData);
+            } else {
+                if (emptyEl) emptyEl.classList.remove('hidden');
+                const ctx = canvas?.getContext?.('2d');
+                if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
+            updateCoffeeGraphNav();
         };
 
         const closeCardGraphModal = (e) => {
@@ -3484,6 +3500,29 @@
                 const modal = document.getElementById('cardGraphModal');
                 if (modal) modal.classList.add('hidden');
             }
+        };
+
+        const updateCoffeeGraphNav = () => {
+            const order = getBrewTableOrder();
+            const idx = order.indexOf(currentCoffeeCardId);
+            const prevBtn = document.getElementById('cardGraphPrevBtn');
+            const nextBtn = document.getElementById('cardGraphNextBtn');
+            if (!prevBtn || !nextBtn) return;
+            prevBtn.disabled = idx <= 0;
+            nextBtn.disabled = idx === -1 || idx >= order.length - 1;
+            prevBtn.classList.toggle('opacity-40', prevBtn.disabled);
+            prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
+            nextBtn.classList.toggle('opacity-40', nextBtn.disabled);
+            nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
+        };
+
+        const navigateCoffeeCardFromGraph = (direction) => {
+            const order = getBrewTableOrder();
+            const idx = order.indexOf(currentCoffeeCardId);
+            const nextIdx = idx + direction;
+            if (nextIdx < 0 || nextIdx >= order.length) return;
+            openCoffeeCard(order[nextIdx]);
+            openCardGraphModal(null, true);
         };
 
         const populateForm = (c) => { 
@@ -4552,7 +4591,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans
         });
