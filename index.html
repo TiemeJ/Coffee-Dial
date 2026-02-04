@@ -1283,6 +1283,13 @@
                 improve: f.get('improve') || '', rating: parseInt(f.get('rating')) || 0, isActive: isActiveChecked, updatedAt: new Date().toISOString() 
             };
 
+            const firstDripEl = document.getElementById('graphFirstDrip');
+            const maxFlowEl = document.getElementById('graphMaxFlow');
+            const avgFlowEl = document.getElementById('graphAvgFlow');
+            d.firstDrip = parseNum(firstDripEl ? firstDripEl.value : null);
+            d.maxFlow = parseNum(maxFlowEl ? maxFlowEl.value : null);
+            d.avgFlow = parseNum(avgFlowEl ? avgFlowEl.value : null);
+
             const scaleCaptureData = window.coffeeScale?.getCaptureData?.();
             if (scaleCaptureData) {
                 d.scaleCapture = scaleCaptureData.capture;
@@ -2686,6 +2693,12 @@
                 window.coffeeScale.setCaptureData(graphData);
             }
             if (window.coffeeScale?.syncGraphFormFields) window.coffeeScale.syncGraphFormFields();
+            const firstDripEl = document.getElementById('graphFirstDrip');
+            const maxFlowEl = document.getElementById('graphMaxFlow');
+            const avgFlowEl = document.getElementById('graphAvgFlow');
+            if (firstDripEl) firstDripEl.value = (c.firstDrip ?? '');
+            if (maxFlowEl) maxFlowEl.value = (c.maxFlow ?? '');
+            if (avgFlowEl) avgFlowEl.value = (c.avgFlow ?? '');
         }
 
         const editCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; document.getElementById('editId').value=c.id; populateForm(c); document.getElementById('formContainer').classList.add('editing-mode'); toggleForm(true); document.getElementById('formTitle').innerHTML='<span class="text-orange-500">Edit Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Update</span>'; document.getElementById('submitBtn').className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); };
@@ -3767,6 +3780,22 @@
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label>
                             <input type="number" step="any" id="graphInputYield" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-coffee-50/50 dark:bg-[#201d1b] p-3 rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">First drip</label>
+                            <input type="number" step="any" id="graphFirstDrip" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Max flow</label>
+                            <input type="number" step="any" id="graphMaxFlow" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Avg flow</label>
+                            <input type="number" step="any" id="graphAvgFlow" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500" />
                         </div>
                     </div>
                 </div>

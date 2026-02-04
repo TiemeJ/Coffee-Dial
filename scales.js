@@ -20,6 +20,9 @@ export function initCoffeeScale() {
   const graphInputWeightEl = document.getElementById("graphInputWeight");
   const graphInputRatioEl = document.getElementById("graphInputRatio");
   const graphInputYieldEl = document.getElementById("graphInputYield");
+  const graphFirstDripEl = document.getElementById("graphFirstDrip");
+  const graphMaxFlowEl = document.getElementById("graphMaxFlow");
+  const graphAvgFlowEl = document.getElementById("graphAvgFlow");
   let liveTimerInterval = null;
   let liveTimerStartAt = null;
   let liveTimerElapsedMs = 0;
@@ -58,7 +61,10 @@ export function initCoffeeScale() {
   let rawSamples = [];
   let lastInterpolatedWeight = null;
   let flowHistory = [];
+  let firstDripCapturedAt = null;
+  let maxFlowCaptured = null;
   const FLOW_WINDOW_MS = 2000;
+  const FIRST_DRIP_THRESHOLD = 0;
 
   /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
   const ACAIA_SERVICE_UUID = "00001820-0000-1000-8000-00805f9b34fb";
@@ -263,6 +269,14 @@ export function initCoffeeScale() {
     rawSamples = [];
     lastInterpolatedWeight = null;
     flowHistory = [];
+    firstDripCapturedAt = null;
+    maxFlowCaptured = null;
+    if (graphFirstDripEl && graphFirstDripEl.value !== "") {
+      const existingFirstDrip = Number(graphFirstDripEl.value);
+      if (Number.isFinite(existingFirstDrip)) {
+        firstDripCapturedAt = existingFirstDrip * 1000;
+      }
+    }
     updateCaptureOutput();
     updateFlowOutput();
     updateRawOutput();
@@ -277,6 +291,14 @@ export function initCoffeeScale() {
       const elapsedMs = Date.now() - capture.startAt;
       const targetTime = capture.startAt + elapsedMs;
       const resampledWeight = getInterpolatedWeight(targetTime);
+
+      if (firstDripCapturedAt === null && Number.isFinite(resampledWeight) && resampledWeight > FIRST_DRIP_THRESHOLD) {
+        firstDripCapturedAt = elapsedMs;
+        if (graphFirstDripEl) {
+          graphFirstDripEl.value = String(Math.round(elapsedMs / 1000));
+          graphFirstDripEl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
 
       capture.samples.push({
         tMs: elapsedMs,
@@ -317,6 +339,13 @@ export function initCoffeeScale() {
         tMs: elapsedMs,
         flow,
       });
+      if (Number.isFinite(flow) && (maxFlowCaptured === null || flow > maxFlowCaptured)) {
+        maxFlowCaptured = flow;
+        if (graphMaxFlowEl) {
+          graphMaxFlowEl.value = flow.toFixed(1);
+          graphMaxFlowEl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
       setFlow(flow);
 
       updateCaptureOutput();
@@ -387,6 +416,8 @@ export function initCoffeeScale() {
     rawSamples = [];
     lastInterpolatedWeight = null;
     flowHistory = [];
+    firstDripCapturedAt = null;
+    maxFlowCaptured = null;
     setFlow(NaN);
     updateCaptureOutput();
     updateFlowOutput();
@@ -491,6 +522,12 @@ export function initCoffeeScale() {
     }
   }
 
+  function resetGraphMetrics() {
+    if (graphFirstDripEl) graphFirstDripEl.value = "";
+    if (graphMaxFlowEl) graphMaxFlowEl.value = "";
+    if (graphAvgFlowEl) graphAvgFlowEl.value = "";
+  }
+
   function enqueueWrite(data) {
     if (!writeChar) return Promise.resolve();
     writeQueue = writeQueue
@@ -590,6 +627,17 @@ export function initCoffeeScale() {
     } else {
       stopLiveTimer();
       stopCapture();
+      const outField = document.getElementById("inputYield");
+      const timeField = document.getElementById("time");
+      const finalWeight = outField ? parseFloat(outField.value) : NaN;
+      const totalSeconds = timeField ? parseFloat(timeField.value) : NaN;
+      if (graphAvgFlowEl) {
+        if (Number.isFinite(finalWeight) && Number.isFinite(totalSeconds) && totalSeconds > 0) {
+          const avgFlow = finalWeight / totalSeconds;
+          graphAvgFlowEl.value = avgFlow.toFixed(1);
+          graphAvgFlowEl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
       setFlow(NaN);
     }
   }
@@ -851,6 +899,7 @@ export function initCoffeeScale() {
       setTimerRunningState(false);
       resetLiveTimer();
       resetCaptureData();
+      resetGraphMetrics();
     } catch (err) {
       console.warn("Reset timer failed", err);
     }
@@ -961,6 +1010,7 @@ export function initCoffeeScale() {
       setTimerRunningState(false);
       resetLiveTimer();
       resetCaptureData();
+      resetGraphMetrics();
     } catch (err) {
       console.warn("Reset scale failed", err);
     }
