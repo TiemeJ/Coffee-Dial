@@ -50,7 +50,7 @@
         th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
         
         #filterDropdown, #mainMenuDropdown, #aiMenuDropdown, .action-menu { z-index: 50; animation: fadeIn 0.1s ease-out; }
-        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #coffeeScaleModal, #connectScaleModal, #exportModal, #helpModal, #aboutModal, #beansModal { animation: fadeIn 0.2s ease-out; }
+        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #coffeeScaleModal, #connectScaleModal, #exportModal, #helpModal, #aboutModal, #beansModal, #beanCardOverlay { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .chevron-rotate { transition: transform 0.3s ease; }
         .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
@@ -549,7 +549,7 @@
     </main>
     
     <!-- Beans Management Modal -->
-    <div id="beansModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div id="beansModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917]">
                 <h3 class="font-bold text-xl text-coffee-900 dark:text-white flex items-center gap-2">
@@ -606,7 +606,7 @@
     </div>
 
     <!-- Coffee Card Overlay -->
-    <div id="coffeeCardOverlay" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCoffeeCard(event)">
+    <div id="coffeeCardOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCoffeeCard(event)">
         <!-- Same as original -->
         <div class="flex flex-col gap-2 w-full max-w-sm">
             <div id="shareControls" class="hidden bg-white dark:bg-[#292524] rounded-lg p-2 shadow-lg border border-coffee-200 dark:border-[#44403c] flex justify-between items-center transition-all animate-in fade-in zoom-in duration-200" onclick="event.stopPropagation()">
@@ -681,8 +681,146 @@
         </div>
     </div>
 
+    <!-- Bean Card Overlay -->
+    <div id="beanCardOverlay" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeBeanCard(event)">
+        <div class="bg-white dark:bg-[#292524] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col" onclick="event.stopPropagation()">
+            <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
+                <div class="absolute top-4 right-4 flex items-center gap-2">
+                    <button id="beanCardEditBtn" onclick="enterBeanEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
+                        <i class="fa-solid fa-pen-to-square text-lg"></i>
+                    </button>
+                    <button onclick="closeBeanCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <h3 id="beanCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
+                <p id="beanCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
+            </div>
+            <div id="beanCardView" class="p-4 space-y-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="md:w-40 lg:w-48 w-full">
+                        <div id="beanCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
+                            <img id="beanCardImage" class="absolute inset-0 w-full h-full object-contain hidden cursor-pointer" src="" alt="Bean Photo" onclick="openBeanPhoto(event)">
+                            <div id="beanCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
+                                <i class="fa-solid fa-image text-3xl mb-2"></i>
+                                <p class="text-xs font-medium">Add / Change picture</p>
+                            </div>
+                            <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" onclick="triggerBeanPhoto(event)" title="Change photo">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" onclick="removeBeanPhoto(event)" title="Remove photo">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="file" id="beanPhotoInput" accept="image/*" class="hidden" onchange="handleBeanPhoto(event)">
+                    </div>
+                    <div class="flex-1 space-y-4">
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Origin</span><span id="beanCardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Process</span><span id="beanCardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Variety</span><span id="beanCardVariety" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</span><span id="beanCardRoast" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        </div>
+                        <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-3 border border-coffee-100 dark:border-[#44403c]">
+                            <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Stock</div><div id="beanCardStock" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Left</div><div id="beanCardStockLeft" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Status</div><div id="beanCardStatus" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-xs">
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Opened</span><span id="beanCardOpened"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Frozen</span><span id="beanCardFrozen"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</span><span id="beanCardRoastDate"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-coffee-100 dark:border-[#44403c]">
+                    <div class="flex flex-wrap gap-2">
+                        <button id="beanCardBuyBtn" class="hidden px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-cart-shopping"></i> Buy more
+                        </button>
+                        <button id="beanCardBrewBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-coffee-700 hover:bg-coffee-800 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-mug-saucer"></i> Brew
+                        </button>
+                        <button id="beanCardOpenNewBagBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-bag-shopping"></i> Open new bag
+                        </button>
+                        <button id="beanCardFreezeBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2"></button>
+                        <button id="beanCardArchiveBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-2"></button>
+                        <button id="beanCardDeleteBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-red-600 hover:bg-red-700 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="beanCardEdit" class="hidden p-4 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Farmer</label>
+                        <input id="beanEditFarmer" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roaster</label>
+                        <input id="beanEditRoaster" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Origin</label>
+                        <input id="beanEditOrigin" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Processing</label>
+                        <input id="beanEditProcessing" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Variety</label>
+                        <input id="beanEditVariety" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast Type</label>
+                        <input id="beanEditRoastType" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Shop URL</label>
+                        <input id="beanEditShopUrl" type="url" placeholder="https://" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Stock (g)</label>
+                        <input id="beanEditStock" type="number" step="1" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Opened Date</label>
+                        <input id="beanEditOpenedDate" type="date" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Frozen Date</label>
+                        <input id="beanEditFrozenDate" type="date" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast Date</label>
+                        <input id="beanEditRoastDate" type="date" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input id="beanEditFrozen" type="checkbox" class="toggle-checkbox w-5 h-5">
+                        <label for="beanEditFrozen" class="text-sm text-coffee-700 dark:text-[#d6ccc2]">Frozen</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input id="beanEditArchived" type="checkbox" class="toggle-checkbox w-5 h-5">
+                        <label for="beanEditArchived" class="text-sm text-coffee-700 dark:text-[#d6ccc2]">Archived</label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-coffee-100 dark:border-[#44403c]">
+                    <button onclick="cancelBeanEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+                    <button onclick="saveBeanCardEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Card Graph Modal -->
-    <div id="cardGraphModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCardGraphModal(event)">
+    <div id="cardGraphModal" class="hidden fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCardGraphModal(event)">
         <div class="bg-white dark:bg-[#292524] rounded-2xl shadow-2xl w-full max-w-lg border border-coffee-200 dark:border-[#44403c] flex flex-col" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center p-4 border-b border-coffee-100 dark:border-[#44403c]">
                 <h3 class="text-lg font-bold text-coffee-900 dark:text-white flex items-center gap-2">
@@ -1543,6 +1681,275 @@
             document.getElementById('beansModal').classList.add('hidden');
         };
 
+        const getBeanCalculatedStock = (bean) => {
+            if (bean.stock === undefined || bean.stock === null) return null;
+            const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
+            const usedAmount = coffees
+                .filter(c => c.beanId === bean.id && new Date(c.createdAt) > stockDate)
+                .reduce((sum, c) => sum + (c.weight || 0), 0);
+            return parseFloat(bean.stock) - usedAmount;
+        };
+
+        let currentBeanCardId = null;
+
+        const openBeanCard = (beanId, ev) => {
+            if(ev) ev.stopPropagation();
+            const bean = beans.find(b => b.id === beanId);
+            if (!bean) return;
+            document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden'));
+            currentBeanCardId = bean.id;
+
+            const statusParts = [];
+            if (bean.archived) statusParts.push('Archived');
+            if (bean.frozen) statusParts.push('Frozen');
+            if (!statusParts.length) statusParts.push('Active');
+
+            const formatDate = (value) => {
+                if (!value) return '-';
+                const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+                if (isNaN(dateObj)) return '-';
+                const dd = String(dateObj.getDate()).padStart(2, '0');
+                const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const yy = String(dateObj.getFullYear()).slice(-2);
+                return `${dd}/${mm}/${yy}`;
+            };
+
+            const stockLeft = getBeanCalculatedStock(bean);
+            const stockLeftDisplay = stockLeft === null || isNaN(stockLeft) ? '-' : `${stockLeft.toFixed(1)}g`;
+            const stockDisplay = bean.stock === undefined || bean.stock === null || bean.stock === '' ? '-' : `${bean.stock}g`;
+
+            document.getElementById('beanCardTitle').textContent = bean.farmer || '-';
+            document.getElementById('beanCardSubtitle').textContent = bean.roaster || 'Unknown Roaster';
+            document.getElementById('beanCardOrigin').textContent = bean.origin || '-';
+            document.getElementById('beanCardProcess').textContent = bean.processing || '-';
+            document.getElementById('beanCardVariety').textContent = bean.variety || '-';
+            document.getElementById('beanCardRoast').textContent = bean.roastType || '-';
+            document.getElementById('beanCardStock').textContent = stockDisplay;
+            document.getElementById('beanCardStockLeft').textContent = stockLeftDisplay;
+            document.getElementById('beanCardStatus').textContent = statusParts.join(' • ');
+            document.getElementById('beanCardOpened').textContent = formatDate(bean.openedDate);
+            document.getElementById('beanCardFrozen').textContent = formatDate(bean.frozenDate);
+            document.getElementById('beanCardRoastDate').textContent = formatDate(bean.roastDate);
+
+            const imgEl = document.getElementById('beanCardImage');
+            const placeholderEl = document.getElementById('beanCardImagePlaceholder');
+            if (bean.imageURL) {
+                imgEl.src = bean.imageURL;
+                imgEl.classList.remove('hidden');
+                placeholderEl.classList.add('hidden');
+            } else {
+                imgEl.src = '';
+                imgEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+            }
+
+            const brewBtn = document.getElementById('beanCardBrewBtn');
+            const openNewBagBtn = document.getElementById('beanCardOpenNewBagBtn');
+            const deleteBtn = document.getElementById('beanCardDeleteBtn');
+            const buyBtn = document.getElementById('beanCardBuyBtn');
+
+            if (brewBtn) brewBtn.onclick = () => { closeBeanCard(null); openBrewWithBean(bean.id); };
+            if (openNewBagBtn) openNewBagBtn.onclick = () => openNewBag(bean.id);
+            if (deleteBtn) deleteBtn.onclick = () => deleteBean(bean.id);
+            if (buyBtn) {
+                if (bean.shopUrl) {
+                    buyBtn.classList.remove('hidden');
+                    buyBtn.onclick = () => openBeanShopUrl(bean.id);
+                } else {
+                    buyBtn.classList.add('hidden');
+                }
+            }
+
+            updateBeanCardActionButtons(bean);
+
+            document.getElementById('beanCardOverlay').classList.remove('hidden');
+            cancelBeanEditMode();
+        };
+
+        const updateBeanCardActionButtons = (bean) => {
+            const freezeBtn = document.getElementById('beanCardFreezeBtn');
+            const archiveBtn = document.getElementById('beanCardArchiveBtn');
+            if (freezeBtn) {
+                const freezeLabel = bean.frozen ? 'Unfreeze' : 'Freeze';
+                const freezeIcon = bean.frozen ? 'fa-sun' : 'fa-snowflake';
+                freezeBtn.innerHTML = `<i class="fa-solid ${freezeIcon}"></i> ${freezeLabel}`;
+                freezeBtn.onclick = () => toggleBeanFrozen(bean.id, !!bean.frozen);
+            }
+            if (archiveBtn) {
+                const archiveLabel = bean.archived ? 'Unarchive' : 'Archive';
+                const archiveIcon = bean.archived ? 'fa-box-open' : 'fa-box-archive';
+                archiveBtn.innerHTML = `<i class="fa-solid ${archiveIcon}"></i> ${archiveLabel}`;
+                archiveBtn.onclick = () => toggleBeanArchive(bean.id, !!bean.archived);
+            }
+        };
+
+        const closeBeanCard = (e) => {
+            if (!e || e.target.id === 'beanCardOverlay' || e.target.closest('button')) {
+                document.getElementById('beanCardOverlay').classList.add('hidden');
+            }
+        };
+
+        const triggerBeanPhoto = (e) => {
+            if (e) e.stopPropagation();
+            if (!currentBeanCardId) return;
+            document.getElementById('beanPhotoInput').click();
+        };
+
+        const openBeanPhoto = (e) => {
+            if (e) e.stopPropagation();
+            const bean = beans.find(b => b.id === currentBeanCardId);
+            if (bean && bean.imageURL) window.open(bean.imageURL, '_blank');
+        };
+
+        const openBeanShopUrl = (beanId, ev) => {
+            if (ev) ev.stopPropagation();
+            const bean = beans.find(b => b.id === beanId);
+            if (bean && bean.shopUrl) window.open(bean.shopUrl, '_blank');
+        };
+
+        const removeBeanPhoto = async (e) => {
+            if (e) e.stopPropagation();
+            if (!currentUser || !currentBeanCardId) return;
+            const bean = beans.find(b => b.id === currentBeanCardId);
+            if (!bean || !bean.imageURL) return;
+            try {
+                const photoRef = ref(storage, bean.imageURL);
+                await deleteObject(photoRef);
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', currentBeanCardId), {
+                    imageURL: null,
+                    updatedAt: new Date().toISOString()
+                });
+                const idx = beans.findIndex(b => b.id === currentBeanCardId);
+                if (idx !== -1) beans[idx] = { ...beans[idx], imageURL: null };
+                openBeanCard(currentBeanCardId);
+            } catch (err) {
+                console.error('Remove bean photo failed:', err);
+                alert('Failed to remove image.');
+            }
+        };
+
+        const handleBeanPhoto = async (event) => {
+            const file = event.target.files[0];
+            if (!file || !currentUser || !currentBeanCardId) return;
+            const btn = document.getElementById('beanCardImageSection');
+            const originalClasses = btn.className;
+            try {
+                btn.classList.add('ai-loading-pulse');
+                const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: true };
+                const compressedFile = await imageCompression(file, options);
+                const timestamp = Date.now();
+                const storageRef = ref(storage, `photos/${currentUser.uid}/bean_${currentBeanCardId}_${timestamp}`);
+                const snapshot = await uploadBytes(storageRef, compressedFile);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', currentBeanCardId), {
+                    imageURL: downloadURL,
+                    updatedAt: new Date().toISOString()
+                });
+                const idx = beans.findIndex(b => b.id === currentBeanCardId);
+                if (idx !== -1) beans[idx] = { ...beans[idx], imageURL: downloadURL };
+                openBeanCard(currentBeanCardId);
+            } catch (err) {
+                console.error('Bean photo upload failed:', err);
+                alert('Failed to upload image.');
+            } finally {
+                btn.className = originalClasses;
+                event.target.value = '';
+            }
+        };
+
+        const enterBeanEditMode = () => {
+            if (!currentBeanCardId) return;
+            const bean = beans.find(b => b.id === currentBeanCardId);
+            if (!bean) return;
+            const toInputDate = (value) => {
+                if (!value) return '';
+                const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+                if (isNaN(dateObj)) return '';
+                const yyyy = dateObj.getFullYear();
+                const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const dd = String(dateObj.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            };
+
+            document.getElementById('beanEditFarmer').value = bean.farmer || '';
+            document.getElementById('beanEditRoaster').value = bean.roaster || '';
+            document.getElementById('beanEditOrigin').value = bean.origin || '';
+            document.getElementById('beanEditProcessing').value = bean.processing || '';
+            document.getElementById('beanEditVariety').value = bean.variety || '';
+            document.getElementById('beanEditRoastType').value = bean.roastType || '';
+            document.getElementById('beanEditShopUrl').value = bean.shopUrl || '';
+            document.getElementById('beanEditStock').value = bean.stock ?? '';
+            document.getElementById('beanEditOpenedDate').value = toInputDate(bean.openedDate);
+            document.getElementById('beanEditFrozenDate').value = toInputDate(bean.frozenDate);
+            document.getElementById('beanEditRoastDate').value = toInputDate(bean.roastDate);
+            document.getElementById('beanEditFrozen').checked = !!bean.frozen;
+            document.getElementById('beanEditArchived').checked = !!bean.archived;
+
+            document.getElementById('beanCardView').classList.add('hidden');
+            document.getElementById('beanCardEdit').classList.remove('hidden');
+            document.getElementById('beanCardEditBtn').classList.add('hidden');
+        };
+
+        const cancelBeanEditMode = () => {
+            document.getElementById('beanCardEdit').classList.add('hidden');
+            document.getElementById('beanCardView').classList.remove('hidden');
+            document.getElementById('beanCardEditBtn').classList.remove('hidden');
+        };
+
+        const saveBeanCardEdits = async () => {
+            if (!currentUser || !currentBeanCardId) return;
+            const stockValRaw = document.getElementById('beanEditStock').value;
+            const stockVal = stockValRaw === '' ? null : parseFloat(stockValRaw);
+            const openedDateVal = document.getElementById('beanEditOpenedDate').value;
+            const frozenDateVal = document.getElementById('beanEditFrozenDate').value;
+            const roastDateVal = document.getElementById('beanEditRoastDate').value;
+            const frozenChecked = document.getElementById('beanEditFrozen').checked;
+            const archivedChecked = document.getElementById('beanEditArchived').checked;
+
+            const updates = {
+                farmer: document.getElementById('beanEditFarmer').value || '',
+                roaster: document.getElementById('beanEditRoaster').value || '',
+                origin: document.getElementById('beanEditOrigin').value || '',
+                processing: document.getElementById('beanEditProcessing').value || '',
+                variety: document.getElementById('beanEditVariety').value || '',
+                roastType: document.getElementById('beanEditRoastType').value || '',
+                shopUrl: document.getElementById('beanEditShopUrl').value || '',
+                stock: stockVal,
+                openedDate: openedDateVal ? new Date(openedDateVal).toISOString() : null,
+                frozenDate: frozenDateVal ? new Date(frozenDateVal).toISOString() : null,
+                roastDate: roastDateVal ? new Date(roastDateVal).toISOString() : null,
+                frozen: frozenChecked,
+                archived: archivedChecked,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (stockVal !== null) updates.stockUpdatedAt = new Date().toISOString();
+
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', currentBeanCardId), updates);
+                const idx = beans.findIndex(b => b.id === currentBeanCardId);
+                if (idx !== -1) beans[idx] = { ...beans[idx], ...updates };
+                cancelBeanEditMode();
+                openBeanCard(currentBeanCardId);
+            } catch (err) {
+                console.error("Error saving bean edits:", err);
+                alert("Failed to save changes.");
+            }
+        };
+
+        const openBrewWithBean = (beanId) => {
+            if (currentView !== 'mine') return;
+            document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden'));
+            closeBeans();
+            const select = document.getElementById('savedBeanSelect');
+            if (select) {
+                select.value = beanId;
+                fillBeanDetails(beanId);
+            }
+            toggleForm(true);
+            document.getElementById('formWrapper')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
         const renderBeansTable = () => {
             const tbody = document.getElementById('beansTableBody');
             const empty = document.getElementById('beansEmpty');
@@ -1604,6 +2011,7 @@
             const createRow = (bean) => {
                 const tr = document.createElement('tr');
                 tr.className = "bg-white dark:bg-[#292524] border-b border-coffee-50 dark:border-[#34302e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors";
+                tr.ondblclick = (e) => openBeanCard(bean.id, e);
                 
                 let stockLeftDisplay = '-';
                 if (bean.calculatedStock !== null) {
@@ -1623,6 +2031,11 @@
                 const freezeIcon = bean.frozen ? 'fa-sun text-amber-500' : 'fa-snowflake text-sky-500';
                 const archiveLabel = bean.archived ? 'Unarchive' : 'Archive';
                 const archiveIcon = bean.archived ? 'fa-box-open text-amber-600' : 'fa-box-archive text-amber-600';
+                const buyMoreBtn = bean.shopUrl ? `
+                    <button onclick="openBeanShopUrl('${bean.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                        <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy more
+                    </button>
+                ` : '';
                 
                 tr.innerHTML = `
                     <td class="px-4 py-3 font-medium text-coffee-900 dark:text-white">${farmer}<br><span class="text-xs text-coffee-500">${roaster}</span></td>
@@ -1656,6 +2069,13 @@
                                  <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                              </button>
                              <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden">
+                                 <button onclick="openBeanCard('${bean.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                     <i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card
+                                 </button>
+                                 ${buyMoreBtn}
+                                 <button onclick="openBrewWithBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                     <i class="fa-solid fa-mug-saucer text-coffee-600 w-4"></i> Brew
+                                 </button>
                                  <button onclick="openNewBag('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                      <i class="fa-solid fa-bag-shopping text-green-600 w-4"></i> Open new bag
                                  </button>
@@ -1772,6 +2192,11 @@
                     archived: !isArchived,
                     updatedAt: new Date().toISOString()
                 });
+                const idx = beans.findIndex(b => b.id === beanId);
+                if (idx !== -1) {
+                    beans[idx] = { ...beans[idx], archived: !isArchived };
+                    if (currentBeanCardId === beanId) updateBeanCardActionButtons(beans[idx]);
+                }
             } catch (err) {
                 console.error("Error updating archive state:", err);
                 alert("Failed to update archive state.");
@@ -1787,6 +2212,11 @@
                     frozenDate: !isFrozen ? nowIso : null,
                     updatedAt: nowIso
                 });
+                const idx = beans.findIndex(b => b.id === beanId);
+                if (idx !== -1) {
+                    beans[idx] = { ...beans[idx], frozen: !isFrozen, frozenDate: !isFrozen ? nowIso : null };
+                    if (currentBeanCardId === beanId) updateBeanCardActionButtons(beans[idx]);
+                }
             } catch (err) {
                 console.error("Error updating frozen state:", err);
                 alert("Failed to update frozen state.");
@@ -3994,7 +4424,7 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, openBeanCard, closeBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans
         });
@@ -4012,7 +4442,7 @@
       }
     </script>
     <!-- Graph Modal -->
-    <div id="graphModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[70] flex items-center justify-center p-4" onclick="closeGraphModal()">
+    <div id="graphModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[10000] flex items-center justify-center p-4" onclick="closeGraphModal()">
         <div class="bg-white dark:bg-[#292524] rounded-2xl shadow-2xl w-full max-w-lg mx-auto border border-coffee-200 dark:border-[#44403c] max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center p-5 border-b border-coffee-100 dark:border-[#44403c]">
                 <h2 class="text-xl font-bold text-coffee-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-chart-line text-coffee-700 dark:text-[#d6ccc2]"></i> Graph</h2>
