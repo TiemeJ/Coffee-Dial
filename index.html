@@ -1165,6 +1165,8 @@
         let currentCardCoffee = null;
         let currentCardGraphData = null;
 
+        let pendingAIBeanImageFile = null;
+
         let currentStatsData = [];
         let currentBeanMeterPeriod = 'day';
 
@@ -1276,11 +1278,26 @@
                         setTimeout(() => el.classList.remove('ai-flash-effect'), 2000);
                     }
                 });
+                // Keep image for later upload on save
+                pendingAIBeanImageFile = compressedFile;
+
                 // Ensure form is open
                 toggleForm(true);
             } catch (error) { console.error(error); alert("Error scanning bag: " + error.message); } finally {
                 btn.disabled = false; btn.innerHTML = originalContent; btn.classList.remove('ai-loading-pulse'); event.target.value = '';
             }
+        };
+
+        const uploadPendingBeanImage = async (beanId) => {
+            if (!pendingAIBeanImageFile || !beanId || !currentUser) return;
+            const storageRef = ref(storage, `photos/${currentUser.uid}/bean_${beanId}_${Date.now()}`);
+            const snapshot = await uploadBytes(storageRef, pendingAIBeanImageFile);
+            const imageURL = await getDownloadURL(snapshot.ref);
+            await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                imageURL: imageURL,
+                updatedAt: new Date().toISOString()
+            });
+            pendingAIBeanImageFile = null;
         };
 
         const handleBeansAIFile = async (event) => {
@@ -1306,6 +1323,11 @@
                 const data = await response.json();
 
                 const nowIso = new Date().toISOString();
+                const beanRef = doc(collection(db, 'users', currentUser.uid, 'beans'));
+                const storageRef = ref(storage, `photos/${currentUser.uid}/bean_${beanRef.id}_${Date.now()}`);
+                const snapshot = await uploadBytes(storageRef, compressedFile);
+                const imageURL = await getDownloadURL(snapshot.ref);
+
                 const beanData = {
                     roaster: data.roaster || '',
                     farmer: data.farmer || '',
@@ -1319,10 +1341,11 @@
                     frozen: false,
                     stock: 250,
                     stockUpdatedAt: nowIso,
-                    openedDate: nowIso
+                    openedDate: nowIso,
+                    imageURL: imageURL
                 };
 
-                await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
+                await setDoc(beanRef, beanData);
             } catch (error) { console.error(error); alert("Error scanning bag: " + error.message); } finally {
                 btn.disabled = false; btn.innerHTML = originalContent; btn.classList.remove('ai-loading-pulse'); event.target.value = '';
             }
@@ -1547,6 +1570,7 @@
                         selectedBeanId = existingBean.id;
                         // Optionally update updatedTimestamp
                         await updateDoc(doc(db, 'users', currentUser.uid, 'beans', selectedBeanId), { updatedAt: beanData.updatedAt });
+                        await uploadPendingBeanImage(selectedBeanId);
                     } else {
                         // Create New Bean with Auto-ID
                         if (beanData.roaster || beanData.origin) { // Only create if minimal data exists
@@ -1560,11 +1584,13 @@
                             beanData.openedDate = nowIso;
                             const newBeanRef = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
                             selectedBeanId = newBeanRef.id;
+                            await uploadPendingBeanImage(selectedBeanId);
                         }
                     }
                 } else {
                     // Update existing bean timestamp
                      await updateDoc(doc(db, 'users', currentUser.uid, 'beans', selectedBeanId), { updatedAt: beanData.updatedAt });
+                     await uploadPendingBeanImage(selectedBeanId);
                 }
 
                 // Add beanId to brew data
@@ -1750,7 +1776,7 @@
 
             if (brewBtn) brewBtn.onclick = () => { closeBeanCard(null); openBrewWithBean(bean.id); };
             if (openNewBagBtn) openNewBagBtn.onclick = () => openNewBag(bean.id);
-            if (deleteBtn) deleteBtn.onclick = () => deleteBean(bean.id);
+            if (deleteBtn) deleteBtn.onclick = () => { closeBeanCard(null); deleteBean(bean.id); };
             if (buyBtn) {
                 if (bean.shopUrl) {
                     buyBtn.classList.remove('hidden');
@@ -3503,6 +3529,7 @@
         const deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); };
         const resetFormState = (e) => { 
             if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('numeric'); setNotesMode('manual'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); document.getElementById('isActiveToggle').checked = false; document.getElementById('drinkOther').classList.add('hidden'); document.getElementById('methodOther').classList.add('hidden');
+            pendingAIBeanImageFile = null;
             if (window.coffeeScale?.resetCaptureData) window.coffeeScale.resetCaptureData();
             if (window.coffeeScale?.syncGraphFormFields) window.coffeeScale.syncGraphFormFields();
         };
