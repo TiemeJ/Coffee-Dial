@@ -590,6 +590,7 @@
                                 <th class="px-4 py-3 text-center w-24">Stock (g)</th>
                                 <th class="px-4 py-3 text-center w-24">Stock Left</th>
                                 <th class="px-4 py-3 text-center w-24">Opened Date</th>
+                                <th class="px-4 py-3 text-center w-24">Frozen Date</th>
                                 <th class="px-4 py-3 text-center w-24">Roast Date</th>
                                 <th class="px-4 py-3 text-center w-24">Actions</th>
                             </tr>
@@ -1615,6 +1616,7 @@
                 const process = bean.processing || '-';
                 const variety = bean.variety ? `<br><span class="text-xs text-coffee-500">${bean.variety}</span>` : '';
                 const openedDateInputValue = formatBeanDateForInput(bean.openedDate);
+                const frozenDateInputValue = formatBeanDateForInput(bean.frozenDate);
                 const roastDateInputValue = formatBeanDateForInput(bean.roastDate);
                 const menuId = `beans-action-menu-${bean.id}`;
                 const freezeLabel = bean.frozen ? 'Unfreeze' : 'Freeze';
@@ -1636,6 +1638,11 @@
                     <td class="px-4 py-3 text-center">
                         <input type="date" value="${openedDateInputValue}"
                             onchange="saveBeanOpenedDate('${bean.id}', this.value)"
+                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="date" value="${frozenDateInputValue}"
+                            onchange="saveBeanFrozenDate('${bean.id}', this.value)"
                             class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500">
                     </td>
                     <td class="px-4 py-3 text-center">
@@ -1673,7 +1680,7 @@
             if (inStockBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = "bg-green-50 dark:bg-green-900/20";
-                headerRow.innerHTML = `<td colspan="9" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>`;
+                headerRow.innerHTML = `<td colspan="10" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>`;
                 tbody.appendChild(headerRow);
                 inStockBeans.forEach(bean => tbody.appendChild(createRow(bean)));
             }
@@ -1683,7 +1690,7 @@
                 if(inStockBeans.length > 0) {
                     const headerRow = document.createElement('tr');
                     headerRow.className = "bg-blue-50 dark:bg-blue-900/20";
-                    headerRow.innerHTML = `<td colspan="9" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>`;
+                    headerRow.innerHTML = `<td colspan="10" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>`;
                     tbody.appendChild(headerRow);
                 }
                 frozenBeans.forEach(bean => tbody.appendChild(createRow(bean)));
@@ -1694,7 +1701,7 @@
                  if(inStockBeans.length > 0 || frozenBeans.length > 0) {
                     const headerRow = document.createElement('tr');
                     headerRow.className = "bg-gray-50 dark:bg-[#34302e]";
-                          headerRow.innerHTML = `<td colspan="9" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>`;
+                          headerRow.innerHTML = `<td colspan="10" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>`;
                     tbody.appendChild(headerRow);
                  }
                  otherBeans.forEach(bean => tbody.appendChild(createRow(bean)));
@@ -1744,6 +1751,20 @@
             }
         };
 
+        const saveBeanFrozenDate = async (beanId, dateValue) => {
+            if (!currentUser) return;
+            try {
+                const frozenDateVal = dateValue ? new Date(dateValue).toISOString() : null;
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                    frozenDate: frozenDateVal,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error("Error saving frozen date:", err);
+                alert("Failed to save frozen date.");
+            }
+        };
+
         const toggleBeanArchive = async (beanId, isArchived) => {
             if (!currentUser) return;
             try {
@@ -1760,9 +1781,11 @@
         const toggleBeanFrozen = async (beanId, isFrozen) => {
             if (!currentUser) return;
             try {
+                const nowIso = new Date().toISOString();
                 await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
                     frozen: !isFrozen,
-                    updatedAt: new Date().toISOString()
+                    frozenDate: !isFrozen ? nowIso : null,
+                    updatedAt: nowIso
                 });
             } catch (err) {
                 console.error("Error updating frozen state:", err);
@@ -1780,6 +1803,7 @@
             delete newBeanData.stock;
             delete newBeanData.stockUpdatedAt;
             delete newBeanData.openedDate;
+            delete newBeanData.frozenDate;
             delete newBeanData.roastDate;
             delete newBeanData.frozen;
             delete newBeanData.archived;
@@ -1789,6 +1813,7 @@
             newBeanData.stockUpdatedAt = new Date().toISOString();
             newBeanData.frozen = false;
             newBeanData.archived = false;
+            newBeanData.frozenDate = null;
             newBeanData.openedDate = new Date().toISOString();
             newBeanData.createdAt = new Date().toISOString();
             newBeanData.updatedAt = new Date().toISOString();
@@ -3971,7 +3996,7 @@
         Object.assign(window, { 
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, openCardGraphModal, closeCardGraphModal, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
-            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans
+            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans
         });
 
         const searchInput = document.getElementById('globalSearch'); 
