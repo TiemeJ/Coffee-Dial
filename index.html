@@ -559,6 +559,9 @@
                      <button onclick="syncLegacyBeans()" class="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded font-bold transition-colors border border-indigo-200 dark:border-indigo-800">
                         <i class="fa-solid fa-sync-alt mr-1"></i> Scan brews
                     </button>
+                    <button onclick="extractCoffeeTypesFromBeans()" class="text-xs bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded font-bold transition-colors border border-emerald-200 dark:border-emerald-800">
+                        <i class="fa-solid fa-layer-group mr-1"></i> Extract coffee types
+                    </button>
                     <div class="relative">
                         <button type="button" onclick="toggleBeansAiMenu(event)" id="beansAiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Add bag
@@ -775,6 +778,12 @@
             </div>
             <div id="beanCardEdit" class="hidden p-4 space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Coffee Type</label>
+                        <select id="beanEditCoffeeType" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <option value="">-- Select Coffee Type --</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Farmer</label>
                         <input id="beanEditFarmer" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
@@ -1215,10 +1224,12 @@
         let currentView = 'mine'; 
         let coffees = [];
         let beans = []; // Store saved beans
+        let coffeeTypes = []; // Store coffee types
         let following = [];
         let followers = []; 
         let unsubscribeData = null; 
         let unsubscribeBeans = null; // Listener for saved beans
+        let unsubscribeCoffeeTypes = null; // Listener for coffee types
         let unsubscribeNotifications = null;
         let isPublic = false;
         let sortableInstances = []; 
@@ -1461,6 +1472,7 @@
             currentView = uid;
             if(unsubscribeData) unsubscribeData(); 
             if(unsubscribeBeans) unsubscribeBeans();
+            if(unsubscribeCoffeeTypes) unsubscribeCoffeeTypes();
 
             const targetUid = uid === 'mine' ? currentUser.uid : uid;
             const isMine = uid === 'mine';
@@ -1498,6 +1510,23 @@
                 beans = [];
                 renderPinnedTiles(); renderTable();
             });
+
+            // Listen to Coffee Types (only for own view)
+            if (isMine) {
+                const typeQ = collection(db, 'users', targetUid, 'coffeeTypes');
+                unsubscribeCoffeeTypes = onSnapshot(typeQ, (snapshot) => {
+                    coffeeTypes = [];
+                    snapshot.forEach(doc => coffeeTypes.push({ id: doc.id, ...doc.data() }));
+                    updateCoffeeTypeSelectors();
+                }, (error) => {
+                    console.error("Error loading coffee types:", error);
+                    coffeeTypes = [];
+                    updateCoffeeTypeSelectors();
+                });
+            } else {
+                coffeeTypes = [];
+                updateCoffeeTypeSelectors();
+            }
         };
 
         const updateBeanDropdown = () => {
@@ -1516,6 +1545,103 @@
                 option.text = `${roaster}${farmer}`;
                 select.appendChild(option);
             });
+        };
+
+        const updateCoffeeTypeSelectors = () => {
+            const select = document.getElementById('beanEditCoffeeType');
+            if (!select) return;
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">-- Select Coffee Type --</option>';
+            coffeeTypes
+                .slice()
+                .sort((a,b) => (a.roaster || '').localeCompare(b.roaster || ''))
+                .forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type.id;
+                    const roaster = type.roaster || 'Unknown';
+                    const farmer = type.farmer ? ` - ${type.farmer}` : '';
+                    const roast = type.roast ? ` (${type.roast})` : '';
+                    option.text = `${roaster}${farmer}${roast}`;
+                    select.appendChild(option);
+                });
+            if (currentValue) select.value = currentValue;
+        };
+
+        const extractCoffeeTypesFromBeans = async () => {
+            if (!currentUser) return alert("Please sign in to extract coffee types.");
+            if (!beans.length) return alert("No coffee bags found to extract.");
+
+            const normalize = (v) => (v || '').toLowerCase().trim();
+            const makeKey = (obj) => [
+                normalize(obj.roaster),
+                normalize(obj.farmer),
+                normalize(obj.processing),
+                normalize(obj.origin),
+                normalize(obj.roast || obj.roastType)
+            ].join('|');
+
+            const existingTypeByKey = new Map(coffeeTypes.map(ct => [makeKey(ct), ct]));
+            const newTypeByKey = new Map();
+            const nowIso = new Date().toISOString();
+
+            beans.forEach(bean => {
+                const key = makeKey(bean);
+                if (existingTypeByKey.has(key) || newTypeByKey.has(key)) return;
+                newTypeByKey.set(key, {
+                    uid: currentUser.uid,
+                    roaster: bean.roaster || '',
+                    farmer: bean.farmer || '',
+                    processing: bean.processing || '',
+                    origin: bean.origin || '',
+                    tasteNotes: bean.tasteNotes || bean.notes || '',
+                    roast: bean.roastType || '',
+                    webshopUrl: bean.shopUrl || '',
+                    imageUrl: bean.imageURL || '',
+                    variety: bean.variety || '',
+                    createdAt: nowIso,
+                    updatedAt: nowIso
+                });
+            });
+
+            if (!newTypeByKey.size && !coffeeTypes.length) {
+                return alert("No coffee types found to extract.");
+            }
+
+            try {
+                const batch = writeBatch(db);
+                const typeIdByKey = new Map();
+
+                existingTypeByKey.forEach((type, key) => {
+                    if (type?.id) typeIdByKey.set(key, type.id);
+                });
+
+                newTypeByKey.forEach((typeData, key) => {
+                    const ref = doc(collection(db, 'users', currentUser.uid, 'coffeeTypes'));
+                    batch.set(ref, typeData);
+                    typeIdByKey.set(key, ref.id);
+                });
+
+                beans.forEach(bean => {
+                    const key = makeKey(bean);
+                    const typeId = typeIdByKey.get(key);
+                    if (!typeId || bean.coffeeTypeId === typeId) return;
+                    batch.update(doc(db, 'users', currentUser.uid, 'beans', bean.id), { coffeeTypeId: typeId, updatedAt: nowIso });
+                });
+
+                await batch.commit();
+
+                beans = beans.map(bean => {
+                    const key = makeKey(bean);
+                    const typeId = typeIdByKey.get(key);
+                    return typeId ? { ...bean, coffeeTypeId: typeId } : bean;
+                });
+
+                const addedCount = newTypeByKey.size;
+                alert(`Saved ${addedCount} coffee type${addedCount === 1 ? '' : 's'} and linked bags.`);
+            } catch (error) {
+                console.error(error);
+                alert("Error saving coffee types: " + error.message);
+            }
         };
 
         const fillBeanDetails = (beanId) => {
@@ -1764,6 +1890,7 @@
             if (!currentUser) return alert("Please sign in.");
             document.getElementById('beansModal').classList.remove('hidden');
             renderBeansTable();
+            updateCoffeeTypeSelectors();
         };
 
         const closeBeans = () => {
@@ -2001,6 +2128,7 @@
             if (!currentBeanCardId) return;
             const bean = beans.find(b => b.id === currentBeanCardId);
             if (!bean) return;
+            updateCoffeeTypeSelectors();
             const toInputDate = (value) => {
                 if (!value) return '';
                 const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
@@ -2018,6 +2146,7 @@
             document.getElementById('beanEditVariety').value = bean.variety || '';
             document.getElementById('beanEditRoastType').value = bean.roastType || '';
             document.getElementById('beanEditShopUrl').value = bean.shopUrl || '';
+            document.getElementById('beanEditCoffeeType').value = bean.coffeeTypeId || '';
             document.getElementById('beanEditStock').value = bean.stock ?? '';
             document.getElementById('beanEditOpenedDate').value = toInputDate(bean.openedDate);
             document.getElementById('beanEditFrozenDate').value = toInputDate(bean.frozenDate);
@@ -2045,6 +2174,7 @@
             const roastDateVal = document.getElementById('beanEditRoastDate').value;
             const frozenChecked = document.getElementById('beanEditFrozen').checked;
             const archivedChecked = document.getElementById('beanEditArchived').checked;
+            const coffeeTypeIdVal = document.getElementById('beanEditCoffeeType').value || '';
 
             const updates = {
                 farmer: document.getElementById('beanEditFarmer').value || '',
@@ -2054,6 +2184,7 @@
                 variety: document.getElementById('beanEditVariety').value || '',
                 roastType: document.getElementById('beanEditRoastType').value || '',
                 shopUrl: document.getElementById('beanEditShopUrl').value || '',
+                coffeeTypeId: coffeeTypeIdVal,
                 stock: stockVal,
                 openedDate: openedDateVal ? new Date(openedDateVal).toISOString() : null,
                 frozenDate: frozenDateVal ? new Date(frozenDateVal).toISOString() : null,
@@ -4672,7 +4803,7 @@
         Object.assign(window, { 
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
-            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans
+            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, extractCoffeeTypesFromBeans
         });
 
         const searchInput = document.getElementById('globalSearch'); 
