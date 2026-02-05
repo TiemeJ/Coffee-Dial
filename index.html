@@ -629,7 +629,7 @@
                 <div class="p-5 overflow-y-auto space-y-5">
                     <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                         <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Origin</span><span id="cardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
-                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Blend/Farmer</span><span id="cardFarmer" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Roaster</span><span id="cardFarmer" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                         <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Process</span><span id="cardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                         <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Roast</span><span id="cardRoastType" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                         <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Drink</span><span id="cardDrink" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
@@ -849,17 +849,53 @@
                 </button>
             </div>
             <div class="p-4 bg-coffee-50/50 dark:bg-[#1c1917]">
+                <div id="cardGraphSubtitle" class="text-xs text-coffee-600 dark:text-[#a8a29e] mb-3">&nbsp;</div>
                 <div class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-2">
                     <canvas id="cardGraphCanvas" class="w-full h-52"></canvas>
                     <div id="cardGraphEmpty" class="hidden text-xs text-center text-coffee-400 dark:text-[#78716c] py-3">No graph data for this brew.</div>
                 </div>
-                <div class="flex justify-end gap-2 mt-3">
-                    <button id="cardGraphPrevBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" onclick="navigateCoffeeCardFromGraph(-1)">
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </button>
-                    <button id="cardGraphNextBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" onclick="navigateCoffeeCardFromGraph(1)">
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>
+                <div class="bg-coffee-50/50 dark:bg-[#201d1b] p-3 rounded-lg border border-coffee-100 dark:border-[#44403c] mt-3">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">In (g)</label>
+                            <input type="number" step="any" id="cardGraphInputWeight" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                        <div class="relative">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label>
+                            <input type="number" step="any" id="cardGraphInputRatio" readonly tabindex="-1" class="w-full text-center font-mono bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label>
+                            <input type="number" step="any" id="cardGraphInputYield" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-coffee-50/50 dark:bg-[#201d1b] p-3 rounded-lg border border-coffee-100 dark:border-[#44403c] mt-3">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">First drip</label>
+                            <input type="number" step="any" id="cardGraphFirstDrip" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Max flow</label>
+                            <input type="number" step="any" id="cardGraphMaxFlow" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Avg flow</label>
+                            <input type="number" step="any" id="cardGraphAvgFlow" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between mt-3 text-xs text-coffee-400 dark:text-[#57534e]">
+                    <span id="cardGraphDate"></span>
+                    <div class="flex justify-end gap-2">
+                        <button id="cardGraphPrevBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" onclick="navigateCoffeeCardFromGraph(-1)">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <button id="cardGraphNextBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" onclick="navigateCoffeeCardFromGraph(1)">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1122,7 +1158,7 @@
             </div>
         </div>
     </div>
-    <div id="connectScaleModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div id="connectScaleModal" class="hidden fixed inset-0 z-[10002] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
                 <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-scale-balanced mr-2"></i>Connect scale</h3>
@@ -3231,10 +3267,10 @@
                 flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
                 rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] }
             } : null;
-            document.getElementById('cardRoaster').textContent = c.roaster || c.name || 'Unknown Roaster';
+            document.getElementById('cardRoaster').textContent = c.farmer || c.roaster || c.name || 'Unknown Blend';
             document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
             document.getElementById('cardOrigin').textContent = c.origin || c.beanType || '-';
-            document.getElementById('cardFarmer').textContent = c.farmer || '-';
+            document.getElementById('cardFarmer').textContent = c.roaster || c.name || '-';
             document.getElementById('cardProcess').textContent = c.processing || '-';
             document.getElementById('cardRoastType').textContent = c.roastType || '-';
             document.getElementById('cardMethod').textContent = c.method || '-';
@@ -3484,6 +3520,49 @@
             modal.classList.remove('hidden');
             const canvas = document.getElementById('cardGraphCanvas');
             const emptyEl = document.getElementById('cardGraphEmpty');
+            const subtitleEl = document.getElementById('cardGraphSubtitle');
+            const dateEl = document.getElementById('cardGraphDate');
+            const inputWeightEl = document.getElementById('cardGraphInputWeight');
+            const inputRatioEl = document.getElementById('cardGraphInputRatio');
+            const inputYieldEl = document.getElementById('cardGraphInputYield');
+            const firstDripEl = document.getElementById('cardGraphFirstDrip');
+            const maxFlowEl = document.getElementById('cardGraphMaxFlow');
+            const avgFlowEl = document.getElementById('cardGraphAvgFlow');
+            const c = currentCardCoffee || {};
+            if (subtitleEl) {
+                const roaster = c.roaster || c.name || 'Unknown Roaster';
+                const farmer = c.farmer || '-';
+                const method = c.method || '-';
+                subtitleEl.textContent = `${roaster} ${farmer} (${method})`;
+            }
+            if (dateEl) {
+                const formatDateTime = (value) => {
+                    if (!value) return '-';
+                    const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+                    if (isNaN(dateObj)) return '-';
+                    const dd = String(dateObj.getDate()).padStart(2, '0');
+                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const yy = String(dateObj.getFullYear()).slice(-2);
+                    const hh = String(dateObj.getHours()).padStart(2, '0');
+                    const min = String(dateObj.getMinutes()).padStart(2, '0');
+                    return `${dd}-${mm}-${yy} ${hh}:${min}`;
+                };
+                dateEl.textContent = formatDateTime(c.createdAt);
+            }
+            const weightVal = parseFloat(c.weight);
+            const ratioVal = parseFloat(c.ratio);
+            if (inputWeightEl) inputWeightEl.value = (!isNaN(weightVal) ? weightVal : '');
+            if (inputRatioEl) inputRatioEl.value = (!isNaN(ratioVal) ? ratioVal : '');
+            if (inputYieldEl) {
+                if (!isNaN(weightVal) && !isNaN(ratioVal)) {
+                    inputYieldEl.value = (weightVal * ratioVal).toFixed(1);
+                } else {
+                    inputYieldEl.value = '';
+                }
+            }
+            if (firstDripEl) firstDripEl.value = (c.firstDrip ?? '');
+            if (maxFlowEl) maxFlowEl.value = (c.maxFlow ?? '');
+            if (avgFlowEl) avgFlowEl.value = (c.avgFlow ?? '');
             if (window.coffeeScale?.renderGraphTo && currentCardGraphData) {
                 if (emptyEl) emptyEl.classList.add('hidden');
                 window.coffeeScale.renderGraphTo(canvas, currentCardGraphData);
