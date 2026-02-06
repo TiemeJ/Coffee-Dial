@@ -598,24 +598,29 @@
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
-                <div class="mb-3 relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <i class="fa-solid fa-search text-coffee-400"></i>
+                <div class="mb-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <select id="beansViewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
+                        <option value="mine">My Beans</option>
+                    </select>
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fa-solid fa-search text-coffee-400"></i>
+                        </div>
+                        <input id="beansSearch" type="text" placeholder="Search beans..." oninput="setBeansSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                            <button id="beansSearchClearBtn" onclick="clearBeansSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                            <button onclick="toggleBeansQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                                <i class="fa-solid fa-filter"></i>
+                            </button>
+                        </div>
+                        <div id="beansQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                        </div>
+                        <div id="beansQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
                     </div>
-                    <input id="beansSearch" type="text" placeholder="Search beans..." oninput="setBeansSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-1">
-                        <button id="beansSearchClearBtn" onclick="clearBeansSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                        <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
-                        <button onclick="toggleBeansQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
-                            <i class="fa-solid fa-filter"></i>
-                        </button>
-                    </div>
-                    <div id="beansQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                        <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
-                    </div>
-                    <div id="beansQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
                 </div>
                 <div id="beansActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap mb-4">
                     <div class="flex items-center gap-2 flex-wrap" id="beansActiveFiltersList"></div>
@@ -678,24 +683,29 @@
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
-                <div class="mb-3 relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <i class="fa-solid fa-search text-coffee-400"></i>
+                <div class="mb-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <select id="coffeeTypesViewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
+                        <option value="mine">My Coffees</option>
+                    </select>
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fa-solid fa-search text-coffee-400"></i>
+                        </div>
+                        <input id="coffeeTypesSearch" type="text" placeholder="Search coffees..." oninput="setCoffeeTypesSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                            <button id="coffeeTypesSearchClearBtn" onclick="clearCoffeeTypesSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                            <button onclick="toggleCoffeeTypesQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                                <i class="fa-solid fa-filter"></i>
+                            </button>
+                        </div>
+                        <div id="coffeeTypesQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                        </div>
+                        <div id="coffeeTypesQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
                     </div>
-                    <input id="coffeeTypesSearch" type="text" placeholder="Search coffees..." oninput="setCoffeeTypesSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-1">
-                        <button id="coffeeTypesSearchClearBtn" onclick="clearCoffeeTypesSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                        <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
-                        <button onclick="toggleCoffeeTypesQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
-                            <i class="fa-solid fa-filter"></i>
-                        </button>
-                    </div>
-                    <div id="coffeeTypesQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                        <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
-                    </div>
-                    <div id="coffeeTypesQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
                 </div>
                 <div id="coffeeTypesActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap mb-4">
                     <div class="flex items-center gap-2 flex-wrap" id="coffeeTypesActiveFiltersList"></div>
@@ -1866,6 +1876,7 @@
 
         const changeView = (uid) => {
             currentView = uid;
+            syncFriendViewSelectValues(uid);
             if(unsubscribeData) unsubscribeData(); 
             if(unsubscribeBeans) unsubscribeBeans();
             if(unsubscribeCoffeeTypes) unsubscribeCoffeeTypes();
@@ -1884,7 +1895,7 @@
                 renderPinnedTiles(); renderTable(); updateAutocompleteLists();
             }, (error) => {
                 console.error(error);
-                if(error.code === 'permission-denied') { alert("⚠️ Access Denied: This user's profile is private."); document.getElementById('viewSelect').value = 'mine'; changeView('mine'); }
+                if(error.code === 'permission-denied') { alert("⚠️ Access Denied: This user's profile is private."); syncFriendViewSelectValues('mine'); changeView('mine'); }
             });
 
             // Listen to Beans - load for whoever we're viewing
@@ -1894,10 +1905,10 @@
                 snapshot.forEach(doc => beans.push({ id: doc.id, ...doc.data() }));
                 if(isMine) {
                     updateBeanDropdown();
-                    // If beans modal is open, refresh it
-                    if(!document.getElementById('beansModal').classList.contains('hidden')) {
-                        renderBeansTable();
-                    }
+                }
+                // If beans modal is open, refresh it
+                if(!document.getElementById('beansModal').classList.contains('hidden')) {
+                    renderBeansTable();
                 }
                 renderPinnedTiles(); renderTable(); 
             }, (error) => {
@@ -4006,6 +4017,30 @@
             } catch(e) { console.error("Unfollow error", e); alert("Error unfollowing"); }
         };
 
+        const syncFriendViewSelectValues = (value) => {
+            ['viewSelect', 'beansViewSelect', 'coffeeTypesViewSelect'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            });
+        };
+
+        const updateFriendViewSelectors = () => {
+            const populateSelect = (select, label) => {
+                if (!select) return;
+                select.innerHTML = `<option value="mine">My ${label}</option>`;
+                following.forEach(f => {
+                    const option = document.createElement('option');
+                    option.value = f.uid;
+                    option.text = f.name || `Friend (${f.uid.substr(0,5)}...)`;
+                    select.appendChild(option);
+                });
+                select.value = currentView;
+            };
+            populateSelect(document.getElementById('viewSelect'), 'Brews');
+            populateSelect(document.getElementById('beansViewSelect'), 'Beans');
+            populateSelect(document.getElementById('coffeeTypesViewSelect'), 'Coffees');
+        };
+
         const loadFollowingList = async () => { 
             if(!currentUser) return;
             const s = await getDocs(collection(db, 'users', currentUser.uid, 'following'));
@@ -4018,11 +4053,7 @@
                     l.appendChild(d);
                 });
             }
-            const sl = document.getElementById('viewSelect'); sl.innerHTML = '<option value="mine">My Brews</option>';
-            following.forEach(f => {
-                const o = document.createElement('option'); o.value = f.uid; o.text = f.name || `Friend (${f.uid.substr(0,5)}...)`; sl.appendChild(o);
-            });
-            sl.value = currentView; 
+            updateFriendViewSelectors();
         };
 
         const loadFollowersList = async () => {
