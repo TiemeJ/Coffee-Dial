@@ -204,6 +204,9 @@
                                  <button onclick="openBeans(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                                      <i class="fa-solid fa-seedling w-4 text-center"></i> <span>Beans</span>
                         </button>
+                                <button onclick="openCoffeeTypes(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                    <i class="fa-solid fa-layer-group w-4 text-center"></i> <span>Coffee types</span>
+                                </button>
                         <button onclick="openGallery(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-images w-4 text-center"></i> <span>Photo Gallery</span>
@@ -267,9 +270,9 @@
                     <!-- SECTION 1: COFFEE DETAILS -->
                     <div class="bg-coffee-50 dark:bg-[#1c1917]/50 p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] relative">
                          <div class="flex justify-between items-center mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c]">
-                             <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
-                                <i class="fa-solid fa-seedling text-coffee-600 dark:text-[#a8a29e]"></i> Coffee Details
-                             </h3>
+                                      <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                                          <i class="fa-solid fa-seedling text-coffee-600 dark:text-[#a8a29e]"></i> <span id="coffeeDetailsTitle">Coffee Details</span>
+                                      </h3>
                             <!-- AI & Saved Beans Controls -->
                             <div class="flex items-center gap-2">
                                  <div class="relative">
@@ -287,18 +290,22 @@
                                     </div>
                                     <input type="file" id="aiFileInput" accept="image/*" class="hidden" onchange="handleAIFile(event)">
                                 </div>
+                                <button type="button" onclick="toggleCoffeeDetails(event)" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse coffee details">
+                                    <i id="coffeeDetailsToggleIcon" class="fa-solid fa-chevron-up transition-transform"></i>
+                                </button>
                             </div>
                          </div>
                          
-                         <!-- Saved Beans Dropdown -->
-                         <div class="mb-4">
-                             <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Select Saved Bean</label>
-                             <select id="savedBeanSelect" onchange="fillBeanDetails(this.value)" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 cursor-pointer shadow-sm">
-                                 <option value="">-- Create New / Custom --</option>
-                             </select>
-                         </div>
+                         <div id="coffeeDetailsBody">
+                             <!-- Saved Beans Dropdown -->
+                             <div class="mb-4">
+                                 <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Select Saved Bean</label>
+                                 <select id="savedBeanSelect" onchange="fillBeanDetails(this.value)" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 cursor-pointer shadow-sm">
+                                     <option value="">-- create new --</option>
+                                 </select>
+                             </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roaster</label>
                                 <input type="text" id="roaster" name="roaster" list="roasterList" placeholder="e.g. La Cabra" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
@@ -317,6 +324,7 @@
                             <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Variety</label><input type="text" id="variety" name="variety" placeholder="e.g. Geisha" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"></div>
                             <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Processing</label><input type="text" id="processing" name="processing" placeholder="e.g. Natural" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"></div>
                             <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roast Type</label><select id="roastType" name="roastType" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 cursor-pointer"><option value="" disabled selected>Select Roast</option><option value="Light">Light</option><option value="Medium">Medium</option><option value="Medium-Dark">Medium-Dark</option><option value="Dark">Dark</option></select></div>
+                            </div>
                         </div>
                     </div>
 
@@ -576,6 +584,9 @@
                         </div>
                         <input type="file" id="beansAiFileInput" accept="image/*" class="hidden" onchange="handleBeansAIFile(event)">
                     </div>
+                    <button onclick="createBeanFromModal()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add bag
+                    </button>
                     <button onclick="closeBeans()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white ml-2">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
@@ -608,6 +619,216 @@
         </div>
     </div>
 
+    <!-- Coffee Types Modal -->
+    <div id="coffeeTypesModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917]">
+                <h3 class="font-bold text-xl text-coffee-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-coffee-600 dark:text-[#d6ccc2]"></i> Coffee Types
+                </h3>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <button type="button" onclick="toggleCoffeeTypesAiMenu(event)" id="coffeeTypesAiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Add coffee type
+                        </button>
+                        <div id="coffeeTypesAiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <button type="button" onclick="triggerCoffeeTypesAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
+                                <i class="fa-solid fa-camera w-4"></i> Take Photo
+                            </button>
+                            <button type="button" onclick="triggerCoffeeTypesAIScan('library')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-images w-4"></i> From Gallery
+                            </button>
+                        </div>
+                        <input type="file" id="coffeeTypesAiFileInput" accept="image/*" class="hidden" onchange="handleCoffeeTypesAIFile(event)">
+                    </div>
+                    <button onclick="createCoffeeTypeFromModal()" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add coffee type
+                    </button>
+                    <button onclick="closeCoffeeTypes()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
+                <div class="mb-4 space-y-3">
+                    <input id="coffeeTypesSearch" type="text" placeholder="Search coffee types..." oninput="setCoffeeTypesSearch(this.value)" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
+                </div>
+                <div class="overflow-x-auto rounded-lg border border-coffee-200 dark:border-[#44403c]">
+                    <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+                        <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
+                            <tr>
+                                <th class="px-4 py-3">
+                                    <button type="button" onclick="setCoffeeTypesSort('farmer')" class="flex items-center gap-2">
+                                        <span>Farmer</span>
+                                        <span id="coffeeTypesSortIcon-farmer" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <button type="button" onclick="setCoffeeTypesSort('roaster')" class="flex items-center gap-2">
+                                        <span>Roaster</span>
+                                        <span id="coffeeTypesSortIcon-roaster" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <button type="button" onclick="setCoffeeTypesSort('origin')" class="flex items-center gap-2">
+                                        <span>Origin</span>
+                                        <span id="coffeeTypesSortIcon-origin" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <button type="button" onclick="setCoffeeTypesSort('processing')" class="flex items-center gap-2">
+                                        <span>Process</span>
+                                        <span id="coffeeTypesSortIcon-processing" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <button type="button" onclick="setCoffeeTypesSort('variety')" class="flex items-center gap-2">
+                                        <span>Variety</span>
+                                        <span id="coffeeTypesSortIcon-variety" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center">
+                                    <button type="button" onclick="setCoffeeTypesSort('roast')" class="flex items-center gap-2 mx-auto">
+                                        <span>Roast</span>
+                                        <span id="coffeeTypesSortIcon-roast" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center">
+                                    <button type="button" onclick="setCoffeeTypesSort('createdAt')" class="flex items-center gap-2 mx-auto">
+                                        <span>Created</span>
+                                        <span id="coffeeTypesSortIcon-createdAt" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="coffeeTypesTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
+                    </table>
+                </div>
+                <div id="coffeeTypesEmpty" class="hidden text-center py-8 text-coffee-400 dark:text-[#57534e]">
+                    <p>No coffee types saved yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coffee Type Card Overlay -->
+    <div id="coffeeTypeCardOverlay" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCoffeeTypeCard(event)">
+        <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c]" onclick="event.stopPropagation()">
+            <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
+                <div class="absolute top-4 right-4 flex items-center gap-2">
+                    <button id="coffeeTypeCardEditBtn" onclick="enterCoffeeTypeEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
+                        <i class="fa-solid fa-pen-to-square text-lg"></i>
+                    </button>
+                    <button onclick="closeCoffeeTypeCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <h3 id="coffeeTypeCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
+                <p id="coffeeTypeCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
+            </div>
+            <div id="coffeeTypeCardView" class="p-4 space-y-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="w-36 md:w-40 lg:w-48">
+                        <div id="coffeeTypeCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
+                            <img id="coffeeTypeCardImage" class="absolute inset-0 w-full h-full object-contain hidden cursor-pointer" src="" alt="Coffee Type Photo" onclick="openCoffeeTypePhoto(event)">
+                            <div id="coffeeTypeCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
+                                <i class="fa-solid fa-image text-3xl mb-2"></i>
+                                <p class="text-xs font-medium">Add / Change picture</p>
+                            </div>
+                            <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" onclick="triggerCoffeeTypePhoto(event)" title="Change photo">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" onclick="removeCoffeeTypePhoto(event)" title="Remove photo">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="file" id="coffeeTypePhotoInput" accept="image/*" class="hidden" onchange="handleCoffeeTypePhoto(event)">
+                    </div>
+                    <div class="flex-1 space-y-4">
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Origin</span>
+                                <span id="coffeeTypeCardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</span>
+                                <span id="coffeeTypeCardRoast" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Process</span>
+                                <span id="coffeeTypeCardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Variety</span>
+                                <span id="coffeeTypeCardVariety" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Created</span>
+                            <span id="coffeeTypeCardCreated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-coffee-100 dark:border-[#44403c]">
+                    <div class="flex flex-wrap gap-2">
+                        <button id="coffeeTypeCardBuyBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-cart-shopping"></i> Buy more
+                        </button>
+                        <button id="coffeeTypeCardDeleteBtn" onclick="deleteCoffeeType()" class="px-3 py-1.5 text-xs font-bold rounded bg-red-600 hover:bg-red-700 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-3">
+                        <button id="coffeeTypeCardPrevBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" onclick="navigateCoffeeTypeCard(-1)">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <button id="coffeeTypeCardNextBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" onclick="navigateCoffeeTypeCard(1)">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="coffeeTypeCardEdit" class="hidden p-4 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Farmer</label>
+                        <input id="coffeeTypeEditFarmer" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roaster</label>
+                        <input id="coffeeTypeEditRoaster" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Origin</label>
+                        <input id="coffeeTypeEditOrigin" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Process</label>
+                        <input id="coffeeTypeEditProcessing" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Variety</label>
+                        <input id="coffeeTypeEditVariety" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</label>
+                        <input id="coffeeTypeEditRoast" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Web Shop URL</label>
+                        <input id="coffeeTypeEditShopUrl" type="url" placeholder="https://" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="cancelCoffeeTypeEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+                    <button onclick="saveCoffeeTypeEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Coffee Card Overlay -->
     <div id="coffeeCardOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCoffeeCard(event)">
         <!-- Same as original -->
@@ -624,9 +845,17 @@
                 </div>
             </div>
 
-            <div id="coffeeCardContent" class="bg-white dark:bg-[#292524] w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+            <div id="coffeeCardContent" class="bg-white dark:bg-[#292524] w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation(); closeCoffeeCardMenu()">
                 <div class="bg-coffee-100 dark:bg-[#1c1917] p-5 border-b border-coffee-200 dark:border-[#44403c] relative">
-                    <button id="cardCloseBtn" onclick="closeCoffeeCard(null)" class="absolute top-4 right-4 text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    <button id="cardCloseBtn" onclick="closeCoffeeCard(null)" class="absolute top-4 right-4 text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                    <div class="absolute right-4 top-full mt-2 flex flex-col items-center">
+                        <button id="coffeeCardMenuBtn" onclick="toggleActionMenu('coffeeCardActionMenu', event)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                            <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                        </button>
+                        <div id="coffeeCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" onclick="event.stopPropagation()"></div>
+                    </div>
                     <div class="pr-6"><h3 id="cardRoaster" class="text-xl font-bold text-coffee-900 dark:text-white leading-tight mb-1"></h3><div id="cardRating" class="text-sm"></div></div>
                 </div>
                 <div class="p-5 overflow-y-auto space-y-5">
@@ -751,7 +980,7 @@
                 </div>
                 <div class="pt-2 border-t border-coffee-100 dark:border-[#44403c]">
                     <div class="flex flex-wrap gap-2">
-                        <button id="beanCardBuyBtn" class="hidden px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                        <button id="beanCardBuyBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
                             <i class="fa-solid fa-cart-shopping"></i> Buy more
                         </button>
                         <button id="beanCardBrewBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-coffee-700 hover:bg-coffee-800 text-white flex items-center gap-2">
@@ -781,7 +1010,7 @@
                     <div class="sm:col-span-2">
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Coffee Type</label>
                         <select id="beanEditCoffeeType" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
-                            <option value="">-- Select Coffee Type --</option>
+                            <option value="__new__">-- create new coffee type --</option>
                         </select>
                     </div>
                     <div>
@@ -1095,7 +1324,7 @@
         </div>
     </div>
 
-    <div id="uploadPhotoModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div id="uploadPhotoModal" class="hidden fixed inset-0 z-[10010] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
          <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
                 <h3 class="font-bold text-coffee-900 dark:text-white">Upload Brew Photo</h3>
@@ -1239,6 +1468,12 @@
         let currentCoffeeCardId = null;
         let currentCardGraphData = null;
 
+        let currentCoffeeTypeId = null;
+
+        let coffeeTypesSortKey = 'createdAt';
+        let coffeeTypesSortDir = 'desc';
+        let coffeeTypesSearch = '';
+
         let pendingAIBeanImageFile = null;
 
         let currentStatsData = [];
@@ -1314,12 +1549,26 @@
             document.getElementById('beansAiMenuDropdown').classList.toggle('hidden');
         };
 
+        const toggleCoffeeTypesAiMenu = (e) => {
+            if (e) e.stopPropagation();
+            document.getElementById('coffeeTypesAiMenuDropdown').classList.toggle('hidden');
+        };
+
         const triggerBeansAIScan = (mode = null) => {
             if (!currentUser) return alert("Please sign in to use AI scanning.");
             const input = document.getElementById('beansAiFileInput');
             if (mode === 'camera') input.setAttribute('capture', 'environment');
             else if (mode === 'library') input.removeAttribute('capture');
             document.getElementById('beansAiMenuDropdown').classList.add('hidden');
+            input.click();
+        };
+
+        const triggerCoffeeTypesAIScan = (mode = null) => {
+            if (!currentUser) return alert("Please sign in to use AI scanning.");
+            const input = document.getElementById('coffeeTypesAiFileInput');
+            if (mode === 'camera') input.setAttribute('capture', 'environment');
+            else if (mode === 'library') input.removeAttribute('capture');
+            document.getElementById('coffeeTypesAiMenuDropdown').classList.add('hidden');
             input.click();
         };
 
@@ -1398,9 +1647,25 @@
 
                 const nowIso = new Date().toISOString();
                 const beanRef = doc(collection(db, 'users', currentUser.uid, 'beans'));
-                const storageRef = ref(storage, `photos/${currentUser.uid}/bean_${beanRef.id}_${Date.now()}`);
+                const typeRef = doc(collection(db, 'users', currentUser.uid, 'coffeeTypes'));
+                const storageRef = ref(storage, `photos/${currentUser.uid}/coffee_type_${typeRef.id}_${Date.now()}`);
                 const snapshot = await uploadBytes(storageRef, compressedFile);
                 const imageURL = await getDownloadURL(snapshot.ref);
+
+                const typeData = {
+                    uid: currentUser.uid,
+                    roaster: data.roaster || '',
+                    farmer: data.farmer || '',
+                    origin: data.origin || '',
+                    processing: data.processing || '',
+                    variety: data.variety || '',
+                    roast: data.roastType || data.roast || '',
+                    tasteNotes: '',
+                    webshopUrl: '',
+                    imageUrl: imageURL,
+                    createdAt: nowIso,
+                    updatedAt: nowIso
+                };
 
                 const beanData = {
                     roaster: data.roaster || '',
@@ -1409,6 +1674,7 @@
                     variety: data.variety || '',
                     processing: data.processing || '',
                     roastType: data.roastType || '',
+                    coffeeTypeId: typeRef.id,
                     createdAt: nowIso,
                     updatedAt: nowIso,
                     archived: false,
@@ -1419,8 +1685,72 @@
                     imageURL: imageURL
                 };
 
-                await setDoc(beanRef, beanData);
+                const batch = writeBatch(db);
+                batch.set(typeRef, typeData);
+                batch.set(beanRef, beanData);
+                await batch.commit();
+
+                if (!coffeeTypes.find(ct => ct.id === typeRef.id)) {
+                    coffeeTypes.push({ id: typeRef.id, ...typeData });
+                }
             } catch (error) { console.error(error); alert("Error scanning bag: " + error.message); } finally {
+                btn.disabled = false; btn.innerHTML = originalContent; btn.classList.remove('ai-loading-pulse'); event.target.value = '';
+            }
+        };
+
+        const handleCoffeeTypesAIFile = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const btn = document.getElementById('coffeeTypesAiScanBtn');
+            const originalContent = btn.innerHTML;
+            try {
+                btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning...'; btn.classList.add('ai-loading-pulse');
+                const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true };
+                const compressedFile = await imageCompression(file, options);
+                const base64String = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(compressedFile);
+                });
+                const response = await fetch(BAG_AI_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base64Image: base64String })
+                });
+                if (!response.ok) throw new Error("AI Analysis Failed.");
+                const data = await response.json();
+
+                const nowIso = new Date().toISOString();
+                const typeRef = doc(collection(db, 'users', currentUser.uid, 'coffeeTypes'));
+                const storageRef = ref(storage, `photos/${currentUser.uid}/coffee_type_${typeRef.id}_${Date.now()}`);
+                const snapshot = await uploadBytes(storageRef, compressedFile);
+                const imageURL = await getDownloadURL(snapshot.ref);
+
+                const typeData = {
+                    uid: currentUser.uid,
+                    roaster: data.roaster || '',
+                    farmer: data.farmer || '',
+                    origin: data.origin || '',
+                    processing: data.processing || '',
+                    variety: data.variety || '',
+                    roast: data.roastType || data.roast || '',
+                    tasteNotes: '',
+                    webshopUrl: '',
+                    imageUrl: imageURL,
+                    createdAt: nowIso,
+                    updatedAt: nowIso
+                };
+
+                await setDoc(typeRef, typeData);
+                const newType = { id: typeRef.id, ...typeData };
+                if (!coffeeTypes.find(ct => ct.id === newType.id)) coffeeTypes.push(newType);
+
+                openCoffeeTypeCard(newType.id);
+                enterCoffeeTypeEditMode();
+            } catch (error) {
+                console.error(error);
+                alert("Error scanning bag: " + error.message);
+            } finally {
                 btn.disabled = false; btn.innerHTML = originalContent; btn.classList.remove('ai-loading-pulse'); event.target.value = '';
             }
         };
@@ -1511,27 +1841,32 @@
                 renderPinnedTiles(); renderTable();
             });
 
-            // Listen to Coffee Types (only for own view)
-            if (isMine) {
-                const typeQ = collection(db, 'users', targetUid, 'coffeeTypes');
-                unsubscribeCoffeeTypes = onSnapshot(typeQ, (snapshot) => {
-                    coffeeTypes = [];
-                    snapshot.forEach(doc => coffeeTypes.push({ id: doc.id, ...doc.data() }));
-                    updateCoffeeTypeSelectors();
-                }, (error) => {
-                    console.error("Error loading coffee types:", error);
-                    coffeeTypes = [];
-                    updateCoffeeTypeSelectors();
-                });
-            } else {
+            // Listen to Coffee Types (needed to resolve brew -> bean -> coffee type display)
+            const typeQ = collection(db, 'users', targetUid, 'coffeeTypes');
+            unsubscribeCoffeeTypes = onSnapshot(typeQ, (snapshot) => {
+                coffeeTypes = [];
+                snapshot.forEach(doc => coffeeTypes.push({ id: doc.id, ...doc.data() }));
+                updateCoffeeTypeSelectors();
+                if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
+                    renderCoffeeTypesTable();
+                }
+                renderPinnedTiles();
+                renderTable();
+            }, (error) => {
+                console.error("Error loading coffee types:", error);
                 coffeeTypes = [];
                 updateCoffeeTypeSelectors();
-            }
+                if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
+                    renderCoffeeTypesTable();
+                }
+                renderPinnedTiles();
+                renderTable();
+            });
         };
 
         const updateBeanDropdown = () => {
             const select = document.getElementById('savedBeanSelect');
-            select.innerHTML = '<option value="">-- Create New / Custom --</option>';
+            select.innerHTML = '<option value="">-- create new --</option>';
             // Sort beans by Roaster name
             beans
                 .filter(bean => !bean.archived && !bean.frozen)
@@ -1551,9 +1886,12 @@
             const select = document.getElementById('beanEditCoffeeType');
             if (!select) return;
             const currentValue = select.value;
-            select.innerHTML = '<option value="">-- Select Coffee Type --</option>';
-            coffeeTypes
-                .slice()
+            select.innerHTML = '<option value="__new__">-- create new coffee type --</option>';
+            const uniqueTypes = new Map();
+            coffeeTypes.forEach(type => {
+                if (type?.id && !uniqueTypes.has(type.id)) uniqueTypes.set(type.id, type);
+            });
+            [...uniqueTypes.values()]
                 .sort((a,b) => (a.roaster || '').localeCompare(b.roaster || ''))
                 .forEach(type => {
                     const option = document.createElement('option');
@@ -1644,24 +1982,58 @@
             }
         };
 
+        const setCoffeeTypeFieldState = (locked) => {
+            const fieldIds = ['roaster', 'farmer', 'origin', 'variety', 'processing', 'roastType'];
+            fieldIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.disabled = locked;
+                el.classList.toggle('cursor-not-allowed', locked);
+                el.classList.toggle('opacity-70', locked);
+            });
+        };
+
         const fillBeanDetails = (beanId) => {
-            if(!beanId) return; // "Create New" selected
-            const bean = beans.find(b => b.id === beanId);
-            if(bean) {
-                document.getElementById('roaster').value = bean.roaster || '';
-                document.getElementById('farmer').value = bean.farmer || '';
-                document.getElementById('origin').value = bean.origin || '';
-                document.getElementById('variety').value = bean.variety || '';
-                document.getElementById('processing').value = bean.processing || '';
-                document.getElementById('roastType').value = bean.roastType || '';
-                
-                // Add flash effect
-                ['roaster','farmer','origin','variety','processing','roastType'].forEach(id => {
-                    const el = document.getElementById(id);
-                    el.classList.add('ai-flash-effect');
-                    setTimeout(() => el.classList.remove('ai-flash-effect'), 1000);
-                });
+            if (!beanId) {
+                document.getElementById('roaster').value = '';
+                document.getElementById('farmer').value = '';
+                document.getElementById('origin').value = '';
+                document.getElementById('variety').value = '';
+                document.getElementById('processing').value = '';
+                document.getElementById('roastType').value = '';
+                setCoffeeTypeFieldState(false);
+                updateCoffeeDetailsTitle();
+                return; // "create new" selected
             }
+            const bean = beans.find(b => b.id === beanId);
+            if (!bean) return;
+
+            const type = bean.coffeeTypeId ? coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) : null;
+            const source = type || {
+                roaster: bean.roaster || '',
+                farmer: bean.farmer || '',
+                origin: bean.origin || '',
+                variety: bean.variety || '',
+                processing: bean.processing || '',
+                roast: bean.roastType || ''
+            };
+
+            document.getElementById('roaster').value = source.roaster || '';
+            document.getElementById('farmer').value = source.farmer || '';
+            document.getElementById('origin').value = source.origin || '';
+            document.getElementById('variety').value = source.variety || '';
+            document.getElementById('processing').value = source.processing || '';
+            document.getElementById('roastType').value = source.roast || source.roastType || '';
+
+            setCoffeeTypeFieldState(!!type);
+            updateCoffeeDetailsTitle();
+
+            // Add flash effect
+            ['roaster', 'farmer', 'origin', 'variety', 'processing', 'roastType'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.add('ai-flash-effect');
+                setTimeout(() => el.classList.remove('ai-flash-effect'), 1000);
+            });
         };
 
         const updateAutocompleteLists = () => {
@@ -1897,6 +2269,41 @@
             document.getElementById('beansModal').classList.add('hidden');
         };
 
+        const createBeanFromModal = async () => {
+            if (!currentUser) return alert("Please sign in.");
+            const nowIso = new Date().toISOString();
+            const beanData = {
+                roaster: '',
+                farmer: '',
+                origin: '',
+                processing: '',
+                variety: '',
+                roastType: '',
+                shopUrl: '',
+                archived: false,
+                frozen: false,
+                stock: 250,
+                stockUpdatedAt: nowIso,
+                openedDate: nowIso,
+                frozenDate: null,
+                roastDate: null,
+                createdAt: nowIso,
+                updatedAt: nowIso
+            };
+
+            try {
+                const ref = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
+                const newBean = { id: ref.id, ...beanData };
+                beans.push(newBean);
+                renderBeansTable();
+                openBeanCard(ref.id);
+                enterBeanEditMode();
+            } catch (err) {
+                console.error('Error creating bean:', err);
+                alert('Failed to create bean.');
+            }
+        };
+
         const getBeanCalculatedStock = (bean) => {
             if (bean.stock === undefined || bean.stock === null) return null;
             const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
@@ -1904,6 +2311,405 @@
                 .filter(c => c.beanId === bean.id && new Date(c.createdAt) > stockDate)
                 .reduce((sum, c) => sum + (c.weight || 0), 0);
             return parseFloat(bean.stock) - usedAmount;
+        };
+
+        // --- Coffee Types Management Functions ---
+        const openCoffeeTypes = () => {
+            if (!currentUser) return alert("Please sign in.");
+            document.getElementById('coffeeTypesModal').classList.remove('hidden');
+            renderCoffeeTypesTable();
+        };
+
+        const closeCoffeeTypes = () => {
+            document.getElementById('coffeeTypesModal').classList.add('hidden');
+        };
+
+        const createCoffeeTypeFromModal = async () => {
+            if (!currentUser) return alert("Please sign in.");
+            const nowIso = new Date().toISOString();
+            const typeData = {
+                uid: currentUser.uid,
+                roaster: '',
+                farmer: '',
+                origin: '',
+                processing: '',
+                variety: '',
+                roast: '',
+                tasteNotes: '',
+                webshopUrl: '',
+                imageUrl: '',
+                createdAt: nowIso,
+                updatedAt: nowIso
+            };
+
+            try {
+                const typeRef = await addDoc(collection(db, 'users', currentUser.uid, 'coffeeTypes'), typeData);
+                const newType = { id: typeRef.id, ...typeData };
+                if (!coffeeTypes.find(ct => ct.id === newType.id)) coffeeTypes.push(newType);
+                openCoffeeTypeCard(newType.id);
+                enterCoffeeTypeEditMode();
+            } catch (err) {
+                console.error('Error creating coffee type:', err);
+                alert('Failed to create coffee type.');
+            }
+        };
+
+        const openCoffeeTypeShopUrl = (typeId, ev) => {
+            if (ev) ev.stopPropagation();
+            const type = coffeeTypes.find(ct => ct.id === typeId);
+            const url = type?.webshopUrl || type?.shopUrl;
+            if (!url) return;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        };
+
+        const deleteCoffeeType = async () => {
+            if (!currentUser || !currentCoffeeTypeId) return;
+            if (!confirm('Delete this coffee type? Beans linked to it will be unlinked.')) return;
+
+            const typeId = currentCoffeeTypeId;
+            const nowIso = new Date().toISOString();
+
+            try {
+                const batch = writeBatch(db);
+                beans
+                    .filter(bean => bean.coffeeTypeId === typeId)
+                    .forEach(bean => {
+                        batch.update(doc(db, 'users', currentUser.uid, 'beans', bean.id), { coffeeTypeId: null, updatedAt: nowIso });
+                    });
+                batch.delete(doc(db, 'users', currentUser.uid, 'coffeeTypes', typeId));
+                await batch.commit();
+
+                coffeeTypes = coffeeTypes.filter(ct => ct.id !== typeId);
+                beans = beans.map(bean => bean.coffeeTypeId === typeId ? { ...bean, coffeeTypeId: null, updatedAt: nowIso } : bean);
+                updateCoffeeTypeSelectors();
+                renderCoffeeTypesTable();
+                closeCoffeeTypeCard(null);
+                renderPinnedTiles();
+                renderTable();
+            } catch (err) {
+                console.error('Error deleting coffee type:', err);
+                alert('Failed to delete coffee type.');
+            }
+        };
+
+        const triggerCoffeeTypePhoto = (e) => {
+            if (e) e.stopPropagation();
+            if (!currentCoffeeTypeId) return;
+            document.getElementById('coffeeTypePhotoInput').click();
+        };
+
+        const openCoffeeTypePhoto = (e) => {
+            if (e) e.stopPropagation();
+            const type = coffeeTypes.find(ct => ct.id === currentCoffeeTypeId);
+            const url = type?.imageUrl || type?.imageURL;
+            if (url) window.open(url, '_blank');
+        };
+
+        const removeCoffeeTypePhoto = async (e) => {
+            if (e) e.stopPropagation();
+            if (!currentUser || !currentCoffeeTypeId) return;
+            const type = coffeeTypes.find(ct => ct.id === currentCoffeeTypeId);
+            const url = type?.imageUrl || type?.imageURL;
+            if (!url) return;
+            try {
+                const photoRef = ref(storage, url);
+                await deleteObject(photoRef);
+                await updateDoc(doc(db, 'users', currentUser.uid, 'coffeeTypes', currentCoffeeTypeId), {
+                    imageUrl: null,
+                    updatedAt: new Date().toISOString()
+                });
+                const idx = coffeeTypes.findIndex(ct => ct.id === currentCoffeeTypeId);
+                if (idx !== -1) coffeeTypes[idx] = { ...coffeeTypes[idx], imageUrl: null, imageURL: null };
+                openCoffeeTypeCard(currentCoffeeTypeId);
+            } catch (err) {
+                console.error('Remove coffee type photo failed:', err);
+                alert('Failed to remove image.');
+            }
+        };
+
+        const handleCoffeeTypePhoto = async (event) => {
+            const file = event.target.files[0];
+            if (!file || !currentUser || !currentCoffeeTypeId) return;
+            const btn = document.getElementById('coffeeTypeCardImageSection');
+            const targetEl = btn || document.getElementById('coffeeTypeCardView');
+            const originalClasses = targetEl?.className;
+            try {
+                if (targetEl) targetEl.classList.add('ai-loading-pulse');
+                const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: true };
+                const compressedFile = await imageCompression(file, options);
+                const timestamp = Date.now();
+                const storageRef = ref(storage, `photos/${currentUser.uid}/coffee_type_${currentCoffeeTypeId}_${timestamp}`);
+                const snapshot = await uploadBytes(storageRef, compressedFile);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                await updateDoc(doc(db, 'users', currentUser.uid, 'coffeeTypes', currentCoffeeTypeId), {
+                    imageUrl: downloadURL,
+                    updatedAt: new Date().toISOString()
+                });
+                const idx = coffeeTypes.findIndex(ct => ct.id === currentCoffeeTypeId);
+                if (idx !== -1) coffeeTypes[idx] = { ...coffeeTypes[idx], imageUrl: downloadURL };
+                openCoffeeTypeCard(currentCoffeeTypeId);
+            } catch (err) {
+                console.error('Coffee type photo upload failed:', err);
+                alert('Failed to upload image.');
+            } finally {
+                if (targetEl && originalClasses) targetEl.className = originalClasses;
+                event.target.value = '';
+            }
+        };
+
+        const openCoffeeTypeCard = (typeId, ev) => {
+            if (ev) ev.stopPropagation();
+            const type = coffeeTypes.find(ct => ct.id === typeId);
+            if (!type) return;
+            currentCoffeeTypeId = type.id;
+
+            const farmer = type.farmer || 'Unknown';
+            const roaster = type.roaster || '';
+            const origin = type.origin || '-';
+            const roast = type.roast || type.roastType || '-';
+            const processing = type.processing || '-';
+            const variety = type.variety || '-';
+            const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
+
+            document.getElementById('coffeeTypeCardTitle').textContent = farmer;
+            document.getElementById('coffeeTypeCardSubtitle').textContent = roaster;
+            document.getElementById('coffeeTypeCardOrigin').textContent = origin;
+            document.getElementById('coffeeTypeCardRoast').textContent = roast;
+            document.getElementById('coffeeTypeCardProcess').textContent = processing;
+            document.getElementById('coffeeTypeCardVariety').textContent = variety;
+            document.getElementById('coffeeTypeCardCreated').textContent = createdAt;
+
+            const imageUrl = type.imageUrl || type.imageURL;
+            const imgEl = document.getElementById('coffeeTypeCardImage');
+            const placeholderEl = document.getElementById('coffeeTypeCardImagePlaceholder');
+            if (imageUrl) {
+                imgEl.src = imageUrl;
+                imgEl.classList.remove('hidden');
+                placeholderEl.classList.add('hidden');
+            } else {
+                imgEl.src = '';
+                imgEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+            }
+
+            const buyBtn = document.getElementById('coffeeTypeCardBuyBtn');
+            const shopUrl = type.webshopUrl || type.shopUrl || '';
+            if (buyBtn) {
+                if (shopUrl) {
+                    buyBtn.disabled = false;
+                    buyBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    buyBtn.onclick = () => openCoffeeTypeShopUrl(type.id);
+                } else {
+                    buyBtn.disabled = true;
+                    buyBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                    buyBtn.onclick = null;
+                }
+            }
+
+            document.getElementById('coffeeTypeCardView').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
+            document.getElementById('coffeeTypeCardEditBtn').classList.remove('hidden');
+            updateCoffeeTypeCardNav();
+            document.getElementById('coffeeTypeCardOverlay').classList.remove('hidden');
+        };
+
+        const closeCoffeeTypeCard = (event) => {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
+            document.getElementById('coffeeTypeCardView').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardEditBtn').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardOverlay').classList.add('hidden');
+        };
+
+        const updateCoffeeTypeCardNav = () => {
+            const order = getFilteredSortedCoffeeTypes().map(type => type.id);
+            const idx = order.indexOf(currentCoffeeTypeId);
+            const prevBtn = document.getElementById('coffeeTypeCardPrevBtn');
+            const nextBtn = document.getElementById('coffeeTypeCardNextBtn');
+            if (!prevBtn || !nextBtn) return;
+            prevBtn.disabled = idx <= 0;
+            nextBtn.disabled = idx === -1 || idx >= order.length - 1;
+            prevBtn.classList.toggle('opacity-40', prevBtn.disabled);
+            prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
+            nextBtn.classList.toggle('opacity-40', nextBtn.disabled);
+            nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
+        };
+
+        const navigateCoffeeTypeCard = (direction) => {
+            const order = getFilteredSortedCoffeeTypes().map(type => type.id);
+            const idx = order.indexOf(currentCoffeeTypeId);
+            const nextIdx = idx + direction;
+            if (nextIdx < 0 || nextIdx >= order.length) return;
+            openCoffeeTypeCard(order[nextIdx]);
+        };
+
+        const enterCoffeeTypeEditMode = () => {
+            if (!currentCoffeeTypeId) return;
+            const type = coffeeTypes.find(ct => ct.id === currentCoffeeTypeId);
+            if (!type) return;
+
+            document.getElementById('coffeeTypeEditFarmer').value = type.farmer || '';
+            document.getElementById('coffeeTypeEditRoaster').value = type.roaster || '';
+            document.getElementById('coffeeTypeEditOrigin').value = type.origin || '';
+            document.getElementById('coffeeTypeEditProcessing').value = type.processing || '';
+            document.getElementById('coffeeTypeEditVariety').value = type.variety || '';
+            document.getElementById('coffeeTypeEditRoast').value = type.roast || type.roastType || '';
+            document.getElementById('coffeeTypeEditShopUrl').value = type.webshopUrl || type.shopUrl || '';
+
+            document.getElementById('coffeeTypeCardView').classList.add('hidden');
+            document.getElementById('coffeeTypeCardEdit').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardEditBtn').classList.add('hidden');
+        };
+
+        const cancelCoffeeTypeEditMode = () => {
+            document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
+            document.getElementById('coffeeTypeCardView').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardEditBtn').classList.remove('hidden');
+        };
+
+        const saveCoffeeTypeEdits = async () => {
+            if (!currentUser || !currentCoffeeTypeId) return;
+            const nowIso = new Date().toISOString();
+            const updates = {
+                farmer: document.getElementById('coffeeTypeEditFarmer').value || '',
+                roaster: document.getElementById('coffeeTypeEditRoaster').value || '',
+                origin: document.getElementById('coffeeTypeEditOrigin').value || '',
+                processing: document.getElementById('coffeeTypeEditProcessing').value || '',
+                variety: document.getElementById('coffeeTypeEditVariety').value || '',
+                roast: document.getElementById('coffeeTypeEditRoast').value || '',
+                webshopUrl: document.getElementById('coffeeTypeEditShopUrl').value || '',
+                updatedAt: nowIso
+            };
+
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'coffeeTypes', currentCoffeeTypeId), updates);
+                const idx = coffeeTypes.findIndex(ct => ct.id === currentCoffeeTypeId);
+                if (idx !== -1) coffeeTypes[idx] = { ...coffeeTypes[idx], ...updates };
+                renderCoffeeTypesTable();
+                openCoffeeTypeCard(currentCoffeeTypeId);
+            } catch (err) {
+                console.error('Error saving coffee type edits:', err);
+                alert('Failed to save changes.');
+            }
+        };
+
+        const setCoffeeTypesSearch = (value) => {
+            coffeeTypesSearch = value || '';
+            renderCoffeeTypesTable();
+        };
+
+        const setCoffeeTypesSort = (key) => {
+            if (coffeeTypesSortKey === key) {
+                coffeeTypesSortDir = coffeeTypesSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                coffeeTypesSortKey = key;
+                coffeeTypesSortDir = 'asc';
+            }
+            renderCoffeeTypesTable();
+        };
+
+        const updateCoffeeTypesSortIcons = () => {
+            const keys = ['farmer', 'roaster', 'origin', 'processing', 'variety', 'roast', 'createdAt'];
+            keys.forEach(key => {
+                const el = document.getElementById(`coffeeTypesSortIcon-${key}`);
+                if (!el) return;
+                if (coffeeTypesSortKey !== key) {
+                    el.textContent = '';
+                    return;
+                }
+                el.textContent = coffeeTypesSortDir === 'asc' ? '▲' : '▼';
+            });
+        };
+
+        const getFilteredSortedCoffeeTypes = () => {
+            const normalizeText = (value) => (value || '').toString().toLowerCase().trim();
+            const searchValue = normalizeText(coffeeTypesSearch);
+            const hasSearch = searchValue.length > 0;
+
+            const filteredTypes = coffeeTypes.filter(type => {
+                const roaster = normalizeText(type.roaster);
+                const farmer = normalizeText(type.farmer);
+                const origin = normalizeText(type.origin);
+                const processing = normalizeText(type.processing);
+                const variety = normalizeText(type.variety);
+                const roast = normalizeText(type.roast || type.roastType);
+
+                if (!hasSearch) return true;
+                const searchHaystack = [roaster, farmer, origin, processing, variety, roast].join(' ');
+                return searchHaystack.includes(searchValue);
+            });
+
+            const getSortValue = (type, key) => {
+                if (key === 'roast') return type.roast || type.roastType || '';
+                if (key === 'createdAt') return type.createdAt || '';
+                return type[key] || '';
+            };
+
+            return [...filteredTypes].sort((a, b) => {
+                const dir = coffeeTypesSortDir === 'asc' ? 1 : -1;
+                const aVal = getSortValue(a, coffeeTypesSortKey);
+                const bVal = getSortValue(b, coffeeTypesSortKey);
+                let primary = normalizeText(aVal).localeCompare(normalizeText(bVal));
+
+                if (primary === 0) {
+                    const aRoaster = normalizeText(a.roaster);
+                    const bRoaster = normalizeText(b.roaster);
+                    const aFarmer = normalizeText(a.farmer);
+                    const bFarmer = normalizeText(b.farmer);
+                    if (coffeeTypesSortKey === 'roaster') {
+                        primary = aFarmer.localeCompare(bFarmer);
+                    } else if (coffeeTypesSortKey === 'farmer') {
+                        primary = aRoaster.localeCompare(bRoaster);
+                    } else {
+                        primary = aRoaster.localeCompare(bRoaster) || aFarmer.localeCompare(bFarmer);
+                    }
+                }
+                return primary * dir;
+            });
+        };
+
+        const renderCoffeeTypesTable = () => {
+            const tbody = document.getElementById('coffeeTypesTableBody');
+            const empty = document.getElementById('coffeeTypesEmpty');
+            tbody.innerHTML = '';
+
+            if (!coffeeTypes.length) {
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            const sortedTypes = getFilteredSortedCoffeeTypes();
+            if (!sortedTypes.length) {
+                empty.classList.remove('hidden');
+                updateCoffeeTypesSortIcons();
+                return;
+            }
+            empty.classList.add('hidden');
+
+            sortedTypes.forEach(type => {
+                const roaster = type.roaster || 'Unknown';
+                const farmer = type.farmer || '-';
+                const origin = type.origin || '-';
+                const processing = type.processing || '-';
+                const variety = type.variety || '-';
+                const roast = type.roast || type.roastType || '-';
+                const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
+
+                const row = document.createElement('tr');
+                row.className = 'bg-white dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0';
+                row.ondblclick = (event) => openCoffeeTypeCard(type.id, event);
+                row.innerHTML = `
+                    <td class="px-4 py-3 text-sm">${farmer}</td>
+                    <td class="px-4 py-3 font-semibold">${roaster}</td>
+                    <td class="px-4 py-3 text-sm">${origin}</td>
+                    <td class="px-4 py-3 text-sm">${processing}</td>
+                    <td class="px-4 py-3 text-sm">${variety}</td>
+                    <td class="px-4 py-3 text-center text-sm">${roast}</td>
+                    <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${createdAt}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            updateCoffeeTypesSortIcons();
         };
 
         const getBeanTableOrder = () => {
@@ -1997,10 +2803,13 @@
             if (deleteBtn) deleteBtn.onclick = () => { closeBeanCard(null); deleteBean(bean.id); };
             if (buyBtn) {
                 if (bean.shopUrl) {
-                    buyBtn.classList.remove('hidden');
+                    buyBtn.disabled = false;
+                    buyBtn.classList.remove('opacity-40', 'cursor-not-allowed');
                     buyBtn.onclick = () => openBeanShopUrl(bean.id);
                 } else {
-                    buyBtn.classList.add('hidden');
+                    buyBtn.disabled = true;
+                    buyBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                    buyBtn.onclick = null;
                 }
             }
 
@@ -2124,6 +2933,56 @@
             }
         };
 
+        const setBeanEditCoffeeTypeFieldState = (locked) => {
+            const fieldIds = [
+                'beanEditFarmer',
+                'beanEditRoaster',
+                'beanEditOrigin',
+                'beanEditProcessing',
+                'beanEditVariety',
+                'beanEditRoastType'
+            ];
+            fieldIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.disabled = locked;
+                el.classList.toggle('cursor-not-allowed', locked);
+                el.classList.toggle('opacity-70', locked);
+            });
+        };
+
+        const applyBeanEditCoffeeType = (typeId) => {
+            const clearFields = () => {
+                document.getElementById('beanEditFarmer').value = '';
+                document.getElementById('beanEditRoaster').value = '';
+                document.getElementById('beanEditOrigin').value = '';
+                document.getElementById('beanEditProcessing').value = '';
+                document.getElementById('beanEditVariety').value = '';
+                document.getElementById('beanEditRoastType').value = '';
+            };
+
+            if (!typeId || typeId === '__new__') {
+                clearFields();
+                setBeanEditCoffeeTypeFieldState(false);
+                return;
+            }
+
+            const type = coffeeTypes.find(ct => ct.id === typeId);
+            if (!type) {
+                clearFields();
+                setBeanEditCoffeeTypeFieldState(true);
+                return;
+            }
+
+            document.getElementById('beanEditFarmer').value = type.farmer || '';
+            document.getElementById('beanEditRoaster').value = type.roaster || '';
+            document.getElementById('beanEditOrigin').value = type.origin || '';
+            document.getElementById('beanEditProcessing').value = type.processing || '';
+            document.getElementById('beanEditVariety').value = type.variety || '';
+            document.getElementById('beanEditRoastType').value = type.roast || type.roastType || '';
+            setBeanEditCoffeeTypeFieldState(true);
+        };
+
         const enterBeanEditMode = () => {
             if (!currentBeanCardId) return;
             const bean = beans.find(b => b.id === currentBeanCardId);
@@ -2139,14 +2998,13 @@
                 return `${yyyy}-${mm}-${dd}`;
             };
 
-            document.getElementById('beanEditFarmer').value = bean.farmer || '';
-            document.getElementById('beanEditRoaster').value = bean.roaster || '';
-            document.getElementById('beanEditOrigin').value = bean.origin || '';
-            document.getElementById('beanEditProcessing').value = bean.processing || '';
-            document.getElementById('beanEditVariety').value = bean.variety || '';
-            document.getElementById('beanEditRoastType').value = bean.roastType || '';
             document.getElementById('beanEditShopUrl').value = bean.shopUrl || '';
-            document.getElementById('beanEditCoffeeType').value = bean.coffeeTypeId || '';
+            const coffeeTypeSelect = document.getElementById('beanEditCoffeeType');
+            coffeeTypeSelect.value = bean.coffeeTypeId || '__new__';
+            applyBeanEditCoffeeType(coffeeTypeSelect.value);
+            coffeeTypeSelect.onchange = (event) => {
+                applyBeanEditCoffeeType(event.target.value);
+            };
             document.getElementById('beanEditStock').value = bean.stock ?? '';
             document.getElementById('beanEditOpenedDate').value = toInputDate(bean.openedDate);
             document.getElementById('beanEditFrozenDate').value = toInputDate(bean.frozenDate);
@@ -2174,7 +3032,28 @@
             const roastDateVal = document.getElementById('beanEditRoastDate').value;
             const frozenChecked = document.getElementById('beanEditFrozen').checked;
             const archivedChecked = document.getElementById('beanEditArchived').checked;
-            const coffeeTypeIdVal = document.getElementById('beanEditCoffeeType').value || '';
+            const nowIso = new Date().toISOString();
+            let coffeeTypeIdVal = document.getElementById('beanEditCoffeeType').value || '__new__';
+            if (coffeeTypeIdVal === '__new__') {
+                const bean = beans.find(b => b.id === currentBeanCardId);
+                const typeData = {
+                    uid: currentUser.uid,
+                    roaster: document.getElementById('beanEditRoaster').value || '',
+                    farmer: document.getElementById('beanEditFarmer').value || '',
+                    processing: document.getElementById('beanEditProcessing').value || '',
+                    origin: document.getElementById('beanEditOrigin').value || '',
+                    roast: document.getElementById('beanEditRoastType').value || '',
+                    variety: document.getElementById('beanEditVariety').value || '',
+                    webshopUrl: document.getElementById('beanEditShopUrl').value || '',
+                    imageUrl: bean?.imageURL || '',
+                    tasteNotes: '',
+                    createdAt: nowIso,
+                    updatedAt: nowIso
+                };
+                const typeRef = doc(collection(db, 'users', currentUser.uid, 'coffeeTypes'));
+                await setDoc(typeRef, typeData);
+                coffeeTypeIdVal = typeRef.id;
+            }
 
             const updates = {
                 farmer: document.getElementById('beanEditFarmer').value || '',
@@ -2191,10 +3070,10 @@
                 roastDate: roastDateVal ? new Date(roastDateVal).toISOString() : null,
                 frozen: frozenChecked,
                 archived: archivedChecked,
-                updatedAt: new Date().toISOString()
+                updatedAt: nowIso
             };
 
-            if (stockVal !== null) updates.stockUpdatedAt = new Date().toISOString();
+            if (stockVal !== null) updates.stockUpdatedAt = nowIso;
 
             try {
                 await updateDoc(doc(db, 'users', currentUser.uid, 'beans', currentBeanCardId), updates);
@@ -3029,22 +3908,26 @@
             const firstDate = new Date(Math.min(...dataToUse.map(c => new Date(c.createdAt || now)))); const diffDays = Math.max(1, Math.round(Math.abs((now - firstDate) / oneDay))); const avg = (total / diffDays).toFixed(1);
             const lastBrewDate = new Date(Math.max(...dataToUse.map(c => new Date(c.createdAt || now)))); const hoursSinceLastBrew = Math.round((now - lastBrewDate) / (60 * 60 * 1000));
             document.getElementById('statTotalBrews').innerText = total; document.getElementById('statMonthBrews').innerText = hoursSinceLastBrew; document.getElementById('statWeekBrews').innerText = last7; document.getElementById('statAvgBrews').innerText = avg;
-            const agg = (key) => dataToUse.reduce((acc, c) => { const val = c[key] || 'Unknown'; acc[val] = (acc[val] || 0) + 1; return acc; }, {});
-            const roastData = agg('roastType'); const methodData = agg('method'); const drinkData = agg('drink');
+            const agg = (key, getValue) => dataToUse.reduce((acc, c) => { const val = (getValue ? getValue(c) : c[key]) || 'Unknown'; acc[val] = (acc[val] || 0) + 1; return acc; }, {});
+            const roastData = agg(null, (c) => getCoffeeTypeDisplay(c).roastType);
+            const methodData = agg('method');
+            const drinkData = agg('drink');
             const ratingData = dataToUse.reduce((acc, c) => { const r = c.rating || 0; if(r > 0) acc[r] = (acc[r] || 0) + 1; return acc; }, {});
             renderCharts(roastData, methodData, drinkData, ratingData);
             updateBeanMeter('day');
             const uniqueMap = {}; 
             dataToUse.forEach(c => { 
-                const beanId = c.beanId || '-';
-                const roaster = c.roaster || c.name || '-'; const origin = c.origin || c.beanType || '-'; const farmer = c.farmer || '-'; 
-                if(!uniqueMap[beanId]) uniqueMap[beanId] = { count: 0, roaster, origin, farmer, totalRating: 0, ratingCount: 0 }; uniqueMap[beanId].count++; 
-                if (c.rating > 0) { uniqueMap[beanId].totalRating += c.rating; uniqueMap[beanId].ratingCount++; }
+                const type = getCoffeeTypeForBrew(c);
+                const typeKey = type?.id || c.beanId || '-';
+                const typeDisplay = getCoffeeTypeDisplay(c);
+                if(!uniqueMap[typeKey]) uniqueMap[typeKey] = { count: 0, roaster: typeDisplay.roaster, origin: typeDisplay.origin, farmer: typeDisplay.farmer, totalRating: 0, ratingCount: 0 };
+                uniqueMap[typeKey].count++; 
+                if (c.rating > 0) { uniqueMap[typeKey].totalRating += c.rating; uniqueMap[typeKey].ratingCount++; }
             });
             document.getElementById('statUniqueCoffees').innerText = Object.keys(uniqueMap).length;
             let maxKey = null; Object.keys(uniqueMap).forEach(k => { if(!maxKey || uniqueMap[k].count > uniqueMap[maxKey].count) maxKey = k; });
             if(maxKey) { const d = uniqueMap[maxKey]; document.getElementById('mostBrewedName').innerText = `${d.roaster} - ${d.origin} ${d.farmer !== '-' ? '('+d.farmer+')' : ''}`; document.getElementById('mostBrewedCount').innerText = `${d.count} brews`; }
-            const topMap = {}; dataToUse.filter(c => c.rating === 5).forEach(c => { const key = `${c.roaster||''}|${c.origin||''}|${c.farmer||''}`; if(!topMap[key]) topMap[key] = { count: 0, data: c }; topMap[key].count++; });
+            const topMap = {}; dataToUse.filter(c => c.rating === 5).forEach(c => { const typeDisplay = getCoffeeTypeDisplay(c); const key = `${typeDisplay.roaster}|${typeDisplay.origin}|${typeDisplay.farmer}`; if(!topMap[key]) topMap[key] = { count: 0, data: typeDisplay }; topMap[key].count++; });
             const sortedTopList = Object.values(topMap).sort((a,b) => b.count - a.count); const listEl = document.getElementById('topCoffeesList'); listEl.innerHTML = '';
             if(sortedTopList.length === 0) listEl.innerHTML = '<p class="text-sm text-gray-400 italic">No 5-star brews yet.</p>';
             else sortedTopList.forEach(item => { const c = item.data; const div = document.createElement('div'); div.className = "flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-100 dark:border-[#44403c]"; div.innerHTML = `<div class="truncate pr-2"><span class="font-bold text-coffee-800 dark:text-white text-sm block truncate">${c.roaster || 'Unknown'}</span><span class="text-xs text-coffee-500 dark:text-[#78716c] truncate">${c.origin || ''} ${c.farmer ? '• '+c.farmer : ''}</span></div><span class="text-xs font-bold bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full whitespace-nowrap">${item.count} <i class="fa-solid fa-mug-hot ml-1"></i></span>`; listEl.appendChild(div); });
@@ -3242,26 +4125,29 @@
                 return str; 
             };
             const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grinder","Grind","In(g)","Out(g)","Time(s)","Temp","Drink","Rating","Notes","Improve"]; 
-            const r = brews.map(c => [ 
-                c.createdAt || '', 
-                esc(c.roaster || c.name), 
-                esc(c.origin || c.beanType), 
-                esc(c.farmer), 
-                esc(c.variety), 
-                esc(c.processing), 
-                esc(c.roastType), 
-                esc(c.method), 
-                esc(c.grinder), 
-                esc(c.grind), 
-                esc(c.weight), 
-                (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', 
-                esc(c.time), 
-                esc(c.temp), 
-                esc(c.drink), 
-                esc(c.rating), 
-                esc(c.notes), 
-                esc(c.improve) 
-            ]); 
+            const r = brews.map(c => {
+                const type = getCoffeeTypeDisplay(c);
+                return [
+                    c.createdAt || '', 
+                    esc(type.roaster), 
+                    esc(type.origin), 
+                    esc(type.farmer), 
+                    esc(type.variety), 
+                    esc(type.processing), 
+                    esc(type.roastType), 
+                    esc(c.method), 
+                    esc(c.grinder), 
+                    esc(c.grind), 
+                    esc(c.weight), 
+                    (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', 
+                    esc(c.time), 
+                    esc(c.temp), 
+                    esc(c.drink), 
+                    esc(c.rating), 
+                    esc(c.notes), 
+                    esc(c.improve) 
+                ];
+            }); 
             const csvContent = "data:text/csv;charset=utf-8," + h.join(",") + "\n" + r.map(e => e.join(",")).join("\n"); 
             const encodedUri = encodeURI(csvContent); 
             const link = document.createElement("a"); 
@@ -3282,13 +4168,15 @@
                 return str; 
             };
 
-            const rows = brews.map(c => [
-                esc(c.grind || ''),                                    // Grind Setting
-                esc(c.weight || ''),                                   // Ground Coffee (gr)
-                esc(c.temp || ''),                                     // Brew Temperature
-                esc(c.method || ''),                                   // Preparation method
-                esc(c.farmer || ''),                                   // Bean Type
-                esc(c.grinder || ''),                                  // Grinder
+            const rows = brews.map(c => {
+                const type = getCoffeeTypeDisplay(c);
+                return [
+                    esc(c.grind || ''),                                    // Grind Setting
+                    esc(c.weight || ''),                                   // Ground Coffee (gr)
+                    esc(c.temp || ''),                                     // Brew Temperature
+                    esc(c.method || ''),                                   // Preparation method
+                    esc(type.farmer || ''),                                // Bean Type
+                    esc(c.grinder || ''),                                  // Grinder
                 '',                                                     // Grind Speed (rpm)
                 '',                                                     // Grind Time
                 '',                                                     // Profile
@@ -3312,7 +4200,8 @@
                 '',                                                     // Bean Id
                 '',                                                     // Preparation Id
                 ''                                                      // Mill Id
-            ]);
+                ];
+            });
 
             const csvContent = "data:text/csv;charset=utf-8," + headers.join(";") + "\n" + rows.map(e => e.join(";")).join("\n");
             const encodedUri = encodeURI(csvContent);
@@ -3325,7 +4214,29 @@
         };
 
         const exportAsJSON = (brews) => {
-            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(brews, null, 2));
+            const normalized = brews.map(brew => {
+                const typeDisplay = getCoffeeTypeDisplay(brew);
+                const type = getCoffeeTypeForBrew(brew);
+                return {
+                    ...brew,
+                    roaster: typeDisplay.roaster,
+                    farmer: typeDisplay.farmer,
+                    origin: typeDisplay.origin,
+                    variety: typeDisplay.variety,
+                    processing: typeDisplay.processing,
+                    roastType: typeDisplay.roastType,
+                    coffeeType: {
+                        id: type?.id || null,
+                        roaster: typeDisplay.roaster,
+                        farmer: typeDisplay.farmer,
+                        origin: typeDisplay.origin,
+                        variety: typeDisplay.variety,
+                        processing: typeDisplay.processing,
+                        roastType: typeDisplay.roastType
+                    }
+                };
+            });
+            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(normalized, null, 2));
             const link = document.createElement("a");
             link.setAttribute("href", jsonContent);
             link.setAttribute("download", "coffee_log.json");
@@ -3357,7 +4268,30 @@
         };
 
         const exportCoffeesAsJSON = (brews) => {
-            const sourceBeans = beans;
+            const sourceBeans = beans.map(bean => {
+                const type = bean.coffeeTypeId ? coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) : null;
+                const normalized = {
+                    roaster: type?.roaster || bean.roaster || null,
+                    farmer: type?.farmer || bean.farmer || null,
+                    origin: type?.origin || bean.origin || null,
+                    variety: type?.variety || bean.variety || null,
+                    processing: type?.processing || bean.processing || null,
+                    roastType: type?.roast || type?.roastType || bean.roastType || null
+                };
+                return {
+                    ...bean,
+                    ...normalized,
+                    coffeeType: {
+                        id: type?.id || null,
+                        roaster: normalized.roaster,
+                        farmer: normalized.farmer,
+                        origin: normalized.origin,
+                        variety: normalized.variety,
+                        processing: normalized.processing,
+                        roastType: normalized.roastType
+                    }
+                };
+            });
             const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sourceBeans, null, 2));
             const link = document.createElement("a");
             link.setAttribute("href", jsonContent);
@@ -3371,7 +4305,7 @@
             const d = getFilteredCoffees(); if(!d.length) return alert("No data"); 
             const esc = (t) => { if (t === null || t === undefined) return ''; const str = String(t); if (str.includes(',') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; return str; };
             const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grinder","Grind","In(g)","Out(g)","Time(s)","Temp","Drink","Rating","Notes","Improve"]; 
-            const r = d.map(c => [ c.createdAt || '', esc(c.roaster || c.name), esc(c.origin || c.beanType), esc(c.farmer), esc(c.variety), esc(c.processing), esc(c.roastType), esc(c.method), esc(c.grinder), esc(c.grind), esc(c.weight), (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', esc(c.time), esc(c.temp), esc(c.drink), esc(c.rating), esc(c.notes), esc(c.improve) ]); 
+            const r = d.map(c => { const type = getCoffeeTypeDisplay(c); return [ c.createdAt || '', esc(type.roaster), esc(type.origin), esc(type.farmer), esc(type.variety), esc(type.processing), esc(type.roastType), esc(c.method), esc(c.grinder), esc(c.grind), esc(c.weight), (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', esc(c.time), esc(c.temp), esc(c.drink), esc(c.rating), esc(c.notes), esc(c.improve) ]; }); 
             const csvContent = "data:text/csv;charset=utf-8," + h.join(",") + "\n" + r.map(e => e.join(",")).join("\n"); 
             const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "coffee_log.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); 
         };
@@ -3382,12 +4316,104 @@
             const activeClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white"; const inactiveClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
             if (m === 'numeric') { conNum.classList.remove('hidden'); conProf.classList.add('hidden'); btnNum.className = activeClass; btnProf.className = inactiveClass; } else { conProf.classList.remove('hidden'); conNum.classList.add('hidden'); btnProf.className = activeClass; btnNum.className = inactiveClass; }
         };
+
+        const updateCoffeeDetailsTitle = () => {
+            const titleEl = document.getElementById('coffeeDetailsTitle');
+            const body = document.getElementById('coffeeDetailsBody');
+            const farmerEl = document.getElementById('farmer');
+            if (!titleEl || !body || !farmerEl) return;
+            const isCollapsed = body.classList.contains('hidden');
+            const farmerValue = (farmerEl.value || '').trim();
+            const roasterEl = document.getElementById('roaster');
+            const roasterValue = (roasterEl?.value || '').trim();
+            if (isCollapsed && (farmerValue || roasterValue)) {
+                titleEl.textContent = farmerValue || roasterValue;
+            } else {
+                titleEl.textContent = 'Coffee Details';
+            }
+        };
+
+        const setCoffeeDetailsCollapsed = (collapsed) => {
+            const body = document.getElementById('coffeeDetailsBody');
+            const icon = document.getElementById('coffeeDetailsToggleIcon');
+            if (!body || !icon) return;
+            body.classList.toggle('hidden', collapsed);
+            icon.classList.toggle('rotate-180', collapsed);
+            localStorage.setItem('coffeeDetailsCollapsed', collapsed ? 'true' : 'false');
+            updateCoffeeDetailsTitle();
+        };
+
+        const toggleCoffeeDetails = (e) => {
+            if (e) e.stopPropagation();
+            const body = document.getElementById('coffeeDetailsBody');
+            if (!body) return;
+            const isHidden = body.classList.contains('hidden');
+            setCoffeeDetailsCollapsed(!isHidden);
+        };
+
+        const initCoffeeDetailsCollapsed = () => {
+            const collapsed = localStorage.getItem('coffeeDetailsCollapsed') === 'true';
+            setCoffeeDetailsCollapsed(collapsed);
+            const farmerEl = document.getElementById('farmer');
+            if (farmerEl) farmerEl.addEventListener('input', updateCoffeeDetailsTitle);
+        };
+        initCoffeeDetailsCollapsed();
         
         const toggleForm = (f=null) => { 
             const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
             c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (window.coffeeScale?.autoConnect) window.coffeeScale.autoConnect(); } else { o.classList.add('hidden'); } 
         };
         
+        const getCoffeeTypeForBrew = (brew) => {
+            if (!brew || !brew.beanId) return null;
+            const bean = beans.find(b => b.id === brew.beanId);
+            if (!bean || !bean.coffeeTypeId) return null;
+            return coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) || null;
+        };
+
+        const getCoffeeTypeDisplay = (brew) => {
+            const type = getCoffeeTypeForBrew(brew);
+            return {
+                roaster: type?.roaster || '-',
+                farmer: type?.farmer || '-',
+                origin: type?.origin || '-',
+                processing: type?.processing || '-',
+                variety: type?.variety || '-',
+                roastType: type?.roast || type?.roastType || '-'
+            };
+        };
+
+        const closeCoffeeCardMenu = () => {
+            const menu = document.getElementById('coffeeCardActionMenu');
+            if (menu) menu.classList.add('hidden');
+        };
+
+        const updateCoffeeCardActionMenu = (c) => {
+            const menu = document.getElementById('coffeeCardActionMenu');
+            const btn = document.getElementById('coffeeCardMenuBtn');
+            if (!menu || !btn) return;
+            menu.classList.add('hidden');
+            if (!c) return;
+
+            if (currentView === 'mine') {
+                const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
+                const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
+                menu.innerHTML = `
+                    <button onclick="closeCoffeeCard(null); editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button>
+                    <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button>
+                    <button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button>
+                    <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button>
+                    <hr class="border-coffee-100 dark:border-[#44403c]">
+                    <button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button>
+                `;
+            } else {
+                menu.innerHTML = `
+                    <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button>
+                    <button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews</button>
+                `;
+            }
+        };
+
         const populateCardData = (c) => {
             currentCardCoffee = c;
             const hasGraph = !!((c.scaleCapture && c.scaleCapture.samples && c.scaleCapture.samples.length) || (c.scaleFlowCapture && c.scaleFlowCapture.samples && c.scaleFlowCapture.samples.length) || (c.scaleRawCapture && c.scaleRawCapture.samples && c.scaleRawCapture.samples.length));
@@ -3398,12 +4424,14 @@
                 flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
                 rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] }
             } : null;
-            document.getElementById('cardRoaster').textContent = c.farmer || c.roaster || c.name || 'Unknown Blend';
+            const coffeeType = getCoffeeTypeDisplay(c);
+            updateCoffeeCardActionMenu(c);
+            document.getElementById('cardRoaster').textContent = coffeeType.farmer !== '-' ? coffeeType.farmer : (coffeeType.roaster !== '-' ? coffeeType.roaster : 'Unknown Blend');
             document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
-            document.getElementById('cardOrigin').textContent = c.origin || c.beanType || '-';
-            document.getElementById('cardFarmer').textContent = c.roaster || c.name || '-';
-            document.getElementById('cardProcess').textContent = c.processing || '-';
-            document.getElementById('cardRoastType').textContent = c.roastType || '-';
+            document.getElementById('cardOrigin').textContent = coffeeType.origin;
+            document.getElementById('cardFarmer').textContent = coffeeType.roaster;
+            document.getElementById('cardProcess').textContent = coffeeType.processing;
+            document.getElementById('cardRoastType').textContent = coffeeType.roastType;
             document.getElementById('cardMethod').textContent = c.method || '-';
             document.getElementById('cardWeight').textContent = (c.weight ? c.weight + 'g' : '-');
             document.getElementById('cardRatio').textContent = (c.ratio ? '1:' + c.ratio : '-');
@@ -3590,7 +4618,8 @@
 
                 canvas.toBlob(async (blob) => {
                     if (!blob) return alert('Failed to generate image data');
-                    const fileName = `brew_${(c.roaster || 'coffee').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
+                    const shareType = getCoffeeTypeDisplay(c);
+                    const fileName = `brew_${(shareType.roaster !== '-' ? shareType.roaster : 'coffee').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
                     const file = new File([blob], fileName, { type: 'image/png' });
 
                     if (navigator.share) {
@@ -3599,7 +4628,7 @@
                                 await navigator.share({
                                     files: [file],
                                     title: 'Coffee Dial Brew',
-                                    text: `Check out this brew of ${c.roaster}!`
+                                    text: `Check out this brew of ${shareType.roaster !== '-' ? shareType.roaster : 'coffee'}!`
                                 });
                             } else {
                                 throw new Error('Device does not support file sharing.');
@@ -3661,8 +4690,9 @@
             const avgFlowEl = document.getElementById('cardGraphAvgFlow');
             const c = currentCardCoffee || {};
             if (subtitleEl) {
-                const roaster = c.roaster || c.name || 'Unknown Roaster';
-                const farmer = c.farmer || '-';
+                const typeDisplay = getCoffeeTypeDisplay(c);
+                const roaster = typeDisplay.roaster !== '-' ? typeDisplay.roaster : 'Unknown Roaster';
+                const farmer = typeDisplay.farmer !== '-' ? typeDisplay.farmer : '-';
                 const method = c.method || '-';
                 subtitleEl.textContent = `${roaster} ${farmer} (${method})`;
             }
@@ -4729,8 +5759,9 @@
 
         const generateRow = (c) => {
             const w = (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '-';
-            const displayRoaster = c.roaster || c.name || '-'; 
-            const displayOrigin = c.origin || c.beanType || '-'; 
+            const typeDisplay = getCoffeeTypeDisplay(c);
+            const displayRoaster = typeDisplay.roaster;
+            const displayOrigin = typeDisplay.origin;
             const displayDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
             let gripIconClass = '';
             if (c.isActive) { gripIconClass = 'fa-thumbtack text-green-600'; } else { gripIconClass = 'fa-thumbtack text-stone-300 dark:text-stone-600 opacity-40'; }
@@ -4751,10 +5782,10 @@
             let rowHTML = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIconClass}"></i></td>`;
             if(columnPreferences.roaster !== false) rowHTML += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
             if(columnPreferences.origin !== false) rowHTML += `<td class="px-3 py-1 text-sm">${displayOrigin}</td>`;
-            if(columnPreferences.farmer !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.farmer || '-'}</td>`;
-            if(columnPreferences.variety !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.variety || '-'}</td>`;
-            if(columnPreferences.processing !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.processing || '-'}</td>`;
-            if(columnPreferences.roastType !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.roastType || '-'}</td>`;
+            if(columnPreferences.farmer !== false) rowHTML += `<td class="px-3 py-1 text-sm">${typeDisplay.farmer}</td>`;
+            if(columnPreferences.variety !== false) rowHTML += `<td class="px-3 py-1 text-sm">${typeDisplay.variety}</td>`;
+            if(columnPreferences.processing !== false) rowHTML += `<td class="px-3 py-1 text-sm">${typeDisplay.processing}</td>`;
+            if(columnPreferences.roastType !== false) rowHTML += `<td class="px-3 py-1 text-sm">${typeDisplay.roastType}</td>`;
             if(columnPreferences.method !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.method || '-'}</td>`;
             if(columnPreferences.grinder !== false) rowHTML += `<td class="px-3 py-1 text-sm">${c.grinder || '-'}</td>`;
             if(columnPreferences.grind !== false) rowHTML += `<td class="px-3 py-1 font-mono text-coffee-700 dark:text-[#d6ccc2]">${c.grind || '-'}</td>`;
@@ -4785,6 +5816,93 @@
         };
         initAnimationPreference();
 
+        const handleCardKeyNav = (event) => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            const target = event.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) {
+                return;
+            }
+
+            const dir = event.key === 'ArrowLeft' ? -1 : 1;
+            const isVisible = (id) => {
+                const el = document.getElementById(id);
+                return el && !el.classList.contains('hidden');
+            };
+            const tryNavigate = (btnId, action) => {
+                const btn = document.getElementById(btnId);
+                if (!btn || btn.disabled || btn.classList.contains('hidden')) return false;
+                action();
+                return true;
+            };
+
+            if (isVisible('cardGraphModal')) {
+                if (tryNavigate(dir < 0 ? 'cardGraphPrevBtn' : 'cardGraphNextBtn', () => navigateCoffeeCardFromGraph(dir))) {
+                    event.preventDefault();
+                }
+                return;
+            }
+
+            if (isVisible('coffeeCardOverlay')) {
+                if (tryNavigate(dir < 0 ? 'coffeeCardPrevBtn' : 'coffeeCardNextBtn', () => navigateCoffeeCard(dir))) {
+                    event.preventDefault();
+                }
+                return;
+            }
+
+            if (isVisible('beanCardOverlay')) {
+                if (tryNavigate(dir < 0 ? 'beanCardPrevBtn' : 'beanCardNextBtn', () => navigateBeanCard(dir))) {
+                    event.preventDefault();
+                }
+                return;
+            }
+
+            if (isVisible('coffeeTypeCardOverlay')) {
+                if (tryNavigate(dir < 0 ? 'coffeeTypeCardPrevBtn' : 'coffeeTypeCardNextBtn', () => navigateCoffeeTypeCard(dir))) {
+                    event.preventDefault();
+                }
+            }
+        };
+        document.addEventListener('keydown', handleCardKeyNav);
+
+        const handleEscapeKey = (event) => {
+            if (event.key !== 'Escape') return;
+            const target = event.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) {
+                return;
+            }
+
+            const closeIfVisible = (id, closeFn) => {
+                const el = document.getElementById(id);
+                if (!el || el.classList.contains('hidden')) return false;
+                closeFn();
+                return true;
+            };
+
+            const closed =
+                closeIfVisible('connectScaleModal', () => window.closeConnectScaleModal && window.closeConnectScaleModal()) ||
+                closeIfVisible('cardGraphModal', () => closeCardGraphModal(null)) ||
+                closeIfVisible('graphModal', () => closeGraphModal()) ||
+                closeIfVisible('coffeeCardOverlay', () => closeCoffeeCard(null)) ||
+                closeIfVisible('easterEggModal', () => closeEasterEgg(null)) ||
+                closeIfVisible('statsModal', () => closeStats()) ||
+                closeIfVisible('helpModal', () => closeHelp()) ||
+                closeIfVisible('aboutModal', () => closeAbout()) ||
+                closeIfVisible('exportModal', () => closeExportModal()) ||
+                closeIfVisible('preferencesModal', () => document.getElementById('preferencesModal').classList.add('hidden')) ||
+                closeIfVisible('coffeeScaleModal', () => window.closeCoffeeScaleModal && window.closeCoffeeScaleModal()) ||
+                closeIfVisible('uploadPhotoModal', () => closeUploadModal()) ||
+                closeIfVisible('coffeeTypeCardOverlay', () => closeCoffeeTypeCard(null)) ||
+                closeIfVisible('galleryModal', () => document.getElementById('galleryModal').classList.add('hidden')) ||
+                closeIfVisible('beanCardOverlay', () => closeBeanCard(null)) ||
+                closeIfVisible('imageModalOverlay', () => closeImageModal(null)) ||
+                closeIfVisible('coffeeTypesModal', () => closeCoffeeTypes()) ||
+                closeIfVisible('beansModal', () => closeBeans()) ||
+                closeIfVisible('modalOverlay', () => closeModal());
+
+            if (closed) event.preventDefault();
+        };
+        document.addEventListener('keydown', handleEscapeKey);
+
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
             if (user) {
@@ -4803,7 +5921,16 @@
         Object.assign(window, { 
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             // New Beans Functions
-            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, extractCoffeeTypesFromBeans
+            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, extractCoffeeTypesFromBeans,
+            openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto,
+            closeCoffeeCardMenu,
+            toggleCoffeeDetails,
+            createCoffeeTypeFromModal,
+            deleteCoffeeType,
+            createBeanFromModal,
+            toggleCoffeeTypesAiMenu,
+            triggerCoffeeTypesAIScan,
+            handleCoffeeTypesAIFile
         });
 
         const searchInput = document.getElementById('globalSearch'); 
