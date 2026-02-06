@@ -1586,6 +1586,19 @@
         </div>
     </div>
 
+    <div id="autoCoffeeTypeToast" class="hidden fixed bottom-4 right-4 z-[120] w-[calc(100%-2rem)] max-w-sm">
+        <div class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-xl shadow-2xl p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div id="autoCoffeeTypeToastText" class="text-sm font-semibold text-coffee-900 dark:text-white">
+                    Coffee created.
+                </div>
+                <button onclick="closeCoffeeTypeCreatedToast()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // --- CONFIG ---
         const firebaseConfig = {
@@ -2301,6 +2314,39 @@
                 // 3. If not exists, create new doc with auto-ID.
                 
                 const clean = (s) => (s || '').toLowerCase().trim();
+                const makeCoffeeTypeKey = (obj) => [
+                    clean(obj?.roaster),
+                    clean(obj?.farmer),
+                    clean(obj?.processing),
+                    clean(obj?.origin),
+                    clean(obj?.roastType || obj?.roast)
+                ].join('|');
+
+                const ensureCoffeeTypeId = async () => {
+                    const key = makeCoffeeTypeKey(beanData);
+                    if (!key || key.replace(/\|/g, '') === '') return null;
+                    const existingType = coffeeTypes.find(ct => makeCoffeeTypeKey(ct) === key);
+                    if (existingType?.id) return { id: existingType.id, created: false };
+
+                    const nowIso = new Date().toISOString();
+                    const typeData = {
+                        uid: currentUser.uid,
+                        roaster: beanData.roaster || '',
+                        farmer: beanData.farmer || '',
+                        origin: beanData.origin || '',
+                        processing: beanData.processing || '',
+                        variety: beanData.variety || '',
+                        roast: beanData.roastType || '',
+                        tasteNotes: '',
+                        webshopUrl: '',
+                        imageUrl: '',
+                        createdAt: nowIso,
+                        updatedAt: nowIso
+                    };
+                    const typeRef = await addDoc(collection(db, 'users', currentUser.uid, 'coffeeTypes'), typeData);
+                    coffeeTypes.push({ id: typeRef.id, ...typeData });
+                    return { id: typeRef.id, created: true };
+                };
                 
                 if (!selectedBeanId) {
                     // Check for existing bean with same signature in client cache to prevent duplicates
@@ -2312,13 +2358,24 @@
                         clean(b.variety) === clean(beanData.variety) &&
                         clean(b.roastType) === clean(beanData.roastType)
                     );
-                    
+
                     if (existingBean) {
                         selectedBeanId = existingBean.id;
+                        let coffeeTypeId = existingBean.coffeeTypeId || null;
+                        if (!coffeeTypeId) {
+                            const coffeeTypeInfo = await ensureCoffeeTypeId();
+                            coffeeTypeId = coffeeTypeInfo?.id || null;
+                            if (coffeeTypeInfo?.created) showCoffeeTypeCreatedToast(coffeeTypeId);
+                        }
                         // Optionally update updatedTimestamp
-                        await updateDoc(doc(db, 'users', currentUser.uid, 'beans', selectedBeanId), { updatedAt: beanData.updatedAt });
+                        const updates = { updatedAt: beanData.updatedAt };
+                        if (!existingBean.coffeeTypeId && coffeeTypeId) updates.coffeeTypeId = coffeeTypeId;
+                        await updateDoc(doc(db, 'users', currentUser.uid, 'beans', selectedBeanId), updates);
                         await uploadPendingBeanImage(selectedBeanId);
                     } else {
+                        const coffeeTypeInfo = await ensureCoffeeTypeId();
+                        const coffeeTypeId = coffeeTypeInfo?.id || null;
+                        if (coffeeTypeInfo?.created) showCoffeeTypeCreatedToast(coffeeTypeId);
                         // Create New Bean with Auto-ID
                         if (beanData.roaster || beanData.origin) { // Only create if minimal data exists
                             const nowIso = new Date().toISOString();
@@ -2329,6 +2386,7 @@
                             beanData.stock = 250;
                             beanData.stockUpdatedAt = nowIso;
                             beanData.openedDate = nowIso;
+                            if (coffeeTypeId) beanData.coffeeTypeId = coffeeTypeId;
                             const newBeanRef = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
                             selectedBeanId = newBeanRef.id;
                             await uploadPendingBeanImage(selectedBeanId);
@@ -2516,7 +2574,6 @@
         };
 
         const getRemainingStockAfterBrew = (bean, brew, existingBrewId = null) => {
-            console.log('[stock-calc] stockUpdatedAt', bean?.stockUpdatedAt, typeof bean?.stockUpdatedAt);
             if (!bean || bean.stock === undefined || bean.stock === null || bean.stock === '') return null;
             if (!bean.stockUpdatedAt) return null;
             const stockBase = parseFloat(bean.stock);
@@ -2544,12 +2601,10 @@
             const usedAmount = brewsForBean
                 .filter(c => c.createdAt && new Date(c.createdAt) > stockDate)
                 .reduce((sum, c) => {
-                    console.log('[stock-calc] weight', c.weight, typeof c.weight);
                     const weight = parseFloat(c.weight);
                     return sum + (isNaN(weight) ? 0 : weight);
                 }, 0);
             const remaining = stockBase - usedAmount;
-            console.log(`[stock-calc] beanId=${bean.id} usedAmount=${usedAmount} stockBase=${stockBase} remaining=${remaining} brewsCount=${brewsForBean.length} calc=${stockBase}-${usedAmount}=${remaining}`);
             return remaining;
         };
 
@@ -2618,6 +2673,37 @@
         };
 
         window.handleAutoArchiveToastAction = handleAutoArchiveToastAction;
+
+        let coffeeTypeToastTimer = null;
+
+        const showCoffeeTypeCreatedToast = (coffeeTypeId = null) => {
+            const toast = document.getElementById('autoCoffeeTypeToast');
+            if (!toast) return;
+            const textEl = document.getElementById('autoCoffeeTypeToastText');
+            if (textEl) {
+                const type = coffeeTypes.find(ct => ct.id === coffeeTypeId);
+                const name = type
+                    ? `${type.roaster || 'New coffee'}${type.farmer ? ' - ' + type.farmer : ''}`
+                    : 'New coffee';
+                textEl.textContent = `Coffee created: ${name}.`;
+            }
+            toast.classList.remove('hidden');
+            if (coffeeTypeToastTimer) clearTimeout(coffeeTypeToastTimer);
+            coffeeTypeToastTimer = setTimeout(() => {
+                closeCoffeeTypeCreatedToast();
+            }, 3500);
+        };
+
+        const closeCoffeeTypeCreatedToast = () => {
+            const toast = document.getElementById('autoCoffeeTypeToast');
+            if (toast) toast.classList.add('hidden');
+            if (coffeeTypeToastTimer) {
+                clearTimeout(coffeeTypeToastTimer);
+                coffeeTypeToastTimer = null;
+            }
+        };
+
+        window.closeCoffeeTypeCreatedToast = closeCoffeeTypeCreatedToast;
 
         // --- Coffee Management Functions ---
         const openCoffeeTypes = () => {
