@@ -1509,7 +1509,7 @@
 
     <!-- Gallery, Preferences, Export, Help, About Modals -->
     <div id="galleryModal" class="hidden fixed inset-0 z-[75] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col"><div class="flex border-b border-coffee-200 dark:border-[#44403c]"><button onclick="switchGalleryTab('mine')" id="tabGalleryMine" class="flex-1 py-3 text-sm font-semibold text-coffee-700 dark:text-[#d6ccc2] bg-coffee-50 dark:bg-[#1c1917]">My Photos</button><button onclick="switchGalleryTab('shared')" id="tabGalleryShared" class="flex-1 py-3 text-sm font-semibold text-coffee-500 dark:text-[#78716c] hover:bg-coffee-50 dark:hover:bg-[#1c1917]">Friends' Photos</button><button onclick="document.getElementById('galleryModal').classList.add('hidden')" class="px-4 text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></div><div id="galleryContent" class="p-4 overflow-y-auto ios-scroll flex-1 bg-coffee-50 dark:bg-[#1c1917]"><div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div><div id="galleryLoadMore" class="text-center py-4 hidden"><button onclick="loadMoreGallery()" class="bg-coffee-100 dark:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] px-6 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-coffee-200 dark:hover:bg-[#44403c] transition-colors">Load More <i class="fa-solid fa-chevron-down ml-2"></i></button></div><div id="galleryEmpty" class="hidden text-center py-10 text-coffee-400 dark:text-[#57534e]"><i class="fa-solid fa-images text-4xl mb-2"></i><p>No photos found.</p></div></div></div></div>
-    <div id="preferencesModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]"><div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center"><h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-sliders mr-2"></i>Preferences</h3><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 max-h-[60vh] overflow-y-auto"><div class="mb-6"><h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Pinned Brews</h4><p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Control the behaviour of pinned brews. These settings are stored in your profile and apply to every device.</p><div class="space-y-3"><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Enable Animations</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="animationsToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="animationsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-amber-700"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Organize by Beans</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="organizeByBeansToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="organizeByBeansToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-bag-shopping text-green-600"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Pin Open Bags</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="pinOpenBagsToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="pinOpenBagsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div></div></div><div><h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3">Table Columns</h4><p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Select the columns you want to see in the brew table. These settings are stored on your device.</p><div id="preferencesList" class="space-y-3"></div></div></div><div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2"><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button><button onclick="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Save Preferences</button></div></div></div>
+    <div id="preferencesModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]"><div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center"><h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-sliders mr-2"></i>Preferences</h3><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 max-h-[60vh] overflow-y-auto"><div class="mb-6"><h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Pinned Brews</h4><p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Control the behaviour of pinned brews. These settings are stored in your profile and apply to every device.</p><div class="space-y-3"><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Enable Animations</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="animationsToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="animationsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-amber-700"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Organize by Beans</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="organizeByBeansToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="organizeByBeansToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-bag-shopping text-green-600"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Pin Open Bags</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="pinOpenBagsToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="pinOpenBagsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-arrows-rotate text-sky-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Swap Roaster/Farmer</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="swapRoasterFarmerToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="swapRoasterFarmerToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div></div></div><div><h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3">Table Columns</h4><p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Select the columns you want to see in the brew table. These settings are stored on your device.</p><div id="preferencesList" class="space-y-3"></div></div></div><div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2"><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button><button onclick="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Save Preferences</button></div></div></div>
     <div id="coffeeScaleModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
@@ -1692,7 +1692,8 @@
         const defaultPinnedBrewsPreferences = {
             animationsEnabled: true,
             organizeByBeans: true,
-            pinOpenBags: false
+            pinOpenBags: false,
+            swapRoasterFarmer: false
         };
         let pinnedBrewsPreferences = { ...defaultPinnedBrewsPreferences };
 
@@ -4665,6 +4666,8 @@
             document.getElementById('organizeByBeansToggle').checked = organizeByBeans;
             const pinOpenBagsEnabled = !!pinnedBrewsPreferences.pinOpenBags;
             document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;
+            const swapRoasterFarmer = !!pinnedBrewsPreferences.swapRoasterFarmer;
+            document.getElementById('swapRoasterFarmerToggle').checked = swapRoasterFarmer;
             document.getElementById('preferencesModal').classList.remove('hidden');
         };
 
@@ -4675,12 +4678,14 @@
             const animationsEnabled = document.getElementById('animationsToggle').checked;
             const organizeByBeans = document.getElementById('organizeByBeansToggle').checked;
             const pinOpenBagsEnabled = document.getElementById('pinOpenBagsToggle').checked;
+            const swapRoasterFarmer = document.getElementById('swapRoasterFarmerToggle').checked;
             const pinOpenBagsWasEnabled = !!pinnedBrewsPreferences.pinOpenBags;
             pinnedBrewsPreferences = {
                 ...pinnedBrewsPreferences,
                 animationsEnabled,
                 organizeByBeans,
-                pinOpenBags: pinOpenBagsEnabled
+                pinOpenBags: pinOpenBagsEnabled,
+                swapRoasterFarmer: swapRoasterFarmer
             };
             applyAnimationPreference();
             if (pinOpenBagsEnabled && !pinOpenBagsWasEnabled) {
@@ -6426,6 +6431,11 @@
             
             const roaster = brew.roaster || brew.name || 'Unknown Roaster';
             const farmer = brew.farmer || '-';
+            const swapPinnedBrewTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
+            const titleText = swapPinnedBrewTitle
+                ? (farmer && farmer !== '-' ? farmer : roaster)
+                : roaster;
+            const subtitleText = swapPinnedBrewTitle ? roaster : farmer;
             
             // Check if this brew is decaf
             const isDecaf = [brew.roaster, brew.name, brew.farmer, brew.origin, brew.variety, brew.processing, brew.roastType, brew.notes]
@@ -6445,7 +6455,7 @@
             const brewCountBadge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>1 brew</span>`;
             const placeholderBadge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border border-transparent invisible">-</span>`;
             
-            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${brewCountBadge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
+            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${brewCountBadge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
             container.appendChild(tile);
         };
         
@@ -6541,6 +6551,11 @@
             
             const roaster = bean?.roaster || 'Unknown';
             const farmer = bean?.farmer || '-';
+            const swapPinnedBrewTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
+            const titleText = swapPinnedBrewTitle
+                ? (farmer && farmer !== '-' ? farmer : roaster)
+                : roaster;
+            const subtitleText = swapPinnedBrewTitle ? roaster : farmer;
             const brewCount = brews.length;
             
             // Check if any brew in this bean is decaf
@@ -6565,7 +6580,7 @@
             const brewCountBadge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>${brewCount} brew${brewCount !== 1 ? 's' : ''}</span>`;
             const placeholderBadge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border border-transparent invisible">-</span>`;
             
-            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${brewCountBadge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
+            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${brewCountBadge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
             container.appendChild(tile);
         };
         
@@ -6758,6 +6773,11 @@
 
             const roaster = c.roaster || c.name || 'Unknown Roaster';
             const farmer = c.farmer || '-';
+            const swapPinnedBrewTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
+            const titleText = swapPinnedBrewTitle
+                ? (farmer && farmer !== '-' ? farmer : roaster)
+                : roaster;
+            const subtitleText = swapPinnedBrewTitle ? roaster : farmer;
             const method = c.method || '-';
             const drink = c.drink || '-';
             
@@ -6784,7 +6804,7 @@
             // Background Layer Wrapper (Clip Overlay)
             const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
 
-            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${roaster}">${roaster}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${farmer}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(method,'method')}<div class="flex gap-1 items-center">${getTileBadge(drink,'drink')}${decafIcon}</div></div></div>${menuBtn}${menu}`;
+            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(method,'method')}<div class="flex gap-1 items-center">${getTileBadge(drink,'drink')}${decafIcon}</div></div></div>${menuBtn}${menu}`;
             container.appendChild(tile);
         };
 
