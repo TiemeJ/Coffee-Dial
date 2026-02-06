@@ -4596,13 +4596,10 @@
             if (!openBeans.length) return;
 
             const openBeanIds = new Set(openBeans.map(bean => bean.id));
-            const openBeanSignatures = new Set(openBeans.map(bean => makeBeanSignature(bean)).filter(Boolean));
 
             const brewsToPin = coffees.filter(brew => {
                 if (brew.isActive) return false;
-                if (brew.beanId && openBeanIds.has(brew.beanId)) return true;
-                const brewSignature = makeBeanSignature(brew);
-                return brewSignature ? openBeanSignatures.has(brewSignature) : false;
+                return !!(brew.beanId && openBeanIds.has(brew.beanId));
             });
 
             if (!brewsToPin.length) return;
@@ -4629,14 +4626,11 @@
         const unpinBrewsForBeans = async ({ beanIds = [], beanSignatures = [] }) => {
             if (!currentUser) return;
             const idSet = new Set(beanIds.filter(Boolean));
-            const sigSet = new Set(beanSignatures.filter(Boolean));
-            if (!idSet.size && !sigSet.size) return;
+            if (!idSet.size) return;
 
             const brewsToUnpin = coffees.filter(brew => {
                 if (!brew.isActive) return false;
-                if (brew.beanId && idSet.has(brew.beanId)) return true;
-                const brewSignature = makeBeanSignature(brew);
-                return brewSignature ? sigSet.has(brewSignature) : false;
+                return !!(brew.beanId && idSet.has(brew.beanId));
             });
 
             if (!brewsToUnpin.length) return;
