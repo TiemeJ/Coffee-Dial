@@ -205,7 +205,7 @@
                                      <i class="fa-solid fa-seedling w-4 text-center"></i> <span>Beans</span>
                         </button>
                                 <button onclick="openCoffeeTypes(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                                    <i class="fa-solid fa-layer-group w-4 text-center"></i> <span>Coffee types</span>
+                                    <i class="fa-solid fa-layer-group w-4 text-center"></i> <span>Coffees</span>
                                 </button>
                         <button onclick="openGallery(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -568,7 +568,7 @@
                         <i class="fa-solid fa-sync-alt mr-1"></i> Scan brews
                     </button>
                     <button onclick="extractCoffeeTypesFromBeans()" class="text-xs bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded font-bold transition-colors border border-emerald-200 dark:border-emerald-800">
-                        <i class="fa-solid fa-layer-group mr-1"></i> Extract coffee types
+                        <i class="fa-solid fa-layer-group mr-1"></i> Extract coffees
                     </button>
                     <div class="relative">
                         <button type="button" onclick="toggleBeansAiMenu(event)" id="beansAiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
@@ -593,6 +593,29 @@
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
+                <div class="mb-3 relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <i class="fa-solid fa-search text-coffee-400"></i>
+                    </div>
+                    <input id="beansSearch" type="text" placeholder="Search beans..." oninput="setBeansSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                        <button id="beansSearchClearBtn" onclick="clearBeansSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                        <button onclick="toggleBeansQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
+                    </div>
+                    <div id="beansQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                        <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                    </div>
+                    <div id="beansQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
+                </div>
+                <div id="beansActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap mb-4">
+                    <div class="flex items-center gap-2 flex-wrap" id="beansActiveFiltersList"></div>
+                    <button onclick="clearBeansFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
+                </div>
                  <div class="overflow-x-auto rounded-lg border border-coffee-200 dark:border-[#44403c]">
                     <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                         <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
@@ -619,17 +642,17 @@
         </div>
     </div>
 
-    <!-- Coffee Types Modal -->
+    <!-- Coffee Modal -->
     <div id="coffeeTypesModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917]">
                 <h3 class="font-bold text-xl text-coffee-900 dark:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-coffee-600 dark:text-[#d6ccc2]"></i> Coffee Types
+                    <i class="fa-solid fa-layer-group text-coffee-600 dark:text-[#d6ccc2]"></i> Coffees
                 </h3>
                 <div class="flex items-center gap-3">
                     <div class="relative">
                         <button type="button" onclick="toggleCoffeeTypesAiMenu(event)" id="coffeeTypesAiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> Add coffee type
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Add coffee
                         </button>
                         <div id="coffeeTypesAiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
                             <button type="button" onclick="triggerCoffeeTypesAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
@@ -642,7 +665,7 @@
                         <input type="file" id="coffeeTypesAiFileInput" accept="image/*" class="hidden" onchange="handleCoffeeTypesAIFile(event)">
                     </div>
                     <button onclick="createCoffeeTypeFromModal()" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Add coffee type
+                        <i class="fa-solid fa-plus"></i> Add coffee
                     </button>
                     <button onclick="closeCoffeeTypes()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
                         <i class="fa-solid fa-xmark text-xl"></i>
@@ -650,8 +673,28 @@
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
-                <div class="mb-4 space-y-3">
-                    <input id="coffeeTypesSearch" type="text" placeholder="Search coffee types..." oninput="setCoffeeTypesSearch(this.value)" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
+                <div class="mb-3 relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <i class="fa-solid fa-search text-coffee-400"></i>
+                    </div>
+                    <input id="coffeeTypesSearch" type="text" placeholder="Search coffees..." oninput="setCoffeeTypesSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                        <button id="coffeeTypesSearchClearBtn" onclick="clearCoffeeTypesSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                        <button onclick="toggleCoffeeTypesQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
+                    </div>
+                    <div id="coffeeTypesQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                        <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                    </div>
+                    <div id="coffeeTypesQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
+                </div>
+                <div id="coffeeTypesActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap mb-4">
+                    <div class="flex items-center gap-2 flex-wrap" id="coffeeTypesActiveFiltersList"></div>
+                    <button onclick="clearCoffeeTypesFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
                 </div>
                 <div class="overflow-x-auto rounded-lg border border-coffee-200 dark:border-[#44403c]">
                     <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
@@ -705,13 +748,13 @@
                     </table>
                 </div>
                 <div id="coffeeTypesEmpty" class="hidden text-center py-8 text-coffee-400 dark:text-[#57534e]">
-                    <p>No coffee types saved yet.</p>
+                    <p>No coffees saved yet.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Coffee Type Card Overlay -->
+    <!-- Coffee Card Overlay -->
     <div id="coffeeTypeCardOverlay" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCoffeeTypeCard(event)">
         <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c]" onclick="event.stopPropagation()">
             <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
@@ -730,7 +773,7 @@
                 <div class="flex flex-col md:flex-row gap-4">
                     <div class="w-36 md:w-40 lg:w-48">
                         <div id="coffeeTypeCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
-                            <img id="coffeeTypeCardImage" class="absolute inset-0 w-full h-full object-contain hidden cursor-pointer" src="" alt="Coffee Type Photo" onclick="openCoffeeTypePhoto(event)">
+                            <img id="coffeeTypeCardImage" class="absolute inset-0 w-full h-full object-contain hidden cursor-pointer" src="" alt="Coffee Photo" onclick="openCoffeeTypePhoto(event)">
                             <div id="coffeeTypeCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
                                 <i class="fa-solid fa-image text-3xl mb-2"></i>
                                 <p class="text-xs font-medium">Add / Change picture</p>
@@ -1008,9 +1051,9 @@
             <div id="beanCardEdit" class="hidden p-4 space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="sm:col-span-2">
-                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Coffee Type</label>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Coffee</label>
                         <select id="beanEditCoffeeType" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
-                            <option value="__new__">-- create new coffee type --</option>
+                            <option value="__new__">-- create new coffee --</option>
                         </select>
                     </div>
                     <div>
@@ -1453,12 +1496,12 @@
         let currentView = 'mine'; 
         let coffees = [];
         let beans = []; // Store saved beans
-        let coffeeTypes = []; // Store coffee types
+        let coffeeTypes = []; // Store coffees
         let following = [];
         let followers = []; 
         let unsubscribeData = null; 
         let unsubscribeBeans = null; // Listener for saved beans
-        let unsubscribeCoffeeTypes = null; // Listener for coffee types
+        let unsubscribeCoffeeTypes = null; // Listener for coffees
         let unsubscribeNotifications = null;
         let isPublic = false;
         let sortableInstances = []; 
@@ -1473,6 +1516,7 @@
         let coffeeTypesSortKey = 'createdAt';
         let coffeeTypesSortDir = 'desc';
         let coffeeTypesSearch = '';
+        let coffeeTypesFilters = { roaster: null, farmer: null, origin: null, processing: null, variety: null, roast: null };
 
         let pendingAIBeanImageFile = null;
 
@@ -1841,7 +1885,7 @@
                 renderPinnedTiles(); renderTable();
             });
 
-            // Listen to Coffee Types (needed to resolve brew -> bean -> coffee type display)
+            // Listen to Coffees (needed to resolve brew -> bean -> coffee display)
             const typeQ = collection(db, 'users', targetUid, 'coffeeTypes');
             unsubscribeCoffeeTypes = onSnapshot(typeQ, (snapshot) => {
                 coffeeTypes = [];
@@ -1853,7 +1897,7 @@
                 renderPinnedTiles();
                 renderTable();
             }, (error) => {
-                console.error("Error loading coffee types:", error);
+                console.error("Error loading coffees:", error);
                 coffeeTypes = [];
                 updateCoffeeTypeSelectors();
                 if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
@@ -1886,7 +1930,7 @@
             const select = document.getElementById('beanEditCoffeeType');
             if (!select) return;
             const currentValue = select.value;
-            select.innerHTML = '<option value="__new__">-- create new coffee type --</option>';
+            select.innerHTML = '<option value="__new__">-- create new coffee --</option>';
             const uniqueTypes = new Map();
             coffeeTypes.forEach(type => {
                 if (type?.id && !uniqueTypes.has(type.id)) uniqueTypes.set(type.id, type);
@@ -1906,7 +1950,7 @@
         };
 
         const extractCoffeeTypesFromBeans = async () => {
-            if (!currentUser) return alert("Please sign in to extract coffee types.");
+            if (!currentUser) return alert("Please sign in to extract coffees.");
             if (!beans.length) return alert("No coffee bags found to extract.");
 
             const normalize = (v) => (v || '').toLowerCase().trim();
@@ -1942,7 +1986,7 @@
             });
 
             if (!newTypeByKey.size && !coffeeTypes.length) {
-                return alert("No coffee types found to extract.");
+                return alert("No coffees found to extract.");
             }
 
             try {
@@ -1975,10 +2019,10 @@
                 });
 
                 const addedCount = newTypeByKey.size;
-                alert(`Saved ${addedCount} coffee type${addedCount === 1 ? '' : 's'} and linked bags.`);
+                alert(`Saved ${addedCount} coffee${addedCount === 1 ? '' : 's'} and linked bags.`);
             } catch (error) {
                 console.error(error);
-                alert("Error saving coffee types: " + error.message);
+                alert("Error saving coffees: " + error.message);
             }
         };
 
@@ -2313,7 +2357,7 @@
             return parseFloat(bean.stock) - usedAmount;
         };
 
-        // --- Coffee Types Management Functions ---
+        // --- Coffee Management Functions ---
         const openCoffeeTypes = () => {
             if (!currentUser) return alert("Please sign in.");
             document.getElementById('coffeeTypesModal').classList.remove('hidden');
@@ -2349,8 +2393,8 @@
                 openCoffeeTypeCard(newType.id);
                 enterCoffeeTypeEditMode();
             } catch (err) {
-                console.error('Error creating coffee type:', err);
-                alert('Failed to create coffee type.');
+                console.error('Error creating coffee:', err);
+                alert('Failed to create coffee.');
             }
         };
 
@@ -2364,7 +2408,7 @@
 
         const deleteCoffeeType = async () => {
             if (!currentUser || !currentCoffeeTypeId) return;
-            if (!confirm('Delete this coffee type? Beans linked to it will be unlinked.')) return;
+            if (!confirm('Delete this coffee? Beans linked to it will be unlinked.')) return;
 
             const typeId = currentCoffeeTypeId;
             const nowIso = new Date().toISOString();
@@ -2387,8 +2431,8 @@
                 renderPinnedTiles();
                 renderTable();
             } catch (err) {
-                console.error('Error deleting coffee type:', err);
-                alert('Failed to delete coffee type.');
+                console.error('Error deleting coffee:', err);
+                alert('Failed to delete coffee.');
             }
         };
 
@@ -2422,7 +2466,7 @@
                 if (idx !== -1) coffeeTypes[idx] = { ...coffeeTypes[idx], imageUrl: null, imageURL: null };
                 openCoffeeTypeCard(currentCoffeeTypeId);
             } catch (err) {
-                console.error('Remove coffee type photo failed:', err);
+                console.error('Remove coffee photo failed:', err);
                 alert('Failed to remove image.');
             }
         };
@@ -2449,7 +2493,7 @@
                 if (idx !== -1) coffeeTypes[idx] = { ...coffeeTypes[idx], imageUrl: downloadURL };
                 openCoffeeTypeCard(currentCoffeeTypeId);
             } catch (err) {
-                console.error('Coffee type photo upload failed:', err);
+                console.error('Coffee photo upload failed:', err);
                 alert('Failed to upload image.');
             } finally {
                 if (targetEl && originalClasses) targetEl.className = originalClasses;
@@ -2588,14 +2632,127 @@
                 renderCoffeeTypesTable();
                 openCoffeeTypeCard(currentCoffeeTypeId);
             } catch (err) {
-                console.error('Error saving coffee type edits:', err);
+                console.error('Error saving coffee edits:', err);
                 alert('Failed to save changes.');
             }
         };
 
         const setCoffeeTypesSearch = (value) => {
             coffeeTypesSearch = value || '';
+            const clearBtn = document.getElementById('coffeeTypesSearchClearBtn');
+            if (clearBtn) clearBtn.classList.toggle('hidden', coffeeTypesSearch.length === 0);
             renderCoffeeTypesTable();
+        };
+
+        const clearCoffeeTypesSearch = () => {
+            const input = document.getElementById('coffeeTypesSearch');
+            if (input) input.value = '';
+            setCoffeeTypesSearch('');
+            input?.focus();
+        };
+
+        const toggleCoffeeTypesQuickFilter = (e) => {
+            e.stopPropagation();
+            const dropdown = document.getElementById('coffeeTypesQuickFilterDropdown');
+            const valuesDropdown = document.getElementById('coffeeTypesQuickFilterValuesDropdown');
+            valuesDropdown.classList.add('hidden');
+
+            if (dropdown.classList.contains('hidden')) {
+                const filterCategories = [
+                    { key: 'farmer', label: 'Farmer' },
+                    { key: 'roaster', label: 'Roaster' },
+                    { key: 'origin', label: 'Origin' },
+                    { key: 'processing', label: 'Process' },
+                    { key: 'variety', label: 'Variety' },
+                    { key: 'roast', label: 'Roast' }
+                ];
+                let html = '<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>';
+                filterCategories.forEach(cat => {
+                    const isActive = coffeeTypesFilters[cat.key] !== null;
+                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e] font-semibold' : '';
+                    html += `<button onclick="openCoffeeTypesQuickFilterValues(event, '${cat.key}', '${cat.label}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] flex items-center justify-between ${activeClass}">
+                        <span>${cat.label}</span>
+                        ${isActive ? '<i class="fa-solid fa-check text-coffee-600 dark:text-[#a8a29e] text-xs"></i>' : '<i class="fa-solid fa-chevron-right text-coffee-300 dark:text-[#57534e] text-xs"></i>'}
+                    </button>`;
+                });
+                dropdown.innerHTML = html;
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        };
+
+        const openCoffeeTypesQuickFilterValues = (e, key, label) => {
+            e.stopPropagation();
+            const valuesDropdown = document.getElementById('coffeeTypesQuickFilterValuesDropdown');
+            const mainDropdown = document.getElementById('coffeeTypesQuickFilterDropdown');
+
+            const valueSource = coffeeTypes.map(type => {
+                if (key === 'roast') return type.roast || type.roastType;
+                return type[key];
+            }).filter(Boolean);
+            const uniqueVals = [...new Set(valueSource)].sort();
+
+            if (!uniqueVals.length) {
+                valuesDropdown.innerHTML = '<div class="px-4 py-3 text-sm text-coffee-400 dark:text-[#78716c] italic">No values available</div>';
+            } else {
+                let html = `<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] flex items-center justify-between">
+                    <span>${label}</span>
+                    <button onclick="toggleCoffeeTypesQuickFilter(event)" class="text-coffee-400 hover:text-coffee-600 dark:hover:text-white">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                </div>`;
+                html += `<button onclick="applyCoffeeTypesFilterFromQuick('${key}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`;
+                uniqueVals.forEach(val => {
+                    const isActive = coffeeTypesFilters[key] === val;
+                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
+                    const escapedVal = String(val).replace(/'/g, "\\'");
+                    html += `<button onclick="applyCoffeeTypesFilterFromQuick('${key}', '${escapedVal}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
+                        ${val}
+                    </button>`;
+                });
+                valuesDropdown.innerHTML = html;
+            }
+
+            mainDropdown.classList.add('hidden');
+            valuesDropdown.classList.remove('hidden');
+        };
+
+        const applyCoffeeTypesFilterFromQuick = (key, value) => {
+            coffeeTypesFilters[key] = value;
+            document.getElementById('coffeeTypesQuickFilterDropdown').classList.add('hidden');
+            document.getElementById('coffeeTypesQuickFilterValuesDropdown').classList.add('hidden');
+            renderCoffeeTypesActiveFilters();
+            renderCoffeeTypesTable();
+        };
+
+        const clearCoffeeTypesFilters = () => {
+            coffeeTypesFilters = { roaster: null, farmer: null, origin: null, processing: null, variety: null, roast: null };
+            renderCoffeeTypesActiveFilters();
+            renderCoffeeTypesTable();
+        };
+
+        const renderCoffeeTypesActiveFilters = () => {
+            const container = document.getElementById('coffeeTypesActiveFiltersContainer');
+            const list = document.getElementById('coffeeTypesActiveFiltersList');
+            if (!container || !list) return;
+            list.innerHTML = '';
+            let hasFilters = false;
+            const labelMap = {
+                farmer: 'Farmer',
+                roaster: 'Roaster',
+                origin: 'Origin',
+                processing: 'Process',
+                variety: 'Variety',
+                roast: 'Roast'
+            };
+            Object.entries(coffeeTypesFilters).forEach(([key, value]) => {
+                if (!value) return;
+                hasFilters = true;
+                const label = labelMap[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
+                list.innerHTML += `<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${label}:</span><b>${value}</b><button onclick="applyCoffeeTypesFilterFromQuick('${key}', null)" class="ml-1 hover:text-red-200">x</button></div>`;
+            });
+            container.classList.toggle('hidden', !hasFilters);
         };
 
         const setCoffeeTypesSort = (key) => {
@@ -2626,6 +2783,14 @@
             const searchValue = normalizeText(coffeeTypesSearch);
             const hasSearch = searchValue.length > 0;
 
+            const matchesQuickFilters = (type) => {
+                return Object.entries(coffeeTypesFilters).every(([key, value]) => {
+                    if (!value) return true;
+                    const targetValue = key === 'roast' ? (type.roast || type.roastType || '') : (type[key] || '');
+                    return normalizeText(targetValue) === normalizeText(value);
+                });
+            };
+
             const filteredTypes = coffeeTypes.filter(type => {
                 const roaster = normalizeText(type.roaster);
                 const farmer = normalizeText(type.farmer);
@@ -2633,6 +2798,8 @@
                 const processing = normalizeText(type.processing);
                 const variety = normalizeText(type.variety);
                 const roast = normalizeText(type.roast || type.roastType);
+
+                if (!matchesQuickFilters(type)) return false;
 
                 if (!hasSearch) return true;
                 const searchHaystack = [roaster, farmer, origin, processing, variety, roast].join(' ');
@@ -2672,6 +2839,7 @@
             const tbody = document.getElementById('coffeeTypesTableBody');
             const empty = document.getElementById('coffeeTypesEmpty');
             tbody.innerHTML = '';
+            renderCoffeeTypesActiveFilters();
 
             if (!coffeeTypes.length) {
                 empty.classList.remove('hidden');
@@ -3100,19 +3268,154 @@
             document.getElementById('formWrapper')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
+        let beansSearch = '';
+        let beansFilters = { coffeeType: null };
+        const setBeansSearch = (value) => {
+            beansSearch = value || '';
+            const clearBtn = document.getElementById('beansSearchClearBtn');
+            if (clearBtn) clearBtn.classList.toggle('hidden', beansSearch.length === 0);
+            renderBeansTable();
+        };
+
+        const clearBeansSearch = () => {
+            const input = document.getElementById('beansSearch');
+            if (input) input.value = '';
+            setBeansSearch('');
+            input?.focus();
+        };
+
+        const toggleBeansQuickFilter = (e) => {
+            e.stopPropagation();
+            const dropdown = document.getElementById('beansQuickFilterDropdown');
+            const valuesDropdown = document.getElementById('beansQuickFilterValuesDropdown');
+            valuesDropdown.classList.add('hidden');
+
+            if (dropdown.classList.contains('hidden')) {
+                const filterCategories = [
+                    { key: 'coffeeType', label: 'Coffee' }
+                ];
+                let html = '<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>';
+                filterCategories.forEach(cat => {
+                    const isActive = beansFilters[cat.key] !== null;
+                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e] font-semibold' : '';
+                    html += `<button onclick="openBeansQuickFilterValues(event, '${cat.key}', '${cat.label}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] flex items-center justify-between ${activeClass}">
+                        <span>${cat.label}</span>
+                        ${isActive ? '<i class="fa-solid fa-check text-coffee-600 dark:text-[#a8a29e] text-xs"></i>' : '<i class="fa-solid fa-chevron-right text-coffee-300 dark:text-[#57534e] text-xs"></i>'}
+                    </button>`;
+                });
+                dropdown.innerHTML = html;
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        };
+
+        const openBeansQuickFilterValues = (e, key, label) => {
+            e.stopPropagation();
+            const valuesDropdown = document.getElementById('beansQuickFilterValuesDropdown');
+            const mainDropdown = document.getElementById('beansQuickFilterDropdown');
+
+            let uniqueVals = [];
+            if (key === 'coffeeType') {
+                uniqueVals = coffeeTypes.map(type => ({
+                    id: type.id,
+                    display: `${type.roaster || 'Unknown'}${type.farmer ? ' - ' + type.farmer : ''}`
+                }));
+            }
+
+            if (!uniqueVals.length) {
+                valuesDropdown.innerHTML = '<div class="px-4 py-3 text-sm text-coffee-400 dark:text-[#78716c] italic">No values available</div>';
+            } else {
+                let html = `<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] flex items-center justify-between">
+                    <span>${label}</span>
+                    <button onclick="toggleBeansQuickFilter(event)" class="text-coffee-400 hover:text-coffee-600 dark:hover:text-white">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                </div>`;
+                html += `<button onclick="applyBeansFilterFromQuick('${key}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`;
+                uniqueVals.forEach(val => {
+                    const isActive = beansFilters[key] === val.id;
+                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
+                    const escapedId = String(val.id).replace(/'/g, "\\'");
+                    html += `<button onclick="applyBeansFilterFromQuick('${key}', '${escapedId}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
+                        ${val.display}
+                    </button>`;
+                });
+                valuesDropdown.innerHTML = html;
+            }
+
+            mainDropdown.classList.add('hidden');
+            valuesDropdown.classList.remove('hidden');
+        };
+
+        const applyBeansFilterFromQuick = (key, value) => {
+            beansFilters[key] = value;
+            document.getElementById('beansQuickFilterDropdown').classList.add('hidden');
+            document.getElementById('beansQuickFilterValuesDropdown').classList.add('hidden');
+            renderBeansActiveFilters();
+            renderBeansTable();
+        };
+
+        const clearBeansFilters = () => {
+            beansFilters = { coffeeType: null };
+            renderBeansActiveFilters();
+            renderBeansTable();
+        };
+
+        const renderBeansActiveFilters = () => {
+            const container = document.getElementById('beansActiveFiltersContainer');
+            const list = document.getElementById('beansActiveFiltersList');
+            if (!container || !list) return;
+            list.innerHTML = '';
+            let hasFilters = false;
+            if (beansFilters.coffeeType) {
+                hasFilters = true;
+                const type = coffeeTypes.find(ct => ct.id === beansFilters.coffeeType);
+                const label = type ? `${type.roaster || 'Unknown'}${type.farmer ? ' - ' + type.farmer : ''}` : beansFilters.coffeeType;
+                list.innerHTML += `<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>Coffee:</span><b>${label}</b><button onclick="applyBeansFilterFromQuick('coffeeType', null)" class="ml-1 hover:text-red-200">x</button></div>`;
+            }
+            container.classList.toggle('hidden', !hasFilters);
+        };
+
         const renderBeansTable = () => {
             const tbody = document.getElementById('beansTableBody');
             const empty = document.getElementById('beansEmpty');
             tbody.innerHTML = '';
-            
-            if (beans.length === 0) {
+            renderBeansActiveFilters();
+            const searchTerm = beansSearch.trim().toLowerCase();
+            const filteredBeans = beans.filter(bean => {
+                if (!searchTerm) return true;
+                const type = bean.coffeeTypeId ? coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) : null;
+                const haystack = [
+                    bean.roaster,
+                    bean.farmer,
+                    bean.origin,
+                    bean.processing,
+                    bean.variety,
+                    bean.roastType,
+                    type?.roaster,
+                    type?.farmer,
+                    type?.origin,
+                    type?.processing,
+                    type?.variety,
+                    type?.roast,
+                    type?.roastType
+                ].filter(Boolean).join(' ').toLowerCase();
+                return haystack.includes(searchTerm);
+            });
+            const coffeeTypeFilter = beansFilters.coffeeType;
+            const finalBeans = coffeeTypeFilter
+                ? filteredBeans.filter(bean => bean.coffeeTypeId === coffeeTypeFilter)
+                : filteredBeans;
+
+            if (finalBeans.length === 0) {
                 empty.classList.remove('hidden');
                 return;
             }
             empty.classList.add('hidden');
 
             // Map beans to include calculated remaining stock
-            const beansWithStock = beans.map(bean => {
+            const beansWithStock = finalBeans.map(bean => {
                 let remaining = null;
                 if (bean.stock !== undefined && bean.stock !== null) {
                     const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
@@ -4159,7 +4462,7 @@
         };
 
         const exportBrewsAsBeanconquerorCSV = (brews) => {
-            const headers = ["Grind Setting", "Ground Coffee (gr)", "Brew Temperature", "Preparation method", "Bean Type", "Grinder", "Grind Speed (rpm)", "Grind Time", "Profile", "Preparation tools", "Temperature Time", "Time", "Bloom Time / Pre-infusion", "First drip time", "Amount of water", "Coffee Type", "Coffee Concentration", "Rating", "Notes", "Beverage quantity", "Total dissolved solids %", "Extraction Yield %", "Creation Date", "Brew Ratio", "Bean Age", "Archived", "Bean Id", "Preparation Id", "Mill Id"];
+            const headers = ["Grind Setting", "Ground Coffee (gr)", "Brew Temperature", "Preparation method", "Bean Type", "Grinder", "Grind Speed (rpm)", "Grind Time", "Profile", "Preparation tools", "Temperature Time", "Time", "Bloom Time / Pre-infusion", "First drip time", "Amount of water", "Coffee", "Coffee Concentration", "Rating", "Notes", "Beverage quantity", "Total dissolved solids %", "Extraction Yield %", "Creation Date", "Brew Ratio", "Bean Age", "Archived", "Bean Id", "Preparation Id", "Mill Id"];
             
             const esc = (t) => { 
                 if (t === null || t === undefined) return ''; 
@@ -4186,7 +4489,7 @@
                 '',                                                     // Bloom Time / Pre-infusion
                 '',                                                     // First drip time
                 (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', // Amount of water
-                '',                                                     // Coffee Type
+                '',                                                     // Coffee
                 '',                                                     // Coffee Concentration
                 esc(c.rating || ''),                                   // Rating
                 esc(c.notes || ''),                                    // Notes
@@ -4918,11 +5221,28 @@
         
         let currentSort = { key: null, direction: 'asc' };
         let activeFilters = { bean: null, coffeeType: null, method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null };
+        const getFilterLabel = (key) => {
+            const labelMap = {
+                bean: 'Bean',
+                coffeeType: 'Coffee',
+                method: 'Method',
+                temp: 'Temperature',
+                roastType: 'Roast',
+                roaster: 'Roaster',
+                origin: 'Origin',
+                farmer: 'Blend/Farmer',
+                variety: 'Variety',
+                processing: 'Process',
+                drink: 'Drink',
+                grinder: 'Grinder'
+            };
+            return labelMap[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
+        };
         const sortBy = (k) => { if(currentSort.key===k)currentSort.direction=currentSort.direction==='asc'?'desc':'asc'; else {currentSort.key=k;currentSort.direction='asc';} displayedBrewsCount = BREWS_PER_PAGE; renderTable(); };
-        const openFilterMenu = (e,k) => { e.stopPropagation(); const m=document.getElementById('filterDropdown'); const vals = coffees.map(c => k==='roaster' ? (c.roaster||c.name) : (k==='origin' ? (c.origin||c.beanType) : c[k])); const v=[...new Set(vals)].sort(); if(!v.length)return; let h=`<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] mb-1">Filter ${k}</div><button onclick="applyFilter('${k}',null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`; v.forEach(val=>{h+=`<button onclick="applyFilter('${k}','${val}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e]">${val}</button>`}); m.innerHTML=h; const r=e.currentTarget.getBoundingClientRect(); const c=e.currentTarget.closest('.relative').getBoundingClientRect(); m.style.top=(r.bottom-c.top+5)+'px'; m.style.left=(r.left-c.left)+'px'; m.classList.remove('hidden'); }
+        const openFilterMenu = (e,k) => { e.stopPropagation(); const m=document.getElementById('filterDropdown'); const vals = coffees.map(c => k==='roaster' ? (c.roaster||c.name) : (k==='origin' ? (c.origin||c.beanType) : c[k])); const v=[...new Set(vals)].sort(); if(!v.length)return; const label = getFilterLabel(k); let h=`<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] mb-1">Filter ${label}</div><button onclick="applyFilter('${k}',null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`; v.forEach(val=>{h+=`<button onclick="applyFilter('${k}','${val}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e]">${val}</button>`}); m.innerHTML=h; const r=e.currentTarget.getBoundingClientRect(); const c=e.currentTarget.closest('.relative').getBoundingClientRect(); m.style.top=(r.bottom-c.top+5)+'px'; m.style.left=(r.left-c.left)+'px'; m.classList.remove('hidden'); }
         const applyFilter = (k,v) => { activeFilters[k]=v; document.getElementById('filterDropdown').classList.add('hidden'); displayedBrewsCount = BREWS_PER_PAGE; renderTable(); renderActiveFilters(); };
         const clearAllFilters = () => { activeFilters={bean:null,coffeeType:null,method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null,drink:null,grinder:null}; displayedBrewsCount = BREWS_PER_PAGE; renderTable(); renderActiveFilters(); }
-        const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; let displayValue = v; if(k === 'bean'){ const bean = beans.find(b => b.id === v); if(bean) displayValue = `${bean.roaster || 'Unknown'}${bean.farmer ? ' - ' + bean.farmer : ''}`; } if(k === 'coffeeType'){ const type = coffeeTypes.find(ct => ct.id === v); if(type) displayValue = `${type.roaster || 'Unknown'}${type.farmer ? ' - ' + type.farmer : ''}`; } l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${k}:</span><b>${displayValue}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
+        const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; let displayValue = v; const label = getFilterLabel(k); if(k === 'bean'){ const bean = beans.find(b => b.id === v); if(bean) displayValue = `${bean.roaster || 'Unknown'}${bean.farmer ? ' - ' + bean.farmer : ''}`; } if(k === 'coffeeType'){ const type = coffeeTypes.find(ct => ct.id === v); if(type) displayValue = `${type.roaster || 'Unknown'}${type.farmer ? ' - ' + type.farmer : ''}`; } l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${label}:</span><b>${displayValue}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
         
         const toggleQuickFilter = (e) => {
             e.stopPropagation();
@@ -4934,7 +5254,7 @@
                 // Build filter category menu
                 const filterCategories = [
                     { key: 'bean', label: 'Bean' },
-                    { key: 'coffeeType', label: 'Coffee Type' },
+                    { key: 'coffeeType', label: 'Coffee' },
                     { key: 'method', label: 'Method' },
                     { key: 'drink', label: 'Drink' },
                     { key: 'roaster', label: 'Roaster' },
@@ -5088,6 +5408,14 @@
             if(!e.target.closest('#quickFilterDropdown') && !e.target.closest('#quickFilterValuesDropdown') && !e.target.closest('button[onclick*="toggleQuickFilter"]')) { 
                 document.getElementById('quickFilterDropdown').classList.add('hidden'); 
                 document.getElementById('quickFilterValuesDropdown').classList.add('hidden'); 
+            }
+            if(!e.target.closest('#beansQuickFilterDropdown') && !e.target.closest('#beansQuickFilterValuesDropdown') && !e.target.closest('button[onclick*="toggleBeansQuickFilter"]')) {
+                document.getElementById('beansQuickFilterDropdown').classList.add('hidden');
+                document.getElementById('beansQuickFilterValuesDropdown').classList.add('hidden');
+            }
+            if(!e.target.closest('#coffeeTypesQuickFilterDropdown') && !e.target.closest('#coffeeTypesQuickFilterValuesDropdown') && !e.target.closest('button[onclick*="toggleCoffeeTypesQuickFilter"]')) {
+                document.getElementById('coffeeTypesQuickFilterDropdown').classList.add('hidden');
+                document.getElementById('coffeeTypesQuickFilterValuesDropdown').classList.add('hidden');
             }
         };
         const toggleMainMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('mainMenuDropdown').classList.toggle('hidden'); };
@@ -5937,7 +6265,18 @@
             createBeanFromModal,
             toggleCoffeeTypesAiMenu,
             triggerCoffeeTypesAIScan,
-            handleCoffeeTypesAIFile
+            handleCoffeeTypesAIFile,
+            setBeansSearch,
+            clearBeansSearch,
+            clearCoffeeTypesSearch,
+            toggleBeansQuickFilter,
+            openBeansQuickFilterValues,
+            applyBeansFilterFromQuick,
+            clearBeansFilters,
+            toggleCoffeeTypesQuickFilter,
+            openCoffeeTypesQuickFilterValues,
+            applyCoffeeTypesFilterFromQuick,
+            clearCoffeeTypesFilters
         });
 
         const searchInput = document.getElementById('globalSearch'); 
