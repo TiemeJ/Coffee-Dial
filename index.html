@@ -1509,7 +1509,7 @@
 
     <!-- Gallery, Preferences, Export, Help, About Modals -->
     <div id="galleryModal" class="hidden fixed inset-0 z-[75] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col"><div class="flex border-b border-coffee-200 dark:border-[#44403c]"><button onclick="switchGalleryTab('mine')" id="tabGalleryMine" class="flex-1 py-3 text-sm font-semibold text-coffee-700 dark:text-[#d6ccc2] bg-coffee-50 dark:bg-[#1c1917]">My Photos</button><button onclick="switchGalleryTab('shared')" id="tabGalleryShared" class="flex-1 py-3 text-sm font-semibold text-coffee-500 dark:text-[#78716c] hover:bg-coffee-50 dark:hover:bg-[#1c1917]">Friends' Photos</button><button onclick="document.getElementById('galleryModal').classList.add('hidden')" class="px-4 text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></div><div id="galleryContent" class="p-4 overflow-y-auto ios-scroll flex-1 bg-coffee-50 dark:bg-[#1c1917]"><div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div><div id="galleryLoadMore" class="text-center py-4 hidden"><button onclick="loadMoreGallery()" class="bg-coffee-100 dark:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] px-6 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-coffee-200 dark:hover:bg-[#44403c] transition-colors">Load More <i class="fa-solid fa-chevron-down ml-2"></i></button></div><div id="galleryEmpty" class="hidden text-center py-10 text-coffee-400 dark:text-[#57534e]"><i class="fa-solid fa-images text-4xl mb-2"></i><p>No photos found.</p></div></div></div></div>
-    <div id="preferencesModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]"><div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center"><h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-sliders mr-2"></i>Preferences</h3><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 max-h-[60vh] overflow-y-auto"><div class="mb-6"><h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3">Pinned Brews</h4><div class="space-y-3"><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Enable Animations</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="animationsToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="animationsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-amber-700"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Organize by Beans</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="organizeByBeansToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="organizeByBeansToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div></div></div><div><h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3">Table Columns</h4><p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Select the columns you want to see in your brew log.</p><div id="preferencesList" class="space-y-3"></div></div></div><div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2"><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button><button onclick="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Save Preferences</button></div></div></div>
+    <div id="preferencesModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]"><div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center"><h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-sliders mr-2"></i>Preferences</h3><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 max-h-[60vh] overflow-y-auto"><div class="mb-6"><h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3">Pinned Brews</h4><div class="space-y-3"><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Enable Animations</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="animationsToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="animationsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-amber-700"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Organize by Beans</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="organizeByBeansToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="organizeByBeansToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div><div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]"><div class="flex items-center gap-2"><i class="fa-solid fa-bag-shopping text-green-600"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Pin Open Bags</span></div><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="pinOpenBagsToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="pinOpenBagsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div></div></div></div><div><h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3">Table Columns</h4><p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Select the columns you want to see in your brew log.</p><div id="preferencesList" class="space-y-3"></div></div></div><div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2"><button onclick="document.getElementById('preferencesModal').classList.add('hidden')" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button><button onclick="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Save Preferences</button></div></div></div>
     <div id="coffeeScaleModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
@@ -1567,6 +1567,24 @@
     <div id="helpModal" class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col"><div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center"><h3 class="font-bold text-xl text-coffee-900 dark:text-white"><i class="fa-solid fa-circle-question mr-2 text-coffee-600 dark:text-[#d6ccc2]"></i>How to Use Coffee Dial</h3><button onclick="closeHelp()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 overflow-y-auto space-y-8 bg-coffee-50 dark:bg-[#1c1917]"><div class="space-y-2"><h4 class="font-bold text-coffee-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-hand-sparkles text-yellow-500"></i> Your Brew, Your Way</h4><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Coffee Dial is flexible. You can use it to log <strong>every single shot</strong> you make to track consistency, OR you can just save your <strong>favourite recipes</strong> (Golden Cups) and update them as you dial in a new bean. It's your laboratory!</p></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">1. Adding & Editing Brews</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-coffee-500 text-4xl"><i class="fa-solid fa-plus-circle"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Tap the <strong>"Add New Brew"</strong> bar at the top to open the form. Fill in your details (Roaster, Grind, Ratio, etc.). You can use the SCA Flavor Wheel for notes! To edit, simply tap the <i class="fa-solid fa-ellipsis-vertical text-blue-500 text-xs"></i> icon on any row.</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">2. Pinning & Active Brews</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-green-600 text-3xl"><i class="fa-solid fa-thumbtack"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Found a recipe you love? Click the <strong>Pin icon</strong> (<i class="fa-solid fa-thumbtack text-xs"></i>) to move it to the <strong>"Pinned Brews"</strong> tiles. This keeps your daily drivers separated from your experiment history.</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">3. Rating Your Brews</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-yellow-400 text-4xl"><i class="fa-solid fa-star"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Use the <strong>star rating</strong> system to track which brews you loved and which ones need refinement. Hover over the stars to rate, or click them to set your rating. This helps you quickly identify your best recipes at a glance.</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">4. Coffee Photos & Gallery</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-blue-500 text-4xl"><i class="fa-solid fa-image"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Capture and attach photos of your brews to track visual consistency and color development. Browse the <strong>Coffee Gallery</strong> to see your brew journey over time and share beautiful shots with friends. Your coffee deserves to be seen!</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">5. Statistics & Analytics</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-purple-500 text-4xl"><i class="fa-solid fa-chart-line"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">View detailed <strong>brewing statistics</strong> to analyze your brew data over time. See charts on brewing methods, roasters, and more. Let data guide your next experiment and discover patterns in your perfect cup.</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">6. Share & Follow Friends</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-pink-500 text-4xl"><i class="fa-solid fa-share-nodes"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Share your brew cards and coffee photos with friends directly from the app. <strong>Follow other brewers</strong> to see their experiments and get inspired. Building a community is the best part of the coffee journey!</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">7. Beans Functionality</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-amber-700 text-4xl"><i class="fa-solid fa-leaf"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Access the <strong>Beans menu</strong> from the main navigation to keep track of which bags you currently have open. Record and update your stock levels to monitor how much of each bean you have left. Never run out of your favorite coffee unexpectedly!</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">8. Navigation & Gestures</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-cyan-500 text-4xl"><i class="fa-solid fa-hand"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]"><strong>Double-tap</strong> any brew row to quickly open the full coffee card view. Use the <strong>menu icon</strong> (<i class="fa-solid fa-ellipsis-vertical text-xs"></i>) for actions like editing, duplicating, or deleting. Swipe through your pinned brews for quick access to your daily drivers.</p></div></div><div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] shadow-sm"><h4 class="font-bold text-coffee-800 dark:text-white mb-2">9. AI Integration</h4><div class="flex flex-col sm:flex-row gap-4 items-center"><div class="flex-shrink-0 text-indigo-500 text-4xl"><i class="fa-solid fa-brain"></i></div><p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Use AI-powered features to <strong>scan coffee bag labels</strong> and automatically extract roaster, origin, and roast level information. The AI can also <strong>analyze your coffee profile</strong> to understand what kind of coffee drinker you are based on all your brews, helping you discover new preferences and brewing styles.</p></div></div></div><div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end border-t border-coffee-200 dark:border-[#44403c]"><button onclick="closeHelp()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-6 py-2 rounded-lg text-sm font-medium">Got it!</button></div></div></div>
     <div id="aboutModal" class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c] relative"><button onclick="closeAbout()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button><div class="p-8 text-center flex flex-col items-center"><div class="w-16 h-16 bg-coffee-100 dark:bg-[#44403c] rounded-full flex items-center justify-center mb-4 shadow-inner"><i class="fa-solid fa-heart text-3xl text-red-500 animate-pulse"></i></div><h3 class="text-2xl font-bold text-coffee-900 dark:text-white mb-2">About Coffee Dial</h3><div class="w-12 h-1 bg-coffee-300 dark:bg-[#57534e] rounded-full mb-6"></div><p class="text-coffee-700 dark:text-[#d6ccc2] mb-6 leading-relaxed text-sm">This app is made by two amateur brewers, <strong>Tieme & Robert</strong>, who wanted some method to their madness of home coffee experimentation.</p><p class="text-coffee-600 dark:text-[#a8a29e] text-sm italic mb-6">Feel free to spread our love for coffee and share the link to this app with friends and follow each other's brews.</p><div class="text-xs text-coffee-400 dark:text-[#57534e]">Version 1.2.0 (BETA)</div></div></div></div>
     <div id="easterEggModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-300" onclick="closeEasterEgg(event)"><div class="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/20"><button onclick="closeEasterEgg(null)" class="absolute top-4 right-4 text-white/70 hover:text-white z-10 transition-colors"><i class="fa-solid fa-xmark text-2xl drop-shadow-md"></i></button><video id="easterEggVideo" class="w-full h-full object-contain" controls><source src="img/Cozy_and_Funky_Video_Generation.mp4" type="video/mp4">Your browser does not support the video tag.</video></div></div>
+
+    <div id="autoArchiveToast" class="hidden fixed bottom-4 right-4 z-[120] w-[calc(100%-2rem)] max-w-sm">
+        <div class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-xl shadow-2xl p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div class="text-sm font-semibold text-coffee-900 dark:text-white">
+                    O, no! Your bag is empty. It has been archived.
+                </div>
+                <button onclick="closeAutoArchiveToast()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button onclick="handleAutoArchiveToastAction('unarchive')" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-3 py-1.5 rounded-lg text-xs font-semibold">Unarchive</button>
+                <button onclick="handleAutoArchiveToastAction('open')" class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-3 py-1.5 rounded-lg text-xs font-semibold">Open new bag</button>
+                <button onclick="handleAutoArchiveToastAction('close')" class="text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-800 dark:hover:text-white px-2 py-1.5 text-xs font-semibold">That's life</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         // --- CONFIG ---
@@ -1835,6 +1853,7 @@
                 batch.set(typeRef, typeData);
                 batch.set(beanRef, beanData);
                 await batch.commit();
+                await autoPinOpenBagsIfEnabled();
 
                 if (!coffeeTypes.find(ct => ct.id === typeRef.id)) {
                     coffeeTypes.push({ id: typeRef.id, ...typeData });
@@ -2329,10 +2348,25 @@
 
                 // Save Brew
                 const col = collection(db, 'users', currentUser.uid, 'coffees');
+                let didSaveBrew = false;
+                let savedBrewId = null;
                 if(eid) { 
                     await updateDoc(doc(col, eid), d); 
+                    didSaveBrew = true;
+                    savedBrewId = eid;
                 } else if (hasBrewData) { 
-                    d.customOrder = newOrder; d.createdAt = new Date().toISOString(); await addDoc(col, d); 
+                    d.customOrder = newOrder; d.createdAt = new Date().toISOString();
+                    const newBrewRef = await addDoc(col, d);
+                    savedBrewId = newBrewRef.id;
+                    didSaveBrew = true;
+                }
+
+                if (didSaveBrew && selectedBeanId) {
+                    await archiveBeanIfStockDepleted({
+                        beanId: selectedBeanId,
+                        brew: d,
+                        existingBrewId: savedBrewId
+                    });
                 }
 
                 resetFormState(); toggleForm(false);
@@ -2463,6 +2497,7 @@
                 const newBean = { id: ref.id, ...beanData };
                 beans.push(newBean);
                 renderBeansTable();
+                await autoPinOpenBagsIfEnabled();
                 openBeanCard(ref.id);
                 enterBeanEditMode();
             } catch (err) {
@@ -2479,6 +2514,110 @@
                 .reduce((sum, c) => sum + (c.weight || 0), 0);
             return parseFloat(bean.stock) - usedAmount;
         };
+
+        const getRemainingStockAfterBrew = (bean, brew, existingBrewId = null) => {
+            console.log('[stock-calc] stockUpdatedAt', bean?.stockUpdatedAt, typeof bean?.stockUpdatedAt);
+            if (!bean || bean.stock === undefined || bean.stock === null || bean.stock === '') return null;
+            if (!bean.stockUpdatedAt) return null;
+            const stockBase = parseFloat(bean.stock);
+            if (isNaN(stockBase)) return null;
+
+            const stockDate = new Date(bean.stockUpdatedAt);
+            if (isNaN(stockDate)) return null;
+            let brewsForBean = coffees.filter(c => c.beanId === bean.id);
+
+            if (brew) {
+                const existing = existingBrewId ? coffees.find(c => c.id === existingBrewId) : null;
+                const createdAt = brew.createdAt || existing?.createdAt || new Date().toISOString();
+                const brewForCalc = { ...existing, ...brew, createdAt, beanId: bean.id };
+
+                if (existingBrewId) {
+                    const hadExisting = brewsForBean.some(c => c.id === existingBrewId);
+                    brewsForBean = hadExisting
+                        ? brewsForBean.map(c => c.id === existingBrewId ? brewForCalc : c)
+                        : [...brewsForBean, brewForCalc];
+                } else {
+                    brewsForBean = [...brewsForBean, brewForCalc];
+                }
+            }
+
+            const usedAmount = brewsForBean
+                .filter(c => c.createdAt && new Date(c.createdAt) > stockDate)
+                .reduce((sum, c) => {
+                    console.log('[stock-calc] weight', c.weight, typeof c.weight);
+                    const weight = parseFloat(c.weight);
+                    return sum + (isNaN(weight) ? 0 : weight);
+                }, 0);
+            const remaining = stockBase - usedAmount;
+            console.log(`[stock-calc] beanId=${bean.id} usedAmount=${usedAmount} stockBase=${stockBase} remaining=${remaining} brewsCount=${brewsForBean.length} calc=${stockBase}-${usedAmount}=${remaining}`);
+            return remaining;
+        };
+
+        const archiveBeanIfStockDepleted = async ({ beanId, brew, existingBrewId = null }) => {
+            if (!currentUser || !beanId) return;
+            const bean = beans.find(b => b.id === beanId);
+            if (!bean || bean.archived || bean.frozen) return;
+
+            const remaining = getRemainingStockAfterBrew(bean, brew, existingBrewId);
+            if (remaining === null || isNaN(remaining) || remaining > 0) return;
+
+            const nowIso = new Date().toISOString();
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                    archived: true,
+                    updatedAt: nowIso
+                });
+                const idx = beans.findIndex(b => b.id === beanId);
+                if (idx !== -1) {
+                    beans[idx] = { ...beans[idx], archived: true, updatedAt: nowIso };
+                }
+                await autoUnpinClosedBagsIfEnabled({
+                    beanIds: [beanId],
+                    beanSignatures: [makeBeanSignature(bean)]
+                });
+                showAutoArchiveToast(beanId);
+            } catch (err) {
+                console.error('Auto-archive failed:', err);
+            }
+        };
+
+        let autoArchiveToastBeanId = null;
+
+        const showAutoArchiveToast = (beanId) => {
+            const toast = document.getElementById('autoArchiveToast');
+            if (!toast) return;
+            autoArchiveToastBeanId = beanId || null;
+            toast.classList.remove('hidden');
+        };
+
+        window.showAutoArchiveToast = showAutoArchiveToast;
+
+        const closeAutoArchiveToast = () => {
+            const toast = document.getElementById('autoArchiveToast');
+            if (toast) toast.classList.add('hidden');
+            autoArchiveToastBeanId = null;
+        };
+
+        window.closeAutoArchiveToast = closeAutoArchiveToast;
+
+        const handleAutoArchiveToastAction = async (action) => {
+            const beanId = autoArchiveToastBeanId;
+            if (!beanId) return closeAutoArchiveToast();
+
+            if (action === 'unarchive') {
+                await toggleBeanArchive(beanId, true);
+                return closeAutoArchiveToast();
+            }
+
+            if (action === 'open') {
+                await openNewBag(beanId, { openCard: true, editAfter: true });
+                return closeAutoArchiveToast();
+            }
+
+            closeAutoArchiveToast();
+        };
+
+        window.handleAutoArchiveToastAction = handleAutoArchiveToastAction;
 
         // --- Coffee Management Functions ---
         const openCoffeeTypes = () => {
@@ -3784,6 +3923,14 @@
                     stock: stockVal,
                     stockUpdatedAt: new Date().toISOString()
                 });
+                if (stockVal !== null && stockVal <= 0) {
+                    const bean = beans.find(b => b.id === beanId);
+                    await autoUnpinClosedBagsIfEnabled({
+                        beanIds: [beanId],
+                        beanSignatures: [makeBeanSignature(bean)]
+                    });
+                }
+                await autoPinOpenBagsIfEnabled();
                 // Table will auto-refresh via snapshot listener
             } catch (err) {
                 console.error("Error saving stock:", err);
@@ -3813,6 +3960,7 @@
                     openedDate: openedDateVal,
                     updatedAt: new Date().toISOString()
                 });
+                await autoPinOpenBagsIfEnabled();
             } catch (err) {
                 console.error("Error saving opened date:", err);
                 alert("Failed to save opened date.");
@@ -3835,6 +3983,7 @@
 
         const toggleBeanArchive = async (beanId, isArchived) => {
             if (!currentUser) return;
+            const targetBean = beans.find(b => b.id === beanId);
             try {
                 await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
                     archived: !isArchived,
@@ -3845,6 +3994,15 @@
                     beans[idx] = { ...beans[idx], archived: !isArchived };
                     if (currentBeanCardId === beanId) updateBeanCardActionButtons(beans[idx]);
                 }
+                if (!isArchived) {
+                    await autoUnpinClosedBagsIfEnabled({
+                        beanIds: [beanId],
+                        beanSignatures: [makeBeanSignature(targetBean)]
+                    });
+                }
+                if (isArchived) {
+                    await autoPinOpenBagsIfEnabled();
+                }
             } catch (err) {
                 console.error("Error updating archive state:", err);
                 alert("Failed to update archive state.");
@@ -3853,6 +4011,7 @@
 
         const toggleBeanFrozen = async (beanId, isFrozen) => {
             if (!currentUser) return;
+            const targetBean = beans.find(b => b.id === beanId);
             try {
                 const nowIso = new Date().toISOString();
                 await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
@@ -3865,16 +4024,27 @@
                     beans[idx] = { ...beans[idx], frozen: !isFrozen, frozenDate: !isFrozen ? nowIso : null };
                     if (currentBeanCardId === beanId) updateBeanCardActionButtons(beans[idx]);
                 }
+                if (!isFrozen) {
+                    await autoUnpinClosedBagsIfEnabled({
+                        beanIds: [beanId],
+                        beanSignatures: [makeBeanSignature(targetBean)]
+                    });
+                }
+                if (isFrozen) {
+                    await autoPinOpenBagsIfEnabled();
+                }
             } catch (err) {
                 console.error("Error updating frozen state:", err);
                 alert("Failed to update frozen state.");
             }
         };
 
-        const openNewBag = async (beanId) => {
+        const openNewBag = async (beanId, options = {}) => {
             if (!currentUser) return;
             const sourceBean = beans.find(b => b.id === beanId);
             if (!sourceBean) return;
+
+            const { openCard = false, editAfter = false } = options;
 
             const newBeanData = { ...sourceBean };
             delete newBeanData.id;
@@ -3897,7 +4067,15 @@
             newBeanData.updatedAt = new Date().toISOString();
 
             try {
-                await addDoc(collection(db, 'users', currentUser.uid, 'beans'), newBeanData);
+                const ref = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), newBeanData);
+                const newBean = { id: ref.id, ...newBeanData };
+                beans.push(newBean);
+                await autoPinOpenBagsIfEnabled();
+                if (openCard) {
+                    openBeanCard(ref.id);
+                    if (editAfter) enterBeanEditMode();
+                }
+                return ref.id;
             } catch (err) {
                 console.error("Error opening new bag:", err);
                 alert("Failed to open new bag.");
@@ -3906,7 +4084,12 @@
 
         const deleteBean = async (beanId) => {
             if(!confirm("Are you sure? This will not delete brews, but will unlink them from this bean.")) return;
+            const targetBean = beans.find(b => b.id === beanId);
             try {
+                await autoUnpinClosedBagsIfEnabled({
+                    beanIds: [beanId],
+                    beanSignatures: [makeBeanSignature(targetBean)]
+                });
                 await deleteDoc(doc(db, 'users', currentUser.uid, 'beans', beanId));
             } catch(e) { alert(e.message); }
         };
@@ -4230,6 +4413,92 @@
             } catch (err) { console.error("Deletion failed", err); alert("Error deleting photo: " + err.message); }
         };
 
+        const makeBeanSignature = (data) => {
+            const normalize = (value) => (value || '').toString().toLowerCase().trim();
+            const parts = [
+                data?.roaster,
+                data?.farmer,
+                data?.origin,
+                data?.processing,
+                data?.variety,
+                data?.roastType || data?.roast
+            ].map(normalize);
+            if (parts.every(part => part === '')) return null;
+            return parts.join('|');
+        };
+
+        const pinBrewsFromOpenBags = async () => {
+            if (!currentUser) return;
+            const openBeans = beans.filter(bean => {
+                const remaining = getBeanCalculatedStock(bean);
+                return !bean.archived && !bean.frozen && remaining !== null && remaining > 0;
+            });
+
+            if (!openBeans.length) return;
+
+            const openBeanIds = new Set(openBeans.map(bean => bean.id));
+            const openBeanSignatures = new Set(openBeans.map(bean => makeBeanSignature(bean)).filter(Boolean));
+
+            const brewsToPin = coffees.filter(brew => {
+                if (brew.isActive) return false;
+                if (brew.beanId && openBeanIds.has(brew.beanId)) return true;
+                const brewSignature = makeBeanSignature(brew);
+                return brewSignature ? openBeanSignatures.has(brewSignature) : false;
+            });
+
+            if (!brewsToPin.length) return;
+
+            const batch = writeBatch(db);
+            brewsToPin.forEach(brew => {
+                batch.update(doc(db, 'users', currentUser.uid, 'coffees', brew.id), { isActive: true });
+            });
+
+            try {
+                await batch.commit();
+            } catch (err) {
+                console.error('Pin open bags failed', err);
+            }
+        };
+
+        const isPinOpenBagsEnabled = () => localStorage.getItem('pinOpenBags') === 'true';
+
+        const autoPinOpenBagsIfEnabled = async () => {
+            if (!isPinOpenBagsEnabled()) return;
+            await pinBrewsFromOpenBags();
+        };
+
+        const unpinBrewsForBeans = async ({ beanIds = [], beanSignatures = [] }) => {
+            if (!currentUser) return;
+            const idSet = new Set(beanIds.filter(Boolean));
+            const sigSet = new Set(beanSignatures.filter(Boolean));
+            if (!idSet.size && !sigSet.size) return;
+
+            const brewsToUnpin = coffees.filter(brew => {
+                if (!brew.isActive) return false;
+                if (brew.beanId && idSet.has(brew.beanId)) return true;
+                const brewSignature = makeBeanSignature(brew);
+                return brewSignature ? sigSet.has(brewSignature) : false;
+            });
+
+            if (!brewsToUnpin.length) return;
+
+            const batch = writeBatch(db);
+            brewsToUnpin.forEach(brew => {
+                batch.update(doc(db, 'users', currentUser.uid, 'coffees', brew.id), { isActive: false });
+            });
+
+            try {
+                await batch.commit();
+            } catch (err) {
+                console.error('Unpin closed bags failed', err);
+            }
+        };
+
+        const autoUnpinClosedBagsIfEnabled = async ({ beanIds = [], beanSignatures = [] }) => {
+            if (!isPinOpenBagsEnabled()) return;
+            await unpinBrewsForBeans({ beanIds, beanSignatures });
+        };
+
         const openPreferences = () => {
             const list = document.getElementById('preferencesList'); list.innerHTML = '';
             columnDefs.forEach(col => {
@@ -4241,6 +4510,8 @@
             document.getElementById('animationsToggle').checked = animationsEnabled;
             const organizeByBeans = localStorage.getItem('organizeByBeans') !== 'false';
             document.getElementById('organizeByBeansToggle').checked = organizeByBeans;
+            const pinOpenBagsEnabled = localStorage.getItem('pinOpenBags') === 'true';
+            document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;
             document.getElementById('preferencesModal').classList.remove('hidden');
         };
 
@@ -4251,10 +4522,16 @@
             localStorage.setItem('animationsEnabled', animationsEnabled);
             const organizeByBeans = document.getElementById('organizeByBeansToggle').checked;
             localStorage.setItem('organizeByBeans', organizeByBeans);
+            const pinOpenBagsEnabled = document.getElementById('pinOpenBagsToggle').checked;
+            const pinOpenBagsWasEnabled = localStorage.getItem('pinOpenBags') === 'true';
+            localStorage.setItem('pinOpenBags', pinOpenBagsEnabled);
             if (animationsEnabled) {
                 document.documentElement.classList.remove('no-animations');
             } else {
                 document.documentElement.classList.add('no-animations');
+            }
+            if (pinOpenBagsEnabled && !pinOpenBagsWasEnabled) {
+                await pinBrewsFromOpenBags();
             }
             if(currentUser) { try { await updateDoc(doc(db, 'users', currentUser.uid), { preferences: newPrefs }); } catch(e) { console.error("Error saving prefs", e); } }
             document.getElementById('preferencesModal').classList.add('hidden'); renderTable(); renderPinnedTiles();
@@ -5394,6 +5671,12 @@
                     try {
                         const col = collection(db, 'users', currentUser.uid, 'coffees');
                         await addDoc(col, d);
+                        if (d.beanId) {
+                            await archiveBeanIfStockDepleted({
+                                beanId: d.beanId,
+                                brew: d
+                            });
+                        }
                         alert("Brew added to your collection!");
                     } catch(err) {
                         console.error(err);
@@ -5420,6 +5703,12 @@
             try {
                 const col = collection(db, 'users', currentUser.uid, 'coffees');
                 await addDoc(col, d);
+                if (d.beanId) {
+                    await archiveBeanIfStockDepleted({
+                        beanId: d.beanId,
+                        brew: d
+                    });
+                }
                 closeCoffeeCard(null);
                 alert("Brew duplicated successfully!"); 
             } catch(err) {
