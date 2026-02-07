@@ -1,0 +1,47 @@
+# GitHub Copilot Workspace Budget Configuration
+# 
+# This configuration sets the budget for premium AI model requests in GitHub Copilot Workspace.
+# 
+# To avoid the notification "You have exceeded your premium request allowance", 
+# you need to enable a paid budget for premium requests.
+#
+# Budget Options:
+# - Set a monthly budget in USD (minimum $1.00)
+# - Premium requests are billed per request
+# - Pricing varies by model (GPT-4, Claude, etc.)
+#
+# Recommended Settings:
+# - For light usage: $5-10/month
+# - For moderate usage: $20-50/month  
+# - For heavy usage: $100+/month
+#
+# To enable this budget:
+# 1. Go to your GitHub account settings
+# 2. Navigate to Copilot settings
+# 3. Enable "Additional paid premium requests"
+# 4. Set your monthly budget limit
+
+version: 1
+
+# Enable premium model requests with a monthly budget
+premium_requests:
+  enabled: true
+  
+  # Monthly budget in USD - adjust based on your usage needs
+  # Minimum: $1.00
+  # Recommended for typical project work: $20-50/month
+  monthly_budget_usd: 20.00
+  
+  # Alert threshold - get notified when you've used this percentage of your budget
+  alert_threshold_percentage: 80
+  
+  # Models to use with premium requests
+  models:
+    - gpt-4
+    - gpt-4-turbo
+    - claude-3-opus
+    - claude-3-sonnet
+  
+  # Fallback behavior when budget is exhausted
+  # Options: "switch_to_free" or "block_requests"
+  fallback: "switch_to_free"
