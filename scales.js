@@ -82,6 +82,7 @@ export function initCoffeeScale() {
   let pourCount = 0;
   let pourStartMs = null;
   let pourStartWeight = null;
+  let pourMaxFlow = null;
   let pours = [];
   const FLOW_WINDOW_MS = 2000;
   const FIRST_DRIP_THRESHOLD = 0;
@@ -314,6 +315,7 @@ export function initCoffeeScale() {
     pourCount = 0;
     pourStartMs = null;
     pourStartWeight = null;
+    pourMaxFlow = null;
     pours = [];
     if (graphFirstDripEl && graphFirstDripEl.value !== "") {
       const existingFirstDrip = Number(graphFirstDripEl.value);
@@ -336,9 +338,14 @@ export function initCoffeeScale() {
       const targetTime = capture.startAt + elapsedMs;
       const resampledWeight = getInterpolatedWeight(targetTime);
       let effectiveWeight = resampledWeight;
+      // Clamp effectiveWeight to zero or above
+      if (Number.isFinite(effectiveWeight) && effectiveWeight < 0) {
+        effectiveWeight = 0;
+      }
 
       if (unswirlEnabled) {
         const hasWeight = Number.isFinite(resampledWeight);
+        // Swirl start: hold pre-swirl weight for 500ms
         if (!swirlActive && hasWeight && resampledWeight <= UNSWIRL_THRESHOLD && Number.isFinite(lastGoodWeight) && lastGoodWeight > UNSWIRL_THRESHOLD) {
           swirlActive = true;
           swirlCount += 1;
@@ -346,8 +353,10 @@ export function initCoffeeScale() {
           const preSwirlTime = Math.max(0, elapsedMs - 1000);
           const preSwirlWeight = getInterpolatedWeight(capture.startAt + preSwirlTime);
           swirlStartHoldWeight = Number.isFinite(preSwirlWeight) ? preSwirlWeight : lastGoodWeight;
+          swirlSpikeFilterUntil = elapsedMs + 500;
         }
 
+        // Swirl end: hold post-swirl weight for 500ms
         if (swirlActive) {
           if (hasWeight && resampledWeight > UNSWIRL_THRESHOLD) {
             swirlActive = false;
@@ -362,11 +371,22 @@ export function initCoffeeScale() {
             currentSwirlStartMs = null;
             swirlPendingEndMs = elapsedMs + 1000;
             lastGoodWeight = Number.isFinite(resampledWeight) ? resampledWeight : lastGoodWeight;
+            swirlSpikeFilterUntil = elapsedMs + 500;
+            swirlPostWeight = lastGoodWeight;
           } else if (Number.isFinite(lastGoodWeight)) {
+            // During swirl, hold pre-swirl weight
             effectiveWeight = Number.isFinite(swirlStartHoldWeight) ? swirlStartHoldWeight : lastGoodWeight;
           }
         } else if (hasWeight && resampledWeight > UNSWIRL_THRESHOLD) {
           lastGoodWeight = resampledWeight;
+        }
+
+        // After swirl ends, hold post-swirl weight for 500ms
+        if (!swirlActive && typeof swirlSpikeFilterUntil !== 'undefined' && elapsedMs < swirlSpikeFilterUntil && typeof swirlPostWeight !== 'undefined') {
+          effectiveWeight = swirlPostWeight;
+        } else if (!swirlActive && typeof swirlSpikeFilterUntil !== 'undefined' && elapsedMs >= swirlSpikeFilterUntil) {
+          swirlSpikeFilterUntil = undefined;
+          swirlPostWeight = undefined;
         }
 
         if (!swirlActive && swirlPendingEndMs !== null && elapsedMs >= swirlPendingEndMs) {
@@ -390,7 +410,7 @@ export function initCoffeeScale() {
       capture.samples.push({
         tMs: elapsedMs,
         w: Number.isFinite(effectiveWeight)
-          ? Number(effectiveWeight.toFixed(1))
+          ? Math.max(0, Number(effectiveWeight.toFixed(1)))
           : null,
       });
 
@@ -419,12 +439,16 @@ export function initCoffeeScale() {
           if (denom !== 0) {
             const slope = (n * sumTW - sumT * sumW) / denom;
             flow = Number(slope.toFixed(1));
+            // Clamp flow to zero or above
+            if (Number.isFinite(flow) && flow < 0) {
+              flow = 0;
+            }
           }
         }
       }
       flowCapture.samples.push({
         tMs: elapsedMs,
-        flow,
+        flow: Number.isFinite(flow) ? Math.max(0, flow) : flow,
       });
       if (Number.isFinite(flow) && (maxFlowCaptured === null || flow > maxFlowCaptured)) {
         maxFlowCaptured = flow;
@@ -440,24 +464,34 @@ export function initCoffeeScale() {
           pourCount += 1;
           pourStartMs = elapsedMs;
           pourStartWeight = Number.isFinite(effectiveWeight) ? effectiveWeight : lastGoodWeight;
+          pourMaxFlow = flow;
+        }
+
+        if (pourActive && Number.isFinite(flow) && (pourMaxFlow === null || flow > pourMaxFlow)) {
+          pourMaxFlow = flow;
         }
 
         if (pourActive && (!Number.isFinite(flow) || flow <= 0)) {
           const endWeight = Number.isFinite(effectiveWeight) ? effectiveWeight : lastGoodWeight;
+          const durationSec = Math.max(0.001, (elapsedMs - pourStartMs) / 1000);
           const weightDiff = (Number.isFinite(pourStartWeight) && Number.isFinite(endWeight))
             ? (endWeight - pourStartWeight)
             : NaN;
+          const avgFlow = Number.isFinite(weightDiff) ? (weightDiff / durationSec) : NaN;
           const pourRecord = {
             count: pourCount,
             startMs: pourStartMs,
             endMs: elapsedMs,
-            weightDiff
+            weightDiff,
+            avgFlow,
+            maxFlow: pourMaxFlow
           };
           pours.push(pourRecord);
           renderPourLog();
           pourActive = false;
           pourStartMs = null;
           pourStartWeight = null;
+          pourMaxFlow = null;
         }
       }
       setFlow(flow);
@@ -545,6 +579,7 @@ export function initCoffeeScale() {
     pourCount = 0;
     pourStartMs = null;
     pourStartWeight = null;
+    pourMaxFlow = null;
     pours = [];
     renderSwirlLog();
     renderPourLog();
@@ -671,7 +706,9 @@ export function initCoffeeScale() {
       const endSec = Math.round(pour.endMs / 1000);
       const lenSec = Math.max(0, endSec - startSec);
       const weightDiff = Number.isFinite(pour.weightDiff) ? `${pour.weightDiff.toFixed(1)}g` : "-";
-      return `Pour ${pour.count}: ${startSec} - ${endSec} (${lenSec}s / ${weightDiff})`;
+      const avgFlow = Number.isFinite(pour.avgFlow) ? `${pour.avgFlow.toFixed(1)}g/s` : "-";
+      const maxFlow = Number.isFinite(pour.maxFlow) ? `${pour.maxFlow.toFixed(1)}g/s` : "-";
+      return `${pour.count}: ${startSec} - ${endSec} (${lenSec}s / ${weightDiff} / ${avgFlow} / ${maxFlow})`;
     }).join("<br>");
   }
 
@@ -685,7 +722,7 @@ export function initCoffeeScale() {
       const startSec = Math.round(swirl.startMs / 1000);
       const endSec = Math.round(swirl.endMs / 1000);
       const lenSec = Math.max(0, endSec - startSec);
-      return `Swirl ${swirl.count}: ${startSec} - ${endSec} (${lenSec}s)`;
+      return `${swirl.count}: ${startSec} - ${endSec} (${lenSec}s)`;
     }).join("<br>");
   }
 
