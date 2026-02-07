@@ -1,6 +1,11 @@
 # GitHub Copilot Workspace Budget Configuration
 # 
-# This configuration sets the budget for premium AI model requests in GitHub Copilot Workspace.
+# ⚠️  IMPORTANT: This file is a TEMPLATE and REFERENCE ONLY.
+# This file is NOT automatically processed by GitHub Copilot.
+# The actual budget must be configured in your GitHub account settings.
+#
+# This configuration documents recommended settings for premium AI model requests 
+# in GitHub Copilot Workspace.
 # 
 # To avoid the notification "You have exceeded your premium request allowance", 
 # you need to enable a paid budget for premium requests.
@@ -36,6 +41,8 @@ premium_requests:
   alert_threshold_percentage: 80
   
   # Models to use with premium requests
+  # Note: This list is for reference only. Check GitHub's official Copilot documentation
+  # for the current list of supported premium models, as this may change over time.
   models:
     - gpt-4
     - gpt-4-turbo
