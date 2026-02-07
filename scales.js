@@ -23,6 +23,9 @@ export function initCoffeeScale() {
   const graphFirstDripEl = document.getElementById("graphFirstDrip");
   const graphMaxFlowEl = document.getElementById("graphMaxFlow");
   const graphAvgFlowEl = document.getElementById("graphAvgFlow");
+  const graphAutoStartToggle = document.getElementById("graphAutoStartToggle");
+  const graphUnswirlToggle = document.getElementById("graphUnswirlToggle");
+  const graphSwirlLogEl = document.getElementById("graphSwirlLog");
   let liveTimerInterval = null;
   let liveTimerStartAt = null;
   let liveTimerElapsedMs = 0;
@@ -63,8 +66,19 @@ export function initCoffeeScale() {
   let flowHistory = [];
   let firstDripCapturedAt = null;
   let maxFlowCaptured = null;
+  let autoStartPending = false;
+  let unswirlEnabled = false;
+  let swirlActive = false;
+  let swirlCount = 0;
+  let currentSwirlStartMs = null;
+  let swirls = [];
+  let lastGoodWeight = null;
+  let swirlStartHoldWeight = null;
+  let swirlPendingEndMs = null;
   const FLOW_WINDOW_MS = 2000;
   const FIRST_DRIP_THRESHOLD = 0;
+  const AUTO_START_THRESHOLD = 0.2;
+  const UNSWIRL_THRESHOLD = 0.1;
 
   /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
   const ACAIA_SERVICE_UUID = "00001820-0000-1000-8000-00805f9b34fb";
@@ -101,12 +115,19 @@ export function initCoffeeScale() {
   }
 
   function setWeight(value) {
+    const prevWeight = lastWeight;
     weightEl.textContent = value.toFixed(1) + " g";
     if (connectWeightEl) connectWeightEl.textContent = value.toFixed(1) + " g";
     lastWeight = value;
     updateLiveWeight(value);
     if (timerRunning) {
       addRawSample(value, Date.now());
+    }
+    if (autoStartPending && Number.isFinite(value)) {
+      const weightDelta = Number.isFinite(prevWeight) ? Math.abs(value - prevWeight) : Math.abs(value);
+      if (weightDelta >= AUTO_START_THRESHOLD) {
+        triggerAutoStartTimer();
+      }
     }
   }
 
@@ -271,6 +292,14 @@ export function initCoffeeScale() {
     flowHistory = [];
     firstDripCapturedAt = null;
     maxFlowCaptured = null;
+    unswirlEnabled = graphUnswirlToggle ? graphUnswirlToggle.checked : false;
+    swirlActive = false;
+    swirlCount = 0;
+    currentSwirlStartMs = null;
+    swirls = [];
+    lastGoodWeight = null;
+    swirlStartHoldWeight = null;
+    swirlPendingEndMs = null;
     if (graphFirstDripEl && graphFirstDripEl.value !== "") {
       const existingFirstDrip = Number(graphFirstDripEl.value);
       if (Number.isFinite(existingFirstDrip)) {
@@ -291,8 +320,51 @@ export function initCoffeeScale() {
       const elapsedMs = Date.now() - capture.startAt;
       const targetTime = capture.startAt + elapsedMs;
       const resampledWeight = getInterpolatedWeight(targetTime);
+      let effectiveWeight = resampledWeight;
 
-      if (firstDripCapturedAt === null && Number.isFinite(resampledWeight) && resampledWeight > FIRST_DRIP_THRESHOLD) {
+      if (unswirlEnabled) {
+        const hasWeight = Number.isFinite(resampledWeight);
+        if (!swirlActive && hasWeight && resampledWeight <= UNSWIRL_THRESHOLD && Number.isFinite(lastGoodWeight) && lastGoodWeight > UNSWIRL_THRESHOLD) {
+          swirlActive = true;
+          swirlCount += 1;
+          currentSwirlStartMs = elapsedMs;
+          const preSwirlTime = Math.max(0, elapsedMs - 1000);
+          const preSwirlWeight = getInterpolatedWeight(capture.startAt + preSwirlTime);
+          swirlStartHoldWeight = Number.isFinite(preSwirlWeight) ? preSwirlWeight : lastGoodWeight;
+        }
+
+        if (swirlActive) {
+          if (hasWeight && resampledWeight > UNSWIRL_THRESHOLD) {
+            swirlActive = false;
+            const swirlRecord = {
+              count: swirlCount,
+              startMs: currentSwirlStartMs,
+              endMs: elapsedMs
+            };
+            swirls.push(swirlRecord);
+            console.log("Swirl detected", swirlRecord);
+            renderSwirlLog();
+            currentSwirlStartMs = null;
+            swirlPendingEndMs = elapsedMs + 1000;
+            lastGoodWeight = Number.isFinite(resampledWeight) ? resampledWeight : lastGoodWeight;
+          } else if (Number.isFinite(lastGoodWeight)) {
+            effectiveWeight = Number.isFinite(swirlStartHoldWeight) ? swirlStartHoldWeight : lastGoodWeight;
+          }
+        } else if (hasWeight && resampledWeight > UNSWIRL_THRESHOLD) {
+          lastGoodWeight = resampledWeight;
+        }
+
+        if (!swirlActive && swirlPendingEndMs !== null && elapsedMs >= swirlPendingEndMs) {
+          const postSwirlWeight = getInterpolatedWeight(capture.startAt + swirlPendingEndMs);
+          if (Number.isFinite(postSwirlWeight)) {
+            lastGoodWeight = postSwirlWeight;
+          }
+          swirlPendingEndMs = null;
+          swirlStartHoldWeight = null;
+        }
+      }
+
+      if (firstDripCapturedAt === null && Number.isFinite(effectiveWeight) && effectiveWeight > FIRST_DRIP_THRESHOLD) {
         firstDripCapturedAt = elapsedMs;
         if (graphFirstDripEl) {
           graphFirstDripEl.value = String(Math.round(elapsedMs / 1000));
@@ -302,14 +374,14 @@ export function initCoffeeScale() {
 
       capture.samples.push({
         tMs: elapsedMs,
-        w: Number.isFinite(resampledWeight)
-          ? Number(resampledWeight.toFixed(1))
+        w: Number.isFinite(effectiveWeight)
+          ? Number(effectiveWeight.toFixed(1))
           : null,
       });
 
       let flow = null;
-      if (Number.isFinite(resampledWeight)) {
-        flowHistory.push({ tMs: elapsedMs, w: resampledWeight });
+      if (Number.isFinite(effectiveWeight)) {
+        flowHistory.push({ tMs: elapsedMs, w: effectiveWeight });
         const cutoff = elapsedMs - FLOW_WINDOW_MS;
         while (flowHistory.length && flowHistory[0].tMs < cutoff) {
           flowHistory.shift();
@@ -418,6 +490,16 @@ export function initCoffeeScale() {
     flowHistory = [];
     firstDripCapturedAt = null;
     maxFlowCaptured = null;
+    autoStartPending = false;
+    setTimerBlinking(false);
+    swirlActive = false;
+    swirlCount = 0;
+    currentSwirlStartMs = null;
+    swirls = [];
+    lastGoodWeight = null;
+    swirlStartHoldWeight = null;
+    swirlPendingEndMs = null;
+    renderSwirlLog();
     setFlow(NaN);
     updateCaptureOutput();
     updateFlowOutput();
@@ -526,6 +608,21 @@ export function initCoffeeScale() {
     if (graphFirstDripEl) graphFirstDripEl.value = "";
     if (graphMaxFlowEl) graphMaxFlowEl.value = "";
     if (graphAvgFlowEl) graphAvgFlowEl.value = "";
+    renderSwirlLog();
+  }
+
+  function renderSwirlLog() {
+    if (!graphSwirlLogEl) return;
+    if (!swirls.length) {
+      graphSwirlLogEl.innerHTML = "";
+      return;
+    }
+    graphSwirlLogEl.innerHTML = swirls.map((swirl) => {
+      const startSec = Math.round(swirl.startMs / 1000);
+      const endSec = Math.round(swirl.endMs / 1000);
+      const lenSec = Math.max(0, endSec - startSec);
+      return `Swirl ${swirl.count}: ${startSec} - ${endSec} (${lenSec}s)`;
+    }).join("<br>");
   }
 
   function enqueueWrite(data) {
@@ -1028,6 +1125,13 @@ export function initCoffeeScale() {
 
     if (!writeChar) return;
 
+    const autoStartEnabled = graphAutoStartToggle ? graphAutoStartToggle.checked : false;
+    if (!timerRunning && autoStartEnabled) {
+      autoStartPending = !autoStartPending;
+      setTimerBlinking(autoStartPending);
+      return;
+    }
+
     try {
       if (scaleType === "OLD" || scaleType === "NEW") {
         await enqueueWrite(timerRunning ? STOP_TIMER_ACAIA : START_TIMER_ACAIA);
@@ -1065,9 +1169,50 @@ export function initCoffeeScale() {
 
       if (label) {
         const labelEl = button.querySelector(label);
-        if (labelEl) labelEl.textContent = timerRunning ? "Stop Timer" : "Start Timer";
+        if (labelEl) labelEl.textContent = timerRunning ? "Stop" : "Start";
       }
     });
+
+    if (timerRunning) {
+      setTimerBlinking(false);
+    }
+  }
+
+  function setTimerBlinking(isBlinking) {
+    const timerTargets = [
+      document.getElementById("brewTimerBtn"),
+      document.getElementById("graphTimerBtn")
+    ];
+
+    timerTargets.forEach((button) => {
+      if (!button) return;
+      const timerIcon = button.querySelector("i");
+      if (!timerIcon) return;
+      if (isBlinking) {
+        timerIcon.classList.add("animate-pulse");
+      } else {
+        timerIcon.classList.remove("animate-pulse");
+      }
+    });
+  }
+
+  async function triggerAutoStartTimer() {
+    if (!autoStartPending || timerRunning) return;
+    if (!isConnected || !writeChar) return;
+    try {
+      if (scaleType === "OLD" || scaleType === "NEW") {
+        await enqueueWrite(START_TIMER_ACAIA);
+      } else if (scaleType === "GENERIC") {
+        await enqueueWrite(START_TIMER_BOOKOO);
+      } else {
+        return;
+      }
+      autoStartPending = false;
+      setTimerRunningState(true);
+      setTimerBlinking(false);
+    } catch (err) {
+      console.warn("Auto start failed", err);
+    }
   }
 
   const weighBtn = document.getElementById("brewWeighBtn");
@@ -1106,6 +1251,27 @@ export function initCoffeeScale() {
   const graphTimerBtn = document.getElementById("graphTimerBtn");
   if (graphTimerBtn) {
     graphTimerBtn.addEventListener("click", handleTimerIconClick);
+  }
+
+  if (graphAutoStartToggle) {
+    graphAutoStartToggle.addEventListener("change", () => {
+      if (!graphAutoStartToggle.checked && autoStartPending) {
+        autoStartPending = false;
+        setTimerBlinking(false);
+      }
+    });
+  }
+
+  if (graphUnswirlToggle) {
+    graphUnswirlToggle.addEventListener("change", () => {
+      unswirlEnabled = graphUnswirlToggle.checked;
+      if (!unswirlEnabled) {
+        swirlActive = false;
+        currentSwirlStartMs = null;
+      } else if (Number.isFinite(lastWeight) && lastWeight > UNSWIRL_THRESHOLD) {
+        lastGoodWeight = lastWeight;
+      }
+    });
   }
 
   const inField = document.getElementById("inputWeight");
