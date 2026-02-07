@@ -649,12 +649,6 @@
                     <i class="fa-solid fa-jar text-coffee-600 dark:text-[#d6ccc2]"></i> Coffee Beans
                 </h3>
                 <div class="flex items-center gap-2">
-                     <button onclick="syncLegacyBeans()" class="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded font-bold transition-colors border border-indigo-200 dark:border-indigo-800">
-                        <i class="fa-solid fa-sync-alt mr-1"></i> Scan brews
-                    </button>
-                    <button onclick="extractCoffeeTypesFromBeans()" class="text-xs bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded font-bold transition-colors border border-emerald-200 dark:border-emerald-800">
-                        <i class="fa-solid fa-layer-group mr-1"></i> Extract coffees
-                    </button>
                     <div class="relative">
                         <button type="button" onclick="toggleBeansAiMenu(event)" id="beansAiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Add bag
@@ -1561,6 +1555,18 @@
                         <input id="emailLinkActivationEmail" type="email" placeholder="you@example.com" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors" />
                         <button id="emailLinkActivationBtn" onclick="sendEmailLinkActivation()" class="w-full bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Send login link</button>
                         <div id="emailLinkActivationStatus" class="hidden text-xs text-coffee-600 dark:text-[#a8a29e]"></div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Beans Utilities</h4>
+                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Scan brews to sync legacy beans and extract coffee types.</p>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="syncLegacyBeans()" class="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-2 rounded font-bold transition-colors border border-indigo-200 dark:border-indigo-800">
+                            <i class="fa-solid fa-sync-alt mr-1"></i> Scan brews
+                        </button>
+                        <button onclick="extractCoffeeTypesFromBeans()" class="text-xs bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-3 py-2 rounded font-bold transition-colors border border-emerald-200 dark:border-emerald-800">
+                            <i class="fa-solid fa-layer-group mr-1"></i> Extract coffees
+                        </button>
                     </div>
                 </div>
             </div>
