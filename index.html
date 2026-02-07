@@ -7391,8 +7391,18 @@
                             <label for="graphUnswirlToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label>
                         </div>
                     </div>
+                    <div class="flex items-center gap-2 bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2">
+                        <span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">Count pours</span>
+                        <div class="relative inline-block w-10 align-middle select-none">
+                            <input type="checkbox" id="graphCountPoursToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600" />
+                            <label for="graphCountPoursToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label>
+                        </div>
+                    </div>
                 </div>
-                <div id="graphSwirlLog" class="text-[10px] text-gray-400 dark:text-[#78716c] space-y-0.5"></div>
+                <div class="flex gap-3 text-[10px] text-gray-400 dark:text-[#78716c]">
+                    <div id="graphPourLog" class="flex-1 space-y-0.5"></div>
+                    <div id="graphSwirlLog" class="flex-1 space-y-0.5 text-right"></div>
+                </div>
                 <!-- Content will go here -->
             </div>
         </div>

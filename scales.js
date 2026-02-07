@@ -26,6 +26,8 @@ export function initCoffeeScale() {
   const graphAutoStartToggle = document.getElementById("graphAutoStartToggle");
   const graphUnswirlToggle = document.getElementById("graphUnswirlToggle");
   const graphSwirlLogEl = document.getElementById("graphSwirlLog");
+  const graphCountPoursToggle = document.getElementById("graphCountPoursToggle");
+  const graphPourLogEl = document.getElementById("graphPourLog");
   let liveTimerInterval = null;
   let liveTimerStartAt = null;
   let liveTimerElapsedMs = 0;
@@ -75,10 +77,17 @@ export function initCoffeeScale() {
   let lastGoodWeight = null;
   let swirlStartHoldWeight = null;
   let swirlPendingEndMs = null;
+  let countPoursEnabled = false;
+  let pourActive = false;
+  let pourCount = 0;
+  let pourStartMs = null;
+  let pourStartWeight = null;
+  let pours = [];
   const FLOW_WINDOW_MS = 2000;
   const FIRST_DRIP_THRESHOLD = 0;
   const AUTO_START_THRESHOLD = 0.2;
   const UNSWIRL_THRESHOLD = 0.1;
+  const POUR_FLOW_THRESHOLD = 3;
 
   /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
   const ACAIA_SERVICE_UUID = "00001820-0000-1000-8000-00805f9b34fb";
@@ -300,6 +309,12 @@ export function initCoffeeScale() {
     lastGoodWeight = null;
     swirlStartHoldWeight = null;
     swirlPendingEndMs = null;
+    countPoursEnabled = graphCountPoursToggle ? graphCountPoursToggle.checked : false;
+    pourActive = false;
+    pourCount = 0;
+    pourStartMs = null;
+    pourStartWeight = null;
+    pours = [];
     if (graphFirstDripEl && graphFirstDripEl.value !== "") {
       const existingFirstDrip = Number(graphFirstDripEl.value);
       if (Number.isFinite(existingFirstDrip)) {
@@ -418,6 +433,33 @@ export function initCoffeeScale() {
           graphMaxFlowEl.dispatchEvent(new Event("input", { bubbles: true }));
         }
       }
+
+      if (countPoursEnabled) {
+        if (!pourActive && Number.isFinite(flow) && flow >= POUR_FLOW_THRESHOLD) {
+          pourActive = true;
+          pourCount += 1;
+          pourStartMs = elapsedMs;
+          pourStartWeight = Number.isFinite(effectiveWeight) ? effectiveWeight : lastGoodWeight;
+        }
+
+        if (pourActive && (!Number.isFinite(flow) || flow <= 0)) {
+          const endWeight = Number.isFinite(effectiveWeight) ? effectiveWeight : lastGoodWeight;
+          const weightDiff = (Number.isFinite(pourStartWeight) && Number.isFinite(endWeight))
+            ? (endWeight - pourStartWeight)
+            : NaN;
+          const pourRecord = {
+            count: pourCount,
+            startMs: pourStartMs,
+            endMs: elapsedMs,
+            weightDiff
+          };
+          pours.push(pourRecord);
+          renderPourLog();
+          pourActive = false;
+          pourStartMs = null;
+          pourStartWeight = null;
+        }
+      }
       setFlow(flow);
 
       updateCaptureOutput();
@@ -499,7 +541,13 @@ export function initCoffeeScale() {
     lastGoodWeight = null;
     swirlStartHoldWeight = null;
     swirlPendingEndMs = null;
+    pourActive = false;
+    pourCount = 0;
+    pourStartMs = null;
+    pourStartWeight = null;
+    pours = [];
     renderSwirlLog();
+    renderPourLog();
     setFlow(NaN);
     updateCaptureOutput();
     updateFlowOutput();
@@ -608,7 +656,23 @@ export function initCoffeeScale() {
     if (graphFirstDripEl) graphFirstDripEl.value = "";
     if (graphMaxFlowEl) graphMaxFlowEl.value = "";
     if (graphAvgFlowEl) graphAvgFlowEl.value = "";
+    renderPourLog();
     renderSwirlLog();
+  }
+
+  function renderPourLog() {
+    if (!graphPourLogEl) return;
+    if (!pours.length) {
+      graphPourLogEl.innerHTML = "";
+      return;
+    }
+    graphPourLogEl.innerHTML = pours.map((pour) => {
+      const startSec = Math.round(pour.startMs / 1000);
+      const endSec = Math.round(pour.endMs / 1000);
+      const lenSec = Math.max(0, endSec - startSec);
+      const weightDiff = Number.isFinite(pour.weightDiff) ? `${pour.weightDiff.toFixed(1)}g` : "-";
+      return `Pour ${pour.count}: ${startSec} - ${endSec} (${lenSec}s / ${weightDiff})`;
+    }).join("<br>");
   }
 
   function renderSwirlLog() {
@@ -1270,6 +1334,17 @@ export function initCoffeeScale() {
         currentSwirlStartMs = null;
       } else if (Number.isFinite(lastWeight) && lastWeight > UNSWIRL_THRESHOLD) {
         lastGoodWeight = lastWeight;
+      }
+    });
+  }
+
+  if (graphCountPoursToggle) {
+    graphCountPoursToggle.addEventListener("change", () => {
+      countPoursEnabled = graphCountPoursToggle.checked;
+      if (!countPoursEnabled) {
+        pourActive = false;
+        pourStartMs = null;
+        pourStartWeight = null;
       }
     });
   }
