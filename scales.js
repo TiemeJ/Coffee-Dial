@@ -25,9 +25,11 @@ export function initCoffeeScale() {
   const graphAvgFlowEl = document.getElementById("graphAvgFlow");
   const graphAutoStartToggle = document.getElementById("graphAutoStartToggle");
   const graphUnswirlToggle = document.getElementById("graphUnswirlToggle");
-  const graphSwirlLogEl = document.getElementById("graphSwirlLog");
+  const graphEventLogEl = document.getElementById("graphEventLog");
   const graphCountPoursToggle = document.getElementById("graphCountPoursToggle");
-  const graphPourLogEl = document.getElementById("graphPourLog");
+  const GRAPH_TOGGLE_NONE_KEY = "none";
+  let graphTogglePrefs = {};
+  let graphTogglePrefsSaver = null;
   let liveTimerInterval = null;
   let liveTimerStartAt = null;
   let liveTimerElapsedMs = 0;
@@ -77,6 +79,8 @@ export function initCoffeeScale() {
   let lastGoodWeight = null;
   let swirlStartHoldWeight = null;
   let swirlPendingEndMs = null;
+  let swirlSpikeFilterUntil = null;
+  let swirlPostWeight = null;
   let countPoursEnabled = false;
   let pourActive = false;
   let pourCount = 0;
@@ -117,6 +121,84 @@ export function initCoffeeScale() {
   const START_TIMER_BOOKOO = new Uint8Array([0x03, 0x0a, 0x04, 0x00, 0x00, 0x0a]);
   const STOP_TIMER_BOOKOO = new Uint8Array([0x03, 0x0a, 0x05, 0x00, 0x00, 0x0d]);
   const RESET_TIMER_BOOKOO = new Uint8Array([0x03, 0x0a, 0x06, 0x00, 0x00, 0x0c]);
+
+  function getMethodValueFromForm() {
+    const methodEl = document.getElementById("method");
+    const methodOtherEl = document.getElementById("methodOther");
+    const raw = methodEl ? methodEl.value : "";
+    if (raw === "Other") {
+      const otherValue = methodOtherEl ? methodOtherEl.value.trim() : "";
+      return otherValue || "Other";
+    }
+    return raw || "";
+  }
+
+  function getMethodKey(value) {
+    const cleaned = (value || "").trim();
+    return cleaned ? cleaned.toLowerCase() : GRAPH_TOGGLE_NONE_KEY;
+  }
+
+  function getGraphTogglePrefs() {
+    return graphTogglePrefs || {};
+  }
+
+  function saveGraphTogglePrefsForMethod(methodValue = null) {
+    const prefs = getGraphTogglePrefs();
+    const methodKey = getMethodKey(methodValue ?? getMethodValueFromForm());
+    prefs[methodKey] = {
+      autoStart: !!graphAutoStartToggle?.checked,
+      unswirl: !!graphUnswirlToggle?.checked,
+      countPours: !!graphCountPoursToggle?.checked,
+    };
+    graphTogglePrefs = { ...prefs };
+    if (typeof graphTogglePrefsSaver === "function") {
+      Promise.resolve(graphTogglePrefsSaver(graphTogglePrefs)).catch((err) => {
+        console.warn("Failed to save graph toggle prefs", err);
+      });
+    }
+  }
+
+  function setGraphToggleState(state) {
+    if (graphAutoStartToggle && typeof state.autoStart === "boolean") {
+      graphAutoStartToggle.checked = state.autoStart;
+      if (!state.autoStart && autoStartPending) {
+        autoStartPending = false;
+        setTimerBlinking(false);
+      }
+    }
+    if (graphUnswirlToggle && typeof state.unswirl === "boolean") {
+      graphUnswirlToggle.checked = state.unswirl;
+      unswirlEnabled = state.unswirl;
+      if (!unswirlEnabled) {
+        swirlActive = false;
+        currentSwirlStartMs = null;
+      } else if (Number.isFinite(lastWeight) && lastWeight > UNSWIRL_THRESHOLD) {
+        lastGoodWeight = lastWeight;
+      }
+    }
+    if (graphCountPoursToggle && typeof state.countPours === "boolean") {
+      graphCountPoursToggle.checked = state.countPours;
+      countPoursEnabled = state.countPours;
+      if (!countPoursEnabled) {
+        pourActive = false;
+        pourStartMs = null;
+        pourStartWeight = null;
+      }
+    }
+  }
+
+  function applyGraphTogglePrefsForMethod(methodValue = null) {
+    const prefs = getGraphTogglePrefs();
+    const methodKey = getMethodKey(methodValue ?? getMethodValueFromForm());
+    const state = prefs[methodKey];
+    if (!state) {
+      if (methodKey === GRAPH_TOGGLE_NONE_KEY) {
+        saveGraphTogglePrefsForMethod(methodValue ?? getMethodValueFromForm());
+      }
+      return;
+    }
+    setGraphToggleState(state);
+  }
 
   /* ---- UI helpers ---- */
   function setStatus(text) {
@@ -366,8 +448,7 @@ export function initCoffeeScale() {
               endMs: elapsedMs
             };
             swirls.push(swirlRecord);
-            console.log("Swirl detected", swirlRecord);
-            renderSwirlLog();
+            renderEventLog();
             currentSwirlStartMs = null;
             swirlPendingEndMs = elapsedMs + 1000;
             lastGoodWeight = Number.isFinite(resampledWeight) ? resampledWeight : lastGoodWeight;
@@ -414,8 +495,16 @@ export function initCoffeeScale() {
           : null,
       });
 
+      const swirlGuardActive = unswirlEnabled && (swirlActive || (swirlPendingEndMs !== null && elapsedMs < swirlPendingEndMs));
+      if (swirlGuardActive && Number.isFinite(lastGoodWeight)) {
+        effectiveWeight = lastGoodWeight;
+      }
+
       let flow = null;
-      if (Number.isFinite(effectiveWeight)) {
+      if (swirlGuardActive) {
+        flowHistory.length = 0;
+        flow = 0;
+      } else if (Number.isFinite(effectiveWeight)) {
         flowHistory.push({ tMs: elapsedMs, w: effectiveWeight });
         const cutoff = elapsedMs - FLOW_WINDOW_MS;
         while (flowHistory.length && flowHistory[0].tMs < cutoff) {
@@ -458,10 +547,9 @@ export function initCoffeeScale() {
         }
       }
 
-      if (countPoursEnabled) {
+      if (countPoursEnabled && !swirlGuardActive) {
         if (!pourActive && Number.isFinite(flow) && flow >= POUR_FLOW_THRESHOLD) {
           pourActive = true;
-          pourCount += 1;
           pourStartMs = elapsedMs;
           pourStartWeight = Number.isFinite(effectiveWeight) ? effectiveWeight : lastGoodWeight;
           pourMaxFlow = flow;
@@ -478,16 +566,19 @@ export function initCoffeeScale() {
             ? (endWeight - pourStartWeight)
             : NaN;
           const avgFlow = Number.isFinite(weightDiff) ? (weightDiff / durationSec) : NaN;
-          const pourRecord = {
-            count: pourCount,
-            startMs: pourStartMs,
-            endMs: elapsedMs,
-            weightDiff,
-            avgFlow,
-            maxFlow: pourMaxFlow
-          };
-          pours.push(pourRecord);
-          renderPourLog();
+          if (Number.isFinite(weightDiff) && weightDiff > 0) {
+            const pourRecord = {
+              count: pourCount + 1,
+              startMs: pourStartMs,
+              endMs: elapsedMs,
+              weightDiff,
+              avgFlow,
+              maxFlow: pourMaxFlow
+            };
+            pours.push(pourRecord);
+            pourCount += 1;
+            renderEventLog();
+          }
           pourActive = false;
           pourStartMs = null;
           pourStartWeight = null;
@@ -581,8 +672,7 @@ export function initCoffeeScale() {
     pourStartWeight = null;
     pourMaxFlow = null;
     pours = [];
-    renderSwirlLog();
-    renderPourLog();
+    renderEventLog();
     setFlow(NaN);
     updateCaptureOutput();
     updateFlowOutput();
@@ -691,39 +781,44 @@ export function initCoffeeScale() {
     if (graphFirstDripEl) graphFirstDripEl.value = "";
     if (graphMaxFlowEl) graphMaxFlowEl.value = "";
     if (graphAvgFlowEl) graphAvgFlowEl.value = "";
-    renderPourLog();
-    renderSwirlLog();
+    renderEventLog();
   }
 
-  function renderPourLog() {
-    if (!graphPourLogEl) return;
-    if (!pours.length) {
-      graphPourLogEl.innerHTML = "";
+  function renderEventLog() {
+    if (!graphEventLogEl) return;
+    if (!pours.length && !swirls.length) {
+      graphEventLogEl.innerHTML = "";
       return;
     }
-    graphPourLogEl.innerHTML = pours.map((pour) => {
+    const events = [];
+    pours.forEach((pour, index) => {
       const startSec = Math.round(pour.startMs / 1000);
       const endSec = Math.round(pour.endMs / 1000);
       const lenSec = Math.max(0, endSec - startSec);
       const weightDiff = Number.isFinite(pour.weightDiff) ? `${pour.weightDiff.toFixed(1)}g` : "-";
       const avgFlow = Number.isFinite(pour.avgFlow) ? `${pour.avgFlow.toFixed(1)}g/s` : "-";
       const maxFlow = Number.isFinite(pour.maxFlow) ? `${pour.maxFlow.toFixed(1)}g/s` : "-";
-      return `${pour.count}: ${startSec} - ${endSec} (${lenSec}s / ${weightDiff} / ${avgFlow} / ${maxFlow})`;
-    }).join("<br>");
-  }
-
-  function renderSwirlLog() {
-    if (!graphSwirlLogEl) return;
-    if (!swirls.length) {
-      graphSwirlLogEl.innerHTML = "";
-      return;
-    }
-    graphSwirlLogEl.innerHTML = swirls.map((swirl) => {
+      events.push({
+        startMs: pour.startMs || 0,
+        order: index,
+        text: `Pour ${pour.count}: ${startSec} - ${endSec} (${lenSec}s / ${weightDiff} / ${avgFlow} / ${maxFlow})`
+      });
+    });
+    swirls.forEach((swirl, index) => {
       const startSec = Math.round(swirl.startMs / 1000);
       const endSec = Math.round(swirl.endMs / 1000);
       const lenSec = Math.max(0, endSec - startSec);
-      return `${swirl.count}: ${startSec} - ${endSec} (${lenSec}s)`;
-    }).join("<br>");
+      events.push({
+        startMs: swirl.startMs || 0,
+        order: index,
+        text: `Swirl ${swirl.count}: ${startSec} - ${endSec} (${lenSec}s)`
+      });
+    });
+    events.sort((a, b) => {
+      if (a.startMs !== b.startMs) return a.startMs - b.startMs;
+      return a.order - b.order;
+    });
+    graphEventLogEl.innerHTML = events.map((event) => event.text).join("<br>");
   }
 
   function enqueueWrite(data) {
@@ -1360,6 +1455,7 @@ export function initCoffeeScale() {
         autoStartPending = false;
         setTimerBlinking(false);
       }
+      saveGraphTogglePrefsForMethod();
     });
   }
 
@@ -1372,6 +1468,7 @@ export function initCoffeeScale() {
       } else if (Number.isFinite(lastWeight) && lastWeight > UNSWIRL_THRESHOLD) {
         lastGoodWeight = lastWeight;
       }
+      saveGraphTogglePrefsForMethod();
     });
   }
 
@@ -1383,6 +1480,7 @@ export function initCoffeeScale() {
         pourStartMs = null;
         pourStartWeight = null;
       }
+      saveGraphTogglePrefsForMethod();
     });
   }
 
@@ -1409,6 +1507,7 @@ export function initCoffeeScale() {
   if (outField) outField.addEventListener("input", syncGraphRecipeFields);
   syncGraphRecipeFields();
   syncGraphTimeFromForm();
+  applyGraphTogglePrefsForMethod();
   if (inField) {
     inField.addEventListener("focus", () => {
       lastFocusedField = "in";
@@ -1420,6 +1519,21 @@ export function initCoffeeScale() {
     });
   }
 
+  function setGraphTogglePrefs(prefs) {
+    const next = prefs && typeof prefs === "object" ? { ...prefs } : {};
+    if (Object.prototype.hasOwnProperty.call(next, "__none__")) {
+      if (!Object.prototype.hasOwnProperty.call(next, GRAPH_TOGGLE_NONE_KEY)) {
+        next[GRAPH_TOGGLE_NONE_KEY] = next["__none__"];
+      }
+      delete next["__none__"];
+    }
+    graphTogglePrefs = next;
+  }
+
+  function setGraphTogglePrefsSaver(fn) {
+    graphTogglePrefsSaver = fn;
+  }
+
   window.coffeeScale = {
     isConnected: () => isConnected,
     getLastWeight: () => lastWeight,
@@ -1428,6 +1542,9 @@ export function initCoffeeScale() {
     setCaptureData,
     resetCaptureData,
     syncGraphFormFields,
-    renderGraphTo
+    renderGraphTo,
+    applyGraphTogglePrefsForMethod,
+    setGraphTogglePrefs,
+    setGraphTogglePrefsSaver
   };
 }

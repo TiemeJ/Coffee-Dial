@@ -2133,6 +2133,9 @@
             if (snap.exists()) {
                 const data = snap.data();
                 isPublic = data.isPublic || false;
+                if (window.coffeeScale?.setGraphTogglePrefs) {
+                    window.coffeeScale.setGraphTogglePrefs(data.graphTogglePrefs || {});
+                }
                 if (data.preferences && !localStorage.getItem(columnPreferencesKey)) {
                     saveColumnPreferencesToStorage(data.preferences);
                 }
@@ -2159,8 +2162,25 @@
                 await setDoc(userDocRef, {
                     isPublic: false,
                     displayName: user.displayName,
-                    pinnedBrews: pinnedBrewsPreferences
+                    pinnedBrews: pinnedBrewsPreferences,
+                    graphTogglePrefs: {}
                 });
+                if (window.coffeeScale?.setGraphTogglePrefs) {
+                    window.coffeeScale.setGraphTogglePrefs({});
+                }
+            }
+            if (window.coffeeScale?.setGraphTogglePrefsSaver) {
+                window.coffeeScale.setGraphTogglePrefsSaver((prefs) => {
+                    if (!currentUser) return Promise.resolve();
+                    return updateDoc(userDocRef, { graphTogglePrefs: prefs });
+                });
+            }
+            const formContainer = document.getElementById('formContainer');
+            if (formContainer && formContainer.getAttribute('aria-expanded') === 'true') {
+                const isEditing = formContainer.classList.contains('editing-mode') || !!document.getElementById('editId').value;
+                if (!isEditing && window.coffeeScale?.applyGraphTogglePrefsForMethod) {
+                    window.coffeeScale.applyGraphTogglePrefsForMethod();
+                }
             }
             if (!localStorage.getItem(columnPreferencesKey)) {
                 saveColumnPreferencesToStorage(columnPreferences);
@@ -2451,7 +2471,15 @@
         const toggleMethodOther = () => {
             const val = document.getElementById('method').value; const input = document.getElementById('methodOther');
             if(val === 'Other') input.classList.remove('hidden'); else input.classList.add('hidden');
+            if (window.coffeeScale?.applyGraphTogglePrefsForMethod) window.coffeeScale.applyGraphTogglePrefsForMethod();
         };
+
+        const methodOtherInput = document.getElementById('methodOther');
+        if (methodOtherInput) {
+            methodOtherInput.addEventListener('change', () => {
+                if (window.coffeeScale?.applyGraphTogglePrefsForMethod) window.coffeeScale.applyGraphTogglePrefsForMethod();
+            });
+        }
 
         const handleFormSubmit = async (e) => {
             e.preventDefault();
@@ -5578,7 +5606,7 @@
         
         const toggleForm = (f=null) => { 
             const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
-            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (window.coffeeScale?.autoConnect) window.coffeeScale.autoConnect(); } else { o.classList.add('hidden'); } 
+            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (window.coffeeScale?.autoConnect) window.coffeeScale.autoConnect(); const isEditing = c.classList.contains('editing-mode') || !!document.getElementById('editId').value; if (!isEditing && window.coffeeScale?.applyGraphTogglePrefsForMethod) window.coffeeScale.applyGraphTogglePrefsForMethod(); } else { o.classList.add('hidden'); } 
         };
         
         const getCoffeeTypeForBrew = (brew) => {
@@ -6037,6 +6065,7 @@
             if(stdMethods.includes(mVal)) { document.getElementById('method').value = mVal; document.getElementById('methodOther').classList.add('hidden'); } 
             else if (mVal) { document.getElementById('method').value = 'Other'; document.getElementById('methodOther').value = mVal; document.getElementById('methodOther').classList.remove('hidden'); } 
             else { document.getElementById('method').value = ""; document.getElementById('methodOther').classList.add('hidden'); }
+            if (window.coffeeScale?.applyGraphTogglePrefsForMethod) window.coffeeScale.applyGraphTogglePrefsForMethod(mVal);
             setRating(c.rating||0); setNotesMode('manual'); document.getElementById('isActiveToggle').checked = c.isActive || false; 
             
             // Set saved bean dropdown if beanId is present
@@ -6185,6 +6214,7 @@
             pendingAIBeanImageFile = null;
             if (window.coffeeScale?.resetCaptureData) window.coffeeScale.resetCaptureData();
             if (window.coffeeScale?.syncGraphFormFields) window.coffeeScale.syncGraphFormFields();
+            if (window.coffeeScale?.applyGraphTogglePrefsForMethod) window.coffeeScale.applyGraphTogglePrefsForMethod();
         };
 
         const clearSearch = () => { const input = document.getElementById('globalSearch'); input.value = ''; displayedBrewsCount = BREWS_PER_PAGE; renderTable(); document.getElementById('searchClearBtn').classList.add('hidden'); input.focus(); };
@@ -7399,15 +7429,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex gap-3 text-[10px] text-gray-400 dark:text-[#78716c]">
-                    <div class="flex-1">
-                        <div class="text-[9px] font-bold text-gray-400 dark:text-[#78716c] uppercase mb-0.5">Pours</div>
-                        <div id="graphPourLog" class="space-y-0.5"></div>
-                    </div>
-                    <div class="flex-1 text-right">
-                        <div class="text-[9px] font-bold text-gray-400 dark:text-[#78716c] uppercase mb-0.5">Swirls</div>
-                        <div id="graphSwirlLog" class="space-y-0.5"></div>
-                    </div>
+                <div class="text-[10px] text-gray-400 dark:text-[#78716c]">
+                    <div id="graphEventLog" class="space-y-0.5"></div>
                 </div>
                 <!-- Content will go here -->
             </div>
