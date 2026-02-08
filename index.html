@@ -832,6 +832,7 @@
                                         <span id="coffeeTypesSortIcon-createdAt" class="text-[10px]"></span>
                                     </button>
                                 </th>
+                                <th class="px-4 py-3 text-center w-12"><span class="sr-only">Actions</span></th>
                             </tr>
                         </thead>
                         <tbody id="coffeeTypesTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
@@ -846,7 +847,7 @@
 
     <!-- Coffee Card Overlay -->
     <div id="coffeeTypeCardOverlay" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCoffeeTypeCard(event)">
-        <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+        <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation(); closeCoffeeTypeCardMenu()">
             <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
                 <div class="absolute top-4 right-4 flex items-center gap-2">
                     <button id="coffeeTypeCardEditBtn" onclick="enterCoffeeTypeEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
@@ -855,6 +856,29 @@
                     <button onclick="closeCoffeeTypeCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
+                </div>
+                <div class="absolute right-4 top-full mt-2 flex flex-col items-center">
+                    <button id="coffeeTypeCardMenuBtn" onclick="toggleActionMenu('coffeeTypeCardActionMenu', event)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                        <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                    </button>
+                    <div id="coffeeTypeCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" onclick="event.stopPropagation()">
+                        <button id="coffeeTypeCardActionBuy" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
+                        </button>
+                        <button onclick="openNewBagForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-bag-shopping text-emerald-600 w-4"></i> New bag
+                        </button>
+                        <button onclick="showBeansForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to beans
+                        </button>
+                        <button onclick="showBrewsForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
+                        </button>
+                        <hr class="border-coffee-100 dark:border-[#44403c]">
+                        <button onclick="deleteCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                            <i class="fa-solid fa-trash w-4"></i> Delete
+                        </button>
+                    </div>
                 </div>
                 <h3 id="coffeeTypeCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
                 <p id="coffeeTypeCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
@@ -909,16 +933,16 @@
                 <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
                     <div class="flex flex-wrap gap-2">
                         <button id="coffeeTypeCardBuyBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-cart-shopping"></i> Buy more
+                            <i class="fa-solid fa-cart-shopping"></i> Buy
                         </button>
                         <button id="coffeeTypeCardShowBeansBtn" onclick="showBeansForCoffeeType()" class="px-3 py-1.5 text-xs font-bold rounded bg-coffee-700 hover:bg-coffee-800 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-seedling"></i> Show beans
+                            <i class="fa-solid fa-seedling"></i> Beans
                         </button>
                         <button id="coffeeTypeCardShowBrewsBtn" onclick="showBrewsForCoffeeType()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-mug-saucer"></i> Show brews
+                            <i class="fa-solid fa-mug-saucer"></i> Brews
                         </button>
-                        <button id="coffeeTypeCardDeleteBtn" onclick="deleteCoffeeType()" class="px-3 py-1.5 text-xs font-bold rounded bg-red-600 hover:bg-red-700 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-trash"></i> Delete
+                        <button id="coffeeTypeCardNewBagBtn" onclick="openNewBagForCoffeeType()" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-bag-shopping"></i> New bag
                         </button>
                     </div>
                     <div class="flex justify-end gap-2 mt-3">
@@ -988,9 +1012,14 @@
 
             <div id="coffeeCardContent" class="bg-white dark:bg-[#292524] w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation(); closeCoffeeCardMenu()">
                 <div class="bg-coffee-100 dark:bg-[#1c1917] p-5 border-b border-coffee-200 dark:border-[#44403c] relative">
-                    <button id="cardCloseBtn" onclick="closeCoffeeCard(null)" class="absolute top-4 right-4 text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
-                        <i class="fa-solid fa-xmark text-xl"></i>
-                    </button>
+                    <div class="absolute top-4 right-4 flex items-center gap-2">
+                        <button id="coffeeCardEditBtn" onclick="editBrewFromCard()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
+                            <i class="fa-solid fa-pen-to-square text-lg"></i>
+                        </button>
+                        <button id="cardCloseBtn" onclick="closeCoffeeCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
                     <div class="absolute right-4 top-full mt-2 flex flex-col items-center">
                         <button id="coffeeCardMenuBtn" onclick="toggleActionMenu('coffeeCardActionMenu', event)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
                             <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
@@ -1065,7 +1094,7 @@
 
     <!-- Bean Card Overlay -->
     <div id="beanCardOverlay" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeBeanCard(event)">
-        <div class="bg-white dark:bg-[#292524] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+        <div class="bg-white dark:bg-[#292524] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation(); closeBeanCardMenu()">
             <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
                 <div class="absolute top-4 right-4 flex items-center gap-2">
                     <button id="beanCardEditBtn" onclick="enterBeanEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
@@ -1074,6 +1103,37 @@
                     <button onclick="closeBeanCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
+                </div>
+                <div class="absolute right-4 top-full mt-2 flex flex-col items-center">
+                    <button id="beanCardMenuBtn" onclick="toggleActionMenu('beanCardActionMenu', event)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                        <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                    </button>
+                    <div id="beanCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" onclick="event.stopPropagation()">
+                        <button id="beanCardActionBuy" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
+                        </button>
+                        <button id="beanCardActionEdit" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
+                        </button>
+                        <button id="beanCardActionBrew" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-mug-saucer text-coffee-700 w-4"></i> Brew
+                        </button>
+                        <button id="beanCardActionBrews" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
+                        </button>
+                        <button id="beanCardActionCoffee" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee
+                        </button>
+                        <button id="beanCardActionOpenBag" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-bag-shopping text-emerald-600 w-4"></i> New bag
+                        </button>
+                        <button id="beanCardActionFreeze" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"></button>
+                        <button id="beanCardActionArchive" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"></button>
+                        <hr class="border-coffee-100 dark:border-[#44403c]">
+                        <button id="beanCardActionDelete" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                            <i class="fa-solid fa-trash w-4"></i> Delete
+                        </button>
+                    </div>
                 </div>
                 <h3 id="beanCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
                 <p id="beanCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
@@ -1124,25 +1184,16 @@
                 <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
                     <div class="flex flex-wrap gap-2">
                         <button id="beanCardBuyBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-cart-shopping"></i> Buy more
+                            <i class="fa-solid fa-cart-shopping"></i> Buy
                         </button>
                         <button id="beanCardBrewBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-coffee-700 hover:bg-coffee-800 text-white flex items-center gap-2">
                             <i class="fa-solid fa-mug-saucer"></i> Brew
                         </button>
-                        <button id="beanCardShowBrewsBtn" onclick="showBrewsForBean()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-mug-saucer"></i> Show brews
-                        </button>
-                        <button id="beanCardShowCoffeeBtn" onclick="showCoffeeForBean()" class="px-3 py-1.5 text-xs font-bold rounded bg-coffee-700 hover:bg-coffee-800 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-layer-group"></i> Show coffee
-                        </button>
                         <button id="beanCardOpenNewBagBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-bag-shopping"></i> Open new bag
+                            <i class="fa-solid fa-bag-shopping"></i> New bag
                         </button>
                         <button id="beanCardFreezeBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2"></button>
                         <button id="beanCardArchiveBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-2"></button>
-                        <button id="beanCardDeleteBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-red-600 hover:bg-red-700 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-trash"></i> Delete
-                        </button>
                     </div>
                     <div class="flex justify-end gap-2 mt-3">
                         <button id="beanCardPrevBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" onclick="navigateBeanCard(-1)">
@@ -1157,7 +1208,7 @@
             <div id="beanCardEdit" class="hidden flex-1 flex flex-col min-h-0">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
                     <div class="sm:col-span-2">
-                        <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2 mb-1">
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Coffee</label>
                             <button type="button" id="beanEditCoffeeTypeEditBtn" onclick="openCoffeeFromBeanEdit()" class="p-2 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white rounded-md hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors disabled:opacity-40 disabled:cursor-not-allowed" title="Edit coffee" disabled>
                                 <i class="fa-solid fa-pen-to-square"></i>
@@ -2994,6 +3045,46 @@
             window.open(url, '_blank', 'noopener,noreferrer');
         };
 
+        const openNewBagForCoffeeType = async () => {
+            if (!currentUser || !currentCoffeeTypeId) return;
+            const type = coffeeTypes.find(ct => ct.id === currentCoffeeTypeId);
+            if (!type) return;
+            const nowIso = new Date().toISOString();
+            const newBeanData = {
+                coffeeTypeId: type.id,
+                roaster: type.roaster || '',
+                farmer: type.farmer || '',
+                origin: type.origin || '',
+                processing: type.processing || '',
+                variety: type.variety || '',
+                roastType: type.roast || type.roastType || '',
+                shopUrl: type.webshopUrl || type.shopUrl || '',
+                archived: false,
+                frozen: false,
+                stock: 250,
+                stockUpdatedAt: nowIso,
+                openedDate: nowIso,
+                frozenDate: null,
+                roastDate: null,
+                createdAt: nowIso,
+                updatedAt: nowIso
+            };
+
+            try {
+                const ref = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), newBeanData);
+                const newBean = { id: ref.id, ...newBeanData };
+                beans.push(newBean);
+                renderBeansTable();
+                await autoPinOpenBagsIfEnabled();
+                openBeanCard(ref.id);
+                enterBeanEditMode();
+                closeCoffeeTypeCard(null);
+            } catch (err) {
+                console.error('Error creating bean from coffee type:', err);
+                alert('Failed to create bean.');
+            }
+        };
+
         const showBeansForCoffeeType = () => {
             if (!currentCoffeeTypeId) return;
             closeCoffeeTypeCard(null);
@@ -3014,6 +3105,31 @@
             displayedBrewsCount = BREWS_PER_PAGE;
             renderTable();
             renderActiveFilters();
+        };
+
+        const showBeansForCoffeeTypeFromTable = (typeId) => {
+            currentCoffeeTypeId = typeId;
+            showBeansForCoffeeType();
+        };
+
+        const showBrewsForCoffeeTypeFromTable = (typeId) => {
+            currentCoffeeTypeId = typeId;
+            showBrewsForCoffeeType();
+        };
+
+        const openNewBagForCoffeeTypeFromTable = (typeId) => {
+            currentCoffeeTypeId = typeId;
+            openNewBagForCoffeeType();
+        };
+
+        const openCoffeeTypeFromTableEdit = (typeId) => {
+            openCoffeeTypeCard(typeId);
+            enterCoffeeTypeEditMode();
+        };
+
+        const deleteCoffeeTypeFromTable = (typeId) => {
+            currentCoffeeTypeId = typeId;
+            deleteCoffeeType();
         };
 
         const deleteCoffeeType = async () => {
@@ -3147,6 +3263,7 @@
             }
 
             const buyBtn = document.getElementById('coffeeTypeCardBuyBtn');
+            const buyActionBtn = document.getElementById('coffeeTypeCardActionBuy');
             const shopUrl = type.webshopUrl || type.shopUrl || '';
             if (buyBtn) {
                 if (shopUrl) {
@@ -3157,6 +3274,17 @@
                     buyBtn.disabled = true;
                     buyBtn.classList.add('opacity-40', 'cursor-not-allowed');
                     buyBtn.onclick = null;
+                }
+            }
+            if (buyActionBtn) {
+                if (shopUrl) {
+                    buyActionBtn.disabled = false;
+                    buyActionBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    buyActionBtn.onclick = () => openCoffeeTypeShopUrl(type.id);
+                } else {
+                    buyActionBtn.disabled = true;
+                    buyActionBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                    buyActionBtn.onclick = null;
                 }
             }
 
@@ -3213,12 +3341,15 @@
             document.getElementById('coffeeTypeCardView').classList.add('hidden');
             document.getElementById('coffeeTypeCardEdit').classList.remove('hidden');
             document.getElementById('coffeeTypeCardEditBtn').classList.add('hidden');
+            document.getElementById('coffeeTypeCardMenuBtn').classList.add('hidden');
+            document.getElementById('coffeeTypeCardActionMenu').classList.add('hidden');
         };
 
         const cancelCoffeeTypeEditMode = () => {
             document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
             document.getElementById('coffeeTypeCardView').classList.remove('hidden');
             document.getElementById('coffeeTypeCardEditBtn').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardMenuBtn').classList.remove('hidden');
         };
 
         const saveCoffeeTypeEdits = async () => {
@@ -3472,6 +3603,12 @@
                 const variety = type.variety || '-';
                 const roast = type.roast || type.roastType || '-';
                 const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
+                const menuId = `coffee-types-action-menu-${type.id}`;
+                const buyBtn = (type.webshopUrl || type.shopUrl)
+                    ? `<button onclick="openCoffeeTypeShopUrl('${type.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
+                       </button>`
+                    : '';
 
                 const row = document.createElement('tr');
                 row.className = 'bg-white dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0';
@@ -3484,6 +3621,35 @@
                     <td class="px-4 py-3 text-sm">${variety}</td>
                     <td class="px-4 py-3 text-center text-sm">${roast}</td>
                     <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${createdAt}</td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="relative inline-block">
+                            <button onclick="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
+                                <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                            </button>
+                            <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden">
+                                <button onclick="openCoffeeTypeCard('${type.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                    <i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card
+                                </button>
+                                <button onclick="openCoffeeTypeFromTableEdit('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                    <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
+                                </button>
+                                ${buyBtn}
+                                <button onclick="openNewBagForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                    <i class="fa-solid fa-bag-shopping text-emerald-600 w-4"></i> New bag
+                                </button>
+                                <button onclick="showBeansForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                    <i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to beans
+                                </button>
+                                <button onclick="showBrewsForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                    <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
+                                </button>
+                                <hr class="border-coffee-100 dark:border-[#44403c]">
+                                <button onclick="deleteCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                                    <i class="fa-solid fa-trash w-4"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
@@ -3577,11 +3743,23 @@
             const buyBtn = document.getElementById('beanCardBuyBtn');
             const showBrewsBtn = document.getElementById('beanCardShowBrewsBtn');
             const showCoffeeBtn = document.getElementById('beanCardShowCoffeeBtn');
+            const buyActionBtn = document.getElementById('beanCardActionBuy');
+            const editActionBtn = document.getElementById('beanCardActionEdit');
+            const brewActionBtn = document.getElementById('beanCardActionBrew');
+            const brewsActionBtn = document.getElementById('beanCardActionBrews');
+            const coffeeActionBtn = document.getElementById('beanCardActionCoffee');
+            const openBagActionBtn = document.getElementById('beanCardActionOpenBag');
+            const deleteActionBtn = document.getElementById('beanCardActionDelete');
 
             if (brewBtn) brewBtn.onclick = () => { closeBeanCard(null); openBrewWithBean(bean.id); };
             if (openNewBagBtn) openNewBagBtn.onclick = () => openNewBag(bean.id);
             if (deleteBtn) deleteBtn.onclick = () => { closeBeanCard(null); deleteBean(bean.id); };
             if (showBrewsBtn) showBrewsBtn.onclick = () => showBrewsForBean(bean.id);
+            if (brewActionBtn) brewActionBtn.onclick = () => { closeBeanCard(null); openBrewWithBean(bean.id); };
+            if (editActionBtn) editActionBtn.onclick = () => enterBeanEditMode();
+            if (brewsActionBtn) brewsActionBtn.onclick = () => showBrewsForBean(bean.id);
+            if (openBagActionBtn) openBagActionBtn.onclick = () => openNewBag(bean.id);
+            if (deleteActionBtn) deleteActionBtn.onclick = () => { closeBeanCard(null); deleteBean(bean.id); };
             if (showCoffeeBtn) {
                 if (bean.coffeeTypeId) {
                     showCoffeeBtn.disabled = false;
@@ -3593,6 +3771,17 @@
                     showCoffeeBtn.onclick = null;
                 }
             }
+            if (coffeeActionBtn) {
+                if (bean.coffeeTypeId) {
+                    coffeeActionBtn.disabled = false;
+                    coffeeActionBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    coffeeActionBtn.onclick = () => showCoffeeForBean(bean.coffeeTypeId);
+                } else {
+                    coffeeActionBtn.disabled = true;
+                    coffeeActionBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                    coffeeActionBtn.onclick = null;
+                }
+            }
             if (buyBtn) {
                 if (bean.shopUrl) {
                     buyBtn.disabled = false;
@@ -3602,6 +3791,17 @@
                     buyBtn.disabled = true;
                     buyBtn.classList.add('opacity-40', 'cursor-not-allowed');
                     buyBtn.onclick = null;
+                }
+            }
+            if (buyActionBtn) {
+                if (bean.shopUrl) {
+                    buyActionBtn.disabled = false;
+                    buyActionBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    buyActionBtn.onclick = () => openBeanShopUrl(bean.id);
+                } else {
+                    buyActionBtn.disabled = true;
+                    buyActionBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                    buyActionBtn.onclick = null;
                 }
             }
 
@@ -3637,6 +3837,8 @@
         const updateBeanCardActionButtons = (bean) => {
             const freezeBtn = document.getElementById('beanCardFreezeBtn');
             const archiveBtn = document.getElementById('beanCardArchiveBtn');
+            const freezeActionBtn = document.getElementById('beanCardActionFreeze');
+            const archiveActionBtn = document.getElementById('beanCardActionArchive');
             if (freezeBtn) {
                 const freezeLabel = bean.frozen ? 'Unfreeze' : 'Freeze';
                 const freezeIcon = bean.frozen ? 'fa-sun' : 'fa-snowflake';
@@ -3648,6 +3850,18 @@
                 const archiveIcon = bean.archived ? 'fa-box-open' : 'fa-box-archive';
                 archiveBtn.innerHTML = `<i class="fa-solid ${archiveIcon}"></i> ${archiveLabel}`;
                 archiveBtn.onclick = () => toggleBeanArchive(bean.id, !!bean.archived);
+            }
+            if (freezeActionBtn) {
+                const freezeLabel = bean.frozen ? 'Unfreeze' : 'Freeze';
+                const freezeIcon = bean.frozen ? 'fa-sun' : 'fa-snowflake';
+                freezeActionBtn.innerHTML = `<i class="fa-solid ${freezeIcon} text-sky-600 w-4"></i> ${freezeLabel}`;
+                freezeActionBtn.onclick = () => toggleBeanFrozen(bean.id, !!bean.frozen);
+            }
+            if (archiveActionBtn) {
+                const archiveLabel = bean.archived ? 'Unarchive' : 'Archive';
+                const archiveIcon = bean.archived ? 'fa-box-open' : 'fa-box-archive';
+                archiveActionBtn.innerHTML = `<i class="fa-solid ${archiveIcon} text-amber-600 w-4"></i> ${archiveLabel}`;
+                archiveActionBtn.onclick = () => toggleBeanArchive(bean.id, !!bean.archived);
             }
         };
 
@@ -3835,6 +4049,8 @@
             document.getElementById('beanCardView').classList.add('hidden');
             document.getElementById('beanCardEdit').classList.remove('hidden');
             document.getElementById('beanCardEditBtn').classList.add('hidden');
+            document.getElementById('beanCardMenuBtn').classList.add('hidden');
+            document.getElementById('beanCardActionMenu').classList.add('hidden');
         };
 
         const openCoffeeFromBeanEdit = () => {
@@ -3849,6 +4065,7 @@
             document.getElementById('beanCardEdit').classList.add('hidden');
             document.getElementById('beanCardView').classList.remove('hidden');
             document.getElementById('beanCardEditBtn').classList.remove('hidden');
+            document.getElementById('beanCardMenuBtn').classList.remove('hidden');
         };
 
         const saveBeanCardEdits = async () => {
@@ -4146,7 +4363,12 @@
                 const archiveIcon = bean.archived ? 'fa-box-open text-amber-600' : 'fa-box-archive text-amber-600';
                 const buyMoreBtn = bean.shopUrl ? `
                     <button onclick="openBeanShopUrl('${bean.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                        <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy more
+                        <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
+                    </button>
+                ` : '';
+                const goToCoffeeBtn = bean.coffeeTypeId ? `
+                    <button onclick="showCoffeeForBean('${bean.coffeeTypeId}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                        <i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee
                     </button>
                 ` : '';
                 
@@ -4186,11 +4408,18 @@
                                      <i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card
                                  </button>
                                  ${buyMoreBtn}
+                                 <button onclick="openBeanCard('${bean.id}', event); enterBeanEditMode();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                     <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
+                                 </button>
                                  <button onclick="openBrewWithBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                      <i class="fa-solid fa-mug-saucer text-coffee-600 w-4"></i> Brew
                                  </button>
+                                 <button onclick="showBrewsForBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                     <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
+                                 </button>
+                                 ${goToCoffeeBtn}
                                  <button onclick="openNewBag('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                     <i class="fa-solid fa-bag-shopping text-green-600 w-4"></i> Open new bag
+                                     <i class="fa-solid fa-bag-shopping text-green-600 w-4"></i> New bag
                                  </button>
                                  <button onclick="toggleBeanFrozen('${bean.id}', ${bean.frozen ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                      <i class="fa-solid ${freezeIcon} w-4"></i> ${freezeLabel}
@@ -5682,10 +5911,28 @@
             if (menu) menu.classList.add('hidden');
         };
 
+        const closeCoffeeTypeCardMenu = () => {
+            const menu = document.getElementById('coffeeTypeCardActionMenu');
+            if (menu) menu.classList.add('hidden');
+        };
+
+        const closeBeanCardMenu = () => {
+            const menu = document.getElementById('beanCardActionMenu');
+            if (menu) menu.classList.add('hidden');
+        };
+
+        const editBrewFromCard = () => {
+            if (!currentCoffeeCardId) return;
+            closeCoffeeCard(null);
+            editCoffee(currentCoffeeCardId);
+        };
+
         const updateCoffeeCardActionMenu = (c) => {
             const menu = document.getElementById('coffeeCardActionMenu');
             const btn = document.getElementById('coffeeCardMenuBtn');
+            const editBtn = document.getElementById('coffeeCardEditBtn');
             if (!menu || !btn) return;
+            if (editBtn) editBtn.classList.toggle('hidden', currentView !== 'mine');
             menu.classList.add('hidden');
             if (!c) return;
 
@@ -5694,10 +5941,12 @@
                 const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
                 menu.innerHTML = `
                     <button onclick="closeCoffeeCard(null); editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button>
+                    <button onclick="fastDuplicateFromCard();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button>
+                    <button onclick="duplicateFromCard();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button>
                     <button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button>
                     <button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button>
-                    <button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Show bean</button>
-                    <button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Show coffee</button>
+                    <button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button>
+                    <button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button>
                     <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button>
                     <hr class="border-coffee-100 dark:border-[#44403c]">
                     <button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button>
@@ -5705,8 +5954,8 @@
             } else {
                 menu.innerHTML = `
                     <button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button>
-                    <button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Show bean</button>
-                    <button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Show coffee</button>
+                    <button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button>
+                    <button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button>
                     <button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews</button>
                 `;
             }
@@ -6188,6 +6437,78 @@
             } catch(err) {
                 console.error(err);
                 alert("Error duplicating: " + err.message);
+            }
+        };
+
+        const fastRepeatCoffee = async (id) => {
+            const c = coffees.find(x => x.id === id);
+            if (!c) return;
+
+            // If viewing a friend's brew, switch to own view first
+            if(currentView !== 'mine') {
+                document.getElementById('viewSelect').value = 'mine';
+                changeView('mine');
+
+                setTimeout(async () => {
+                    const d = { ...c };
+                    delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
+                    delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps;
+                    delete d.id;
+                    d.isActive = false;
+                    d.createdAt = new Date().toISOString();
+                    d.updatedAt = d.createdAt;
+                    let newOrder = 0;
+                    if (coffees.length > 0) {
+                        const minOrder = Math.min(...coffees.map(item => item.customOrder || 0));
+                        newOrder = minOrder - 1;
+                    }
+                    d.customOrder = newOrder;
+
+                    try {
+                        const col = collection(db, 'users', currentUser.uid, 'coffees');
+                        await addDoc(col, d);
+                        if (d.beanId) {
+                            await archiveBeanIfStockDepleted({
+                                beanId: d.beanId,
+                                brew: d
+                            });
+                        }
+                        alert("Brew added to your collection!");
+                    } catch(err) {
+                        console.error(err);
+                        alert("Error adding brew: " + err.message);
+                    }
+                }, 500);
+                return;
+            }
+
+            const d = { ...c };
+            delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
+            delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps;
+            delete d.id;
+            d.isActive = false;
+            d.createdAt = new Date().toISOString();
+            d.updatedAt = d.createdAt;
+            let newOrder = 0;
+            if (coffees.length > 0) {
+                const minOrder = Math.min(...coffees.map(item => item.customOrder || 0));
+                newOrder = minOrder - 1;
+            }
+            d.customOrder = newOrder;
+
+            try {
+                const col = collection(db, 'users', currentUser.uid, 'coffees');
+                await addDoc(col, d);
+                if (d.beanId) {
+                    await archiveBeanIfStockDepleted({
+                        beanId: d.beanId,
+                        brew: d
+                    });
+                }
+                alert("Brew repeated successfully!");
+            } catch(err) {
+                console.error(err);
+                alert("Error repeating: " + err.message);
             }
         };
 
@@ -7109,7 +7430,7 @@
             if(currentView === 'mine') {
                 const pinLabel = 'Unpin';
                 const pinIcon = 'fa-thumbtack text-green-600';
-                menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] overflow-hidden" style="z-index: 9999;"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Show bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Show coffee</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
+                menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] overflow-hidden" style="z-index: 9999;"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="fastRepeatCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
             }
 
             // Background Layer Wrapper (Clip Overlay)
@@ -7180,9 +7501,9 @@
             if(currentView === 'mine') {
                 const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
                 const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
-                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Duplicate</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Show bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Show coffee</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
+                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="openCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="fastRepeatCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
             } else { 
-                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Show bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Show coffee</button><button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews</button></div></div>`; 
+                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="openCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews</button></div></div>`; 
             }
 
             const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${c.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${w === '-' ? '-' : (w.endsWith('.0')?parseInt(w):w) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${c.ratio || '-'})</span></div>`;
@@ -7326,6 +7647,10 @@
 
         Object.assign(window, { 
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
+            fastRepeatCoffee,
+            editBrewFromCard,
+            closeCoffeeTypeCardMenu,
+            closeBeanCardMenu,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, extractCoffeeTypesFromBeans,
             openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto,
@@ -7349,7 +7674,13 @@
             applyCoffeeTypesFilterFromQuick,
             clearCoffeeTypesFilters,
             showBeansForCoffeeType,
+            openNewBagForCoffeeType,
+            openNewBagForCoffeeTypeFromTable,
             showBrewsForCoffeeType,
+            showBeansForCoffeeTypeFromTable,
+            showBrewsForCoffeeTypeFromTable,
+            openCoffeeTypeFromTableEdit,
+            deleteCoffeeTypeFromTable,
             showBrewsForBean,
             showCoffeeForBean,
             showBeanForBrew,
