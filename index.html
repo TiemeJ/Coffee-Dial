@@ -7464,7 +7464,13 @@
         function openStats() { document.getElementById('statsModal').classList.remove('hidden'); }
         function closeStats() { document.getElementById('statsModal').classList.add('hidden'); }
 
-        function openGraphModal() { document.getElementById('graphModal').classList.remove('hidden'); }
+        function openGraphModal() {
+            const modal = document.getElementById('graphModal');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                if (window.coffeeScale?.renderGraphTo) window.coffeeScale.renderGraphTo(document.getElementById('graph'));
+            });
+        }
         function closeGraphModal() { document.getElementById('graphModal').classList.add('hidden'); }
 
         function openImageModal() { document.getElementById('imageModalOverlay').classList.remove('hidden'); }
