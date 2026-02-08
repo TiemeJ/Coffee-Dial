@@ -1483,6 +1483,11 @@
                             <div id="topCoffeesList" class="overflow-y-auto max-h-48 space-y-2 pr-1"></div>
                         </div>
                     </div>
+
+                    <div class="bg-white dark:bg-[#292524] p-5 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase border-b border-coffee-100 dark:border-[#44403c] pb-2"><i class="fa-solid fa-grip text-amber-600 mr-2"></i>Grinders</h4>
+                        <div id="grinderStatsList" class="space-y-2"></div>
+                    </div>
                 </div>
 
                 <div id="statsUniqueTableView" class="hidden">
@@ -5490,6 +5495,7 @@
                  document.getElementById('statTotalBrews').innerText = '0'; document.getElementById('statMonthBrews').innerText = '∞'; document.getElementById('statWeekBrews').innerText = '0'; document.getElementById('statAvgBrews').innerText = '0';
                  document.getElementById('statUniqueCoffees').innerText = '0'; document.getElementById('mostBrewedName').innerText = '-'; document.getElementById('mostBrewedCount').innerText = '0 brews';
                  document.getElementById('topCoffeesList').innerHTML = '<p class="text-sm text-gray-400 italic">No brews found.</p>'; document.getElementById('uniqueLeaderboardBody').innerHTML = "<tr><td colspan='4' class='text-center py-4 italic text-coffee-400'>No data.</td></tr>";
+                 document.getElementById('grinderStatsList').innerHTML = '<p class="text-sm text-gray-400 italic">No grinder data.</p>';
                  renderCharts({}, {}, {}, {}); return;
             }
             const now = new Date(); const oneDay = 24 * 60 * 60 * 1000;
@@ -5525,6 +5531,31 @@
             leaderboardData.forEach(item => {
                 const tr = document.createElement('tr'); tr.innerHTML = `<td class="px-4 py-3 font-bold">${item.roaster}</td><td class="px-4 py-3">${item.origin}</td><td class="px-4 py-3">${item.farmer}</td><td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold">${item.avg} ★</span></td>`; lbBody.appendChild(tr);
             });
+
+            const grinderTotals = {};
+            dataToUse.forEach(c => {
+                const grinder = (c.grinder || 'Unknown').toString().trim() || 'Unknown';
+                const weight = parseFloat(c.weight);
+                if (!isNaN(weight) && weight > 0) {
+                    grinderTotals[grinder] = (grinderTotals[grinder] || 0) + weight;
+                }
+            });
+            const grinderList = Object.entries(grinderTotals)
+                .map(([name, total]) => ({ name, total }))
+                .sort((a, b) => b.total - a.total);
+            const grinderEl = document.getElementById('grinderStatsList');
+            grinderEl.innerHTML = '';
+            if (!grinderList.length) {
+                grinderEl.innerHTML = '<p class="text-sm text-gray-400 italic">No grinder data.</p>';
+            } else {
+                grinderList.forEach(item => {
+                    const kg = (item.total / 1000).toFixed(2);
+                    const row = document.createElement('div');
+                    row.className = "flex items-center justify-between bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-100 dark:border-[#44403c]";
+                    row.innerHTML = `<span class="text-sm font-semibold text-coffee-800 dark:text-white truncate pr-2">${item.name}</span><span class="text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-2 py-1 rounded-full whitespace-nowrap">${kg} kg</span>`;
+                    grinderEl.appendChild(row);
+                });
+            }
         };
 
         const updateBeanMeter = (period) => {
