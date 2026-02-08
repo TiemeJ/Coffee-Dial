@@ -5093,6 +5093,13 @@
             return raw || 'Unknown';
         };
 
+        const getBrewMethodDrinkKey = (brew) => {
+            const method = getBrewMethodKey(brew);
+            const drinkRaw = (brew?.drink || '').toString().trim();
+            const drink = drinkRaw || 'Unknown';
+            return `${method}||${drink}`;
+        };
+
         const pinBestBrewsForBean = async ({ beanId, brewId = null, brewData = null } = {}) => {
             if (!currentUser || !beanId) return;
             const bean = beans.find(b => b.id === beanId);
@@ -5118,7 +5125,7 @@
             const bestByMethod = new Map();
             brewsForBean.forEach(brew => {
                 if (!brew?.id) return;
-                const methodKey = getBrewMethodKey(brew);
+                const methodKey = getBrewMethodDrinkKey(brew);
                 const { rating, time } = getBrewSortScore(brew);
                 const current = bestByMethod.get(methodKey);
                 if (!current || rating > current.rating || (rating === current.rating && time > current.time)) {
@@ -5165,13 +5172,13 @@
                 const bestByMethod = new Map();
                 brewsForBean.forEach(brew => {
                     if (!brew?.id) return;
-                    const methodKey = getBrewMethodKey(brew);
-                    const { rating, time } = getBrewSortScore(brew);
-                    const current = bestByMethod.get(methodKey);
-                    if (!current || rating > current.rating || (rating === current.rating && time > current.time)) {
-                        bestByMethod.set(methodKey, { brew, rating, time });
-                    }
-                });
+                const methodKey = getBrewMethodDrinkKey(brew);
+                const { rating, time } = getBrewSortScore(brew);
+                const current = bestByMethod.get(methodKey);
+                if (!current || rating > current.rating || (rating === current.rating && time > current.time)) {
+                    bestByMethod.set(methodKey, { brew, rating, time });
+                }
+            });
                 bestByMethod.forEach(entry => bestIds.add(entry.brew.id));
             });
 
