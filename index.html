@@ -7289,8 +7289,9 @@
                 }
             }
             
-            const roaster = brew.roaster || brew.name || 'Unknown Roaster';
-            const farmer = brew.farmer || '-';
+            const typeDisplay = getCoffeeTypeDisplay(brew);
+            const roaster = typeDisplay.roaster || brew.name || 'Unknown Roaster';
+            const farmer = typeDisplay.farmer || '-';
             const swapPinnedBrewTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
             const titleText = swapPinnedBrewTitle
                 ? (farmer && farmer !== '-' ? farmer : roaster)
@@ -7298,7 +7299,7 @@
             const subtitleText = swapPinnedBrewTitle ? roaster : farmer;
             
             // Check if this brew is decaf
-            const isDecaf = [brew.roaster, brew.name, brew.farmer, brew.origin, brew.variety, brew.processing, brew.roastType, brew.notes]
+            const isDecaf = [typeDisplay.roaster, typeDisplay.farmer, typeDisplay.origin, typeDisplay.variety, typeDisplay.processing, typeDisplay.roastType, brew.notes, brew.name]
                 .some(field => field && field.toLowerCase().includes('decaf'));
             const decafIcon = isDecaf 
                 ? `<img src="${decafIconSrc}" alt="Decaf" class="inline-block w-6 h-6" title="Decaffeinated">` 
@@ -7409,8 +7410,17 @@
                 }
             }
             
-            const roaster = bean?.roaster || 'Unknown';
-            const farmer = bean?.farmer || '-';
+            const type = bean?.coffeeTypeId ? coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) : null;
+            const typeDisplay = {
+                roaster: type?.roaster || bean?.roaster || 'Unknown',
+                farmer: type?.farmer || bean?.farmer || '-',
+                origin: type?.origin || bean?.origin || '-',
+                processing: type?.processing || bean?.processing || '-',
+                variety: type?.variety || bean?.variety || '-',
+                roastType: type?.roast || type?.roastType || bean?.roastType || '-'
+            };
+            const roaster = typeDisplay.roaster;
+            const farmer = typeDisplay.farmer;
             const swapPinnedBrewTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
             const titleText = swapPinnedBrewTitle
                 ? (farmer && farmer !== '-' ? farmer : roaster)
@@ -7420,7 +7430,7 @@
             
             // Check if any brew in this bean is decaf
             const isDecaf = brews.some(brew => 
-                [brew.roaster, brew.name, brew.farmer, brew.origin, brew.variety, brew.processing, brew.roastType, brew.notes]
+                [typeDisplay.roaster, typeDisplay.farmer, typeDisplay.origin, typeDisplay.variety, typeDisplay.processing, typeDisplay.roastType, brew.notes, brew.name]
                     .some(field => field && field.toLowerCase().includes('decaf'))
             );
             const decafIcon = isDecaf 
@@ -7631,8 +7641,9 @@
                         }
                     }
 
-            const roaster = c.roaster || c.name || 'Unknown Roaster';
-            const farmer = c.farmer || '-';
+            const typeDisplay = getCoffeeTypeDisplay(c);
+            const roaster = typeDisplay.roaster || c.name || 'Unknown Roaster';
+            const farmer = typeDisplay.farmer || '-';
             const swapPinnedBrewTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
             const titleText = swapPinnedBrewTitle
                 ? (farmer && farmer !== '-' ? farmer : roaster)
@@ -7642,7 +7653,7 @@
             const drink = c.drink || '-';
             
             // Check if 'decaf' appears in any bean field
-            const isDecaf = [c.roaster, c.name, c.farmer, c.origin, c.variety, c.processing, c.roastType, c.notes]
+            const isDecaf = [typeDisplay.roaster, typeDisplay.farmer, typeDisplay.origin, typeDisplay.variety, typeDisplay.processing, typeDisplay.roastType, c.notes, c.name]
                 .some(field => field && field.toLowerCase().includes('decaf'));
             const decafIcon = isDecaf 
                 ? `<img src="${decafIconSrc}" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` 
