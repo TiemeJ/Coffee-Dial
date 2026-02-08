@@ -269,12 +269,21 @@ export function initCoffeeScale() {
 
     ctx.clearRect(0, 0, width, height);
 
-    const padding = { left: 40, right: 40, top: 20, bottom: 30 };
+    const padding = { left: 40, right: 60, top: 20, bottom: 46 };
     const plotW = width - padding.left - padding.right;
     const plotH = height - padding.top - padding.bottom;
 
     const captureData = dataOverride?.capture || capture;
     const flowData = dataOverride?.flowCapture || flowCapture;
+    const firstDripSource = dataOverride?.firstDrip ?? graphFirstDripEl?.value;
+    const firstDripSeconds = Number.isFinite(Number(firstDripSource)) ? Number(firstDripSource) : null;
+    const elapsedSecondsSource = dataOverride?.elapsedSeconds;
+    let elapsedSeconds = Number.isFinite(Number(elapsedSecondsSource)) ? Number(elapsedSecondsSource) : null;
+    if (!Number.isFinite(elapsedSeconds) && !timerRunning) {
+      const timeField = document.getElementById("time");
+      const timeValue = timeField ? Number(timeField.value) : NaN;
+      elapsedSeconds = Number.isFinite(timeValue) ? timeValue : null;
+    }
     const samples = captureData.samples || [];
     const flowSamples = flowData.samples || [];
     if (!samples.length && !flowSamples.length) {
@@ -321,12 +330,21 @@ export function initCoffeeScale() {
     ctx.lineTo(padding.left + plotW, padding.top + plotH);
     ctx.stroke();
 
-    ctx.fillStyle = "#666";
     ctx.font = "12px system-ui";
-    ctx.fillText(`${minW.toFixed(1)} g`, 4, padding.top + plotH);
-    ctx.fillText(`${maxW.toFixed(1)} g`, 4, padding.top + 10);
-    ctx.fillText(`${maxF.toFixed(1)} g/s`, width - 50, padding.top + 10);
-    ctx.fillText(`${minF.toFixed(1)} g/s`, width - 50, padding.top + plotH);
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#2563eb";
+    ctx.fillText(`${minW.toFixed(1)} g`, padding.left - 6, padding.top + plotH);
+    ctx.fillText(`${maxW.toFixed(1)} g`, padding.left - 6, padding.top);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#16a34a";
+    const maxFlowLabel = `${maxF.toFixed(1)} g/s`;
+    const minFlowLabel = `${minF.toFixed(1)} g/s`;
+    const flowLabelX = padding.left + plotW + 6;
+    ctx.fillText(maxFlowLabel, flowLabelX, padding.top);
+    ctx.fillText(minFlowLabel, flowLabelX, padding.top + plotH);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
 
     if (samples.length) {
       ctx.strokeStyle = "#2563eb";
@@ -356,13 +374,72 @@ export function initCoffeeScale() {
       ctx.stroke();
     }
 
+    if (Number.isFinite(firstDripSeconds)) {
+      const firstDripMs = firstDripSeconds * 1000;
+      if (firstDripMs >= minT && firstDripMs <= maxT) {
+        const x = xFor(firstDripMs);
+        const axisY = padding.top + plotH;
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, axisY);
+        ctx.lineTo(x, axisY + 6);
+        ctx.stroke();
+        ctx.fillStyle = "#f59e0b";
+        ctx.font = "11px system-ui";
+        const label = `${firstDripSeconds}s`;
+        const labelWidth = ctx.measureText(label).width;
+        const labelX = x;
+        ctx.textAlign = "center";
+        ctx.fillText(label, labelX, axisY + 16);
+      }
+    }
+
+    if (Number.isFinite(elapsedSeconds)) {
+      const elapsedMs = elapsedSeconds * 1000;
+      const x = xFor(Math.min(Math.max(elapsedMs, minT), maxT));
+      const axisY = padding.top + plotH;
+      ctx.strokeStyle = "#9ca3af";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, axisY);
+      ctx.lineTo(x, axisY + 6);
+      ctx.stroke();
+      ctx.fillStyle = "#9ca3af";
+      ctx.font = "11px system-ui";
+      const label = `${elapsedSeconds}s`;
+      const labelX = x;
+      ctx.textAlign = "center";
+      ctx.fillText(label, labelX, axisY + 16);
+    }
+
     ctx.fillStyle = "#2563eb";
-    ctx.fillRect(padding.left, height - 18, 10, 2);
-    ctx.fillStyle = "#16a34a";
-    ctx.fillRect(padding.left + 70, height - 18, 10, 2);
+    const legendY = height - 6;
+    ctx.font = "12px system-ui";
+    ctx.textAlign = "left";
+    const weightLabel = "Weight";
+    const flowLabel = "Flow";
+    const weightWidth = ctx.measureText(weightLabel).width;
+    const flowWidth = ctx.measureText(flowLabel).width;
+    const maxFlowLabelWidth = ctx.measureText(maxFlowLabel).width;
+    const minFlowLabelWidth = ctx.measureText(minFlowLabel).width;
+    const flowAxisLabelRight = flowLabelX + Math.max(maxFlowLabelWidth, minFlowLabelWidth);
+    const swatchWidth = 10;
+    const gap = 6;
+    const itemGap = 12;
+    const totalWidth = swatchWidth + gap + weightWidth + itemGap + swatchWidth + gap + flowWidth;
+    const legendLeft = Math.max(padding.left, flowAxisLabelRight - totalWidth);
+
+    ctx.fillStyle = "#2563eb";
+    ctx.fillRect(legendLeft, legendY, swatchWidth, 2);
     ctx.fillStyle = "#444";
-    ctx.fillText("Weight", padding.left + 15, height - 14);
-    ctx.fillText("Flow", padding.left + 85, height - 14);
+    ctx.fillText(weightLabel, legendLeft + swatchWidth + gap, legendY + 4);
+
+    const flowLeft = legendLeft + swatchWidth + gap + weightWidth + itemGap;
+    ctx.fillStyle = "#16a34a";
+    ctx.fillRect(flowLeft, legendY, swatchWidth, 2);
+    ctx.fillStyle = "#444";
+    ctx.fillText(flowLabel, flowLeft + swatchWidth + gap, legendY + 4);
   }
 
   function renderGraph() {
