@@ -5717,7 +5717,8 @@
                 flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
                 rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
                 firstDrip: Number.isFinite(Number(c.firstDrip)) ? Number(c.firstDrip) : null,
-                elapsedSeconds: Number.isFinite(Number(c.time)) ? Number(c.time) : null
+                elapsedSeconds: Number.isFinite(Number(c.time)) ? Number(c.time) : null,
+                recipeSteps: Array.isArray(c.recipeSteps) ? c.recipeSteps : []
             } : null;
             const coffeeType = getCoffeeTypeDisplay(c);
             updateCoffeeCardActionMenu(c);

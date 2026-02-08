@@ -88,6 +88,9 @@ export function initCoffeeScale() {
   let pourStartWeight = null;
   let pourMaxFlow = null;
   let pours = [];
+  let graphTooltipEl = null;
+  let graphTooltipHideBound = false;
+  const graphLabelHits = new WeakMap();
   const FLOW_WINDOW_MS = 2000;
   const FIRST_DRIP_THRESHOLD = 0;
   const AUTO_START_THRESHOLD = 0.2;
@@ -279,6 +282,7 @@ export function initCoffeeScale() {
     const firstDripSeconds = Number.isFinite(Number(firstDripSource)) ? Number(firstDripSource) : null;
     const elapsedSecondsSource = dataOverride?.elapsedSeconds;
     let elapsedSeconds = Number.isFinite(Number(elapsedSecondsSource)) ? Number(elapsedSecondsSource) : null;
+    const recipeSteps = Array.isArray(dataOverride?.recipeSteps) ? dataOverride.recipeSteps : getRecipeSteps();
     if (!Number.isFinite(elapsedSeconds) && !timerRunning) {
       const timeField = document.getElementById("time");
       const timeValue = timeField ? Number(timeField.value) : NaN;
@@ -374,6 +378,86 @@ export function initCoffeeScale() {
       ctx.stroke();
     }
 
+    const labelHits = [];
+    if (recipeSteps.length) {
+      const axisY = padding.top + plotH;
+      ctx.strokeStyle = "#16a34a";
+      ctx.lineWidth = 1;
+      recipeSteps.forEach((step) => {
+        const startMs = Number(step.startMs);
+        const endMs = Number(step.endMs);
+        if (step?.type === "pour") {
+          ctx.strokeStyle = "#16a34a";
+          if (Number.isFinite(startMs)) {
+            const x = xFor(Math.min(Math.max(startMs, minT), maxT));
+            ctx.beginPath();
+            ctx.moveTo(x, axisY);
+            ctx.lineTo(x, axisY + 5);
+            ctx.stroke();
+          }
+          if (Number.isFinite(endMs)) {
+            const x = xFor(Math.min(Math.max(endMs, minT), maxT));
+            ctx.beginPath();
+            ctx.moveTo(x, axisY);
+            ctx.lineTo(x, axisY + 5);
+            ctx.stroke();
+          }
+          if (Number.isFinite(startMs) && Number.isFinite(endMs)) {
+            const midMs = (startMs + endMs) / 2;
+            const x = xFor(Math.min(Math.max(midMs, minT), maxT));
+            ctx.fillStyle = "#16a34a";
+            ctx.font = "11px system-ui";
+            ctx.textAlign = "center";
+            const label = `p${step.count}`;
+            const textWidth = ctx.measureText(label).width;
+            const textY = axisY + 16;
+            ctx.fillText(label, x, textY);
+            labelHits.push({
+              x: x - textWidth / 2,
+              y: textY - 10,
+              w: textWidth,
+              h: 12,
+              step,
+            });
+          }
+        } else if (step?.type === "swirl") {
+          ctx.strokeStyle = "#f59e0b";
+          if (Number.isFinite(startMs)) {
+            const x = xFor(Math.min(Math.max(startMs, minT), maxT));
+            ctx.beginPath();
+            ctx.moveTo(x, axisY);
+            ctx.lineTo(x, axisY + 5);
+            ctx.stroke();
+          }
+          if (Number.isFinite(endMs)) {
+            const x = xFor(Math.min(Math.max(endMs, minT), maxT));
+            ctx.beginPath();
+            ctx.moveTo(x, axisY);
+            ctx.lineTo(x, axisY + 5);
+            ctx.stroke();
+          }
+          if (Number.isFinite(startMs) && Number.isFinite(endMs)) {
+            const midMs = (startMs + endMs) / 2;
+            const x = xFor(Math.min(Math.max(midMs, minT), maxT));
+            ctx.fillStyle = "#f59e0b";
+            ctx.font = "11px system-ui";
+            ctx.textAlign = "center";
+            const label = `s${step.count}`;
+            const textWidth = ctx.measureText(label).width;
+            const textY = axisY + 16;
+            ctx.fillText(label, x, textY);
+            labelHits.push({
+              x: x - textWidth / 2,
+              y: textY - 10,
+              w: textWidth,
+              h: 12,
+              step,
+            });
+          }
+        }
+      });
+    }
+
     if (Number.isFinite(firstDripSeconds)) {
       const firstDripMs = firstDripSeconds * 1000;
       if (firstDripMs >= minT && firstDripMs <= maxT) {
@@ -440,10 +524,130 @@ export function initCoffeeScale() {
     ctx.fillRect(flowLeft, legendY, swatchWidth, 2);
     ctx.fillStyle = "#444";
     ctx.fillText(flowLabel, flowLeft + swatchWidth + gap, legendY + 4);
+
+    graphLabelHits.set(targetEl, labelHits);
+    attachGraphTooltipHandler(targetEl);
   }
 
   function renderGraph() {
     renderGraphTo(graphEl);
+  }
+
+  function attachGraphTooltipHandler(targetEl) {
+    if (!targetEl || targetEl.dataset.graphTooltipBound) return;
+    targetEl.dataset.graphTooltipBound = "true";
+    targetEl.addEventListener("click", (event) => {
+      const hits = graphLabelHits.get(targetEl) || [];
+      if (!hits.length) {
+        hideGraphTooltip();
+        return;
+      }
+      const rect = targetEl.getBoundingClientRect();
+      const scaleX = targetEl.width / rect.width;
+      const scaleY = targetEl.height / rect.height;
+      const x = (event.clientX - rect.left) * scaleX;
+      const y = (event.clientY - rect.top) * scaleY;
+      const hit = hits.find((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+      if (!hit) {
+        hideGraphTooltip();
+        return;
+      }
+      const html = buildStepTooltipHtml(hit.step);
+      showGraphTooltip(event.clientX, event.clientY, html);
+      event.stopPropagation();
+    });
+    if (!graphTooltipHideBound) {
+      graphTooltipHideBound = true;
+      document.addEventListener("click", () => hideGraphTooltip());
+    }
+  }
+
+  function ensureGraphTooltip() {
+    if (graphTooltipEl) return graphTooltipEl;
+    const el = document.createElement("div");
+    el.style.position = "fixed";
+    el.style.zIndex = "10050";
+    el.style.background = "rgba(15, 23, 42, 0.95)";
+    el.style.color = "#e2e8f0";
+    el.style.border = "1px solid rgba(148, 163, 184, 0.4)";
+    el.style.borderRadius = "8px";
+    el.style.padding = "8px 10px";
+    el.style.font = "12px system-ui";
+    el.style.lineHeight = "1.4";
+    el.style.boxShadow = "0 8px 20px rgba(15, 23, 42, 0.35)";
+    el.style.pointerEvents = "none";
+    el.style.maxWidth = "220px";
+    el.style.display = "none";
+    document.body.appendChild(el);
+    graphTooltipEl = el;
+    return el;
+  }
+
+  function showGraphTooltip(clientX, clientY, html) {
+    const el = ensureGraphTooltip();
+    el.innerHTML = html;
+    el.style.display = "block";
+    const offset = 12;
+    let left = clientX + offset;
+    let top = clientY + offset;
+    const rect = el.getBoundingClientRect();
+    if (left + rect.width > window.innerWidth - 8) {
+      left = clientX - rect.width - offset;
+    }
+    if (top + rect.height > window.innerHeight - 8) {
+      top = clientY - rect.height - offset;
+    }
+    el.style.left = `${Math.max(8, left)}px`;
+    el.style.top = `${Math.max(8, top)}px`;
+  }
+
+  function hideGraphTooltip() {
+    if (!graphTooltipEl) return;
+    graphTooltipEl.style.display = "none";
+  }
+
+  function formatSeconds(ms) {
+    if (!Number.isFinite(ms)) return "-";
+    return Math.round(ms / 1000);
+  }
+
+  function formatValue(value, suffix = "") {
+    if (!Number.isFinite(value)) return "-";
+    return `${value.toFixed(1)}${suffix}`;
+  }
+
+  function buildStepTooltipHtml(step) {
+    if (!step) return "";
+    if (step.type === "pour") {
+      const start = formatSeconds(step.startMs);
+      const end = formatSeconds(step.endMs);
+      const len = Number.isFinite(step.startMs) && Number.isFinite(step.endMs)
+        ? Math.max(0, Math.round((step.endMs - step.startMs) / 1000))
+        : "-";
+      return `
+        <div style="font-weight:600;margin-bottom:4px;">Pour ${step.count || ""}</div>
+        <div>Start: ${start}s</div>
+        <div>End: ${end}s</div>
+        <div>Length: ${len}s</div>
+        <div>Weight: ${formatValue(step.weightDiff, "g")}</div>
+        <div>Avg flow: ${formatValue(step.avgFlow, "g/s")}</div>
+        <div>Max flow: ${formatValue(step.maxFlow, "g/s")}</div>
+      `;
+    }
+    if (step.type === "swirl") {
+      const start = formatSeconds(step.startMs);
+      const end = formatSeconds(step.endMs);
+      const len = Number.isFinite(step.startMs) && Number.isFinite(step.endMs)
+        ? Math.max(0, Math.round((step.endMs - step.startMs) / 1000))
+        : "-";
+      return `
+        <div style="font-weight:600;margin-bottom:4px;">Swirl ${step.count || ""}</div>
+        <div>Start: ${start}s</div>
+        <div>End: ${end}s</div>
+        <div>Length: ${len}s</div>
+      `;
+    }
+    return "";
   }
 
   function startCapture() {
@@ -965,6 +1169,7 @@ export function initCoffeeScale() {
       });
     }
     renderEventLog();
+    renderGraph();
   }
 
   function enqueueWrite(data) {
