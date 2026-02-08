@@ -6417,6 +6417,7 @@
                                 brew: d
                             });
                         }
+                        await autoPinOpenBagsIfEnabled();
                         alert("Brew added to your collection!");
                     } catch(err) {
                         console.error(err);
@@ -6450,6 +6451,7 @@
                         brew: d
                     });
                 }
+                await autoPinOpenBagsIfEnabled();
                 closeCoffeeCard(null);
                 alert("Brew duplicated successfully!"); 
             } catch(err) {
@@ -6491,6 +6493,7 @@
                                 brew: d
                             });
                         }
+                        await autoPinOpenBagsIfEnabled();
                         alert("Brew added to your collection!");
                     } catch(err) {
                         console.error(err);
@@ -6523,6 +6526,7 @@
                         brew: d
                     });
                 }
+                await autoPinOpenBagsIfEnabled();
                 alert("Brew repeated successfully!");
             } catch(err) {
                 console.error(err);
