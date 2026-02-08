@@ -1607,8 +1607,12 @@
                             <div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="organizeByBeansToggle" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="organizeByBeansToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>
                         </div>
                         <div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
-                            <div class="flex items-center gap-2"><i class="fa-solid fa-bag-shopping text-green-600"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Pin Open Bags</span></div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-bag-shopping text-green-600"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Autopin open bag brews</span></div>
                             <div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="pinOpenBagsToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="pinOpenBagsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>
+                        </div>
+                        <div id="pinOpenBagsBestOnlyRow" class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-award text-emerald-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Autopin best brews only</span></div>
+                            <div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="pinOpenBagsBestOnlyToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="pinOpenBagsBestOnlyToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>
                         </div>
                         <div class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
                             <div class="flex items-center gap-2"><i class="fa-solid fa-arrows-rotate text-sky-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Swap Roaster/Farmer</span></div>
@@ -1789,6 +1793,19 @@
         </div>
     </div>
 
+    <div id="autoPinToast" class="hidden fixed bottom-4 right-4 z-[120] w-[calc(100%-2rem)] max-w-sm">
+        <div class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-xl shadow-2xl p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div id="autoPinToastText" class="text-sm font-semibold text-coffee-900 dark:text-white">
+                    Autopin updated.
+                </div>
+                <button onclick="closeAutoPinToast()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // --- CONFIG ---
         const firebaseConfig = {
@@ -1888,6 +1905,7 @@
             animationsEnabled: true,
             organizeByBeans: true,
             pinOpenBags: false,
+            pinOpenBagsBestOnly: false,
             swapRoasterFarmer: false
         };
         let pinnedBrewsPreferences = { ...defaultPinnedBrewsPreferences };
@@ -2734,6 +2752,9 @@
                         brew: d,
                         existingBrewId: savedBrewId
                     });
+                    const existingBrew = savedBrewId ? coffees.find(c => c.id === savedBrewId) : null;
+                    const brewForPin = { ...existingBrew, ...d, id: savedBrewId, beanId: selectedBeanId };
+                    await autoPinOpenBagsIfEnabled({ beanId: selectedBeanId, brewId: savedBrewId, brewData: brewForPin });
                 }
 
                 resetFormState(); toggleForm(false);
@@ -3013,6 +3034,31 @@
         };
 
         window.closeCoffeeTypeCreatedToast = closeCoffeeTypeCreatedToast;
+
+        let autoPinToastTimer = null;
+
+        const showAutoPinToast = (message) => {
+            const toast = document.getElementById('autoPinToast');
+            if (!toast) return;
+            const textEl = document.getElementById('autoPinToastText');
+            if (textEl) textEl.textContent = message || 'Autopin updated.';
+            toast.classList.remove('hidden');
+            if (autoPinToastTimer) clearTimeout(autoPinToastTimer);
+            autoPinToastTimer = setTimeout(() => {
+                closeAutoPinToast();
+            }, 3000);
+        };
+
+        const closeAutoPinToast = () => {
+            const toast = document.getElementById('autoPinToast');
+            if (toast) toast.classList.add('hidden');
+            if (autoPinToastTimer) {
+                clearTimeout(autoPinToastTimer);
+                autoPinToastTimer = null;
+            }
+        };
+
+        window.closeAutoPinToast = closeAutoPinToast;
 
         // --- Coffee Management Functions ---
         const openCoffeeTypes = () => {
@@ -5032,9 +5078,142 @@
 
         const isPinOpenBagsEnabled = () => !!pinnedBrewsPreferences.pinOpenBags;
 
-        const autoPinOpenBagsIfEnabled = async () => {
+        const isPinOpenBagsBestOnlyEnabled = () => !!pinnedBrewsPreferences.pinOpenBagsBestOnly;
+
+        const getBrewSortScore = (brew) => {
+            const ratingRaw = brew?.rating;
+            const rating = Number.isFinite(ratingRaw) ? ratingRaw : parseInt(ratingRaw) || 0;
+            const dateVal = brew?.createdAt || brew?.updatedAt || 0;
+            const time = Number.isFinite(dateVal) ? dateVal : Date.parse(dateVal) || 0;
+            return { rating, time };
+        };
+
+        const getBrewMethodKey = (brew) => {
+            const raw = (brew?.method || '').toString().trim();
+            return raw || 'Unknown';
+        };
+
+        const pinBestBrewsForBean = async ({ beanId, brewId = null, brewData = null } = {}) => {
+            if (!currentUser || !beanId) return;
+            const bean = beans.find(b => b.id === beanId);
+            if (!bean) return;
+            const remaining = getBeanCalculatedStock(bean);
+            if (bean.archived || bean.frozen || remaining === null || remaining <= 0) return;
+
+            let brewsForBean = coffees.filter(brew => brew.beanId === beanId);
+            if (brewData && (brewData.beanId || beanId) === beanId) {
+                const normalized = { ...brewData, id: brewId || brewData.id, beanId };
+                if (normalized.id) {
+                    const existingIndex = brewsForBean.findIndex(brew => brew.id === normalized.id);
+                    if (existingIndex >= 0) {
+                        brewsForBean[existingIndex] = { ...brewsForBean[existingIndex], ...normalized };
+                    } else {
+                        brewsForBean = [...brewsForBean, normalized];
+                    }
+                }
+            }
+
+            if (!brewsForBean.length) return;
+
+            const bestByMethod = new Map();
+            brewsForBean.forEach(brew => {
+                if (!brew?.id) return;
+                const methodKey = getBrewMethodKey(brew);
+                const { rating, time } = getBrewSortScore(brew);
+                const current = bestByMethod.get(methodKey);
+                if (!current || rating > current.rating || (rating === current.rating && time > current.time)) {
+                    bestByMethod.set(methodKey, { brew, rating, time });
+                }
+            });
+
+            const bestIds = new Set(Array.from(bestByMethod.values()).map(entry => entry.brew.id));
+            let updates = 0;
+            const batch = writeBatch(db);
+            brewsForBean.forEach(brew => {
+                if (!brew?.id) return;
+                const shouldBeActive = bestIds.has(brew.id);
+                if (!!brew.isActive !== shouldBeActive) {
+                    batch.update(doc(db, 'users', currentUser.uid, 'coffees', brew.id), { isActive: shouldBeActive });
+                    updates++;
+                }
+            });
+
+            if (!updates) return;
+            try {
+                await batch.commit();
+            } catch (err) {
+                console.error('Pin best brews failed', err);
+            }
+        };
+
+        const getOpenBeansForAutoPin = () => {
+            return beans.filter(bean => {
+                const remaining = getBeanCalculatedStock(bean);
+                return !bean.archived && !bean.frozen && remaining !== null && remaining > 0;
+            });
+        };
+
+        const pinBestBrewsForAllOpenBags = async () => {
+            if (!currentUser) return;
+            const openBeans = getOpenBeansForAutoPin();
+            const openBeanIds = new Set(openBeans.map(bean => bean.id));
+            const bestIds = new Set();
+
+            openBeans.forEach(bean => {
+                const brewsForBean = coffees.filter(brew => brew.beanId === bean.id);
+                if (!brewsForBean.length) return;
+                const bestByMethod = new Map();
+                brewsForBean.forEach(brew => {
+                    if (!brew?.id) return;
+                    const methodKey = getBrewMethodKey(brew);
+                    const { rating, time } = getBrewSortScore(brew);
+                    const current = bestByMethod.get(methodKey);
+                    if (!current || rating > current.rating || (rating === current.rating && time > current.time)) {
+                        bestByMethod.set(methodKey, { brew, rating, time });
+                    }
+                });
+                bestByMethod.forEach(entry => bestIds.add(entry.brew.id));
+            });
+
+            const batch = writeBatch(db);
+            let updates = 0;
+            coffees.forEach(brew => {
+                if (!brew?.id) return;
+                const shouldBeActive = bestIds.has(brew.id);
+                if (!!brew.isActive !== shouldBeActive) {
+                    batch.update(doc(db, 'users', currentUser.uid, 'coffees', brew.id), { isActive: shouldBeActive });
+                    updates++;
+                }
+            });
+
+            if (!updates) return;
+            try {
+                await batch.commit();
+            } catch (err) {
+                console.error('Pin best brews for open bags failed', err);
+            }
+        };
+
+        const autoPinOpenBagsIfEnabled = async ({ beanId = null, brewId = null, brewData = null } = {}) => {
             if (!isPinOpenBagsEnabled()) return;
+            if (isPinOpenBagsBestOnlyEnabled() && beanId) {
+                await pinBestBrewsForBean({ beanId, brewId, brewData });
+                return;
+            }
             await pinBrewsFromOpenBags();
+        };
+
+        const updateBestOnlyToggleState = (pinOpenBagsEnabled = null) => {
+            const row = document.getElementById('pinOpenBagsBestOnlyRow');
+            const toggle = document.getElementById('pinOpenBagsBestOnlyToggle');
+            if (!row || !toggle) return;
+            const enabled = typeof pinOpenBagsEnabled === 'boolean'
+                ? pinOpenBagsEnabled
+                : !!document.getElementById('pinOpenBagsToggle')?.checked;
+            toggle.disabled = !enabled;
+            if (!enabled) toggle.checked = false;
+            row.classList.toggle('opacity-50', !enabled);
+            row.classList.toggle('cursor-not-allowed', !enabled);
         };
 
         const unpinBrewsForBeans = async ({ beanIds = [], beanSignatures = [] }) => {
@@ -5079,8 +5258,16 @@
             document.getElementById('organizeByBeansToggle').checked = organizeByBeans;
             const pinOpenBagsEnabled = !!pinnedBrewsPreferences.pinOpenBags;
             document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;
+            const pinOpenBagsBestOnly = !!pinnedBrewsPreferences.pinOpenBagsBestOnly;
+            document.getElementById('pinOpenBagsBestOnlyToggle').checked = pinOpenBagsBestOnly;
             const swapRoasterFarmer = !!pinnedBrewsPreferences.swapRoasterFarmer;
             document.getElementById('swapRoasterFarmerToggle').checked = swapRoasterFarmer;
+            updateBestOnlyToggleState(pinOpenBagsEnabled);
+            const pinOpenToggle = document.getElementById('pinOpenBagsToggle');
+            if (pinOpenToggle && !pinOpenToggle.dataset.bound) {
+                pinOpenToggle.addEventListener('change', () => updateBestOnlyToggleState());
+                pinOpenToggle.dataset.bound = 'true';
+            }
             document.getElementById('preferencesModal').classList.remove('hidden');
         };
 
@@ -5091,18 +5278,33 @@
             const animationsEnabled = document.getElementById('animationsToggle').checked;
             const organizeByBeans = document.getElementById('organizeByBeansToggle').checked;
             const pinOpenBagsEnabled = document.getElementById('pinOpenBagsToggle').checked;
+            const pinOpenBagsBestOnlyEnabled = pinOpenBagsEnabled && document.getElementById('pinOpenBagsBestOnlyToggle').checked;
             const swapRoasterFarmer = document.getElementById('swapRoasterFarmerToggle').checked;
             const pinOpenBagsWasEnabled = !!pinnedBrewsPreferences.pinOpenBags;
+            const pinOpenBagsBestOnlyWasEnabled = !!pinnedBrewsPreferences.pinOpenBagsBestOnly;
             pinnedBrewsPreferences = {
                 ...pinnedBrewsPreferences,
                 animationsEnabled,
                 organizeByBeans,
                 pinOpenBags: pinOpenBagsEnabled,
+                pinOpenBagsBestOnly: pinOpenBagsBestOnlyEnabled,
                 swapRoasterFarmer: swapRoasterFarmer
             };
             applyAnimationPreference();
             if (pinOpenBagsEnabled && !pinOpenBagsWasEnabled) {
+                if (pinOpenBagsBestOnlyEnabled) {
+                    await pinBestBrewsForAllOpenBags();
+                    showAutoPinToast('Autopin set to best brews only.');
+                } else {
+                    await pinBrewsFromOpenBags();
+                    showAutoPinToast('Autopin enabled. All brews of all open bags pinned.');
+                }
+            } else if (pinOpenBagsEnabled && pinOpenBagsBestOnlyEnabled && !pinOpenBagsBestOnlyWasEnabled) {
+                await pinBestBrewsForAllOpenBags();
+                showAutoPinToast('Autopin set to best brews only.');
+            } else if (pinOpenBagsEnabled && !pinOpenBagsBestOnlyEnabled && pinOpenBagsBestOnlyWasEnabled) {
                 await pinBrewsFromOpenBags();
+                showAutoPinToast('Autopin enabled. All brews of all open bags pinned.');
             }
             if(currentUser) { 
                 try { 
@@ -6410,14 +6612,15 @@
 
                     try {
                         const col = collection(db, 'users', currentUser.uid, 'coffees');
-                        await addDoc(col, d);
+                        const newRef = await addDoc(col, d);
                         if (d.beanId) {
                             await archiveBeanIfStockDepleted({
                                 beanId: d.beanId,
                                 brew: d
                             });
                         }
-                        await autoPinOpenBagsIfEnabled();
+                        const brewForPin = { ...d, id: newRef.id };
+                        await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
                         alert("Brew added to your collection!");
                     } catch(err) {
                         console.error(err);
@@ -6444,14 +6647,15 @@
 
             try {
                 const col = collection(db, 'users', currentUser.uid, 'coffees');
-                await addDoc(col, d);
+                const newRef = await addDoc(col, d);
                 if (d.beanId) {
                     await archiveBeanIfStockDepleted({
                         beanId: d.beanId,
                         brew: d
                     });
                 }
-                await autoPinOpenBagsIfEnabled();
+                const brewForPin = { ...d, id: newRef.id };
+                await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
                 closeCoffeeCard(null);
                 alert("Brew duplicated successfully!"); 
             } catch(err) {
@@ -6486,14 +6690,15 @@
 
                     try {
                         const col = collection(db, 'users', currentUser.uid, 'coffees');
-                        await addDoc(col, d);
+                        const newRef = await addDoc(col, d);
                         if (d.beanId) {
                             await archiveBeanIfStockDepleted({
                                 beanId: d.beanId,
                                 brew: d
                             });
                         }
-                        await autoPinOpenBagsIfEnabled();
+                        const brewForPin = { ...d, id: newRef.id };
+                        await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
                         alert("Brew added to your collection!");
                     } catch(err) {
                         console.error(err);
@@ -6519,14 +6724,15 @@
 
             try {
                 const col = collection(db, 'users', currentUser.uid, 'coffees');
-                await addDoc(col, d);
+                const newRef = await addDoc(col, d);
                 if (d.beanId) {
                     await archiveBeanIfStockDepleted({
                         beanId: d.beanId,
                         brew: d
                     });
                 }
-                await autoPinOpenBagsIfEnabled();
+                const brewForPin = { ...d, id: newRef.id };
+                await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
                 alert("Brew repeated successfully!");
             } catch(err) {
                 console.error(err);
