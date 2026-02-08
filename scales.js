@@ -666,15 +666,13 @@ export function initCoffeeScale() {
     el.dataset.mode = mode;
     el.style.display = "block";
     const offset = 12;
-    let left = clientX + offset;
-    let top = clientY + offset;
+    let left = clientX - offset;
+    let top = clientY - offset;
     const rect = el.getBoundingClientRect();
-    if (left + rect.width > window.innerWidth - 8) {
-      left = clientX - rect.width - offset;
-    }
-    if (top + rect.height > window.innerHeight - 8) {
-      top = clientY - rect.height - offset;
-    }
+    if (left - rect.width < 8) left = clientX + offset;
+    else left = left - rect.width;
+    if (top - rect.height < 8) top = clientY + offset;
+    else top = top - rect.height;
     el.style.left = `${Math.max(8, left)}px`;
     el.style.top = `${Math.max(8, top)}px`;
   }
