@@ -762,6 +762,14 @@ export function initCoffeeScale() {
       clearInterval(liveTimerInterval);
       liveTimerInterval = null;
     }
+    pours = [];
+    swirls = [];
+    pourCount = 0;
+    swirlCount = 0;
+    postSwirlAwaitingStable = false;
+    postSwirlStableCount = 0;
+    postSwirlStableWeight = null;
+    renderEventLog();
     const timeField = document.getElementById("time");
     if (timeField) {
       timeField.value = 0;
@@ -819,6 +827,67 @@ export function initCoffeeScale() {
       return a.order - b.order;
     });
     graphEventLogEl.innerHTML = events.map((event) => event.text).join("<br>");
+  }
+
+  function getRecipeSteps() {
+    if (!pours.length && !swirls.length) return [];
+    const events = [];
+    pours.forEach((pour, index) => {
+      events.push({
+        type: "pour",
+        count: pour.count,
+        startMs: pour.startMs,
+        endMs: pour.endMs,
+        weightDiff: pour.weightDiff,
+        avgFlow: pour.avgFlow,
+        maxFlow: pour.maxFlow,
+        order: index,
+      });
+    });
+    swirls.forEach((swirl, index) => {
+      events.push({
+        type: "swirl",
+        count: swirl.count,
+        startMs: swirl.startMs,
+        endMs: swirl.endMs,
+        order: index,
+      });
+    });
+    events.sort((a, b) => {
+      if (a.startMs !== b.startMs) return a.startMs - b.startMs;
+      return a.order - b.order;
+    });
+    return events.map((event) => {
+      const cleaned = { ...event };
+      delete cleaned.order;
+      return cleaned;
+    });
+  }
+
+  function setRecipeSteps(steps) {
+    pours = [];
+    swirls = [];
+    if (Array.isArray(steps)) {
+      steps.forEach((step) => {
+        if (step?.type === "pour") {
+          pours.push({
+            count: Number.isFinite(step.count) ? step.count : pours.length + 1,
+            startMs: step.startMs ?? null,
+            endMs: step.endMs ?? null,
+            weightDiff: step.weightDiff ?? NaN,
+            avgFlow: step.avgFlow ?? NaN,
+            maxFlow: step.maxFlow ?? NaN,
+          });
+        } else if (step?.type === "swirl") {
+          swirls.push({
+            count: Number.isFinite(step.count) ? step.count : swirls.length + 1,
+            startMs: step.startMs ?? null,
+            endMs: step.endMs ?? null,
+          });
+        }
+      });
+    }
+    renderEventLog();
   }
 
   function enqueueWrite(data) {
@@ -1545,6 +1614,24 @@ export function initCoffeeScale() {
     renderGraphTo,
     applyGraphTogglePrefsForMethod,
     setGraphTogglePrefs,
-    setGraphTogglePrefsSaver
+    setGraphTogglePrefsSaver,
+    getGraphEventStats: () => {
+      const pourCountValue = pours.length;
+      const swirlCountValue = swirls.length;
+      let bloomTime = null;
+      if (pours.length) {
+        const firstPour = pours[0];
+        if (Number.isFinite(firstPour?.startMs) && Number.isFinite(firstPour?.endMs)) {
+          bloomTime = Math.max(0, (firstPour.endMs - firstPour.startMs) / 1000);
+        }
+      }
+      return {
+        pourCount: pourCountValue,
+        swirlCount: swirlCountValue,
+        bloomTime
+      };
+    },
+    getRecipeSteps,
+    setRecipeSteps
   };
 }

@@ -2518,6 +2518,18 @@
                 d.scaleFlowCapture = scaleCaptureData.flowCapture;
                 d.scaleRawCapture = scaleCaptureData.rawCapture;
             }
+            const graphStats = window.coffeeScale?.getGraphEventStats?.();
+            if (graphStats) {
+                d.swirlCount = Number.isFinite(graphStats.swirlCount) ? graphStats.swirlCount : null;
+                d.pourCount = Number.isFinite(graphStats.pourCount) ? graphStats.pourCount : null;
+                d.bloomTime = Number.isFinite(graphStats.bloomTime) ? Number(graphStats.bloomTime.toFixed(1)) : null;
+            }
+            const recipeSteps = window.coffeeScale?.getRecipeSteps?.();
+            if (recipeSteps && recipeSteps.length) {
+                d.recipeSteps = recipeSteps;
+            } else {
+                d.recipeSteps = [];
+            }
 
             // Bean Data (for creating new or updating)
             const beanData = {
@@ -6083,6 +6095,7 @@
                 } : null;
                 window.coffeeScale.setCaptureData(graphData);
             }
+            if (window.coffeeScale?.setRecipeSteps) window.coffeeScale.setRecipeSteps(c.recipeSteps || []);
             if (window.coffeeScale?.syncGraphFormFields) window.coffeeScale.syncGraphFormFields();
             const firstDripEl = document.getElementById('graphFirstDrip');
             const maxFlowEl = document.getElementById('graphMaxFlow');
@@ -6108,6 +6121,7 @@
                 setTimeout(async () => {
                     const d = { ...c };
                     delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
+                    delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps;
                     delete d.id;
                     d.isActive = false;
                     d.createdAt = new Date().toISOString();
@@ -6140,6 +6154,7 @@
             // Original logic for own brews
             const d = { ...c };
             delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
+            delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps;
             delete d.id; 
             d.isActive = false; 
             d.createdAt = new Date().toISOString();
@@ -6182,6 +6197,7 @@
                     document.getElementById('editId').value='';
                     const d = { ...c };
                     delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
+                    delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps;
                     populateForm(d);
                     toggleForm(true);
                     document.getElementById('formContainer').classList.remove('editing-mode');
@@ -6197,6 +6213,7 @@
                 document.getElementById('editId').value='';
                 const d = { ...c };
                 delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture;
+                delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps;
                 populateForm(d);
                 toggleForm(true);
                 document.getElementById('formContainer').classList.remove('editing-mode');
@@ -6205,7 +6222,7 @@
                 window.scrollTo({top:0,behavior:'smooth'});
             }, 200);
         };
-        const duplicateCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; if(currentView!=='mine'){const d={...c};delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture; document.getElementById('viewSelect').value='mine';changeView('mine');setTimeout(()=>{document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});},500);}else{const d={...c};delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture; document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});} };
+        const duplicateCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; if(currentView!=='mine'){const d={...c};delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture; delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps; document.getElementById('viewSelect').value='mine';changeView('mine');setTimeout(()=>{document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});},500);}else{const d={...c};delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture; delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps; document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});} };
         const cloneBrew = (id) => duplicateCoffee(id);
 
         const deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); };
@@ -6213,6 +6230,7 @@
             if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('numeric'); setNotesMode('manual'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); document.getElementById('isActiveToggle').checked = false; document.getElementById('drinkOther').classList.add('hidden'); document.getElementById('methodOther').classList.add('hidden');
             pendingAIBeanImageFile = null;
             if (window.coffeeScale?.resetCaptureData) window.coffeeScale.resetCaptureData();
+            if (window.coffeeScale?.setRecipeSteps) window.coffeeScale.setRecipeSteps([]);
             if (window.coffeeScale?.syncGraphFormFields) window.coffeeScale.syncGraphFormFields();
             if (window.coffeeScale?.applyGraphTogglePrefsForMethod) window.coffeeScale.applyGraphTogglePrefsForMethod();
         };
