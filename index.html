@@ -845,7 +845,7 @@
 
     <!-- Coffee Card Overlay -->
     <div id="coffeeTypeCardOverlay" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeCoffeeTypeCard(event)">
-        <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c]" onclick="event.stopPropagation()">
+        <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
             <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
                 <div class="absolute top-4 right-4 flex items-center gap-2">
                     <button id="coffeeTypeCardEditBtn" onclick="enterCoffeeTypeEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
@@ -858,7 +858,8 @@
                 <h3 id="coffeeTypeCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
                 <p id="coffeeTypeCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
             </div>
-            <div id="coffeeTypeCardView" class="p-4 space-y-4">
+            <div id="coffeeTypeCardView" class="flex-1 flex flex-col min-h-0">
+                <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4">
                 <div class="flex flex-col md:flex-row gap-4">
                     <div class="w-36 md:w-40 lg:w-48">
                         <div id="coffeeTypeCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
@@ -903,7 +904,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="pt-2 border-t border-coffee-100 dark:border-[#44403c]">
+                </div>
+                <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
                     <div class="flex flex-wrap gap-2">
                         <button id="coffeeTypeCardBuyBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
                             <i class="fa-solid fa-cart-shopping"></i> Buy more
@@ -928,8 +930,8 @@
                     </div>
                 </div>
             </div>
-            <div id="coffeeTypeCardEdit" class="hidden p-4 space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div id="coffeeTypeCardEdit" class="hidden flex-1 flex flex-col min-h-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
                     <div>
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Farmer</label>
                         <input id="coffeeTypeEditFarmer" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
@@ -959,7 +961,7 @@
                         <input id="coffeeTypeEditShopUrl" type="url" placeholder="https://" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                     </div>
                 </div>
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
                     <button onclick="cancelCoffeeTypeEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
                     <button onclick="saveCoffeeTypeEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
                 </div>
@@ -1062,7 +1064,7 @@
 
     <!-- Bean Card Overlay -->
     <div id="beanCardOverlay" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeBeanCard(event)">
-        <div class="bg-white dark:bg-[#292524] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col" onclick="event.stopPropagation()">
+        <div class="bg-white dark:bg-[#292524] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
             <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
                 <div class="absolute top-4 right-4 flex items-center gap-2">
                     <button id="beanCardEditBtn" onclick="enterBeanEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
@@ -1075,7 +1077,8 @@
                 <h3 id="beanCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
                 <p id="beanCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
             </div>
-            <div id="beanCardView" class="p-4 space-y-4">
+            <div id="beanCardView" class="flex-1 flex flex-col min-h-0">
+                <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4">
                 <div class="flex flex-col md:flex-row gap-4">
                     <div class="w-36 md:w-40 lg:w-48">
                         <div id="beanCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
@@ -1116,7 +1119,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="pt-2 border-t border-coffee-100 dark:border-[#44403c]">
+                </div>
+                <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
                     <div class="flex flex-wrap gap-2">
                         <button id="beanCardBuyBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
                             <i class="fa-solid fa-cart-shopping"></i> Buy more
@@ -1149,8 +1153,8 @@
                     </div>
                 </div>
             </div>
-            <div id="beanCardEdit" class="hidden p-4 space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div id="beanCardEdit" class="hidden flex-1 flex flex-col min-h-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
                     <div class="sm:col-span-2">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Coffee</label>
@@ -1215,7 +1219,7 @@
                         <label for="beanEditArchived" class="text-sm text-coffee-700 dark:text-[#d6ccc2]">Archived</label>
                     </div>
                 </div>
-                <div class="flex justify-end gap-2 pt-2 border-t border-coffee-100 dark:border-[#44403c]">
+                <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
                     <button onclick="cancelBeanEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
                     <button onclick="saveBeanCardEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
                 </div>
