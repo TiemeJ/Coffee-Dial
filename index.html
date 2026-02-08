@@ -170,7 +170,6 @@
             <div class="flex items-center gap-3 cursor-pointer select-none group" ondblclick="openEasterEgg()" title="Double click for a surprise!">
                 <i class="fa-solid fa-mug-hot text-coffee-700 dark:text-[#d6ccc2] text-2xl group-hover:scale-110 transition-transform duration-300"></i>
                 <h1 class="text-2xl font-bold tracking-tight text-coffee-900 dark:text-white">Coffee Dial</h1>
-                <div id="syncStatus" class="hidden text-xs text-coffee-500 animate-pulse"><i class="fa-solid fa-cloud"></i></div>
             </div>
             
             <div class="flex items-center gap-4">
@@ -179,20 +178,12 @@
                         <button id="loginBtn" onclick="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
                             <i class="fa-brands fa-google"></i> Sign In
                         </button>
-                        <div class="flex items-center gap-2">
-                            <input id="emailLinkLoginEmail" type="email" placeholder="Email for link" class="w-40 sm:w-48 bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
-                            <button id="emailLinkLoginBtn" onclick="sendEmailLinkLogin()" class="px-3 py-2 rounded-lg bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white text-xs font-semibold transition-colors">Email link</button>
-                        </div>
                     </div>
-                    <div id="emailLinkLoginStatus" class="hidden text-[11px] text-coffee-600 dark:text-[#a8a29e] mt-1"></div>
                     <div id="userProfile" class="hidden flex items-center gap-3">
-                        <button onclick="openFriendsModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#34302e] hover:bg-coffee-100 dark:hover:bg-[#44403c] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]">
-                            <i class="fa-solid fa-user-group"></i> Friends
-                        </button>
-                        <div class="relative">
+                        <button onclick="openFriendsModal()" class="relative flex-shrink-0 hover:opacity-80 transition-opacity">
                             <img id="userAvatar" src="" alt="User" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]">
                             <div id="avatarBadge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-[#292524] shadow-md"></div>
-                        </div>
+                        </button>
                     </div>
                 </div>
                 
@@ -202,39 +193,39 @@
                         <span id="menuBadge" class="hidden absolute top-1 right-1 block h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-[#292524] bg-red-500"></span>
                     </button>
                     <div id="mainMenuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] py-2 z-50">
-                        <button onclick="openHelp(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                            <i class="fa-solid fa-circle-question w-4 text-center"></i> <span>Help / Tutorial</span>
+                        <button id="menuStatsBtn" onclick="openStats(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie w-4 text-center"></i> <span>Statistics</span>
                         </button>
-                         <button onclick="openAbout(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                            <i class="fa-solid fa-circle-info w-4 text-center"></i> <span>About</span>
+                        <button id="menuBeansBtn" onclick="openBeans(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-seedling w-4 text-center"></i> <span>Beans</span>
                         </button>
-                        <hr class="my-1 border-coffee-100 dark:border-[#44403c]">
-                                 <button onclick="openBeans(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                                     <i class="fa-solid fa-seedling w-4 text-center"></i> <span>Beans</span>
+                        <button id="menuCoffeesBtn" onclick="openCoffeeTypes(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group w-4 text-center"></i> <span>Coffees</span>
                         </button>
-                                <button onclick="openCoffeeTypes(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                                    <i class="fa-solid fa-layer-group w-4 text-center"></i> <span>Coffees</span>
-                                </button>
-                        <button onclick="openGallery(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center justify-between">
+                        <button id="menuGalleryBtn" onclick="openGallery(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-images w-4 text-center"></i> <span>Photo Gallery</span>
                             </div>
                             <span id="galleryBadge" class="hidden h-2 w-2 rounded-full bg-red-500 mr-2"></span>
                         </button>
-                        <button onclick="openPreferences(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                            <i class="fa-solid fa-sliders w-4 text-center"></i> <span>Preferences</span>
-                        </button>
-                        <button onclick="openStats(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie w-4 text-center"></i> <span>Statistics</span>
-                        </button>
-                        <button onclick="openCoffeeScaleModal(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                        <button id="menuScaleBtn" onclick="openCoffeeScaleModal(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-scale-balanced w-4 text-center"></i> <span>Coffee scale</span>
                         </button>
-                        <button onclick="openExportModal(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                        <button id="menuExportBtn" onclick="openExportModal(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-file-csv w-4 text-center"></i> <span>Export</span>
                         </button>
-                        <button onclick="openImportModal(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                        <button id="menuImportBtn" onclick="openImportModal(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
                             <i class="fa-solid fa-file-import w-4 text-center"></i> <span>Import</span>
+                        </button>
+                        <button id="menuPreferencesBtn" onclick="openPreferences(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-sliders w-4 text-center"></i> <span>Preferences</span>
+                        </button>
+                        <hr id="menuHelpDivider" class="my-1 border-coffee-100 dark:border-[#44403c]">
+                        <button id="menuHelpBtn" onclick="openHelp(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-circle-question w-4 text-center"></i> <span>Help</span>
+                        </button>
+                        <button id="menuAboutBtn" onclick="openAbout(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info w-4 text-center"></i> <span>About</span>
                         </button>
                     </div>
                 </div>
@@ -244,6 +235,24 @@
     </header>
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
+        <div id="signedOutAuthBody" class="hidden flex justify-center">
+            <div class="w-full max-w-md bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] p-6">
+                <div class="mb-5">
+                    <h2 class="text-lg font-bold text-coffee-900 dark:text-white mb-1">Coffee Dial</h2>
+                    <p class="text-xs text-coffee-600 dark:text-[#a8a29e]">
+                        Log your brews, track beans and coffees, and revisit recipes as you dial in the perfect cup. Sync across devices when you sign in.
+                    </p>
+                </div>
+                <h3 class="text-sm font-semibold text-coffee-900 dark:text-white mb-1">Sign In</h3>
+                <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-4">Use an email link to sign in without a password.</p>
+                <div class="flex items-center gap-2">
+                    <input id="emailLinkLoginEmail" type="email" placeholder="Email for link" class="flex-1 bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
+                    <button id="emailLinkLoginBtn" onclick="sendEmailLinkLogin()" class="px-3 py-2 rounded-lg bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white text-xs font-semibold transition-colors">Email link</button>
+                </div>
+                <div id="emailLinkLoginStatus" class="hidden text-[11px] text-coffee-600 dark:text-[#a8a29e] mt-2"></div>
+            </div>
+        </div>
+        <div id="signedInContent">
         
         <!-- Active Brews Section (New Pinned Tiles) -->
         <div id="pinnedSection" class="hidden mb-8">
@@ -640,6 +649,7 @@
         <div class="mt-3 text-xs text-coffee-500 dark:text-[#78716c] italic flex flex-col gap-1 px-1">
             <span><i class="fa-solid fa-hand-pointer mr-1"></i> Double tap any row to view Card.</span>
         </div>
+        </div>
     </main>
     
     <!-- Beans Management Modal -->
@@ -652,7 +662,7 @@
                 <div class="flex items-center gap-2">
                     <div class="relative">
                         <button type="button" onclick="toggleBeansAiMenu(event)" id="beansAiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> Add bag
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI add
                         </button>
                         <div id="beansAiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
                             <button type="button" onclick="triggerBeansAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
@@ -665,7 +675,7 @@
                         <input type="file" id="beansAiFileInput" accept="image/*" class="hidden" onchange="handleBeansAIFile(event)">
                     </div>
                     <button onclick="createBeanFromModal()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Add bag
+                        <i class="fa-solid fa-plus"></i> Add
                     </button>
                     <button onclick="closeBeans()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white ml-2">
                         <i class="fa-solid fa-xmark text-xl"></i>
@@ -673,55 +683,59 @@
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
-                <div class="mb-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <select id="beansViewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
-                        <option value="mine">My Beans</option>
-                    </select>
-                    <div class="relative flex-1">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <i class="fa-solid fa-search text-coffee-400"></i>
+                <div class="rounded-lg border border-coffee-200 dark:border-[#44403c] overflow-hidden">
+                    <div class="bg-coffee-100/50 dark:bg-[#1c1917] p-3 space-y-3 border-b border-coffee-200 dark:border-[#44403c]">
+                        <div class="flex items-center gap-3">
+                            <select id="beansViewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
+                                <option value="mine">My Beans</option>
+                            </select>
+                            <div class="relative flex-1">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="fa-solid fa-search text-coffee-400"></i>
+                                </div>
+                                <input id="beansSearch" type="text" placeholder="Search beans..." oninput="setBeansSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                                    <button id="beansSearchClearBtn" onclick="clearBeansSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                    <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                                    <button onclick="toggleBeansQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                                        <i class="fa-solid fa-filter"></i>
+                                    </button>
+                                </div>
+                                <div id="beansQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                                    <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                                </div>
+                                <div id="beansQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
+                            </div>
                         </div>
-                        <input id="beansSearch" type="text" placeholder="Search beans..." oninput="setBeansSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
-                            <button id="beansSearchClearBtn" onclick="clearBeansSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                            <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
-                            <button onclick="toggleBeansQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
-                                <i class="fa-solid fa-filter"></i>
-                            </button>
+                        <div id="beansActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-2 flex-wrap" id="beansActiveFiltersList"></div>
+                            <button onclick="clearBeansFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
                         </div>
-                        <div id="beansQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
-                        </div>
-                        <div id="beansQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
                     </div>
-                </div>
-                <div id="beansActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap mb-4">
-                    <div class="flex items-center gap-2 flex-wrap" id="beansActiveFiltersList"></div>
-                    <button onclick="clearBeansFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
-                </div>
-                 <div class="overflow-x-auto rounded-lg border border-coffee-200 dark:border-[#44403c]">
-                    <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
-                        <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
-                            <tr>
-                                <th class="px-4 py-3">Farmer / Roaster</th>
-                                <th class="px-4 py-3">Origin / Region</th>
-                                <th class="px-4 py-3">Process / Variety</th>
-                                <th class="px-4 py-3 text-center">Roast</th>
-                                <th class="px-4 py-3 text-center w-24">Stock (g)</th>
-                                <th class="px-4 py-3 text-center w-24">Stock Left</th>
-                                <th class="px-4 py-3 text-center w-32">Opened Date</th>
-                                <th class="px-4 py-3 text-center w-32">Frozen Date</th>
-                                <th class="px-4 py-3 text-center w-32">Roast Date</th>
-                                <th class="px-4 py-3 text-center w-24">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="beansTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
-                    </table>
-                </div>
-                <div id="beansEmpty" class="hidden text-center py-8 text-coffee-400 dark:text-[#57534e]">
-                    <p>No beans saved yet.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+                            <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
+                                <tr>
+                                    <th class="px-4 py-3">Farmer / Roaster</th>
+                                    <th class="px-4 py-3">Origin / Region</th>
+                                    <th class="px-4 py-3">Process / Variety</th>
+                                    <th class="px-4 py-3 text-center">Roast</th>
+                                    <th class="px-4 py-3 text-center w-24">Stock (g)</th>
+                                    <th class="px-4 py-3 text-center w-24">Stock Left</th>
+                                    <th class="px-4 py-3 text-center w-32">Opened Date</th>
+                                    <th class="px-4 py-3 text-center w-32">Frozen Date</th>
+                                    <th class="px-4 py-3 text-center w-32">Roast Date</th>
+                                    <th class="px-4 py-3 text-center w-24">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="beansTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
+                        </table>
+                    </div>
+                    <div id="beansEmpty" class="hidden text-center py-8 text-coffee-400 dark:text-[#57534e] bg-white dark:bg-[#292524]">
+                        <p>No beans saved yet.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -737,7 +751,7 @@
                 <div class="flex items-center gap-3">
                     <div class="relative">
                         <button type="button" onclick="toggleCoffeeTypesAiMenu(event)" id="coffeeTypesAiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> Add coffee
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI add
                         </button>
                         <div id="coffeeTypesAiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
                             <button type="button" onclick="triggerCoffeeTypesAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
@@ -750,7 +764,7 @@
                         <input type="file" id="coffeeTypesAiFileInput" accept="image/*" class="hidden" onchange="handleCoffeeTypesAIFile(event)">
                     </div>
                     <button onclick="createCoffeeTypeFromModal()" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Add coffee
+                        <i class="fa-solid fa-plus"></i> Add
                     </button>
                     <button onclick="closeCoffeeTypes()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
                         <i class="fa-solid fa-xmark text-xl"></i>
@@ -758,88 +772,92 @@
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
-                <div class="mb-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <select id="coffeeTypesViewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
-                        <option value="mine">My Coffees</option>
-                    </select>
-                    <div class="relative flex-1">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <i class="fa-solid fa-search text-coffee-400"></i>
+                <div class="rounded-lg border border-coffee-200 dark:border-[#44403c] overflow-hidden">
+                    <div class="bg-coffee-100/50 dark:bg-[#1c1917] p-3 space-y-3 border-b border-coffee-200 dark:border-[#44403c]">
+                        <div class="flex items-center gap-3">
+                            <select id="coffeeTypesViewSelect" onchange="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
+                                <option value="mine">My Coffees</option>
+                            </select>
+                            <div class="relative flex-1">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="fa-solid fa-search text-coffee-400"></i>
+                                </div>
+                                <input id="coffeeTypesSearch" type="text" placeholder="Search coffees..." oninput="setCoffeeTypesSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                                    <button id="coffeeTypesSearchClearBtn" onclick="clearCoffeeTypesSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                    <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                                    <button onclick="toggleCoffeeTypesQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                                        <i class="fa-solid fa-filter"></i>
+                                    </button>
+                                </div>
+                                <div id="coffeeTypesQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                                    <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                                </div>
+                                <div id="coffeeTypesQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
+                            </div>
                         </div>
-                        <input id="coffeeTypesSearch" type="text" placeholder="Search coffees..." oninput="setCoffeeTypesSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
-                            <button id="coffeeTypesSearchClearBtn" onclick="clearCoffeeTypesSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                            <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
-                            <button onclick="toggleCoffeeTypesQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
-                                <i class="fa-solid fa-filter"></i>
-                            </button>
+                        <div id="coffeeTypesActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-2 flex-wrap" id="coffeeTypesActiveFiltersList"></div>
+                            <button onclick="clearCoffeeTypesFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
                         </div>
-                        <div id="coffeeTypesQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
-                        </div>
-                        <div id="coffeeTypesQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
                     </div>
-                </div>
-                <div id="coffeeTypesActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap mb-4">
-                    <div class="flex items-center gap-2 flex-wrap" id="coffeeTypesActiveFiltersList"></div>
-                    <button onclick="clearCoffeeTypesFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
-                </div>
-                <div class="overflow-x-auto rounded-lg border border-coffee-200 dark:border-[#44403c]">
-                    <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
-                        <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
-                            <tr>
-                                <th class="px-4 py-3">
-                                    <button type="button" onclick="setCoffeeTypesSort('farmer')" class="flex items-center gap-2">
-                                        <span>Farmer</span>
-                                        <span id="coffeeTypesSortIcon-farmer" class="text-[10px]"></span>
-                                    </button>
-                                </th>
-                                <th class="px-4 py-3">
-                                    <button type="button" onclick="setCoffeeTypesSort('roaster')" class="flex items-center gap-2">
-                                        <span>Roaster</span>
-                                        <span id="coffeeTypesSortIcon-roaster" class="text-[10px]"></span>
-                                    </button>
-                                </th>
-                                <th class="px-4 py-3">
-                                    <button type="button" onclick="setCoffeeTypesSort('origin')" class="flex items-center gap-2">
-                                        <span>Origin</span>
-                                        <span id="coffeeTypesSortIcon-origin" class="text-[10px]"></span>
-                                    </button>
-                                </th>
-                                <th class="px-4 py-3">
-                                    <button type="button" onclick="setCoffeeTypesSort('processing')" class="flex items-center gap-2">
-                                        <span>Process</span>
-                                        <span id="coffeeTypesSortIcon-processing" class="text-[10px]"></span>
-                                    </button>
-                                </th>
-                                <th class="px-4 py-3">
-                                    <button type="button" onclick="setCoffeeTypesSort('variety')" class="flex items-center gap-2">
-                                        <span>Variety</span>
-                                        <span id="coffeeTypesSortIcon-variety" class="text-[10px]"></span>
-                                    </button>
-                                </th>
-                                <th class="px-4 py-3 text-center">
-                                    <button type="button" onclick="setCoffeeTypesSort('roast')" class="flex items-center gap-2 mx-auto">
-                                        <span>Roast</span>
-                                        <span id="coffeeTypesSortIcon-roast" class="text-[10px]"></span>
-                                    </button>
-                                </th>
-                                <th class="px-4 py-3 text-center w-28">
-                                    <button type="button" onclick="setCoffeeTypesSort('createdAt')" class="flex items-center gap-2 mx-auto">
-                                        <span>Created</span>
-                                        <span id="coffeeTypesSortIcon-createdAt" class="text-[10px]"></span>
-                                    </button>
-                                </th>
-                                <th class="px-4 py-3 text-center w-12"><span class="sr-only">Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody id="coffeeTypesTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
-                    </table>
-                </div>
-                <div id="coffeeTypesEmpty" class="hidden text-center py-8 text-coffee-400 dark:text-[#57534e]">
-                    <p>No coffees saved yet.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+                            <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
+                                <tr>
+                                    <th class="px-4 py-3">
+                                        <button type="button" onclick="setCoffeeTypesSort('farmer')" class="flex items-center gap-2">
+                                            <span>Farmer</span>
+                                            <span id="coffeeTypesSortIcon-farmer" class="text-[10px]"></span>
+                                        </button>
+                                    </th>
+                                    <th class="px-4 py-3">
+                                        <button type="button" onclick="setCoffeeTypesSort('roaster')" class="flex items-center gap-2">
+                                            <span>Roaster</span>
+                                            <span id="coffeeTypesSortIcon-roaster" class="text-[10px]"></span>
+                                        </button>
+                                    </th>
+                                    <th class="px-4 py-3">
+                                        <button type="button" onclick="setCoffeeTypesSort('origin')" class="flex items-center gap-2">
+                                            <span>Origin</span>
+                                            <span id="coffeeTypesSortIcon-origin" class="text-[10px]"></span>
+                                        </button>
+                                    </th>
+                                    <th class="px-4 py-3">
+                                        <button type="button" onclick="setCoffeeTypesSort('processing')" class="flex items-center gap-2">
+                                            <span>Process</span>
+                                            <span id="coffeeTypesSortIcon-processing" class="text-[10px]"></span>
+                                        </button>
+                                    </th>
+                                    <th class="px-4 py-3">
+                                        <button type="button" onclick="setCoffeeTypesSort('variety')" class="flex items-center gap-2">
+                                            <span>Variety</span>
+                                            <span id="coffeeTypesSortIcon-variety" class="text-[10px]"></span>
+                                        </button>
+                                    </th>
+                                    <th class="px-4 py-3 text-center">
+                                        <button type="button" onclick="setCoffeeTypesSort('roast')" class="flex items-center gap-2 mx-auto">
+                                            <span>Roast</span>
+                                            <span id="coffeeTypesSortIcon-roast" class="text-[10px]"></span>
+                                        </button>
+                                    </th>
+                                    <th class="px-4 py-3 text-center w-28">
+                                        <button type="button" onclick="setCoffeeTypesSort('createdAt')" class="flex items-center gap-2 mx-auto">
+                                            <span>Created</span>
+                                            <span id="coffeeTypesSortIcon-createdAt" class="text-[10px]"></span>
+                                        </button>
+                                    </th>
+                                    <th class="px-4 py-3 text-center w-12"><span class="sr-only">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="coffeeTypesTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
+                        </table>
+                    </div>
+                    <div id="coffeeTypesEmpty" class="hidden text-center py-8 text-coffee-400 dark:text-[#57534e] bg-white dark:bg-[#292524]">
+                        <p>No coffees saved yet.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1491,12 +1509,12 @@
 
     <!-- Other Modals -->
     <div id="modalOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] min-h-[70vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
             <div class="flex border-b border-coffee-200 dark:border-[#44403c]">
                 <button onclick="switchModalTab('profile')" id="tabProfile" class="flex-1 py-3 text-sm font-semibold text-coffee-700 dark:text-[#d6ccc2] bg-coffee-50 dark:bg-[#1c1917]">My Profile</button>
                 <button onclick="switchModalTab('following')" id="tabFollowing" class="flex-1 py-3 text-sm font-semibold text-coffee-500 dark:text-[#78716c] hover:bg-coffee-50 dark:hover:bg-[#1c1917]">Following</button>
             </div>
-            <div id="contentProfile" class="p-6">
+            <div id="contentProfile" class="p-6 flex-1 overflow-y-auto">
                 <div class="flex items-center justify-between mb-4"><span class="text-sm font-medium text-coffee-900 dark:text-white">Public Profile</span><button id="togglePublicBtn" onclick="togglePublicProfile()" class="bg-gray-200 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative"><div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform"></div></button></div>
                 <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-4">When enabled, anyone with your Share ID can see your brews.</p>
                 <div id="shareIdContainer" class="hidden"><label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase">Your Share ID</label><div class="flex gap-2"><input type="text" id="myShareId" readonly class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1 text-sm font-mono text-coffee-900 dark:text-white select-all"><button onclick="copyShareId()" class="bg-coffee-200 dark:bg-[#44403c] hover:bg-coffee-300 px-3 rounded text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-regular fa-copy"></i></button></div></div>
@@ -1506,7 +1524,7 @@
                 <hr class="my-6 border-coffee-200 dark:border-[#44403c]">
                 <button onclick="googleLogout()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-300 py-2 rounded-lg text-sm font-medium">Sign Out</button>
             </div>
-            <div id="contentFollowing" class="hidden p-6">
+            <div id="contentFollowing" class="hidden p-6 flex-1 overflow-y-auto">
                 <div class="flex gap-2 mb-4"><input type="text" id="friendIdInput" placeholder="Enter Friend's Share ID" class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white"><button onclick="followUser()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-3 py-2 rounded-lg text-sm font-medium">Follow</button></div>
                 <div class="text-xs font-semibold text-coffee-500 dark:text-[#78716c] uppercase mb-2">People you follow</div>
                 <div id="followingList" class="space-y-2 max-h-48 overflow-y-auto"></div>
@@ -7632,15 +7650,42 @@
 
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
+            const setMenuVisibility = (loggedIn) => {
+                const ids = [
+                    'menuStatsBtn',
+                    'menuBeansBtn',
+                    'menuCoffeesBtn',
+                    'menuGalleryBtn',
+                    'menuScaleBtn',
+                    'menuExportBtn',
+                    'menuImportBtn',
+                    'menuPreferencesBtn',
+                    'menuHelpDivider'
+                ];
+                ids.forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.toggle('hidden', !loggedIn);
+                });
+                const divider = document.getElementById('menuHelpDivider');
+                if (divider) divider.classList.toggle('hidden', !loggedIn);
+            };
             if (user) {
-                document.getElementById('authContainer').innerHTML = `<div class="flex items-center gap-3"><button onclick="openFriendsModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-coffee-50 dark:bg-[#34302e] hover:bg-coffee-100 dark:hover:bg-[#44403c] border border-coffee-200 dark:border-[#44403c] transition-colors text-sm font-medium text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-solid fa-user-group"></i> Friends</button><button onclick="openStats()" class="relative flex-shrink-0 hover:opacity-80 transition-opacity"><img src="${user.photoURL}" class="w-8 h-8 flex-shrink-0 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}"><div id="avatarBadge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-[#292524] shadow-md"></div></button></div>`;
-                document.getElementById('syncStatus').classList.remove('hidden'); document.getElementById('viewSelectorContainer').classList.remove('hidden'); 
+                document.getElementById('authContainer').innerHTML = `<div class="flex items-center gap-3"><button onclick="openFriendsModal()" class="relative flex-shrink-0 hover:opacity-80 transition-opacity"><img src="${user.photoURL}" class="w-8 h-8 flex-shrink-0 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}"><div id="avatarBadge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-[#292524] shadow-md"></div></button></div>`;
+                document.getElementById('viewSelectorContainer').classList.remove('hidden'); 
+                document.getElementById('signedOutAuthBody').classList.add('hidden');
+                document.getElementById('signedInContent').classList.remove('hidden');
+                setMenuVisibility(true);
                 await initUserData(user); loadFollowingList(); changeView('mine'); initNotificationListener(user.uid);
                 const hasSeen = localStorage.getItem(`tutorialSeen_${user.uid}`); if (!hasSeen) openHelp();
                 initZoomListeners(); 
             } else {
-                document.getElementById('authContainer').innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2"><button onclick="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button><div class="flex items-center gap-2"><input id="emailLinkLoginEmail" type="email" placeholder="Email for link" class="w-40 sm:w-48 bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"><button id="emailLinkLoginBtn" onclick="sendEmailLinkLogin()" class="px-3 py-2 rounded-lg bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white text-xs font-semibold transition-colors">Email link</button></div></div><div id="emailLinkLoginStatus" class="hidden text-[11px] text-coffee-600 dark:text-[#a8a29e] mt-1"></div>`;
-                document.getElementById('viewSelectorContainer').classList.add('hidden'); document.getElementById('coffeeTableBody').innerHTML = ''; document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('authContainer').innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2"><button onclick="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button></div>`;
+                document.getElementById('viewSelectorContainer').classList.add('hidden');
+                document.getElementById('coffeeTableBody').innerHTML = '';
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('signedInContent').classList.add('hidden');
+                document.getElementById('signedOutAuthBody').classList.remove('hidden');
+                setMenuVisibility(false);
                 if(unsubscribeNotifications) unsubscribeNotifications();
             }
         });
