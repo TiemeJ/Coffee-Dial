@@ -90,6 +90,8 @@ export function initCoffeeScale() {
   let pours = [];
   let graphTooltipEl = null;
   let graphTooltipHideBound = false;
+  const graphRenderCache = new WeakMap();
+  const graphHoverState = new WeakMap();
   const graphLabelHits = new WeakMap();
   const FLOW_WINDOW_MS = 2000;
   const FIRST_DRIP_THRESHOLD = 0;
@@ -323,6 +325,27 @@ export function initCoffeeScale() {
     const yForW = (w) => padding.top + (1 - (w - minW) / (maxW - minW)) * plotH;
     const yForF = (f) => padding.top + (1 - (f - minF) / (maxF - minF)) * plotH;
 
+    const hoverEnabled = !!dataOverride || !captureInterval;
+    if (!hoverEnabled && graphHoverState.has(targetEl)) {
+      graphHoverState.delete(targetEl);
+    }
+    graphRenderCache.set(targetEl, {
+      dataOverride,
+      padding,
+      plotW,
+      plotH,
+      minT,
+      maxT,
+      spanT,
+      samples,
+      flowSamples,
+      minW,
+      maxW,
+      minF,
+      maxF,
+      hoverEnabled,
+    });
+
     ctx.strokeStyle = "#eee";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -376,6 +399,20 @@ export function initCoffeeScale() {
         else ctx.lineTo(x, y);
       });
       ctx.stroke();
+    }
+
+    const hoverState = graphHoverState.get(targetEl);
+    if (hoverState && Number.isFinite(hoverState.x)) {
+      const hoverX = Math.min(padding.left + plotW, Math.max(padding.left, hoverState.x));
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.9)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(hoverX, padding.top);
+      ctx.lineTo(hoverX, padding.top + plotH);
+      ctx.stroke();
+      ctx.restore();
     }
 
     const labelHits = [];
@@ -536,6 +573,36 @@ export function initCoffeeScale() {
   function attachGraphTooltipHandler(targetEl) {
     if (!targetEl || targetEl.dataset.graphTooltipBound) return;
     targetEl.dataset.graphTooltipBound = "true";
+    targetEl.style.touchAction = "none";
+    const updateHover = (event) => {
+      const cache = graphRenderCache.get(targetEl);
+      if (!cache || !cache.hoverEnabled) return;
+      const rect = targetEl.getBoundingClientRect();
+      const scaleX = targetEl.width / rect.width;
+      const scaleY = targetEl.height / rect.height;
+      const x = (event.clientX - rect.left) * scaleX;
+      const y = (event.clientY - rect.top) * scaleY;
+      const { padding, plotW, plotH, minT, maxT, spanT, samples, flowSamples } = cache;
+      const withinX = x >= padding.left && x <= padding.left + plotW;
+      const withinY = y >= padding.top && y <= padding.top + plotH;
+      if (!withinX || !withinY) {
+        clearGraphHover(targetEl);
+        return;
+      }
+      const clampedX = Math.min(padding.left + plotW, Math.max(padding.left, x));
+      const timeMs = minT + ((clampedX - padding.left) / plotW) * spanT;
+      const weight = getValueAtTime(samples, "w", timeMs);
+      const flow = getValueAtTime(flowSamples, "flow", timeMs);
+      graphHoverState.set(targetEl, { x: clampedX });
+      renderGraphTo(targetEl, cache.dataOverride);
+      showGraphTooltip(event.clientX, event.clientY, buildHoverTooltipHtml(timeMs, weight, flow), "hover");
+    };
+    const clearHover = () => clearGraphHover(targetEl);
+    targetEl.addEventListener("pointermove", updateHover);
+    targetEl.addEventListener("pointerdown", updateHover);
+    targetEl.addEventListener("pointerleave", clearHover);
+    targetEl.addEventListener("pointerup", clearHover);
+    targetEl.addEventListener("pointercancel", clearHover);
     targetEl.addEventListener("click", (event) => {
       const hits = graphLabelHits.get(targetEl) || [];
       if (!hits.length) {
@@ -553,13 +620,23 @@ export function initCoffeeScale() {
         return;
       }
       const html = buildStepTooltipHtml(hit.step);
-      showGraphTooltip(event.clientX, event.clientY, html);
+      showGraphTooltip(event.clientX, event.clientY, html, "step");
       event.stopPropagation();
     });
     if (!graphTooltipHideBound) {
       graphTooltipHideBound = true;
       document.addEventListener("click", () => hideGraphTooltip());
     }
+  }
+
+  function clearGraphHover(targetEl) {
+    if (!targetEl) return;
+    const cache = graphRenderCache.get(targetEl);
+    if (graphHoverState.has(targetEl)) {
+      graphHoverState.delete(targetEl);
+      renderGraphTo(targetEl, cache ? cache.dataOverride : null);
+    }
+    hideGraphTooltip("hover");
   }
 
   function ensureGraphTooltip() {
@@ -583,9 +660,10 @@ export function initCoffeeScale() {
     return el;
   }
 
-  function showGraphTooltip(clientX, clientY, html) {
+  function showGraphTooltip(clientX, clientY, html, mode = "hover") {
     const el = ensureGraphTooltip();
     el.innerHTML = html;
+    el.dataset.mode = mode;
     el.style.display = "block";
     const offset = 12;
     let left = clientX + offset;
@@ -601,8 +679,9 @@ export function initCoffeeScale() {
     el.style.top = `${Math.max(8, top)}px`;
   }
 
-  function hideGraphTooltip() {
+  function hideGraphTooltip(mode = null) {
     if (!graphTooltipEl) return;
+    if (mode && graphTooltipEl.dataset.mode !== mode) return;
     graphTooltipEl.style.display = "none";
   }
 
@@ -614,6 +693,40 @@ export function initCoffeeScale() {
   function formatValue(value, suffix = "") {
     if (!Number.isFinite(value)) return "-";
     return `${value.toFixed(1)}${suffix}`;
+  }
+
+  function formatHoverSeconds(ms) {
+    if (!Number.isFinite(ms)) return "-";
+    return (ms / 1000).toFixed(1);
+  }
+
+  function getValueAtTime(samples, key, tMs) {
+    if (!Array.isArray(samples) || samples.length === 0 || !Number.isFinite(tMs)) return null;
+    if (tMs <= samples[0].tMs) return samples[0][key];
+    if (tMs >= samples[samples.length - 1].tMs) return samples[samples.length - 1][key];
+    let i = 1;
+    while (i < samples.length && samples[i].tMs < tMs) {
+      i += 1;
+    }
+    const prev = samples[i - 1];
+    const next = samples[i];
+    const v1 = prev ? prev[key] : null;
+    const v2 = next ? next[key] : null;
+    if (!Number.isFinite(v1) && !Number.isFinite(v2)) return null;
+    if (!Number.isFinite(v1)) return v2;
+    if (!Number.isFinite(v2)) return v1;
+    const span = next.tMs - prev.tMs;
+    if (span <= 0) return v1;
+    const ratio = (tMs - prev.tMs) / span;
+    return v1 + (v2 - v1) * ratio;
+  }
+
+  function buildHoverTooltipHtml(timeMs, weight, flow) {
+    return `
+      <div style="font-weight:600;margin-bottom:4px;">Time: ${formatHoverSeconds(timeMs)}s</div>
+      <div>Weight: ${formatValue(weight, "g")}</div>
+      <div>Flow: ${formatValue(flow, "g/s")}</div>
+    `;
   }
 
   function buildStepTooltipHtml(step) {
