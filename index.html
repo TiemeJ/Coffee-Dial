@@ -256,9 +256,13 @@
         
         <!-- Active Brews Section (New Pinned Tiles) -->
         <div id="pinnedSection" class="hidden mb-8">
-            <h3 class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase tracking-wide mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-thumbtack text-green-600"></i> Pinned Brews
-            </h3>
+            <div id="pinnedHeaderToggle" onclick="togglePinnedTiles()" class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase tracking-wide mb-3 flex items-center justify-between gap-2 cursor-pointer select-none">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-thumbtack text-green-600"></i>
+                    <span>Pinned Brews</span>
+                </div>
+                <i id="pinnedToggleIcon" class="fa-solid fa-plus text-coffee-400 dark:text-[#78716c]"></i>
+            </div>
             <div id="pinnedGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                 <!-- Tiles injected here -->
             </div>
@@ -1878,6 +1882,7 @@
         
         // Tile grouping state
         let expandedBeans = new Set(); // Track which bean groups are expanded
+        let lastPinnedBeanKeys = [];
 
         const columnDefs = [
             { id: 'roaster', label: 'Roaster' },
@@ -7136,6 +7141,34 @@
             renderPinnedTiles();
         };
 
+        const updatePinnedHeaderToggleIcon = (beanKeys = [], organizeByBeans = true) => {
+            lastPinnedBeanKeys = organizeByBeans ? beanKeys : [];
+            const icon = document.getElementById('pinnedToggleIcon');
+            const header = document.getElementById('pinnedHeaderToggle');
+            if (!icon || !header) return;
+            if (!organizeByBeans || !beanKeys.length) {
+                icon.classList.add('hidden');
+                header.classList.remove('cursor-pointer');
+                return;
+            }
+            icon.classList.remove('hidden');
+            header.classList.add('cursor-pointer');
+            const allExpanded = beanKeys.every(key => expandedBeans.has(key));
+            icon.classList.toggle('fa-plus', !allExpanded);
+            icon.classList.toggle('fa-minus', allExpanded);
+        };
+
+        const togglePinnedTiles = () => {
+            if (!lastPinnedBeanKeys.length) return;
+            const allExpanded = lastPinnedBeanKeys.every(key => expandedBeans.has(key));
+            if (allExpanded) {
+                expandedBeans.clear();
+            } else {
+                expandedBeans = new Set(lastPinnedBeanKeys);
+            }
+            renderPinnedTiles();
+        };
+
         const renderPinnedTiles = () => {
             // Pinned brews should always show ALL active brews (not affected by search/filter/sort)
             let allActiveBrews = coffees.filter(c => c.isActive);
@@ -7154,6 +7187,7 @@
                     allActiveBrews.forEach(c => {
                         renderBrewTile(c, pinnedGrid, null);
                     });
+                    updatePinnedHeaderToggleIcon([], false);
                 } else {
                 // Group brews by beans
                 const beanGroups = new Map();
@@ -7192,6 +7226,8 @@
                 // Sort bean groups by the minimum customOrder of their brews
                 const sortedBeanGroups = Array.from(beanGroups.entries())
                     .sort((a, b) => a[1].minOrder - b[1].minOrder);
+
+                updatePinnedHeaderToggleIcon(sortedBeanGroups.map(([beanKey]) => beanKey), true);
                 
                 sortedBeanGroups.forEach(([beanKey, group]) => {
                     const isExpanded = expandedBeans.has(beanKey);
@@ -7228,6 +7264,7 @@
                 initSortable();
             } else {
                 pinnedSection.classList.add('hidden');
+                updatePinnedHeaderToggleIcon([], false);
             }
         };
         
@@ -7920,6 +7957,7 @@
 
         Object.assign(window, { 
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
+            togglePinnedTiles,
             fastRepeatCoffee,
             editBrewFromCard,
             closeCoffeeTypeCardMenu,
