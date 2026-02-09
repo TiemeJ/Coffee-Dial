@@ -7143,7 +7143,7 @@
         
         const getFilteredCoffees = () => { 
             let f=coffees; const searchInput = document.getElementById('globalSearch');
-            if (searchInput && searchInput.value) { const term = searchInput.value.toLowerCase(); f = f.filter(c => { const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||'', c.grinder||''].join(' ').toLowerCase(); return searchable.includes(term); }); }
+            if (searchInput && searchInput.value) { const term = searchInput.value.toLowerCase(); f = f.filter(c => { const typeDisplay = getCoffeeTypeDisplay(c); const searchable = [c.roaster||c.name||'', c.origin||c.beanType||'', c.farmer||'', c.variety||'', c.processing||'', c.method||'', c.drink||'', c.notes||'', c.improve||'', c.grinder||'', typeDisplay.roaster||'', typeDisplay.farmer||'', typeDisplay.origin||'', typeDisplay.variety||'', typeDisplay.processing||'', typeDisplay.roastType||''].join(' ').toLowerCase(); return searchable.includes(term); }); }
             f=f.filter(c=>{ 
                 const cRoaster = c.roaster || c.name; const cOrigin = c.origin || c.beanType;
                 const typeId = getCoffeeTypeForBrew(c)?.id || null;
