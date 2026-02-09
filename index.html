@@ -5228,6 +5228,10 @@
                 await pinBestBrewsForBean({ beanId, brewId, brewData });
                 return;
             }
+            if (isPinOpenBagsBestOnlyEnabled()) {
+                await pinBestBrewsForAllOpenBags();
+                return;
+            }
             await pinBrewsFromOpenBags();
         };
 
