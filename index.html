@@ -2363,6 +2363,15 @@
         const updateBeanDropdown = () => {
             const select = document.getElementById('savedBeanSelect');
             if (!select) return;
+            const formatRoastDate = (value) => {
+                if (!value) return '';
+                const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+                if (isNaN(dateObj)) return '';
+                const dd = String(dateObj.getDate()).padStart(2, '0');
+                const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const yy = String(dateObj.getFullYear()).slice(-2);
+                return `${dd}-${mm}-${yy}`;
+            };
             const currentValue = select.value;
             select.innerHTML = '<option value="">-- create new bean and coffee --</option>';
             // Sort beans by Roaster name
@@ -2375,7 +2384,9 @@
                 // Construct display text
                 const roaster = bean.roaster || 'Unknown';
                 const farmer = bean.farmer ? ` - ${bean.farmer}` : '';
-                option.text = `${roaster}${farmer}`;
+                const roastDate = formatRoastDate(bean.roastDate);
+                const roastDateLabel = roastDate ? ` (${roastDate})` : '';
+                option.text = `${roaster}${farmer}${roastDateLabel}`;
                 select.appendChild(option);
             });
             if (currentValue) {
