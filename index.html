@@ -2384,7 +2384,7 @@
                 // Construct display text
                 const roaster = bean.roaster || 'Unknown';
                 const farmer = bean.farmer ? ` - ${bean.farmer}` : '';
-                const roastDate = formatRoastDate(bean.roastDate);
+                const roastDate = formatRoastDate(bean.openedDate);
                 const roastDateLabel = roastDate ? ` (${roastDate})` : '';
                 option.text = `${roaster}${farmer}${roastDateLabel}`;
                 select.appendChild(option);
