@@ -7020,7 +7020,17 @@
         const openFilterMenu = (e,k) => { e.stopPropagation(); const m=document.getElementById('filterDropdown'); const vals = coffees.map(c => k==='roaster' ? (c.roaster||c.name) : (k==='origin' ? (c.origin||c.beanType) : c[k])); const v=[...new Set(vals)].sort(); if(!v.length)return; const label = getFilterLabel(k); let h=`<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] mb-1">Filter ${label}</div><button onclick="applyFilter('${k}',null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`; v.forEach(val=>{h+=`<button onclick="applyFilter('${k}','${val}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e]">${val}</button>`}); m.innerHTML=h; const r=e.currentTarget.getBoundingClientRect(); const c=e.currentTarget.closest('.relative').getBoundingClientRect(); m.style.top=(r.bottom-c.top+5)+'px'; m.style.left=(r.left-c.left)+'px'; m.classList.remove('hidden'); }
         const applyFilter = (k,v) => { activeFilters[k]=v; document.getElementById('filterDropdown').classList.add('hidden'); displayedBrewsCount = BREWS_PER_PAGE; renderTable(); renderActiveFilters(); };
         const clearAllFilters = () => { activeFilters={bean:null,coffeeType:null,method:null,temp:null,roastType:null,roaster:null,origin:null,farmer:null,variety:null,processing:null,drink:null,grinder:null}; displayedBrewsCount = BREWS_PER_PAGE; renderTable(); renderActiveFilters(); }
-        const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; let displayValue = v; const label = getFilterLabel(k); if(k === 'bean'){ const bean = beans.find(b => b.id === v); if(bean) displayValue = `${bean.roaster || 'Unknown'}${bean.farmer ? ' - ' + bean.farmer : ''}`; } if(k === 'coffeeType'){ const type = coffeeTypes.find(ct => ct.id === v); if(type) displayValue = `${type.roaster || 'Unknown'}${type.farmer ? ' - ' + type.farmer : ''}`; } l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${label}:</span><b>${displayValue}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
+        const formatBeanOpenedDate = (value) => {
+            if (!value) return '';
+            const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+            if (isNaN(dateObj)) return '';
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const yyyy = dateObj.getFullYear();
+            return `${dd}-${mm}-${yyyy}`;
+        };
+
+        const renderActiveFilters = () => { const c=document.getElementById('activeFiltersContainer'), l=document.getElementById('activeFiltersList'); l.innerHTML=''; let h=false; Object.entries(activeFilters).forEach(([k,v])=>{ if(v){ h=true; let displayValue = v; const label = getFilterLabel(k); if(k === 'bean'){ const bean = beans.find(b => b.id === v); if(bean){ const opened = formatBeanOpenedDate(bean.openedDate); const suffix = opened ? ` (${opened})` : ''; displayValue = `${bean.roaster || 'Unknown'}${bean.farmer ? ' - ' + bean.farmer : ''}${suffix}`; } } if(k === 'coffeeType'){ const type = coffeeTypes.find(ct => ct.id === v); if(type) displayValue = `${type.roaster || 'Unknown'}${type.farmer ? ' - ' + type.farmer : ''}`; } l.innerHTML+=`<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${label}:</span><b>${displayValue}</b><button onclick="applyFilter('${k}',null)" class="ml-1 hover:text-red-200">x</button></div>`; } }); c.classList.toggle('hidden',!h); }
         
         const toggleQuickFilter = (e) => {
             e.stopPropagation();
@@ -7069,11 +7079,15 @@
             // Get unique values for this filter key
             let uniqueVals;
             if (key === 'bean') {
-                // For bean filter, show saved beans with their display names
-                uniqueVals = beans.map(b => ({
-                    id: b.id,
-                    display: `${b.roaster || 'Unknown'}${b.farmer ? ' - ' + b.farmer : ''}`
-                }));
+                // For bean filter, show saved beans with their display names and opened date
+                uniqueVals = beans.map(b => {
+                    const opened = formatBeanOpenedDate(b.openedDate);
+                    const suffix = opened ? ` (${opened})` : '';
+                    return {
+                        id: b.id,
+                        display: `${b.roaster || 'Unknown'}${b.farmer ? ' - ' + b.farmer : ''}${suffix}`
+                    };
+                });
             } else if (key === 'coffeeType') {
                 uniqueVals = coffeeTypes.map(t => ({
                     id: t.id,
