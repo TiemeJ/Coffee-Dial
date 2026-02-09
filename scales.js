@@ -665,7 +665,7 @@ export function initCoffeeScale() {
     el.innerHTML = html;
     el.dataset.mode = mode;
     el.style.display = "block";
-    const offset = 20;
+    const offset = 40;
     let left = clientX - offset;
     let top = clientY - offset;
     const rect = el.getBoundingClientRect();
