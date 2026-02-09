@@ -726,8 +726,8 @@
                                     <th class="px-4 py-3">Origin / Region</th>
                                     <th class="px-4 py-3">Process / Variety</th>
                                     <th class="px-4 py-3 text-center">Roast</th>
-                                    <th class="px-4 py-3 text-center w-24">Stock (g)</th>
-                                    <th class="px-4 py-3 text-center w-24">Stock Left</th>
+                                    <th class="px-4 py-3 text-center w-24">Weight (g)</th>
+                                    <th class="px-4 py-3 text-center w-24">Beans left</th>
                                     <th class="px-4 py-3 text-center w-32">Opened Date</th>
                                     <th class="px-4 py-3 text-center w-32">Frozen Date</th>
                                     <th class="px-4 py-3 text-center w-32">Roast Date</th>
@@ -1190,8 +1190,8 @@
                         </div>
                         <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-3 border border-coffee-100 dark:border-[#44403c]">
                             <div class="grid grid-cols-3 gap-2 text-center text-sm">
-                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Stock</div><div id="beanCardStock" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
-                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Left</div><div id="beanCardStockLeft" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Weight</div><div id="beanCardStock" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Beans left</div><div id="beanCardStockLeft" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
                                 <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Status</div><div id="beanCardStatus" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
                             </div>
                         </div>
@@ -1269,7 +1269,7 @@
                         <input id="beanEditShopUrl" type="url" placeholder="https://" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Stock (g)</label>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Weight (g)</label>
                         <input id="beanEditStock" type="number" step="1" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                     </div>
                     <div>
@@ -1654,6 +1654,9 @@
                         <button onclick="extractCoffeeTypesFromBeans()" class="text-xs bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-3 py-2 rounded font-bold transition-colors border border-emerald-200 dark:border-emerald-800">
                             <i class="fa-solid fa-layer-group mr-1"></i> Extract coffees
                         </button>
+                        <button onclick="recalculateAllBeanStockLeft()" class="text-xs bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-3 py-2 rounded font-bold transition-colors border border-amber-200 dark:border-amber-800">
+                            <i class="fa-solid fa-calculator mr-1"></i> Recalculate beans left
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1849,6 +1852,8 @@
         let currentView = 'mine'; 
         let coffees = [];
         let beans = []; // Store saved beans
+        let hasLoadedBrews = false;
+        let hasLoadedBeans = false;
         let coffeeTypes = []; // Store coffees
         let following = [];
         let followers = []; 
@@ -2126,7 +2131,7 @@
                     archived: false,
                     frozen: false,
                     stock: 250,
-                    stockUpdatedAt: nowIso,
+                    beansLeft: 250,
                     openedDate: nowIso,
                     imageURL: imageURL
                 };
@@ -2299,6 +2304,8 @@
             if(unsubscribeData) unsubscribeData(); 
             if(unsubscribeBeans) unsubscribeBeans();
             if(unsubscribeCoffeeTypes) unsubscribeCoffeeTypes();
+            hasLoadedBrews = false;
+            hasLoadedBeans = false;
 
             const targetUid = uid === 'mine' ? currentUser.uid : uid;
             const isMine = uid === 'mine';
@@ -2312,6 +2319,8 @@
                 coffees = []; snapshot.forEach(doc => coffees.push({ id: doc.id, ...doc.data() }));
                 if (!currentSort.key) coffees.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderPinnedTiles(); renderTable(); updateAutocompleteLists();
+                hasLoadedBrews = true;
+                if (isMine) maybeMigrateBeansLeft();
             }, (error) => {
                 console.error(error);
                 if(error.code === 'permission-denied') { alert("⚠️ Access Denied: This user's profile is private."); syncFriendViewSelectValues('mine'); changeView('mine'); }
@@ -2330,6 +2339,8 @@
                     renderBeansTable();
                 }
                 renderPinnedTiles(); renderTable(); 
+                hasLoadedBeans = true;
+                if (isMine) maybeMigrateBeansLeft();
             }, (error) => {
                 console.error("Error loading beans:", error);
                 // If we can't load beans (e.g., permission denied), continue with empty array
@@ -2656,6 +2667,7 @@
             };
 
             try {
+                const existingBrewForUpdate = eid ? coffees.find(c => c.id === eid) : null;
                 // Handle Bean Logic
                 // 1. If user selected a bean from dropdown, use that ID.
                 // 2. If dropdown is empty (Create New), check if a bean with these attributes already exists in the local 'beans' array to avoid duplicates.
@@ -2732,7 +2744,7 @@
                             beanData.archived = false;
                             beanData.frozen = false;
                             beanData.stock = 250;
-                            beanData.stockUpdatedAt = nowIso;
+                            beanData.beansLeft = 250;
                             beanData.openedDate = nowIso;
                             if (coffeeTypeId) beanData.coffeeTypeId = coffeeTypeId;
                             const newBeanRef = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
@@ -2773,6 +2785,11 @@
                         brew: d,
                         existingBrewId: savedBrewId
                     });
+                    await updateBeansLeftForBean(selectedBeanId, [{ ...d, id: savedBrewId, beanId: selectedBeanId }]);
+                    const previousBeanId = existingBrewForUpdate?.beanId;
+                    if (previousBeanId && previousBeanId !== selectedBeanId) {
+                        await updateBeansLeftForBean(previousBeanId);
+                    }
                     const existingBrew = savedBrewId ? coffees.find(c => c.id === savedBrewId) : null;
                     const brewForPin = { ...existingBrew, ...d, id: savedBrewId, beanId: selectedBeanId };
                     await autoPinOpenBagsIfEnabled({ beanId: selectedBeanId, brewId: savedBrewId, brewData: brewForPin });
@@ -2893,7 +2910,7 @@
                 archived: false,
                 frozen: false,
                 stock: 250,
-                stockUpdatedAt: nowIso,
+                beansLeft: 250,
                 openedDate: nowIso,
                 frozenDate: null,
                 roastDate: null,
@@ -2915,23 +2932,32 @@
             }
         };
 
+        const computeBeansLeft = (bean, brews = coffees) => {
+            if (!bean || bean.stock === undefined || bean.stock === null || bean.stock === '') return null;
+            const baseWeight = parseFloat(bean.stock);
+            if (isNaN(baseWeight)) return null;
+            const totalIn = brews
+                .filter(c => c.beanId === bean.id)
+                .reduce((sum, c) => {
+                    const weight = parseFloat(c.weight);
+                    return sum + (isNaN(weight) ? 0 : weight);
+                }, 0);
+            return baseWeight - totalIn;
+        };
+
         const getBeanCalculatedStock = (bean) => {
-            if (bean.stock === undefined || bean.stock === null) return null;
-            const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
-            const usedAmount = coffees
-                .filter(c => c.beanId === bean.id && new Date(c.createdAt) > stockDate)
-                .reduce((sum, c) => sum + (c.weight || 0), 0);
-            return parseFloat(bean.stock) - usedAmount;
+            if (!bean) return null;
+            if (bean.beansLeft !== undefined && bean.beansLeft !== null && bean.beansLeft !== '') {
+                const left = parseFloat(bean.beansLeft);
+                return isNaN(left) ? null : left;
+            }
+            return computeBeansLeft(bean);
         };
 
         const getRemainingStockAfterBrew = (bean, brew, existingBrewId = null) => {
             if (!bean || bean.stock === undefined || bean.stock === null || bean.stock === '') return null;
-            if (!bean.stockUpdatedAt) return null;
             const stockBase = parseFloat(bean.stock);
             if (isNaN(stockBase)) return null;
-
-            const stockDate = new Date(bean.stockUpdatedAt);
-            if (isNaN(stockDate)) return null;
             let brewsForBean = coffees.filter(c => c.beanId === bean.id);
 
             if (brew) {
@@ -2949,14 +2975,110 @@
                 }
             }
 
-            const usedAmount = brewsForBean
-                .filter(c => c.createdAt && new Date(c.createdAt) > stockDate)
-                .reduce((sum, c) => {
-                    const weight = parseFloat(c.weight);
-                    return sum + (isNaN(weight) ? 0 : weight);
-                }, 0);
-            const remaining = stockBase - usedAmount;
-            return remaining;
+            const totalIn = brewsForBean.reduce((sum, c) => {
+                const weight = parseFloat(c.weight);
+                return sum + (isNaN(weight) ? 0 : weight);
+            }, 0);
+            return stockBase - totalIn;
+        };
+
+        const updateBeansLeftForBean = async (beanId, extraBrews = []) => {
+            if (!currentUser || !beanId) return;
+            const bean = beans.find(b => b.id === beanId);
+            if (!bean) return;
+            const combined = extraBrews && extraBrews.length
+                ? [...coffees, ...extraBrews.filter(b => b && b.beanId === beanId)]
+                : coffees;
+            const beansLeft = computeBeansLeft(bean, combined);
+            if (beansLeft === null || isNaN(beansLeft)) return;
+            const nowIso = new Date().toISOString();
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
+                    beansLeft,
+                    updatedAt: nowIso
+                });
+                const idx = beans.findIndex(b => b.id === beanId);
+                if (idx !== -1) {
+                    beans[idx] = { ...beans[idx], beansLeft, updatedAt: nowIso };
+                }
+            } catch (err) {
+                console.error('Update beans left failed', err);
+            }
+        };
+
+        const maybeMigrateBeansLeft = async () => {
+            if (!currentUser) return;
+            if (!hasLoadedBeans || !hasLoadedBrews) return;
+            const key = `beansLeftMigrated_${currentUser.uid}`;
+            if (localStorage.getItem(key) === 'true') return;
+            const toUpdate = beans.filter(bean => {
+                const hasWeight = bean.stock !== undefined && bean.stock !== null && bean.stock !== '';
+                const hasBeansLeft = bean.beansLeft !== undefined && bean.beansLeft !== null && bean.beansLeft !== '';
+                return hasWeight && !hasBeansLeft;
+            });
+            if (!toUpdate.length) {
+                localStorage.setItem(key, 'true');
+                return;
+            }
+            const nowIso = new Date().toISOString();
+            const batch = writeBatch(db);
+            let updates = 0;
+            toUpdate.forEach(bean => {
+                const beansLeft = computeBeansLeft(bean);
+                if (beansLeft === null || isNaN(beansLeft)) return;
+                batch.update(doc(db, 'users', currentUser.uid, 'beans', bean.id), {
+                    beansLeft,
+                    updatedAt: nowIso
+                });
+                updates++;
+            });
+            if (!updates) {
+                localStorage.setItem(key, 'true');
+                return;
+            }
+            try {
+                await batch.commit();
+                beans = beans.map(bean => {
+                    if (!toUpdate.some(b => b.id === bean.id)) return bean;
+                    const beansLeft = computeBeansLeft(bean);
+                    if (beansLeft === null || isNaN(beansLeft)) return bean;
+                    return { ...bean, beansLeft, updatedAt: nowIso };
+                });
+                localStorage.setItem(key, 'true');
+                renderBeansTable();
+                if (currentBeanCardId) openBeanCard(currentBeanCardId);
+            } catch (err) {
+                console.error('Beans left migration failed', err);
+            }
+        };
+
+        const recalculateAllBeanStockLeft = async () => {
+            if (!currentUser) return;
+            const nowIso = new Date().toISOString();
+            const batch = writeBatch(db);
+            let updates = 0;
+            beans.forEach(bean => {
+                const beansLeft = computeBeansLeft(bean);
+                if (beansLeft === null || isNaN(beansLeft)) return;
+                batch.update(doc(db, 'users', currentUser.uid, 'beans', bean.id), {
+                    beansLeft,
+                    updatedAt: nowIso
+                });
+                updates++;
+            });
+            if (!updates) return;
+            try {
+                await batch.commit();
+                beans = beans.map(bean => {
+                    const beansLeft = computeBeansLeft(bean);
+                    if (beansLeft === null || isNaN(beansLeft)) return bean;
+                    return { ...bean, beansLeft, updatedAt: nowIso };
+                });
+                renderBeansTable();
+                if (currentBeanCardId) openBeanCard(currentBeanCardId);
+            } catch (err) {
+                console.error('Recalculate beans left failed', err);
+            }
         };
 
         const archiveBeanIfStockDepleted = async ({ beanId, brew, existingBrewId = null }) => {
@@ -3147,7 +3269,7 @@
                 archived: false,
                 frozen: false,
                 stock: 250,
-                stockUpdatedAt: nowIso,
+                beansLeft: 250,
                 openedDate: nowIso,
                 frozenDate: null,
                 roastDate: null,
@@ -3743,14 +3865,7 @@
 
         const getBeanTableOrder = () => {
             const beansWithStock = beans.map(bean => {
-                let remaining = null;
-                if (bean.stock !== undefined && bean.stock !== null) {
-                    const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
-                    const usedAmount = coffees
-                        .filter(c => c.beanId === bean.id && new Date(c.createdAt) > stockDate)
-                        .reduce((sum, c) => sum + (c.weight || 0), 0);
-                    remaining = parseFloat(bean.stock) - usedAmount;
-                }
+                const remaining = getBeanCalculatedStock(bean);
                 return { ...bean, calculatedStock: remaining };
             });
 
@@ -4202,8 +4317,13 @@
                 archived: archivedChecked,
                 updatedAt: nowIso
             };
-
-            if (stockVal !== null) updates.stockUpdatedAt = nowIso;
+            if (stockVal !== null) {
+                const baseBean = beans.find(b => b.id === currentBeanCardId);
+                const beansLeft = computeBeansLeft({ ...baseBean, stock: stockVal });
+                updates.beansLeft = beansLeft;
+            } else {
+                updates.beansLeft = null;
+            }
 
             try {
                 await updateDoc(doc(db, 'users', currentUser.uid, 'beans', currentBeanCardId), updates);
@@ -4378,15 +4498,7 @@
 
             // Map beans to include calculated remaining stock
             const beansWithStock = finalBeans.map(bean => {
-                let remaining = null;
-                if (bean.stock !== undefined && bean.stock !== null) {
-                    const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
-                    // Filter brews: match beanId, and created AFTER stock date
-                    const usedAmount = coffees
-                        .filter(c => c.beanId === bean.id && new Date(c.createdAt) > stockDate)
-                        .reduce((sum, c) => sum + (c.weight || 0), 0);
-                    remaining = parseFloat(bean.stock) - usedAmount;
-                }
+                const remaining = getBeanCalculatedStock(bean);
                 return { ...bean, calculatedStock: remaining };
             });
 
@@ -4559,12 +4671,14 @@
             if (!currentUser) return;
             try {
                 const stockVal = amount === '' ? null : parseFloat(amount);
+                const bean = beans.find(b => b.id === beanId);
+                const beansLeft = stockVal === null ? null : computeBeansLeft({ ...bean, stock: stockVal });
                 await updateDoc(doc(db, 'users', currentUser.uid, 'beans', beanId), {
                     stock: stockVal,
-                    stockUpdatedAt: new Date().toISOString()
+                    beansLeft: beansLeft,
+                    updatedAt: new Date().toISOString()
                 });
                 if (stockVal !== null && stockVal <= 0) {
-                    const bean = beans.find(b => b.id === beanId);
                     await autoUnpinClosedBagsIfEnabled({
                         beanIds: [beanId],
                         beanSignatures: [makeBeanSignature(bean)]
@@ -4689,7 +4803,7 @@
             const newBeanData = { ...sourceBean };
             delete newBeanData.id;
             delete newBeanData.stock;
-            delete newBeanData.stockUpdatedAt;
+            delete newBeanData.beansLeft;
             delete newBeanData.openedDate;
             delete newBeanData.frozenDate;
             delete newBeanData.roastDate;
@@ -4698,7 +4812,7 @@
             delete newBeanData.calculatedStock;
 
             newBeanData.stock = 250;
-            newBeanData.stockUpdatedAt = new Date().toISOString();
+            newBeanData.beansLeft = 250;
             newBeanData.frozen = false;
             newBeanData.archived = false;
             newBeanData.frozenDate = null;
@@ -6676,6 +6790,7 @@
                                 beanId: d.beanId,
                                 brew: d
                             });
+                            await updateBeansLeftForBean(d.beanId, [{ ...d, id: newRef.id, beanId: d.beanId }]);
                         }
                         const brewForPin = { ...d, id: newRef.id };
                         await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
@@ -6711,6 +6826,7 @@
                         beanId: d.beanId,
                         brew: d
                     });
+                    await updateBeansLeftForBean(d.beanId, [{ ...d, id: newRef.id, beanId: d.beanId }]);
                 }
                 const brewForPin = { ...d, id: newRef.id };
                 await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
@@ -6754,6 +6870,7 @@
                                 beanId: d.beanId,
                                 brew: d
                             });
+                            await updateBeansLeftForBean(d.beanId, [{ ...d, id: newRef.id, beanId: d.beanId }]);
                         }
                         const brewForPin = { ...d, id: newRef.id };
                         await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
@@ -6788,6 +6905,7 @@
                         beanId: d.beanId,
                         brew: d
                     });
+                    await updateBeansLeftForBean(d.beanId, [{ ...d, id: newRef.id, beanId: d.beanId }]);
                 }
                 const brewForPin = { ...d, id: newRef.id };
                 await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
@@ -7327,28 +7445,12 @@
             let decafIconSrc = 'img/decaf_dark.png';
             
             if (bean && bean.stock) {
-                const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
-                const clean = (s) => (s || '').toLowerCase().trim();
-                
-                const usedAmount = coffees
-                    .filter(refC => {
-                        if (refC.beanId && refC.beanId === bean.id) return new Date(refC.createdAt) > stockDate;
-                        if (!refC.beanId) {
-                            const match = clean(bean.roaster) === clean(refC.roaster) &&
-                                clean(bean.farmer) === clean(refC.farmer) &&
-                                clean(bean.origin) === clean(refC.origin) &&
-                                clean(bean.processing) === clean(refC.processing) &&
-                                clean(bean.variety) === clean(refC.variety) &&
-                                clean(bean.roastType) === clean(refC.roastType);
-                            return match && new Date(refC.createdAt) > stockDate;
-                        }
-                        return false;
-                    })
-                    .reduce((sum, refC) => sum + (refC.weight || 0), 0);
-
                 const initialStock = parseFloat(bean.stock);
-                const currentStock = Math.max(0, initialStock - usedAmount);
-                const stockPercentage = Math.min(100, Math.max(0, (currentStock / initialStock) * 100));
+                const currentStockRaw = getBeanCalculatedStock(bean);
+                const currentStock = Math.max(0, parseFloat(currentStockRaw));
+                const stockPercentage = (isNaN(initialStock) || initialStock <= 0 || isNaN(currentStock))
+                    ? 100
+                    : Math.min(100, Math.max(0, (currentStock / initialStock) * 100));
                 
                 if (stockPercentage < 100) {
                     const fullHeight = stockPercentage;
@@ -7448,28 +7550,12 @@
             let decafIconSrc = 'img/decaf_dark.png';
             
             if (bean && bean.stock) {
-                const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
-                const clean = (s) => (s || '').toLowerCase().trim();
-                
-                const usedAmount = coffees
-                    .filter(refC => {
-                        if (refC.beanId && refC.beanId === bean.id) return new Date(refC.createdAt) > stockDate;
-                        if (!refC.beanId) {
-                            const match = clean(bean.roaster) === clean(refC.roaster) &&
-                                clean(bean.farmer) === clean(refC.farmer) &&
-                                clean(bean.origin) === clean(refC.origin) &&
-                                clean(bean.processing) === clean(refC.processing) &&
-                                clean(bean.variety) === clean(refC.variety) &&
-                                clean(bean.roastType) === clean(refC.roastType);
-                            return match && new Date(refC.createdAt) > stockDate;
-                        }
-                        return false;
-                    })
-                    .reduce((sum, refC) => sum + (refC.weight || 0), 0);
-
                 const initialStock = parseFloat(bean.stock);
-                const currentStock = Math.max(0, initialStock - usedAmount);
-                const stockPercentage = Math.min(100, Math.max(0, (currentStock / initialStock) * 100));
+                const currentStockRaw = getBeanCalculatedStock(bean);
+                const currentStock = Math.max(0, parseFloat(currentStockRaw));
+                const stockPercentage = (isNaN(initialStock) || initialStock <= 0 || isNaN(currentStock))
+                    ? 100
+                    : Math.min(100, Math.max(0, (currentStock / initialStock) * 100));
                 
                 if (stockPercentage < 100) {
                     const fullHeight = stockPercentage;
@@ -7674,28 +7760,12 @@
 
                     if (linkedBean && linkedBean.stock) {
                         const bean = linkedBean;
-                        const stockDate = bean.stockUpdatedAt ? new Date(bean.stockUpdatedAt) : new Date(0);
-                        const clean = (s) => (s || '').toLowerCase().trim();
-                        
-                        const usedAmount = coffees
-                            .filter(refC => {
-                                if (refC.beanId && refC.beanId === bean.id) return new Date(refC.createdAt) > stockDate;
-                                if (!refC.beanId) {
-                                     const match = clean(bean.roaster) === clean(refC.roaster) &&
-                                         clean(bean.farmer) === clean(refC.farmer) &&
-                                         clean(bean.origin) === clean(refC.origin) &&
-                                         clean(bean.processing) === clean(refC.processing) &&
-                                         clean(bean.variety) === clean(refC.variety) &&
-                                         clean(bean.roastType) === clean(refC.roastType);
-                                     return match && new Date(refC.createdAt) > stockDate;
-                                }
-                                return false;
-                            })
-                            .reduce((sum, refC) => sum + (refC.weight || 0), 0);
-
                         const initialStock = parseFloat(bean.stock);
-                        const currentStock = Math.max(0, initialStock - usedAmount);
-                        const stockPercentage = Math.min(100, Math.max(0, (currentStock / initialStock) * 100));
+                        const currentStockRaw = getBeanCalculatedStock(bean);
+                        const currentStock = Math.max(0, parseFloat(currentStockRaw));
+                        const stockPercentage = (isNaN(initialStock) || initialStock <= 0 || isNaN(currentStock))
+                            ? 100
+                            : Math.min(100, Math.max(0, (currentStock / initialStock) * 100));
                         
                         if (stockPercentage < 100) {
                              const fullHeight = stockPercentage;
@@ -8043,7 +8113,8 @@
             showBeanForBrew,
             showCoffeeForBrew,
             openSelectedBeanForEdit,
-            openCoffeeFromBeanEdit
+            openCoffeeFromBeanEdit,
+            recalculateAllBeanStockLeft
         });
 
         const searchInput = document.getElementById('globalSearch'); 
