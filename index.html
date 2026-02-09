@@ -3439,6 +3439,7 @@
             const type = coffeeTypes.find(ct => ct.id === typeId);
             if (!type) return;
             currentCoffeeTypeId = type.id;
+            const isMine = currentView === 'mine';
 
             const farmer = type.farmer || 'Unknown';
             const roaster = type.roaster || '';
@@ -3471,6 +3472,8 @@
 
             const buyBtn = document.getElementById('coffeeTypeCardBuyBtn');
             const buyActionBtn = document.getElementById('coffeeTypeCardActionBuy');
+            const newBagBtn = document.getElementById('coffeeTypeCardNewBagBtn');
+            const newBagActionBtn = document.querySelector('#coffeeTypeCardActionMenu button[onclick*="openNewBagForCoffeeType"]');
             const shopUrl = type.webshopUrl || type.shopUrl || '';
             if (buyBtn) {
                 if (shopUrl) {
@@ -3494,10 +3497,13 @@
                     buyActionBtn.onclick = null;
                 }
             }
+            if (newBagBtn) newBagBtn.classList.toggle('hidden', !isMine);
+            if (newBagActionBtn) newBagActionBtn.classList.toggle('hidden', !isMine);
 
             document.getElementById('coffeeTypeCardView').classList.remove('hidden');
             document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
-            document.getElementById('coffeeTypeCardEditBtn').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardEditBtn').classList.toggle('hidden', !isMine);
+            document.getElementById('coffeeTypeCardMenuBtn').classList.toggle('hidden', !isMine);
             updateCoffeeTypeCardNav();
             document.getElementById('coffeeTypeCardOverlay').classList.remove('hidden');
         };
@@ -3506,7 +3512,8 @@
             if (event && event.target !== event.currentTarget) return;
             document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
             document.getElementById('coffeeTypeCardView').classList.remove('hidden');
-            document.getElementById('coffeeTypeCardEditBtn').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardEditBtn').classList.toggle('hidden', currentView !== 'mine');
+            document.getElementById('coffeeTypeCardMenuBtn').classList.toggle('hidden', currentView !== 'mine');
             document.getElementById('coffeeTypeCardOverlay').classList.add('hidden');
         };
 
@@ -3555,8 +3562,8 @@
         const cancelCoffeeTypeEditMode = () => {
             document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
             document.getElementById('coffeeTypeCardView').classList.remove('hidden');
-            document.getElementById('coffeeTypeCardEditBtn').classList.remove('hidden');
-            document.getElementById('coffeeTypeCardMenuBtn').classList.remove('hidden');
+            document.getElementById('coffeeTypeCardEditBtn').classList.toggle('hidden', currentView !== 'mine');
+            document.getElementById('coffeeTypeCardMenuBtn').classList.toggle('hidden', currentView !== 'mine');
         };
 
         const saveCoffeeTypeEdits = async () => {
@@ -3788,6 +3795,7 @@
             const empty = document.getElementById('coffeeTypesEmpty');
             tbody.innerHTML = '';
             renderCoffeeTypesActiveFilters();
+            const isMine = currentView === 'mine';
 
             if (!coffeeTypes.length) {
                 empty.classList.remove('hidden');
@@ -3837,23 +3845,23 @@
                                 <button onclick="openCoffeeTypeCard('${type.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card
                                 </button>
-                                <button onclick="openCoffeeTypeFromTableEdit('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                ${isMine ? `<button onclick="openCoffeeTypeFromTableEdit('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
-                                </button>
+                                </button>` : ''}
                                 ${buyBtn}
-                                <button onclick="openNewBagForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                ${isMine ? `<button onclick="openNewBagForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid fa-bag-shopping text-emerald-600 w-4"></i> New bag
-                                </button>
+                                </button>` : ''}
                                 <button onclick="showBeansForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to beans
                                 </button>
                                 <button onclick="showBrewsForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                     <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
                                 </button>
-                                <hr class="border-coffee-100 dark:border-[#44403c]">
+                                ${isMine ? `<hr class="border-coffee-100 dark:border-[#44403c]">
                                 <button onclick="deleteCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
                                     <i class="fa-solid fa-trash w-4"></i> Delete
-                                </button>
+                                </button>` : ''}
                             </div>
                         </div>
                     </td>
@@ -3892,6 +3900,7 @@
             if (!bean) return;
             document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden'));
             currentBeanCardId = bean.id;
+            const isMine = currentView === 'mine';
 
             const statusParts = [];
             if (bean.archived) statusParts.push('Archived');
@@ -3950,16 +3959,41 @@
             const coffeeActionBtn = document.getElementById('beanCardActionCoffee');
             const openBagActionBtn = document.getElementById('beanCardActionOpenBag');
             const deleteActionBtn = document.getElementById('beanCardActionDelete');
+            const editBtn = document.getElementById('beanCardEditBtn');
+            const menuBtn = document.getElementById('beanCardMenuBtn');
+            const freezeBtn = document.getElementById('beanCardFreezeBtn');
+            const archiveBtn = document.getElementById('beanCardArchiveBtn');
 
-            if (brewBtn) brewBtn.onclick = () => { closeBeanCard(null); openBrewWithBean(bean.id); };
-            if (openNewBagBtn) openNewBagBtn.onclick = () => openNewBag(bean.id);
-            if (deleteBtn) deleteBtn.onclick = () => { closeBeanCard(null); deleteBean(bean.id); };
+            if (brewBtn) {
+                brewBtn.onclick = () => { closeBeanCard(null); openBrewWithBean(bean.id); };
+                brewBtn.classList.toggle('hidden', !isMine);
+            }
+            if (openNewBagBtn) {
+                openNewBagBtn.onclick = () => openNewBag(bean.id);
+                openNewBagBtn.classList.toggle('hidden', !isMine);
+            }
+            if (deleteBtn) {
+                deleteBtn.onclick = () => { closeBeanCard(null); deleteBean(bean.id); };
+                deleteBtn.classList.toggle('hidden', !isMine);
+            }
             if (showBrewsBtn) showBrewsBtn.onclick = () => showBrewsForBean(bean.id);
-            if (brewActionBtn) brewActionBtn.onclick = () => { closeBeanCard(null); openBrewWithBean(bean.id); };
-            if (editActionBtn) editActionBtn.onclick = () => enterBeanEditMode();
+            if (brewActionBtn) {
+                brewActionBtn.onclick = () => { closeBeanCard(null); openBrewWithBean(bean.id); };
+                brewActionBtn.classList.toggle('hidden', !isMine);
+            }
+            if (editActionBtn) {
+                editActionBtn.onclick = () => enterBeanEditMode();
+                editActionBtn.classList.toggle('hidden', !isMine);
+            }
             if (brewsActionBtn) brewsActionBtn.onclick = () => showBrewsForBean(bean.id);
-            if (openBagActionBtn) openBagActionBtn.onclick = () => openNewBag(bean.id);
-            if (deleteActionBtn) deleteActionBtn.onclick = () => { closeBeanCard(null); deleteBean(bean.id); };
+            if (openBagActionBtn) {
+                openBagActionBtn.onclick = () => openNewBag(bean.id);
+                openBagActionBtn.classList.toggle('hidden', !isMine);
+            }
+            if (deleteActionBtn) {
+                deleteActionBtn.onclick = () => { closeBeanCard(null); deleteBean(bean.id); };
+                deleteActionBtn.classList.toggle('hidden', !isMine);
+            }
             if (showCoffeeBtn) {
                 if (bean.coffeeTypeId) {
                     showCoffeeBtn.disabled = false;
@@ -4005,6 +4039,10 @@
                 }
             }
 
+            if (editBtn) editBtn.classList.toggle('hidden', !isMine);
+            if (menuBtn) menuBtn.classList.toggle('hidden', !isMine);
+            if (freezeBtn) freezeBtn.classList.toggle('hidden', !isMine);
+            if (archiveBtn) archiveBtn.classList.toggle('hidden', !isMine);
             updateBeanCardActionButtons(bean);
             updateBeanCardNav();
 
@@ -4264,8 +4302,8 @@
         const cancelBeanEditMode = () => {
             document.getElementById('beanCardEdit').classList.add('hidden');
             document.getElementById('beanCardView').classList.remove('hidden');
-            document.getElementById('beanCardEditBtn').classList.remove('hidden');
-            document.getElementById('beanCardMenuBtn').classList.remove('hidden');
+            document.getElementById('beanCardEditBtn').classList.toggle('hidden', currentView !== 'mine');
+            document.getElementById('beanCardMenuBtn').classList.toggle('hidden', currentView !== 'mine');
         };
 
         const saveBeanCardEdits = async () => {
@@ -4464,6 +4502,7 @@
             const empty = document.getElementById('beansEmpty');
             tbody.innerHTML = '';
             renderBeansActiveFilters();
+            const isMine = currentView === 'mine';
             const searchTerm = beansSearch.trim().toLowerCase();
             const filteredBeans = beans.filter(bean => {
                 if (!searchTerm) return true;
@@ -4576,24 +4615,24 @@
                     <td class="px-4 py-3 text-center">${getRoastBadge(bean.roastType)}</td>
                     <td class="px-4 py-3 text-center">
                         <input type="number" step="1" value="${bean.stock || ''}" 
-                            onchange="saveBeanStock('${bean.id}', this.value)"
-                            class="w-20 text-center text-sm border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500" placeholder="-">
+                            ${isMine ? `onchange="saveBeanStock('${bean.id}', this.value)"` : 'disabled'}
+                            class="w-20 text-center text-sm border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="-">
                     </td>
                     <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${stockLeftDisplay}</td>
                     <td class="px-4 py-3 text-center">
                         <input type="date" value="${openedDateInputValue}"
-                            onchange="saveBeanOpenedDate('${bean.id}', this.value)"
-                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500">
+                            ${isMine ? `onchange="saveBeanOpenedDate('${bean.id}', this.value)"` : 'disabled'}
+                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed">
                     </td>
                     <td class="px-4 py-3 text-center">
                         <input type="date" value="${frozenDateInputValue}"
-                            onchange="saveBeanFrozenDate('${bean.id}', this.value)"
-                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500">
+                            ${isMine ? `onchange="saveBeanFrozenDate('${bean.id}', this.value)"` : 'disabled'}
+                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed">
                     </td>
                     <td class="px-4 py-3 text-center">
                         <input type="date" value="${roastDateInputValue}"
-                            onchange="saveBeanRoastDate('${bean.id}', this.value)"
-                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500">
+                            ${isMine ? `onchange="saveBeanRoastDate('${bean.id}', this.value)"` : 'disabled'}
+                            class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed">
                     </td>
                     <td class="px-4 py-3 text-center">
                          <div class="relative inline-block">
@@ -4605,17 +4644,17 @@
                                      <i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card
                                  </button>
                                  ${buyMoreBtn}
-                                 <button onclick="openBeanCard('${bean.id}', event); enterBeanEditMode();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                 ${isMine ? `<button onclick="openBeanCard('${bean.id}', event); enterBeanEditMode();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                      <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
-                                 </button>
-                                 <button onclick="openBrewWithBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                 </button>` : ''}
+                                 ${isMine ? `<button onclick="openBrewWithBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                      <i class="fa-solid fa-mug-saucer text-coffee-600 w-4"></i> Brew
-                                 </button>
+                                 </button>` : ''}
                                  <button onclick="showBrewsForBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                      <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
                                  </button>
                                  ${goToCoffeeBtn}
-                                 <button onclick="openNewBag('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                 ${isMine ? `<button onclick="openNewBag('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                      <i class="fa-solid fa-bag-shopping text-green-600 w-4"></i> New bag
                                  </button>
                                  <button onclick="toggleBeanFrozen('${bean.id}', ${bean.frozen ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
@@ -4627,7 +4666,7 @@
                                  <hr class="border-coffee-100 dark:border-[#44403c]">
                                  <button onclick="deleteBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
                                      <i class="fa-solid fa-trash w-4"></i> Delete
-                                 </button>
+                                 </button>` : ''}
                              </div>
                          </div>
                     </td>
