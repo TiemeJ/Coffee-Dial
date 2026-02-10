@@ -3049,9 +3049,25 @@
             if (!currentUser || !beanId) return;
             const bean = beans.find(b => b.id === beanId);
             if (!bean) return;
-            const combined = extraBrews && extraBrews.length
-                ? [...coffees, ...extraBrews.filter(b => b && b.beanId === beanId)]
-                : coffees;
+            let combined = coffees;
+            if (extraBrews && extraBrews.length) {
+                const relevantExtraBrews = extraBrews.filter(b => b && b.beanId === beanId);
+                if (relevantExtraBrews.length) {
+                    combined = [...coffees];
+                    relevantExtraBrews.forEach((extra) => {
+                        if (extra.id) {
+                            const existingIdx = combined.findIndex(c => c.id === extra.id);
+                            if (existingIdx !== -1) {
+                                combined[existingIdx] = { ...combined[existingIdx], ...extra };
+                            } else {
+                                combined.push(extra);
+                            }
+                        } else {
+                            combined.push(extra);
+                        }
+                    });
+                }
+            }
             const beansLeft = computeBeansLeft(bean, combined);
             if (beansLeft === null || isNaN(beansLeft)) return;
             const nowIso = new Date().toISOString();
