@@ -2722,7 +2722,9 @@
                         updatedAt: nowIso
                     };
                     const typeRef = await addDoc(collection(db, 'users', currentUser.uid, 'coffeeTypes'), typeData);
-                    coffeeTypes.push({ id: typeRef.id, ...typeData });
+                    if (!coffeeTypes.find(ct => ct.id === typeRef.id)) {
+                        coffeeTypes.push({ id: typeRef.id, ...typeData });
+                    }
                     return { id: typeRef.id, created: true };
                 };
                 
@@ -3816,6 +3818,9 @@
             const normalizeText = (value) => (value || '').toString().toLowerCase().trim();
             const searchValue = normalizeText(coffeeTypesSearch);
             const hasSearch = searchValue.length > 0;
+            const uniqueCoffeeTypes = [...new Map(
+                coffeeTypes.map((type, idx) => [type?.id || `__idx_${idx}`, type])
+            ).values()];
 
             const matchesQuickFilters = (type) => {
                 return Object.entries(coffeeTypesFilters).every(([key, value]) => {
@@ -3825,7 +3830,7 @@
                 });
             };
 
-            const filteredTypes = coffeeTypes.filter(type => {
+            const filteredTypes = uniqueCoffeeTypes.filter(type => {
                 const roaster = normalizeText(type.roaster);
                 const farmer = normalizeText(type.farmer);
                 const origin = normalizeText(type.origin);
