@@ -2126,7 +2126,7 @@
                     frozen: false,
                     stock: 250,
                     beansLeft: 250,
-                    openedDate: nowIso,
+                    openedDate: null,
                     imageURL: imageURL
                 };
 
@@ -2798,6 +2798,21 @@
                 }
 
                 if (didSaveBrew && selectedBeanId) {
+                    const selectedBean = beans.find(b => b.id === selectedBeanId);
+                    if (selectedBean && !selectedBean.openedDate) {
+                        const firstBrewDate = getFirstBrewDateForBean(selectedBeanId, { ...d, id: savedBrewId, beanId: selectedBeanId }, savedBrewId);
+                        if (firstBrewDate) {
+                            const nowIso = new Date().toISOString();
+                            await updateDoc(doc(db, 'users', currentUser.uid, 'beans', selectedBeanId), {
+                                openedDate: firstBrewDate,
+                                updatedAt: nowIso
+                            });
+                            const beanIdx = beans.findIndex(b => b.id === selectedBeanId);
+                            if (beanIdx !== -1) {
+                                beans[beanIdx] = { ...beans[beanIdx], openedDate: firstBrewDate, updatedAt: nowIso };
+                            }
+                        }
+                    }
                     await archiveBeanIfStockDepleted({
                         beanId: selectedBeanId,
                         brew: d,
@@ -2929,7 +2944,7 @@
                 frozen: false,
                 stock: 250,
                 beansLeft: 250,
-                openedDate: nowIso,
+                openedDate: null,
                 frozenDate: null,
                 roastDate: null,
                 createdAt: nowIso,
@@ -2998,6 +3013,36 @@
                 return sum + (isNaN(weight) ? 0 : weight);
             }, 0);
             return stockBase - totalIn;
+        };
+
+        const getFirstBrewDateForBean = (beanId, brew = null, existingBrewId = null) => {
+            if (!beanId) return null;
+            let brewsForBean = coffees.filter(c => c.beanId === beanId);
+
+            if (brew) {
+                const existing = existingBrewId ? coffees.find(c => c.id === existingBrewId) : null;
+                const createdAt = brew.createdAt || existing?.createdAt || new Date().toISOString();
+                const brewForDate = { ...existing, ...brew, beanId, createdAt };
+
+                if (existingBrewId) {
+                    const hadExisting = brewsForBean.some(c => c.id === existingBrewId);
+                    brewsForBean = hadExisting
+                        ? brewsForBean.map(c => c.id === existingBrewId ? brewForDate : c)
+                        : [...brewsForBean, brewForDate];
+                } else {
+                    brewsForBean = [...brewsForBean, brewForDate];
+                }
+            }
+
+            const brewTimes = brewsForBean
+                .map(c => {
+                    const time = new Date(c.createdAt || '').getTime();
+                    return Number.isFinite(time) ? time : null;
+                })
+                .filter(time => time !== null);
+
+            if (!brewTimes.length) return null;
+            return new Date(Math.min(...brewTimes)).toISOString();
         };
 
         const updateBeansLeftForBean = async (beanId, extraBrews = []) => {
@@ -3288,7 +3333,7 @@
                 frozen: false,
                 stock: 250,
                 beansLeft: 250,
-                openedDate: nowIso,
+                openedDate: null,
                 frozenDate: null,
                 roastDate: null,
                 createdAt: nowIso,
@@ -4868,7 +4913,7 @@
             newBeanData.frozen = false;
             newBeanData.archived = false;
             newBeanData.frozenDate = null;
-            newBeanData.openedDate = new Date().toISOString();
+            newBeanData.openedDate = null;
             newBeanData.createdAt = new Date().toISOString();
             newBeanData.updatedAt = new Date().toISOString();
 
