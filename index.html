@@ -3898,6 +3898,7 @@
             if(ev) ev.stopPropagation();
             const bean = beans.find(b => b.id === beanId);
             if (!bean) return;
+            const coffeeDisplay = getBeanCoffeeTypeDisplay(bean);
             document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden'));
             currentBeanCardId = bean.id;
             const isMine = currentView === 'mine';
@@ -3921,12 +3922,12 @@
             const stockLeftDisplay = stockLeft === null || isNaN(stockLeft) ? '-' : `${stockLeft.toFixed(1)}g`;
             const stockDisplay = bean.stock === undefined || bean.stock === null || bean.stock === '' ? '-' : `${bean.stock}g`;
 
-            document.getElementById('beanCardTitle').textContent = bean.farmer || '-';
-            document.getElementById('beanCardSubtitle').textContent = bean.roaster || 'Unknown Roaster';
-            document.getElementById('beanCardOrigin').textContent = bean.origin || '-';
-            document.getElementById('beanCardProcess').textContent = bean.processing || '-';
-            document.getElementById('beanCardVariety').textContent = bean.variety || '-';
-            document.getElementById('beanCardRoast').textContent = bean.roastType || '-';
+            document.getElementById('beanCardTitle').textContent = coffeeDisplay.farmer;
+            document.getElementById('beanCardSubtitle').textContent = coffeeDisplay.roaster !== '-' ? coffeeDisplay.roaster : 'Unknown Roaster';
+            document.getElementById('beanCardOrigin').textContent = coffeeDisplay.origin;
+            document.getElementById('beanCardProcess').textContent = coffeeDisplay.processing;
+            document.getElementById('beanCardVariety').textContent = coffeeDisplay.variety;
+            document.getElementById('beanCardRoast').textContent = coffeeDisplay.roastType;
             document.getElementById('beanCardStock').textContent = stockDisplay;
             document.getElementById('beanCardStockLeft').textContent = stockLeftDisplay;
             document.getElementById('beanCardStatus').textContent = statusParts.join(' • ');
@@ -4506,21 +4507,14 @@
             const searchTerm = beansSearch.trim().toLowerCase();
             const filteredBeans = beans.filter(bean => {
                 if (!searchTerm) return true;
-                const type = bean.coffeeTypeId ? coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) : null;
+                const coffeeDisplay = getBeanCoffeeTypeDisplay(bean);
                 const haystack = [
-                    bean.roaster,
-                    bean.farmer,
-                    bean.origin,
-                    bean.processing,
-                    bean.variety,
-                    bean.roastType,
-                    type?.roaster,
-                    type?.farmer,
-                    type?.origin,
-                    type?.processing,
-                    type?.variety,
-                    type?.roast,
-                    type?.roastType
+                    coffeeDisplay.roaster,
+                    coffeeDisplay.farmer,
+                    coffeeDisplay.origin,
+                    coffeeDisplay.processing,
+                    coffeeDisplay.variety,
+                    coffeeDisplay.roastType
                 ].filter(Boolean).join(' ').toLowerCase();
                 return haystack.includes(searchTerm);
             });
@@ -4578,17 +4572,18 @@
                 const tr = document.createElement('tr');
                 tr.className = "bg-white dark:bg-[#292524] border-b border-coffee-50 dark:border-[#34302e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors";
                 tr.ondblclick = (e) => openBeanCard(bean.id, e);
+                const coffeeDisplay = getBeanCoffeeTypeDisplay(bean);
                 
                 let stockLeftDisplay = '-';
                 if (bean.calculatedStock !== null) {
                      stockLeftDisplay = bean.calculatedStock.toFixed(1) + 'g';
                 }
 
-                const roaster = bean.roaster || 'Unknown';
-                const farmer = bean.farmer || '-';
-                const origin = bean.origin || '-';
-                const process = bean.processing || '-';
-                const variety = bean.variety ? `<br><span class="text-xs text-coffee-500">${bean.variety}</span>` : '';
+                const roaster = coffeeDisplay.roaster !== '-' ? coffeeDisplay.roaster : 'Unknown';
+                const farmer = coffeeDisplay.farmer;
+                const origin = coffeeDisplay.origin;
+                const process = coffeeDisplay.processing;
+                const variety = coffeeDisplay.variety !== '-' ? `<br><span class="text-xs text-coffee-500">${coffeeDisplay.variety}</span>` : '';
                 const openedDateInputValue = formatBeanDateForInput(bean.openedDate);
                 const frozenDateInputValue = formatBeanDateForInput(bean.frozenDate);
                 const roastDateInputValue = formatBeanDateForInput(bean.roastDate);
@@ -4612,7 +4607,7 @@
                     <td class="px-4 py-3 font-medium text-coffee-900 dark:text-white">${farmer}<br><span class="text-xs text-coffee-500">${roaster}</span></td>
                     <td class="px-4 py-3">${origin}</td>
                     <td class="px-4 py-3">${process}${variety}</td>
-                    <td class="px-4 py-3 text-center">${getRoastBadge(bean.roastType)}</td>
+                    <td class="px-4 py-3 text-center">${getRoastBadge(coffeeDisplay.roastType)}</td>
                     <td class="px-4 py-3 text-center">
                         <input type="number" step="1" value="${bean.stock || ''}" 
                             ${isMine ? `onchange="saveBeanStock('${bean.id}', this.value)"` : 'disabled'}
@@ -6302,6 +6297,23 @@
                 processing: type?.processing || brew?.processing || '-',
                 variety: type?.variety || brew?.variety || '-',
                 roastType: type?.roast || type?.roastType || brew?.roastType || '-'
+            };
+        };
+
+        const getCoffeeTypeForBean = (bean) => {
+            if (!bean || !bean.coffeeTypeId) return null;
+            return coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) || null;
+        };
+
+        const getBeanCoffeeTypeDisplay = (bean) => {
+            const type = getCoffeeTypeForBean(bean);
+            return {
+                roaster: type?.roaster || bean?.roaster || '-',
+                farmer: type?.farmer || bean?.farmer || '-',
+                origin: type?.origin || bean?.origin || '-',
+                processing: type?.processing || bean?.processing || '-',
+                variety: type?.variety || bean?.variety || '-',
+                roastType: type?.roast || type?.roastType || bean?.roastType || '-'
             };
         };
 
