@@ -1172,9 +1172,6 @@ export function initCoffeeScale() {
     swirls = [];
     pourCount = 0;
     swirlCount = 0;
-    postSwirlAwaitingStable = false;
-    postSwirlStableCount = 0;
-    postSwirlStableWeight = null;
     renderEventLog();
     const timeField = document.getElementById("time");
     if (timeField) {
@@ -1186,8 +1183,8 @@ export function initCoffeeScale() {
     }
     const outField = document.getElementById("inputYield");
     if (outField) {
-      outField.value = 0;
-      outField.dispatchEvent(new Event("input", { bubbles: true }));
+      outField.value = "";
+      if (graphInputYieldEl) graphInputYieldEl.value = "";
     }
   }
 
@@ -1383,7 +1380,8 @@ export function initCoffeeScale() {
     }
   }
 
-  function setTimerRunningState(running) {
+  function setTimerRunningState(running, options = {}) {
+    const { skipFinalizeMetrics = false } = options;
     timerRunning = running;
     timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
     updateTimerIcon();
@@ -1396,15 +1394,17 @@ export function initCoffeeScale() {
     } else {
       stopLiveTimer();
       stopCapture();
-      const outField = document.getElementById("inputYield");
-      const timeField = document.getElementById("time");
-      const finalWeight = outField ? parseFloat(outField.value) : NaN;
-      const totalSeconds = timeField ? parseFloat(timeField.value) : NaN;
-      if (graphAvgFlowEl) {
-        if (Number.isFinite(finalWeight) && Number.isFinite(totalSeconds) && totalSeconds > 0) {
-          const avgFlow = finalWeight / totalSeconds;
-          graphAvgFlowEl.value = avgFlow.toFixed(1);
-          graphAvgFlowEl.dispatchEvent(new Event("input", { bubbles: true }));
+      if (!skipFinalizeMetrics) {
+        const outField = document.getElementById("inputYield");
+        const timeField = document.getElementById("time");
+        const finalWeight = outField ? parseFloat(outField.value) : NaN;
+        const totalSeconds = timeField ? parseFloat(timeField.value) : NaN;
+        if (graphAvgFlowEl) {
+          if (Number.isFinite(finalWeight) && Number.isFinite(totalSeconds) && totalSeconds > 0) {
+            const avgFlow = finalWeight / totalSeconds;
+            graphAvgFlowEl.value = avgFlow.toFixed(1);
+            graphAvgFlowEl.dispatchEvent(new Event("input", { bubbles: true }));
+          }
         }
       }
       setFlow(NaN);
@@ -1665,7 +1665,7 @@ export function initCoffeeScale() {
         return;
       }
 
-      setTimerRunningState(false);
+      setTimerRunningState(false, { skipFinalizeMetrics: true });
       resetLiveTimer();
       resetCaptureData();
       resetGraphMetrics();
@@ -1757,32 +1757,24 @@ export function initCoffeeScale() {
   }
 
   async function handleResetScaleClick() {
-    if (!isConnected) {
-      if (typeof window.openConnectScaleModal === "function") {
-        window.openConnectScaleModal();
-      } else if (typeof window.openCoffeeScaleModal === "function") {
-        window.openCoffeeScaleModal();
+    if (isConnected && writeChar) {
+      try {
+        await enqueueWrite(scaleType === "GENERIC" ? TARE_GENERIC : TARE_ACAIA);
+        if (scaleType === "OLD" || scaleType === "NEW") {
+          await enqueueWrite(RESET_TIMER_ACAIA);
+        } else if (scaleType === "GENERIC") {
+          await enqueueWrite(RESET_TIMER_BOOKOO);
+        }
+      } catch (err) {
+        console.warn("Reset scale failed", err);
       }
-      return;
     }
 
-    if (!writeChar) return;
-
-    try {
-      await enqueueWrite(scaleType === "GENERIC" ? TARE_GENERIC : TARE_ACAIA);
-      if (scaleType === "OLD" || scaleType === "NEW") {
-        await enqueueWrite(RESET_TIMER_ACAIA);
-      } else if (scaleType === "GENERIC") {
-        await enqueueWrite(RESET_TIMER_BOOKOO);
-      }
-
-      setTimerRunningState(false);
-      resetLiveTimer();
-      resetCaptureData();
-      resetGraphMetrics();
-    } catch (err) {
-      console.warn("Reset scale failed", err);
-    }
+    // Always clear local extraction state/graph, even when no scale is connected.
+    setTimerRunningState(false, { skipFinalizeMetrics: true });
+    resetLiveTimer();
+    resetCaptureData();
+    resetGraphMetrics();
   }
 
   async function handleTimerIconClick() {
