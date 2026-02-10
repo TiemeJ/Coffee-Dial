@@ -2119,12 +2119,6 @@
                 };
 
                 const beanData = {
-                    roaster: data.roaster || '',
-                    farmer: data.farmer || '',
-                    origin: data.origin || '',
-                    variety: data.variety || '',
-                    processing: data.processing || '',
-                    roastType: data.roastType || '',
                     coffeeTypeId: typeRef.id,
                     createdAt: nowIso,
                     updatedAt: nowIso,
@@ -2388,13 +2382,18 @@
             // Sort beans by Roaster name
             beans
                 .filter(bean => !bean.archived && !bean.frozen)
-                .sort((a,b) => (a.roaster || '').localeCompare(b.roaster || ''))
+                .sort((a,b) => {
+                    const aDisplay = getBeanCoffeeTypeDisplay(a);
+                    const bDisplay = getBeanCoffeeTypeDisplay(b);
+                    return (aDisplay.roaster || '').localeCompare(bDisplay.roaster || '');
+                })
                 .forEach(bean => {
                 const option = document.createElement('option');
                 option.value = bean.id;
                 // Construct display text
-                const roaster = bean.roaster || 'Unknown';
-                const farmer = bean.farmer ? ` - ${bean.farmer}` : '';
+                const display = getBeanCoffeeTypeDisplay(bean);
+                const roaster = display.roaster !== '-' ? display.roaster : 'Unknown';
+                const farmer = display.farmer !== '-' ? ` - ${display.farmer}` : '';
                 const roastDate = formatRoastDate(bean.openedDate);
                 const roastDateLabel = roastDate ? ` (${roastDate})` : '';
                 option.text = `${roaster}${farmer}${roastDateLabel}`;
