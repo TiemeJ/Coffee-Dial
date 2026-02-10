@@ -2348,6 +2348,9 @@
                 coffeeTypes = [];
                 snapshot.forEach(doc => coffeeTypes.push({ id: doc.id, ...doc.data() }));
                 updateCoffeeTypeSelectors();
+                if (isMine) {
+                    updateBeanDropdown();
+                }
                 if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
                     renderCoffeeTypesTable();
                 }
@@ -2357,6 +2360,9 @@
                 console.error("Error loading coffees:", error);
                 coffeeTypes = [];
                 updateCoffeeTypeSelectors();
+                if (isMine) {
+                    updateBeanDropdown();
+                }
                 if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
                     renderCoffeeTypesTable();
                 }
