@@ -264,6 +264,24 @@ export function initCoffeeScale() {
     });
   }
 
+  function getFirstDripSecondsFromState() {
+    if (!Number.isFinite(firstDripCapturedAt)) return null;
+    return Math.round(firstDripCapturedAt / 1000);
+  }
+
+  function syncFirstDripInputFromState() {
+    if (!graphFirstDripEl) return;
+    const firstDripSeconds = getFirstDripSecondsFromState();
+    graphFirstDripEl.value = Number.isFinite(firstDripSeconds) ? String(firstDripSeconds) : "";
+  }
+
+  function setFirstDripSeconds(seconds) {
+    const parsed = Number(seconds);
+    firstDripCapturedAt = Number.isFinite(parsed) ? parsed * 1000 : null;
+    syncFirstDripInputFromState();
+    renderGraph();
+  }
+
   function renderGraphTo(targetEl, dataOverride = null) {
     if (!targetEl) return;
     const ctx = targetEl.getContext("2d");
@@ -280,7 +298,7 @@ export function initCoffeeScale() {
 
     const captureData = dataOverride?.capture || capture;
     const flowData = dataOverride?.flowCapture || flowCapture;
-    const firstDripSource = dataOverride?.firstDrip ?? graphFirstDripEl?.value;
+    const firstDripSource = dataOverride?.firstDrip ?? getFirstDripSecondsFromState();
     const firstDripSeconds = Number.isFinite(Number(firstDripSource)) ? Number(firstDripSource) : null;
     const elapsedSecondsSource = dataOverride?.elapsedSeconds;
     let elapsedSeconds = Number.isFinite(Number(elapsedSecondsSource)) ? Number(elapsedSecondsSource) : null;
@@ -791,12 +809,7 @@ export function initCoffeeScale() {
     pourStartWeight = null;
     pourMaxFlow = null;
     pours = [];
-    if (graphFirstDripEl && graphFirstDripEl.value !== "") {
-      const existingFirstDrip = Number(graphFirstDripEl.value);
-      if (Number.isFinite(existingFirstDrip)) {
-        firstDripCapturedAt = existingFirstDrip * 1000;
-      }
-    }
+    syncFirstDripInputFromState();
     updateCaptureOutput();
     updateFlowOutput();
     updateRawOutput();
@@ -874,10 +887,8 @@ export function initCoffeeScale() {
 
       if (firstDripCapturedAt === null && Number.isFinite(effectiveWeight) && effectiveWeight > FIRST_DRIP_THRESHOLD) {
         firstDripCapturedAt = elapsedMs;
-        if (graphFirstDripEl) {
-          graphFirstDripEl.value = String(Math.round(elapsedMs / 1000));
-          graphFirstDripEl.dispatchEvent(new Event("input", { bubbles: true }));
-        }
+        syncFirstDripInputFromState();
+        if (graphFirstDripEl) graphFirstDripEl.dispatchEvent(new Event("input", { bubbles: true }));
       }
 
       capture.samples.push({
@@ -1065,6 +1076,7 @@ export function initCoffeeScale() {
     pourMaxFlow = null;
     pours = [];
     renderEventLog();
+    syncFirstDripInputFromState();
     setFlow(NaN);
     updateCaptureOutput();
     updateFlowOutput();
@@ -1081,6 +1093,7 @@ export function initCoffeeScale() {
     capture = data.capture || { startAt: null, samples: [] };
     flowCapture = data.flowCapture || { startAt: capture.startAt, samples: [] };
     rawSamples = (data.rawCapture && data.rawCapture.samples) ? data.rawCapture.samples : [];
+    firstDripCapturedAt = Number.isFinite(Number(data.firstDrip)) ? Number(data.firstDrip) * 1000 : null;
     flowPrevWeight = null;
     lastInterpolatedWeight = null;
     flowHistory = [];
@@ -1095,6 +1108,7 @@ export function initCoffeeScale() {
     updateCaptureOutput();
     updateFlowOutput();
     updateRawOutput();
+    syncFirstDripInputFromState();
     renderGraph();
   }
 
@@ -1178,7 +1192,7 @@ export function initCoffeeScale() {
   }
 
   function resetGraphMetrics() {
-    if (graphFirstDripEl) graphFirstDripEl.value = "";
+    syncFirstDripInputFromState();
     if (graphMaxFlowEl) graphMaxFlowEl.value = "";
     if (graphAvgFlowEl) graphAvgFlowEl.value = "";
     renderEventLog();
@@ -1980,6 +1994,18 @@ export function initCoffeeScale() {
       lastFocusedField = "out";
     });
   }
+  if (graphFirstDripEl) {
+    graphFirstDripEl.addEventListener("input", () => {
+      const value = graphFirstDripEl.value;
+      if (value === "") {
+        firstDripCapturedAt = null;
+      } else {
+        const parsed = Number(value);
+        firstDripCapturedAt = Number.isFinite(parsed) ? parsed * 1000 : firstDripCapturedAt;
+      }
+      renderGraph();
+    });
+  }
 
   function setGraphTogglePrefs(prefs) {
     const next = prefs && typeof prefs === "object" ? { ...prefs } : {};
@@ -2008,6 +2034,8 @@ export function initCoffeeScale() {
     applyGraphTogglePrefsForMethod,
     setGraphTogglePrefs,
     setGraphTogglePrefsSaver,
+    getFirstDripSeconds: getFirstDripSecondsFromState,
+    setFirstDripSeconds,
     getGraphEventStats: () => {
       const pourCountValue = pours.length;
       const swirlCountValue = swirls.length;

@@ -2631,7 +2631,8 @@
             const firstDripEl = document.getElementById('graphFirstDrip');
             const maxFlowEl = document.getElementById('graphMaxFlow');
             const avgFlowEl = document.getElementById('graphAvgFlow');
-            d.firstDrip = parseNum(firstDripEl ? firstDripEl.value : null);
+            const firstDripFromState = window.coffeeScale?.getFirstDripSeconds?.();
+            d.firstDrip = Number.isFinite(Number(firstDripFromState)) ? Number(firstDripFromState) : parseNum(firstDripEl ? firstDripEl.value : null);
             d.maxFlow = parseNum(maxFlowEl ? maxFlowEl.value : null);
             d.avgFlow = parseNum(avgFlowEl ? avgFlowEl.value : null);
 
@@ -2640,6 +2641,18 @@
                 d.scaleCapture = scaleCaptureData.capture;
                 d.scaleFlowCapture = scaleCaptureData.flowCapture;
                 d.scaleRawCapture = scaleCaptureData.rawCapture;
+                if (d.firstDrip === null) {
+                    const firstDripThreshold = 0;
+                    const samples = Array.isArray(scaleCaptureData.capture?.samples) ? scaleCaptureData.capture.samples : [];
+                    const firstDripSample = samples.find(sample =>
+                        Number.isFinite(sample?.w) &&
+                        sample.w > firstDripThreshold &&
+                        Number.isFinite(sample?.tMs)
+                    );
+                    if (firstDripSample) {
+                        d.firstDrip = Math.round(firstDripSample.tMs / 1000);
+                    }
+                }
             }
             const graphStats = window.coffeeScale?.getGraphEventStats?.();
             if (graphStats) {
@@ -6790,7 +6803,8 @@
                 const graphData = (c.scaleCapture || c.scaleFlowCapture || c.scaleRawCapture) ? {
                     capture: c.scaleCapture || { startAt: null, samples: [] },
                     flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
-                    rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] }
+                    rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
+                    firstDrip: c.firstDrip
                 } : null;
                 window.coffeeScale.setCaptureData(graphData);
             }
@@ -6799,7 +6813,8 @@
             const firstDripEl = document.getElementById('graphFirstDrip');
             const maxFlowEl = document.getElementById('graphMaxFlow');
             const avgFlowEl = document.getElementById('graphAvgFlow');
-            if (firstDripEl) firstDripEl.value = (c.firstDrip ?? '');
+            if (window.coffeeScale?.setFirstDripSeconds) window.coffeeScale.setFirstDripSeconds(c.firstDrip ?? null);
+            else if (firstDripEl) firstDripEl.value = (c.firstDrip ?? '');
             if (maxFlowEl) maxFlowEl.value = (c.maxFlow ?? '');
             if (avgFlowEl) avgFlowEl.value = (c.avgFlow ?? '');
         }
