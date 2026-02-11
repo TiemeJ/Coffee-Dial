@@ -956,6 +956,10 @@
                             <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Created</span>
                             <span id="coffeeTypeCardCreated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
                         </div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Taste Notes</span>
+                            <p id="coffeeTypeCardTasteNotes" class="text-sm text-coffee-700 dark:text-[#d6ccc2] italic bg-yellow-50 dark:bg-yellow-900/10 p-2 rounded-lg border border-yellow-100 dark:border-yellow-900/20"></p>
+                        </div>
                     </div>
                 </div>
                 </div>
@@ -1024,6 +1028,10 @@
                     <div class="sm:col-span-2">
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Web Shop URL</label>
                         <input id="coffeeTypeEditShopUrl" type="url" placeholder="https://" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Taste Notes</label>
+                        <textarea id="coffeeTypeEditTasteNotes" rows="3" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white"></textarea>
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
@@ -3720,6 +3728,7 @@
             const variety = type.variety || '-';
             const rating = parseInt(type.rating, 10) || 0;
             const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
+            const tasteNotes = (type.tasteNotes || '').trim();
 
             document.getElementById('coffeeTypeCardTitle').textContent = farmer;
             document.getElementById('coffeeTypeCardSubtitle').textContent = roaster;
@@ -3729,6 +3738,7 @@
             document.getElementById('coffeeTypeCardProcess').textContent = processing;
             document.getElementById('coffeeTypeCardVariety').textContent = variety;
             document.getElementById('coffeeTypeCardCreated').textContent = createdAt;
+            document.getElementById('coffeeTypeCardTasteNotes').textContent = tasteNotes || '-';
 
             const imageUrl = type.imageUrl || type.imageURL;
             const imgEl = document.getElementById('coffeeTypeCardImage');
@@ -3825,6 +3835,7 @@
             document.getElementById('coffeeTypeEditRoast').value = type.roast || type.roastType || '';
             document.getElementById('coffeeTypeEditRating').value = (parseInt(type.rating, 10) || '');
             document.getElementById('coffeeTypeEditShopUrl').value = type.webshopUrl || type.shopUrl || '';
+            document.getElementById('coffeeTypeEditTasteNotes').value = type.tasteNotes || '';
 
             document.getElementById('coffeeTypeCardView').classList.add('hidden');
             document.getElementById('coffeeTypeCardEdit').classList.remove('hidden');
@@ -3852,6 +3863,7 @@
                 roast: document.getElementById('coffeeTypeEditRoast').value || '',
                 rating: parseInt(document.getElementById('coffeeTypeEditRating').value, 10) || 0,
                 webshopUrl: document.getElementById('coffeeTypeEditShopUrl').value || '',
+                tasteNotes: document.getElementById('coffeeTypeEditTasteNotes').value || '',
                 updatedAt: nowIso
             };
 
