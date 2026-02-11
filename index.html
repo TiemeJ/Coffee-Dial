@@ -1035,7 +1035,7 @@
             <div id="coffeeCardContent" class="bg-white dark:bg-[#292524] w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" onclick="event.stopPropagation(); if (!event.target.closest('.action-menu') && !event.target.closest('.action-menu-toggle')) closeCoffeeCardMenu()">
                 <div class="bg-coffee-100 dark:bg-[#1c1917] p-5 border-b border-coffee-200 dark:border-[#44403c] relative">
                     <div class="absolute top-4 right-4 flex items-center gap-2">
-                        <button id="coffeeCardEditBtn" onclick="editBrewFromCard()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
+                        <button id="coffeeCardEditBtn" onclick="editBrewFromCard()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Quick edit">
                             <i class="fa-solid fa-pen-to-square text-lg"></i>
                         </button>
                         <button id="cardCloseBtn" onclick="closeCoffeeCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
@@ -1050,6 +1050,7 @@
                     </div>
                     <div class="pr-6"><h3 id="cardRoaster" class="text-xl font-bold text-coffee-900 dark:text-white leading-tight mb-1"></h3><div id="cardRating" class="text-sm"></div></div>
                 </div>
+                <div id="coffeeCardView" class="flex-1 flex flex-col min-h-0">
                 <div class="p-5 overflow-y-auto space-y-5">
                     <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                         <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Origin</span><span id="cardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
@@ -1108,6 +1109,80 @@
                                 <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
+                    </div>
+                </div>
+                </div>
+                <div id="coffeeCardQuickEdit" class="hidden flex-1 flex flex-col min-h-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Bean</label>
+                            <select id="quickEditBeanId" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                                <option value="">-- no bean --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Method</label>
+                            <input id="quickEditMethod" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Drink</label>
+                            <input id="quickEditDrink" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Grinder</label>
+                            <input id="quickEditGrinder" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Grind</label>
+                            <input id="quickEditGrind" type="number" step="any" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">In (g)</label>
+                            <input id="quickEditWeight" type="number" step="any" oninput="handleQuickEditRecipeInput('weight')" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Out (g)</label>
+                            <input id="quickEditYield" type="number" step="any" oninput="handleQuickEditRecipeInput('yield')" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Ratio</label>
+                            <input id="quickEditRatio" type="number" step="any" readonly class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-coffee-50 dark:bg-[#201d1b] text-coffee-900 dark:text-white cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Time (sec)</label>
+                            <input id="quickEditTime" type="number" step="any" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Temp</label>
+                            <input id="quickEditTemp" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Rating</label>
+                            <select id="quickEditRating" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Notes</label>
+                            <input id="quickEditNotes" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Improve</label>
+                            <input id="quickEditImprove" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div class="sm:col-span-2 flex items-center gap-2">
+                            <input id="quickEditIsActive" type="checkbox" class="toggle-checkbox w-5 h-5">
+                            <label for="quickEditIsActive" class="text-sm text-coffee-700 dark:text-[#d6ccc2]">Pin to Active</label>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
+                        <button onclick="cancelBrewQuickEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+                        <button onclick="saveBrewQuickEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
                     </div>
                 </div>
             </div>
@@ -6312,6 +6387,25 @@
         };
 
         const handleRecipeInput = (s) => { const w=document.getElementById('inputWeight'),r=document.getElementById('inputRatio'),y=document.getElementById('inputYield'); const wv=parseFloat(w.value)||0,yv=parseFloat(y.value)||0; if(!wv)return; if(s==='weight'){ if(yv>0)r.value=(yv/wv).toFixed(2); } else if(s==='yield'){ if(wv>0)r.value=(yv/wv).toFixed(2); } };
+        const handleQuickEditRecipeInput = (source) => {
+            const weightInput = document.getElementById('quickEditWeight');
+            const yieldInput = document.getElementById('quickEditYield');
+            const ratioInput = document.getElementById('quickEditRatio');
+            if (!weightInput || !yieldInput || !ratioInput) return;
+            const weightVal = parseFloat(weightInput.value);
+            const yieldVal = parseFloat(yieldInput.value);
+            if (!Number.isFinite(weightVal) || weightVal <= 0) {
+                ratioInput.value = '';
+                return;
+            }
+            if (source === 'weight' || source === 'yield') {
+                if (Number.isFinite(yieldVal) && yieldVal >= 0) {
+                    ratioInput.value = (yieldVal / weightVal).toFixed(2);
+                } else {
+                    ratioInput.value = '';
+                }
+            }
+        };
         const setTempMode = (m) => { 
             document.getElementById('tempMode').value = m; const btnNum = document.getElementById('btnTempNumeric'); const btnProf = document.getElementById('btnTempProfile'); const conNum = document.getElementById('tempNumericContainer'); const conProf = document.getElementById('tempProfileContainer');
             const activeClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white"; const inactiveClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
@@ -6448,10 +6542,151 @@
             if (menu) menu.classList.add('hidden');
         };
 
+        const getBeanLabelForBrew = (bean) => {
+            if (!bean) return 'Unknown bean';
+            const display = getBeanCoffeeTypeDisplay(bean);
+            const farmer = display?.farmer && display.farmer !== '-' ? display.farmer : '';
+            const roaster = display?.roaster && display.roaster !== '-' ? display.roaster : '';
+            if (farmer && roaster) return `${farmer} - ${roaster}`;
+            return farmer || roaster || 'Unknown bean';
+        };
+
+        const populateBrewQuickEditBeanOptions = (selectedBeanId = '') => {
+            const select = document.getElementById('quickEditBeanId');
+            if (!select) return;
+            let options = '<option value="">-- no bean --</option>';
+            const beanOptions = [...beans]
+                .sort((a, b) => {
+                    const aLabel = getBeanLabelForBrew(a).toLowerCase();
+                    const bLabel = getBeanLabelForBrew(b).toLowerCase();
+                    return aLabel.localeCompare(bLabel);
+                })
+                .map((bean) => {
+                    const selected = bean.id === selectedBeanId ? 'selected' : '';
+                    return `<option value="${bean.id}" ${selected}>${getBeanLabelForBrew(bean)}</option>`;
+                });
+            select.innerHTML = options + beanOptions.join('');
+            select.value = selectedBeanId || '';
+        };
+
+        const enterBrewQuickEditMode = () => {
+            if (!currentCoffeeCardId || currentView !== 'mine') return;
+            const brew = coffees.find(c => c.id === currentCoffeeCardId);
+            if (!brew) return;
+
+            populateBrewQuickEditBeanOptions(brew.beanId || '');
+            document.getElementById('quickEditMethod').value = brew.method || '';
+            document.getElementById('quickEditDrink').value = brew.drink || '';
+            document.getElementById('quickEditGrinder').value = brew.grinder || '';
+            document.getElementById('quickEditGrind').value = brew.grind ?? '';
+            document.getElementById('quickEditWeight').value = brew.weight ?? '';
+            const outWeight = (Number.isFinite(Number(brew.weight)) && Number.isFinite(Number(brew.ratio)))
+                ? (Number(brew.weight) * Number(brew.ratio)).toFixed(1)
+                : '';
+            document.getElementById('quickEditYield').value = outWeight;
+            document.getElementById('quickEditRatio').value = brew.ratio ?? '';
+            document.getElementById('quickEditTime').value = brew.time ?? '';
+            document.getElementById('quickEditTemp').value = brew.temp || '';
+            document.getElementById('quickEditRating').value = String(parseInt(brew.rating, 10) || 0);
+            document.getElementById('quickEditNotes').value = brew.notes || '';
+            document.getElementById('quickEditImprove').value = brew.improve || '';
+            document.getElementById('quickEditIsActive').checked = !!brew.isActive;
+            handleQuickEditRecipeInput('yield');
+
+            document.getElementById('coffeeCardView').classList.add('hidden');
+            document.getElementById('coffeeCardQuickEdit').classList.remove('hidden');
+            document.getElementById('coffeeCardEditBtn').classList.add('hidden');
+            document.getElementById('coffeeCardMenuBtn').classList.add('hidden');
+            closeCoffeeCardMenu();
+        };
+
+        const cancelBrewQuickEditMode = () => {
+            const viewEl = document.getElementById('coffeeCardView');
+            const editEl = document.getElementById('coffeeCardQuickEdit');
+            if (!viewEl || !editEl) return;
+            editEl.classList.add('hidden');
+            viewEl.classList.remove('hidden');
+            document.getElementById('coffeeCardEditBtn').classList.toggle('hidden', currentView !== 'mine');
+            document.getElementById('coffeeCardMenuBtn').classList.toggle('hidden', currentView !== 'mine');
+        };
+
+        const saveBrewQuickEdits = async () => {
+            if (!currentUser || !currentCoffeeCardId || currentView !== 'mine') return;
+            const brew = coffees.find(c => c.id === currentCoffeeCardId);
+            if (!brew) return;
+
+            const selectedBeanIdRaw = document.getElementById('quickEditBeanId').value;
+            const selectedBeanId = selectedBeanIdRaw || null;
+            const nowIso = new Date().toISOString();
+            const weightVal = parseNum(document.getElementById('quickEditWeight').value);
+            const yieldVal = parseNum(document.getElementById('quickEditYield').value);
+            const ratioVal = (Number.isFinite(weightVal) && weightVal > 0 && Number.isFinite(yieldVal))
+                ? Number((yieldVal / weightVal).toFixed(2))
+                : parseNum(document.getElementById('quickEditRatio').value);
+            const updates = {
+                method: document.getElementById('quickEditMethod').value || '',
+                drink: document.getElementById('quickEditDrink').value || '',
+                grinder: document.getElementById('quickEditGrinder').value || '',
+                grind: parseNum(document.getElementById('quickEditGrind').value),
+                weight: weightVal,
+                ratio: ratioVal,
+                time: parseNum(document.getElementById('quickEditTime').value),
+                temp: (document.getElementById('quickEditTemp').value || '').trim() || 'M',
+                rating: parseInt(document.getElementById('quickEditRating').value, 10) || 0,
+                notes: document.getElementById('quickEditNotes').value || '',
+                improve: document.getElementById('quickEditImprove').value || '',
+                isActive: !!document.getElementById('quickEditIsActive').checked,
+                beanId: selectedBeanId,
+                updatedAt: nowIso
+            };
+
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'coffees', currentCoffeeCardId), updates);
+
+                if (selectedBeanId) {
+                    const selectedBean = beans.find(b => b.id === selectedBeanId);
+                    if (selectedBean && !selectedBean.openedDate) {
+                        const firstBrewDate = getFirstBrewDateForBean(selectedBeanId, { ...brew, ...updates, id: currentCoffeeCardId, beanId: selectedBeanId }, currentCoffeeCardId);
+                        if (firstBrewDate) {
+                            await updateDoc(doc(db, 'users', currentUser.uid, 'beans', selectedBeanId), {
+                                openedDate: firstBrewDate,
+                                updatedAt: nowIso
+                            });
+                            const beanIdx = beans.findIndex(b => b.id === selectedBeanId);
+                            if (beanIdx !== -1) {
+                                beans[beanIdx] = { ...beans[beanIdx], openedDate: firstBrewDate, updatedAt: nowIso };
+                            }
+                        }
+                    }
+                    await archiveBeanIfStockDepleted({
+                        beanId: selectedBeanId,
+                        brew: updates,
+                        existingBrewId: currentCoffeeCardId
+                    });
+                    await updateBeansLeftForBean(selectedBeanId, [{ ...brew, ...updates, id: currentCoffeeCardId, beanId: selectedBeanId }]);
+                    await autoPinOpenBagsIfEnabled({
+                        beanId: selectedBeanId,
+                        brewId: currentCoffeeCardId,
+                        brewData: { ...brew, ...updates, id: currentCoffeeCardId, beanId: selectedBeanId }
+                    });
+                }
+
+                if (brew.beanId && brew.beanId !== selectedBeanId) {
+                    await updateBeansLeftForBean(brew.beanId);
+                }
+
+                const idx = coffees.findIndex(c => c.id === currentCoffeeCardId);
+                if (idx !== -1) coffees[idx] = { ...coffees[idx], ...updates };
+                openCoffeeCard(currentCoffeeCardId);
+            } catch (err) {
+                console.error('Error saving quick edits:', err);
+                alert('Failed to save quick edits.');
+            }
+        };
+
         const editBrewFromCard = () => {
             if (!currentCoffeeCardId) return;
-            closeCoffeeCard(null);
-            editCoffee(currentCoffeeCardId);
+            enterBrewQuickEditMode();
         };
 
         const updateCoffeeCardActionMenu = (c) => {
@@ -6467,6 +6702,7 @@
                 const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
                 const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
                 menu.innerHTML = `
+                    <button onclick="enterBrewQuickEditMode();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 w-4"></i> Quick edit</button>
                     <button onclick="closeCoffeeCard(null); editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button>
                     <button onclick="fastDuplicateFromCard();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button>
                     <button onclick="duplicateFromCard();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button>
@@ -6556,6 +6792,7 @@
             if(window.getSelection().toString().length > 0) return;
             const c = coffees.find(x => x.id === id); if(!c) return;
             currentCoffeeCardId = id;
+            cancelBrewQuickEditMode();
             resetCardPhotoState(); 
             toggleCardMode('stats');
             document.getElementById('shareControls').classList.add('hidden');
@@ -6568,6 +6805,7 @@
             if(e) e.stopPropagation(); 
             const c = coffees.find(x => x.id === id); if(!c) return;
             currentCoffeeCardId = id;
+            cancelBrewQuickEditMode();
             // Close any open action menus
             document.querySelectorAll('.action-menu').forEach(el => el.classList.add('hidden'));
             resetCardPhotoState(); 
@@ -6751,6 +6989,7 @@
 
         const closeCoffeeCard = (e) => { 
             if(!e || e.target.id === 'coffeeCardOverlay') { 
+                cancelBrewQuickEditMode();
                 document.getElementById('coffeeCardOverlay').classList.add('hidden');
                 const graphModal = document.getElementById('cardGraphModal');
                 if (graphModal) graphModal.classList.add('hidden');
@@ -7981,7 +8220,7 @@
             if(currentView === 'mine') {
                 const pinLabel = 'Unpin';
                 const pinIcon = 'fa-thumbtack text-green-600';
-                menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] overflow-hidden" style="z-index: 9999;"><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="fastRepeatCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
+                menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] overflow-hidden" style="z-index: 9999;"><button onclick="openCoffeeCard('${c.id}'); setTimeout(() => enterBrewQuickEditMode(), 0);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 w-4"></i> Quick edit</button><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="fastRepeatCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
             }
 
             // Background Layer Wrapper (Clip Overlay)
@@ -8052,7 +8291,7 @@
             if(currentView === 'mine') {
                 const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
                 const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
-                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="openCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="fastRepeatCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
+                actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="openCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button onclick="openCoffeeCard('${c.id}', event); setTimeout(() => enterBrewQuickEditMode(), 0);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 w-4"></i> Quick edit</button><button onclick="editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button onclick="fastRepeatCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button onclick="duplicateCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button><button onclick="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button><button onclick="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload Photo</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button onclick="deleteCoffee('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
             } else { 
                 actions = `<div class="relative"><button onclick="toggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button onclick="openCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button onclick="shareCoffeeCard('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share Card</button><button onclick="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button onclick="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button onclick="cloneBrew('${c.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to My Brews</button></div></div>`; 
             }
@@ -8224,10 +8463,13 @@
         });
 
         Object.assign(window, { 
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick,
             togglePinnedTiles,
             fastRepeatCoffee,
             editBrewFromCard,
+            enterBrewQuickEditMode,
+            cancelBrewQuickEditMode,
+            saveBrewQuickEdits,
             closeCoffeeTypeCardMenu,
             closeBeanCardMenu,
             // New Beans Functions
