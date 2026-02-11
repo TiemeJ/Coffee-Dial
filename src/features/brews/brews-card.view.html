@@ -1,0 +1,173 @@
+    <!-- Coffee Card Overlay -->
+    <div id="coffeeCardOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeCoffeeCard(event)">
+        <!-- Same as original -->
+        <div class="flex flex-col gap-2 w-full max-w-sm">
+            <div id="shareControls" class="hidden bg-white dark:bg-[#292524] rounded-lg p-2 shadow-lg border border-coffee-200 dark:border-[#44403c] flex justify-between items-center transition-all animate-in fade-in zoom-in duration-200" data-action-click="event.stopPropagation()">
+                <div class="flex gap-2 bg-coffee-100 dark:bg-[#1c1917] rounded p-1">
+                    <button data-action-click="toggleCardMode('stats')" id="btnCardStats" class="px-3 py-1.5 text-xs font-bold rounded shadow-sm bg-white dark:bg-[#292524] text-coffee-800 dark:text-white transition-all">Stats</button>
+                    <button data-action-click="toggleCardMode('photo')" id="btnCardPhoto" class="px-3 py-1.5 text-xs font-bold rounded text-coffee-500 dark:text-[#78716c] hover:text-coffee-700 dark:hover:text-[#d6ccc2] transition-all">Photo</button>
+                </div>
+                 <div class="flex gap-2">
+                    <button data-action-click="triggerCardPhoto()" id="btnUploadCardPhoto" class="hidden bg-coffee-200 hover:bg-coffee-300 dark:bg-[#44403c] dark:hover:bg-[#57534e] text-coffee-800 dark:text-white px-3 py-1.5 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-camera mr-1"></i> Select</button>
+                    <input type="file" id="cardPhotoInput" accept="image/*" class="hidden" data-action-change="handleCardPhoto(event)">
+                    <button data-action-click="generateShareImage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-bold shadow-sm transition-colors"><i class="fa-solid fa-share-nodes mr-1"></i> Share</button>
+                </div>
+            </div>
+
+            <div id="coffeeCardContent" class="bg-white dark:bg-[#292524] w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleCoffeeCardOverlayClick(event)">
+                <div class="bg-coffee-100 dark:bg-[#1c1917] p-5 border-b border-coffee-200 dark:border-[#44403c] relative">
+                    <div class="absolute top-4 right-4 flex items-center gap-2">
+                        <button id="coffeeCardEditBtn" data-action-click="editBrewFromCard()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Quick edit">
+                            <i class="fa-solid fa-pen-to-square text-lg"></i>
+                        </button>
+                        <button id="cardCloseBtn" data-action-click="closeCoffeeCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="absolute right-4 top-full mt-2 flex flex-col items-center">
+                        <button id="coffeeCardMenuBtn" data-action-click="toggleActionMenu('coffeeCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                            <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                        </button>
+                        <div id="coffeeCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()"></div>
+                    </div>
+                    <div class="pr-6"><h3 id="cardRoaster" class="text-xl font-bold text-coffee-900 dark:text-white leading-tight mb-1"></h3><div id="cardRating" class="text-sm"></div></div>
+                </div>
+                <div id="coffeeCardView" class="flex-1 flex flex-col min-h-0">
+                <div class="p-5 overflow-y-auto space-y-5">
+                    <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Origin</span><span id="cardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Roaster</span><span id="cardFarmer" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Process</span><span id="cardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Roast</span><span id="cardRoastType" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Drink</span><span id="cardDrink" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Method</span><span id="cardMethod" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                    </div>
+                    
+                    <div id="cardStatsSection" class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-4 border border-coffee-100 dark:border-[#44403c]">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew Stats</span>
+                            <button id="cardGraphBtn" data-action-click="openCardGraphModal(event)" class="hidden text-coffee-400 hover:text-coffee-700 dark:text-[#78716c] dark:hover:text-white transition-colors" title="View Graph">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                            <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">In</div><div id="cardWeight" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                            <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Ratio</div><div id="cardRatio" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                            <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Out</div><div id="cardOut" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center border-t border-coffee-200 dark:border-[#44403c] pt-2">
+                            <div><div id="cardGrindTitle" class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase truncate px-1">Grind</div><div id="cardGrindValue" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
+                            <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Time</div><div id="cardTime" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
+                            <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Temp</div><div id="cardTemp" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
+                        </div>
+                    </div>
+
+                    <div id="cardPhotoSection" class="hidden relative h-64 bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group cursor-pointer" data-action-click="triggerCardPhoto()">
+                        <img id="cardDisplayedPhoto" class="absolute hidden" src="" alt="Brew Photo" style="max-width: none;">
+                        <div id="cardPhotoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4">
+                            <i class="fa-solid fa-camera text-3xl text-coffee-200 dark:text-[#44403c] mb-2"></i>
+                            <p class="text-xs text-coffee-400 dark:text-[#57534e] font-medium">Tap to add brew photo</p>
+                        </div>
+                    </div>
+
+                    <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Notes</span><p id="cardNotes" class="text-sm text-coffee-800 dark:text-[#d6ccc2] italic bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded-lg border border-yellow-100 dark:border-yellow-900/20"></p></div>
+                    <div id="cardImproveContainer" class="hidden"><span class="block text-xs font-bold text-red-500 dark:text-red-400 uppercase mb-1">To Improve</span><p id="cardImprove" class="text-sm text-coffee-800 dark:text-[#d6ccc2] bg-red-50 dark:bg-red-900/10 p-2 rounded-lg border border-red-100 dark:border-red-900/20"></p></div>
+                </div>
+                <div id="cardBottomBar" class="bg-coffee-50 dark:bg-[#1c1917] p-4 border-t border-coffee-200 dark:border-[#44403c] flex justify-between items-center text-xs text-coffee-400 dark:text-[#57534e]">
+                    <span id="cardDate"></span>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-3 bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
+                                   <button data-action-click="fastDuplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Fast repeat</button>
+                                 <div class="w-px bg-coffee-200 dark:bg-[#57534e] my-0.5"></div>
+                                   <button data-action-click="duplicateFromCard()" class="px-2 py-0.5 text-xs font-bold text-coffee-700 dark:text-[#d6ccc2] hover:bg-white dark:hover:bg-[#292524] rounded transition-all shadow-sm">Repeat</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="coffeeCardPrevBtn" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" data-action-click="navigateCoffeeCard(-1)">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <button id="coffeeCardNextBtn" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" data-action-click="navigateCoffeeCard(1)">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <div id="coffeeCardQuickEdit" class="hidden flex-1 flex flex-col min-h-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Bean</label>
+                            <select id="quickEditBeanId" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                                <option value="">-- no bean --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Method</label>
+                            <input id="quickEditMethod" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Drink</label>
+                            <input id="quickEditDrink" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Grinder</label>
+                            <input id="quickEditGrinder" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Grind</label>
+                            <input id="quickEditGrind" type="number" step="any" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">In (g)</label>
+                            <input id="quickEditWeight" type="number" step="any" data-action-input="handleQuickEditRecipeInput('weight')" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Out (g)</label>
+                            <input id="quickEditYield" type="number" step="any" data-action-input="handleQuickEditRecipeInput('yield')" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Ratio</label>
+                            <input id="quickEditRatio" type="number" step="any" readonly class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-coffee-50 dark:bg-[#201d1b] text-coffee-900 dark:text-white cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Time (sec)</label>
+                            <input id="quickEditTime" type="number" step="any" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Temp</label>
+                            <input id="quickEditTemp" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Rating</label>
+                            <select id="quickEditRating" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Notes</label>
+                            <input id="quickEditNotes" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Improve</label>
+                            <input id="quickEditImprove" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        </div>
+                        <div class="sm:col-span-2 flex items-center gap-2">
+                            <input id="quickEditIsActive" type="checkbox" class="toggle-checkbox w-5 h-5">
+                            <label for="quickEditIsActive" class="text-sm text-coffee-700 dark:text-[#d6ccc2]">Pin to Active</label>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
+                        <button data-action-click="cancelBrewQuickEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+                        <button data-action-click="saveBrewQuickEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+

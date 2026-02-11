@@ -1,4 +1,8 @@
-export function initCoffeeScale() {
+let coffeeScaleApi = null;
+
+export const getCoffeeScale = () => coffeeScaleApi;
+
+export function initCoffeeScale({ openScaleModal } = {}) {
   const statusEl = document.getElementById("status");
   const weightEl = document.getElementById("weight");
   const tareBtn = document.getElementById("tare");
@@ -35,6 +39,7 @@ export function initCoffeeScale() {
   let liveTimerElapsedMs = 0;
 
   if (!statusEl || !weightEl || !tareBtn || !timerBtn || !resetTimerBtn || !connectBtn) {
+    coffeeScaleApi = null;
     return;
   }
 
@@ -98,6 +103,10 @@ export function initCoffeeScale() {
   const AUTO_START_THRESHOLD = 0.2;
   const UNSWIRL_THRESHOLD = 0.1;
   const POUR_FLOW_THRESHOLD = 3;
+  const CAPTURE_UI_UPDATE_INTERVAL_MS = 250;
+  const LIVE_YIELD_INPUT_DISPATCH_INTERVAL_MS = 120;
+  let lastCaptureUiRefreshAt = 0;
+  let lastLiveYieldInputDispatchAt = 0;
 
   /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
   const ACAIA_SERVICE_UUID = "00001820-0000-1000-8000-00805f9b34fb";
@@ -213,8 +222,13 @@ export function initCoffeeScale() {
 
   function setWeight(value) {
     const prevWeight = lastWeight;
-    weightEl.textContent = value.toFixed(1) + " g";
-    if (connectWeightEl) connectWeightEl.textContent = value.toFixed(1) + " g";
+    const formattedWeight = value.toFixed(1) + " g";
+    if (weightEl.textContent !== formattedWeight) {
+      weightEl.textContent = formattedWeight;
+    }
+    if (connectWeightEl && connectWeightEl.textContent !== formattedWeight) {
+      connectWeightEl.textContent = formattedWeight;
+    }
     lastWeight = value;
     updateLiveWeight(value);
     if (timerRunning) {
@@ -242,7 +256,15 @@ export function initCoffeeScale() {
     if (!Number.isFinite(value)) return;
     const outField = document.getElementById("inputYield");
     if (!outField) return;
-    outField.value = value.toFixed(1);
+    const formatted = value.toFixed(1);
+    if (outField.value !== formatted) {
+      outField.value = formatted;
+    }
+    const now = Date.now();
+    if (now - lastLiveYieldInputDispatchAt < LIVE_YIELD_INPUT_DISPATCH_INTERVAL_MS) {
+      return;
+    }
+    lastLiveYieldInputDispatchAt = now;
     outField.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
@@ -814,6 +836,7 @@ export function initCoffeeScale() {
     updateFlowOutput();
     updateRawOutput();
     renderGraph();
+    lastCaptureUiRefreshAt = 0;
 
     if (captureInterval) {
       clearInterval(captureInterval);
@@ -990,10 +1013,14 @@ export function initCoffeeScale() {
       }
       setFlow(flow);
 
-      updateCaptureOutput();
-      updateFlowOutput();
-      updateRawOutput();
-      renderGraph();
+      const now = Date.now();
+      if (now - lastCaptureUiRefreshAt >= CAPTURE_UI_UPDATE_INTERVAL_MS) {
+        updateCaptureOutput();
+        updateFlowOutput();
+        updateRawOutput();
+        renderGraph();
+        lastCaptureUiRefreshAt = now;
+      }
     }, 100);
   }
 
@@ -1019,8 +1046,6 @@ export function initCoffeeScale() {
     if (rawSamples.length > 2000) {
       rawSamples.splice(0, rawSamples.length - 2000);
     }
-    updateRawOutput();
-    renderGraph();
   }
 
   function getInterpolatedWeight(targetTime) {
@@ -1132,18 +1157,26 @@ export function initCoffeeScale() {
     const timeField = document.getElementById("time");
     const now = Date.now();
     const elapsed = liveTimerElapsedMs + (liveTimerStartAt ? (now - liveTimerStartAt) : 0);
+    const seconds = formatLiveTime(elapsed);
+    const nextTimeValue = String(seconds);
     if (timeField) {
-      timeField.value = formatLiveTime(elapsed);
-      timeField.dispatchEvent(new Event("input", { bubbles: true }));
+      if (timeField.value !== nextTimeValue) {
+        timeField.value = nextTimeValue;
+        timeField.dispatchEvent(new Event("input", { bubbles: true }));
+      }
     }
     if (graphTimeEl) {
-      const timeValue = timeField ? timeField.value : formatLiveTime(elapsed);
-      graphTimeEl.textContent = `${timeValue} s`;
+      const timeValue = timeField ? timeField.value : nextTimeValue;
+      const nextGraphTime = `${timeValue} s`;
+      if (graphTimeEl.textContent !== nextGraphTime) {
+        graphTimeEl.textContent = nextGraphTime;
+      }
     }
   }
 
   function startLiveTimer() {
     liveTimerStartAt = Date.now();
+    lastLiveYieldInputDispatchAt = 0;
     updateLiveTime();
     if (liveTimerInterval) clearInterval(liveTimerInterval);
     liveTimerInterval = setInterval(updateLiveTime, 250);
@@ -1581,7 +1614,8 @@ export function initCoffeeScale() {
 
   /* ---- Notification handler ---- */
   function onNotify(event) {
-    const data = new Uint8Array(event.target.value.buffer);
+    const value = event.target.value;
+    const data = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
     const l = data.length;
 
     if (scaleType === "OLD" || scaleType === "NEW") {
@@ -1730,11 +1764,7 @@ export function initCoffeeScale() {
 
   function handleWeighClick() {
     if (!isConnected) {
-      if (typeof window.openConnectScaleModal === "function") {
-        window.openConnectScaleModal();
-      } else if (typeof window.openCoffeeScaleModal === "function") {
-        window.openCoffeeScaleModal();
-      }
+      openScaleModal?.();
       return;
     }
 
@@ -1779,11 +1809,7 @@ export function initCoffeeScale() {
 
   async function handleTimerIconClick() {
     if (!isConnected) {
-      if (typeof window.openConnectScaleModal === "function") {
-        window.openConnectScaleModal();
-      } else if (typeof window.openCoffeeScaleModal === "function") {
-        window.openCoffeeScaleModal();
-      }
+      openScaleModal?.();
       return;
     }
 
@@ -2014,7 +2040,7 @@ export function initCoffeeScale() {
     graphTogglePrefsSaver = fn;
   }
 
-  window.coffeeScale = {
+  coffeeScaleApi = {
     isConnected: () => isConnected,
     getLastWeight: () => lastWeight,
     autoConnect: attemptAutoConnect,
@@ -2047,4 +2073,6 @@ export function initCoffeeScale() {
     getRecipeSteps,
     setRecipeSteps
   };
+
+  return coffeeScaleApi;
 }

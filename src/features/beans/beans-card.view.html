@@ -1,0 +1,187 @@
+    <!-- Bean Card Overlay -->
+    <div id="beanCardOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeBeanCard(event)">
+        <div class="bg-white dark:bg-[#292524] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleBeanCardOverlayClick(event)">
+            <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
+                <div class="absolute top-4 right-4 flex items-center gap-2">
+                    <button id="beanCardEditBtn" data-action-click="enterBeanEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
+                        <i class="fa-solid fa-pen-to-square text-lg"></i>
+                    </button>
+                    <button data-action-click="closeBeanCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <div class="absolute right-4 top-full mt-2 flex flex-col items-center z-[10001]">
+                    <button id="beanCardMenuBtn" data-action-click="toggleActionMenu('beanCardActionMenu', event)" data-action-pointerdown="toggleActionMenu('beanCardActionMenu', event); return false;" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                        <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                    </button>
+                    <div id="beanCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
+                        <button id="beanCardActionBuy" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
+                        </button>
+                        <button id="beanCardActionEdit" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
+                        </button>
+                        <button id="beanCardActionBrew" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-mug-saucer text-coffee-700 w-4"></i> Brew
+                        </button>
+                        <button id="beanCardActionBrews" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
+                        </button>
+                        <button id="beanCardActionCoffee" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee
+                        </button>
+                        <button id="beanCardActionOpenBag" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-bag-shopping text-emerald-600 w-4"></i> New bag
+                        </button>
+                        <button id="beanCardActionFreeze" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"></button>
+                        <button id="beanCardActionArchive" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"></button>
+                        <hr class="border-coffee-100 dark:border-[#44403c]">
+                        <button id="beanCardActionDelete" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                            <i class="fa-solid fa-trash w-4"></i> Delete
+                        </button>
+                    </div>
+                </div>
+                <h3 id="beanCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
+                <p id="beanCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
+            </div>
+            <div id="beanCardView" class="flex-1 flex flex-col min-h-0">
+                <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="w-36 md:w-40 lg:w-48">
+                        <div id="beanCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
+                            <img id="beanCardImage" class="absolute inset-0 w-full h-full object-contain hidden cursor-pointer" src="" alt="Bean Photo" data-action-click="openBeanPhoto(event)">
+                            <div id="beanCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
+                                <i class="fa-solid fa-image text-3xl mb-2"></i>
+                                <p class="text-xs font-medium">Add / Change picture</p>
+                            </div>
+                            <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="triggerBeanPhoto(event)" title="Change photo">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="removeBeanPhoto(event)" title="Remove photo">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="file" id="beanPhotoInput" accept="image/*" class="hidden" data-action-change="handleBeanPhoto(event)">
+                    </div>
+                    <div class="flex-1 space-y-4">
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Origin</span><span id="beanCardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Process</span><span id="beanCardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Variety</span><span id="beanCardVariety" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</span><span id="beanCardRoast" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        </div>
+                        <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-3 border border-coffee-100 dark:border-[#44403c]">
+                            <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Weight</div><div id="beanCardStock" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Beans left</div><div id="beanCardStockLeft" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Status</div><div id="beanCardStatus" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-xs">
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Opened</span><span id="beanCardOpened"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Frozen</span><span id="beanCardFrozen"></span></div>
+                            <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</span><span id="beanCardRoastDate"></span></div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button id="beanCardBuyBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-cart-shopping"></i> Buy
+                        </button>
+                        <button id="beanCardBrewBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-coffee-700 hover:bg-coffee-800 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-mug-saucer"></i> Brew
+                        </button>
+                        <button id="beanCardOpenNewBagBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                            <i class="fa-solid fa-bag-shopping"></i> New bag
+                        </button>
+                        <button id="beanCardFreezeBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2"></button>
+                        <button id="beanCardArchiveBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-2"></button>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-3">
+                        <button id="beanCardPrevBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" data-action-click="navigateBeanCard(-1)">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <button id="beanCardNextBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" data-action-click="navigateBeanCard(1)">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="beanCardEdit" class="hidden flex-1 flex flex-col min-h-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
+                    <div class="sm:col-span-2">
+                        <div class="flex items-center gap-2 mb-1">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Coffee</label>
+                            <button type="button" id="beanEditCoffeeTypeEditBtn" data-action-click="openCoffeeFromBeanEdit()" class="p-2 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white rounded-md hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors disabled:opacity-40 disabled:cursor-not-allowed" title="Edit coffee" disabled>
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
+                        <select id="beanEditCoffeeType" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <option value="__new__">-- create new coffee --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Farmer</label>
+                        <input id="beanEditFarmer" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roaster</label>
+                        <input id="beanEditRoaster" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Origin</label>
+                        <input id="beanEditOrigin" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Processing</label>
+                        <input id="beanEditProcessing" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Variety</label>
+                        <input id="beanEditVariety" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast Type</label>
+                        <input id="beanEditRoastType" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Shop URL</label>
+                        <input id="beanEditShopUrl" type="url" placeholder="https://" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Weight (g)</label>
+                        <input id="beanEditStock" type="number" step="1" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Opened Date</label>
+                        <input id="beanEditOpenedDate" type="date" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Frozen Date</label>
+                        <input id="beanEditFrozenDate" type="date" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast Date</label>
+                        <input id="beanEditRoastDate" type="date" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input id="beanEditFrozen" type="checkbox" class="toggle-checkbox w-5 h-5">
+                        <label for="beanEditFrozen" class="text-sm text-coffee-700 dark:text-[#d6ccc2]">Frozen</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input id="beanEditArchived" type="checkbox" class="toggle-checkbox w-5 h-5">
+                        <label for="beanEditArchived" class="text-sm text-coffee-700 dark:text-[#d6ccc2]">Archived</label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
+                    <button data-action-click="cancelBeanEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+                    <button data-action-click="saveBeanCardEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+

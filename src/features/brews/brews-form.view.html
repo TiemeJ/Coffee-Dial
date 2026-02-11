@@ -1,0 +1,231 @@
+        <div id="formWrapper" class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] mb-8 transition-colors duration-300">
+            
+            <!-- Add New Brew Form Section -->
+            <div id="formContainer" class="hidden transition-all duration-300 group overflow-hidden rounded-b-xl" aria-expanded="false">
+                <div class="p-6 flex justify-between items-center bg-coffee-50/50 dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] rounded-t-xl">
+                <div data-action-click="toggleForm()" class="flex-1 cursor-pointer flex items-center gap-2">
+                    <h2 id="formTitle" class="text-lg font-semibold flex items-center gap-2 text-coffee-900 dark:text-white select-none">
+                        <i class="fa-solid fa-plus-circle text-coffee-700 dark:text-[#d6ccc2]"></i> <span>Add New Brew</span>
+                    </h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="cancelEditBtn" data-action-click="resetFormState(event)" class="hidden text-xs text-red-500 hover:text-red-700 dark:text-red-400 underline z-10 relative">
+                        Cancel Edit
+                    </button>
+                    <i data-action-click="toggleForm()" class="fa-solid fa-chevron-down text-coffee-400 chevron-rotate cursor-pointer"></i>
+                </div>
+            </div>
+
+            <div id="formContent" class="hidden px-6 pb-6 border-t border-coffee-100 dark:border-[#44403c] relative">
+                <form id="coffeeForm" data-action-submit="handleFormSubmit(event)" class="mt-4 space-y-6">
+                    <input type="hidden" id="editId" name="editId" value="">
+                    
+                    <!-- SECTION 1: COFFEE DETAILS -->
+                    <div class="bg-coffee-50 dark:bg-[#1c1917]/50 p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] relative">
+                         <div class="flex justify-between items-center mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c]">
+                                      <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                                          <i class="fa-solid fa-seedling text-coffee-600 dark:text-[#a8a29e]"></i> <span id="coffeeDetailsTitle">Coffee Details</span>
+                                      </h3>
+                            <!-- AI & Saved Beans Controls -->
+                            <div class="flex items-center gap-2">
+                                 <div class="relative">
+                                    <button type="button" data-action-click="toggleAiMenu(event)" id="aiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Scan Bag
+                                    </button>
+                                    <!-- AI Menu -->
+                                    <div id="aiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                                        <button type="button" data-action-click="triggerAIScan('camera')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2 border-b border-coffee-100 dark:border-[#44403c]">
+                                            <i class="fa-solid fa-camera w-4"></i> Take Photo
+                                        </button>
+                                        <button type="button" data-action-click="triggerAIScan('library')" class="w-full text-left px-4 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-2">
+                                            <i class="fa-solid fa-images w-4"></i> From Gallery
+                                        </button>
+                                    </div>
+                                    <input type="file" id="aiFileInput" accept="image/*" class="hidden" data-action-change="handleAIFile(event)">
+                                </div>
+                                <button type="button" data-action-click="toggleCoffeeDetails(event)" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse coffee details">
+                                    <i id="coffeeDetailsToggleIcon" class="fa-solid fa-chevron-up transition-transform"></i>
+                                </button>
+                            </div>
+                         </div>
+                         
+                         <div id="coffeeDetailsBody">
+                             <!-- Saved Beans Dropdown -->
+                             <div class="mb-4">
+                                 <div class="flex items-center justify-between mb-1">
+                                     <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Select Saved Bean</label>
+                                     <button type="button" id="savedBeanEditBtn" data-action-click="openSelectedBeanForEdit()" class="p-2 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white rounded-md hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors disabled:opacity-40 disabled:cursor-not-allowed" title="Edit bean" disabled>
+                                         <i class="fa-solid fa-pen-to-square"></i>
+                                     </button>
+                                 </div>
+                                 <select id="savedBeanSelect" data-action-change="fillBeanDetails(this.value)" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 cursor-pointer shadow-sm">
+                                     <option value="">-- create new bean and coffee --</option>
+                                 </select>
+                             </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roaster</label>
+                                <input type="text" id="roaster" name="roaster" list="roasterList" placeholder="e.g. La Cabra" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
+                                <datalist id="roasterList"></datalist>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Blend/Farmer</label>
+                                <input type="text" id="farmer" name="farmer" list="farmerList" placeholder="e.g. Felipe Arcila" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
+                                <datalist id="farmerList"></datalist>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Origin</label>
+                                <input type="text" id="origin" name="origin" list="originList" placeholder="e.g. Ethiopia" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
+                                <datalist id="originList"></datalist>
+                            </div>
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Variety</label><input type="text" id="variety" name="variety" placeholder="e.g. Geisha" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"></div>
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Processing</label><input type="text" id="processing" name="processing" placeholder="e.g. Natural" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"></div>
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roast Type</label><select id="roastType" name="roastType" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 cursor-pointer"><option value="" disabled selected>Select Roast</option><option value="Light">Light</option><option value="Medium">Medium</option><option value="Medium-Dark">Medium-Dark</option><option value="Dark">Dark</option></select></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: BREW PARAMETERS -->
+                    <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                         <div class="mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] flex items-center justify-between">
+                             <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                                 <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Brew Parameters
+                             </h3>
+                             <div class="flex items-center gap-2">
+                                 <button id="brewGraphBtn" type="button" title="Graph" data-action-click="openGraphModal()" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-chart-line"></i>
+                                 </button>
+                                 <button id="brewWeighBtn" type="button" title="Weigh" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-scale-balanced"></i>
+                                 </button>
+                                 <button id="brewTimerBtn" type="button" title="Start timer" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-play"></i>
+                                 </button>
+                                 <button id="brewResetScaleBtn" type="button" title="Reset scale" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-rotate-left"></i>
+                                 </button>
+                             </div>
+                         </div>
+                         
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                             <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Brewing Method</label>
+                                <select id="method" name="method" data-action-change="toggleMethodOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                    <option value="" disabled selected>Select Method</option>
+                                    <option value="Espresso">Espresso</option>
+                                    <option value="V60">V60</option>
+                                    <option value="Hario Switch">Hario Switch</option>
+                                    <option value="Clever Dripper">Clever Dripper</option>
+                                    <option value="Aeropress">Aeropress</option>
+                                    <option value="OXO Rapid Brewer">OXO Rapid Brewer</option>
+                                    <option value="French Press">French Press</option>
+                                    <option value="Chemex">Chemex</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="text" id="methodOther" name="methodOther" placeholder="e.g. Moka Pot" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grinder</label>
+                                <input type="text" id="grinder" name="grinder" list="grinderList" placeholder="e.g. Niche Zero" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                                <datalist id="grinderList"></datalist>
+                            </div>
+                             <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grind Size</label><input type="number" step="any" id="grind" name="grind" placeholder="e.g. 14" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]"></div>
+                            
+                            <!-- Recipe Block -->
+                             <div class="grid grid-cols-3 gap-2 bg-coffee-50/50 dark:bg-[#201d1b] p-2 rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                                <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">In (g)</label><input type="number" step="any" id="inputWeight" name="weight" data-action-input="handleRecipeInput('weight')" placeholder="18" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
+                                <div class="relative"><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label><input type="number" step="any" id="inputRatio" name="ratio" readonly class="w-full text-center font-mono bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed"></div>
+                                <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label><input type="number" step="any" id="inputYield" name="yield" data-action-input="handleRecipeInput('yield')" placeholder="288" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
+                            </div>
+                            
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Time (Sec)</label><input type="number" step="any" id="time" name="time" placeholder="e.g. 180" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]"></div>
+                            
+                            <div class="relative">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Temp</label>
+                                    <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
+                                        <button type="button" data-action-click="setTempMode('numeric')" id="btnTempNumeric" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">°C</button>
+                                        <button type="button" data-action-click="setTempMode('profile')" id="btnTempProfile" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">Prof</button>
+                                    </div>
+                                </div>
+                                <div id="tempNumericContainer">
+                                    <input type="number" step="any" id="tempNumeric" name="tempNumeric" placeholder="e.g. 93" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
+                                </div>
+                                <div id="tempProfileContainer" class="hidden">
+                                    <select id="tempProfile" name="tempProfile" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="L4">L4 (Very Low)</option>
+                                        <option value="L3">L3 (Low)</option>
+                                        <option value="L2">L2</option>
+                                        <option value="L1">L1</option>
+                                        <option value="M">M (Medium)</option>
+                                        <option value="H1">H1</option>
+                                        <option value="H2">H2</option>
+                                        <option value="H3">H3 (High)</option>
+                                        <option value="H4">H4 (Very High)</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" id="tempMode" name="tempMode" value="numeric">
+                            </div>
+                            
+                             <div>
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Drink</label>
+                                <select id="drinkType" name="drinkType" data-action-change="toggleDrinkOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                    <option value="" disabled selected>Select Drink</option>
+                                    <option value="Espresso">Espresso</option>
+                                    <option value="Lungo">Lungo</option>
+                                    <option value="Americano">Americano</option>
+                                    <option value="Cappuccino">Cappuccino</option>
+                                    <option value="Flat White">Flat White</option>
+                                    <option value="Macchiato">Macchiato</option>
+                                    <option value="Latte Macchiato">Latte Macchiato</option>
+                                    <option value="Filter Coffee">Filter Coffee</option>
+                                    <option value="Soup">Soup</option>
+                                    <option value="Long Soup">Long Soup</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="text" id="drinkOther" name="drinkOther" placeholder="e.g. Cortado" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                            </div>
+                            
+                            <!-- Notes & Ratings -->
+                            <div class="col-span-1 md:col-span-2 lg:col-span-4">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Tasting Notes</label>
+                                    <button type="button" data-action-click="openImageModal()" class="text-xs text-blue-500 hover:underline dark:text-blue-400 mr-auto ml-2"><i class="fa-solid fa-image mr-1"></i>View Wheel</button>
+                                    <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
+                                        <button type="button" data-action-click="setNotesMode('manual')" id="btnNotesManual" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">Text</button>
+                                        <button type="button" data-action-click="setNotesMode('sca')" id="btnNotesSCA" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">SCA Wheel</button>
+                                    </div>
+                                </div>
+                                <div id="notesManualContainer">
+                                    <input type="text" id="notes" name="notes" placeholder="e.g. Floral, fruity acidity, clean finish" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
+                                </div>
+                                <div id="notesSCAContainer" class="hidden mt-2 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-3">
+                                    <div id="scaSelectionDisplay" class="text-sm font-bold text-coffee-800 dark:text-white mb-2 min-h-[1.25rem]"></div>
+                                    <div id="scaButtonsContainer" class="flex flex-wrap gap-2"></div>
+                                </div>
+                                <input type="hidden" id="notesMode" name="notesMode" value="manual">
+                            </div>
+
+                             <div class="col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="flex flex-col items-start gap-1">
+                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Rating</label>
+                                    <div class="star-rating flex text-2xl text-gray-300 dark:text-gray-600" id="starContainer"><i class="fa-solid fa-star" data-action-click="setRating(1)"></i><i class="fa-solid fa-star" data-action-click="setRating(2)"></i><i class="fa-solid fa-star" data-action-click="setRating(3)"></i><i class="fa-solid fa-star" data-action-click="setRating(4)"></i><i class="fa-solid fa-star" data-action-click="setRating(5)"></i></div>
+                                    <input type="hidden" id="ratingInput" name="rating" value="0">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Improve / Next Time</label>
+                                    <input type="text" id="improve" name="improve" placeholder="e.g. Grind finer, hotter water" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER ACTIONS -->
+                    <div class="flex justify-between items-center pt-2"><div class="flex items-center gap-2"><div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" name="isActive" id="isActiveToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="isActiveToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div><label for="isActiveToggle" class="text-xs font-bold text-coffee-600 dark:text-[#a8a29e] cursor-pointer">Add to Active Brews</label></div><div class="flex gap-3"><button type="button" data-action-click="discardForm()" class="text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] px-4 py-2.5 rounded-lg font-medium transition-colors">Discard</button><button type="submit" id="submitBtn" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"><i class="fa-solid fa-check"></i> <span>Save Brew</span></button></div></div>
+                </form>
+            </div>
+            </div>
+            
+        </div>

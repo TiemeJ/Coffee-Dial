@@ -1,0 +1,350 @@
+export const createCoffeeTypeCardModule = ({
+    getCurrentUser,
+    getCurrentView,
+    getCurrentCoffeeTypeId,
+    setCurrentCoffeeTypeId,
+    getCoffeeTypes,
+    setCoffeeTypesState,
+    getBeans,
+    setBeansState,
+    db,
+    storage,
+    doc,
+    updateDoc,
+    writeBatch,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject,
+    openAppConfirm,
+    getStarDisplay,
+    renderCoffeeTypesTable,
+    updateCoffeeTypeSelectors,
+    renderPinnedTiles,
+    renderTable,
+    openCoffeeTypeShopUrl,
+    showBeansForCoffeeType,
+    showBrewsForCoffeeType,
+    openNewBagForCoffeeType,
+    updateCoffeeTypeCardNav
+}) => {
+    const getCurrentType = () => getCoffeeTypes().find((ct) => ct.id === getCurrentCoffeeTypeId());
+
+    const showBeansForCoffeeTypeFromTable = (typeId) => {
+        setCurrentCoffeeTypeId(typeId);
+        showBeansForCoffeeType();
+    };
+
+    const showBrewsForCoffeeTypeFromTable = (typeId) => {
+        setCurrentCoffeeTypeId(typeId);
+        showBrewsForCoffeeType();
+    };
+
+    const openNewBagForCoffeeTypeFromTable = (typeId) => {
+        setCurrentCoffeeTypeId(typeId);
+        openNewBagForCoffeeType();
+    };
+
+    const openCoffeeTypeFromTableEdit = (typeId) => {
+        openCoffeeTypeCard(typeId);
+        enterCoffeeTypeEditMode();
+    };
+
+    const deleteCoffeeTypeFromTable = (typeId) => {
+        setCurrentCoffeeTypeId(typeId);
+        deleteCoffeeType();
+    };
+
+    const deleteCoffeeType = async () => {
+        const user = getCurrentUser();
+        const typeId = getCurrentCoffeeTypeId();
+        if (!user || !typeId) return;
+
+        const shouldDelete = await openAppConfirm({
+            title: 'Delete coffee?',
+            message: 'Beans linked to this coffee will be unlinked.',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+            danger: true
+        });
+        if (!shouldDelete) return;
+
+        const nowIso = new Date().toISOString();
+
+        try {
+            const batch = writeBatch(db);
+            getBeans()
+                .filter((bean) => bean.coffeeTypeId === typeId)
+                .forEach((bean) => {
+                    batch.update(doc(db, 'users', user.uid, 'beans', bean.id), { coffeeTypeId: null, updatedAt: nowIso });
+                });
+            batch.delete(doc(db, 'users', user.uid, 'coffeeTypes', typeId));
+            await batch.commit();
+
+            setCoffeeTypesState(getCoffeeTypes().filter((ct) => ct.id !== typeId));
+            setBeansState(
+                getBeans().map((bean) =>
+                    bean.coffeeTypeId === typeId ? { ...bean, coffeeTypeId: null, updatedAt: nowIso } : bean
+                )
+            );
+            updateCoffeeTypeSelectors();
+            renderCoffeeTypesTable();
+            closeCoffeeTypeCard(null);
+            renderPinnedTiles();
+            renderTable();
+        } catch (err) {
+            console.error('Error deleting coffee:', err);
+            alert('Failed to delete coffee.');
+        }
+    };
+
+    const triggerCoffeeTypePhoto = (e) => {
+        if (e) e.stopPropagation();
+        if (!getCurrentCoffeeTypeId()) return;
+        document.getElementById('coffeeTypePhotoInput')?.click();
+    };
+
+    const openCoffeeTypePhoto = (e) => {
+        if (e) e.stopPropagation();
+        const type = getCurrentType();
+        const url = type?.imageUrl || type?.imageURL;
+        if (url) window.open(url, '_blank');
+    };
+
+    const removeCoffeeTypePhoto = async (e) => {
+        if (e) e.stopPropagation();
+        const user = getCurrentUser();
+        const typeId = getCurrentCoffeeTypeId();
+        if (!user || !typeId) return;
+
+        const type = getCurrentType();
+        const url = type?.imageUrl || type?.imageURL;
+        if (!url) return;
+
+        try {
+            const photoRef = ref(storage, url);
+            await deleteObject(photoRef);
+            await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', typeId), {
+                imageUrl: null,
+                updatedAt: new Date().toISOString()
+            });
+            setCoffeeTypesState(
+                getCoffeeTypes().map((ct) =>
+                    ct.id === typeId ? { ...ct, imageUrl: null, imageURL: null } : ct
+                )
+            );
+            openCoffeeTypeCard(typeId);
+        } catch (err) {
+            console.error('Remove coffee photo failed:', err);
+            alert('Failed to remove image.');
+        }
+    };
+
+    const handleCoffeeTypePhoto = async (event) => {
+        const file = event.target.files?.[0];
+        const user = getCurrentUser();
+        const typeId = getCurrentCoffeeTypeId();
+        if (!file || !user || !typeId) return;
+
+        const btn = document.getElementById('coffeeTypeCardImageSection');
+        const targetEl = btn || document.getElementById('coffeeTypeCardView');
+        const originalClasses = targetEl?.className;
+
+        try {
+            if (targetEl) targetEl.classList.add('ai-loading-pulse');
+            const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: true };
+            const compressedFile = await imageCompression(file, options);
+            const timestamp = Date.now();
+            const storageRef = ref(storage, `photos/${user.uid}/coffee_type_${typeId}_${timestamp}`);
+            const snapshot = await uploadBytes(storageRef, compressedFile);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', typeId), {
+                imageUrl: downloadURL,
+                updatedAt: new Date().toISOString()
+            });
+            setCoffeeTypesState(
+                getCoffeeTypes().map((ct) => (ct.id === typeId ? { ...ct, imageUrl: downloadURL } : ct))
+            );
+            openCoffeeTypeCard(typeId);
+        } catch (err) {
+            console.error('Coffee photo upload failed:', err);
+            alert('Failed to upload image.');
+        } finally {
+            if (targetEl && originalClasses) targetEl.className = originalClasses;
+            event.target.value = '';
+        }
+    };
+
+    const openCoffeeTypeCard = (typeId, ev) => {
+        if (ev) ev.stopPropagation();
+        const type = getCoffeeTypes().find((ct) => ct.id === typeId);
+        if (!type) return;
+
+        setCurrentCoffeeTypeId(type.id);
+        const isMine = getCurrentView() === 'mine';
+
+        const farmer = type.farmer || 'Unknown';
+        const roaster = type.roaster || '';
+        const origin = type.origin || '-';
+        const roast = type.roast || type.roastType || '-';
+        const processing = type.processing || '-';
+        const variety = type.variety || '-';
+        const rating = parseInt(type.rating, 10) || 0;
+        const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
+        const tasteNotes = (type.tasteNotes || '').trim();
+
+        document.getElementById('coffeeTypeCardTitle').textContent = farmer;
+        document.getElementById('coffeeTypeCardSubtitle').textContent = roaster;
+        document.getElementById('coffeeTypeCardRating').innerHTML = getStarDisplay(rating);
+        document.getElementById('coffeeTypeCardOrigin').textContent = origin;
+        document.getElementById('coffeeTypeCardRoast').textContent = roast;
+        document.getElementById('coffeeTypeCardProcess').textContent = processing;
+        document.getElementById('coffeeTypeCardVariety').textContent = variety;
+        document.getElementById('coffeeTypeCardCreated').textContent = createdAt;
+        document.getElementById('coffeeTypeCardTasteNotes').textContent = tasteNotes || '-';
+
+        const imageUrl = type.imageUrl || type.imageURL;
+        const imgEl = document.getElementById('coffeeTypeCardImage');
+        const placeholderEl = document.getElementById('coffeeTypeCardImagePlaceholder');
+        if (imageUrl) {
+            imgEl.src = imageUrl;
+            imgEl.classList.remove('hidden');
+            placeholderEl.classList.add('hidden');
+        } else {
+            imgEl.src = '';
+            imgEl.classList.add('hidden');
+            placeholderEl.classList.remove('hidden');
+        }
+
+        const buyBtn = document.getElementById('coffeeTypeCardBuyBtn');
+        const buyActionBtn = document.getElementById('coffeeTypeCardActionBuy');
+        const newBagBtn = document.getElementById('coffeeTypeCardNewBagBtn');
+        const newBagActionBtn = document.querySelector('#coffeeTypeCardActionMenu button[onclick*="openNewBagForCoffeeType"]');
+        const shopUrl = type.webshopUrl || type.shopUrl || '';
+
+        if (buyBtn) {
+            if (shopUrl) {
+                buyBtn.disabled = false;
+                buyBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                buyBtn.onclick = () => openCoffeeTypeShopUrl(type.id);
+            } else {
+                buyBtn.disabled = true;
+                buyBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                buyBtn.onclick = null;
+            }
+        }
+
+        if (buyActionBtn) {
+            if (shopUrl) {
+                buyActionBtn.disabled = false;
+                buyActionBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                buyActionBtn.onclick = () => openCoffeeTypeShopUrl(type.id);
+            } else {
+                buyActionBtn.disabled = true;
+                buyActionBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                buyActionBtn.onclick = null;
+            }
+        }
+
+        if (newBagBtn) newBagBtn.classList.toggle('hidden', !isMine);
+        if (newBagActionBtn) newBagActionBtn.classList.toggle('hidden', !isMine);
+
+        document.getElementById('coffeeTypeCardView').classList.remove('hidden');
+        document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
+        document.getElementById('coffeeTypeCardEditBtn').classList.toggle('hidden', !isMine);
+        document.getElementById('coffeeTypeCardMenuBtn').classList.toggle('hidden', !isMine);
+        updateCoffeeTypeCardNav();
+        document.getElementById('coffeeTypeCardOverlay').classList.remove('hidden');
+    };
+
+    const closeCoffeeTypeCard = (event) => {
+        if (event && event.target !== event.currentTarget) return;
+        document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
+        document.getElementById('coffeeTypeCardView').classList.remove('hidden');
+        document.getElementById('coffeeTypeCardEditBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
+        document.getElementById('coffeeTypeCardMenuBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
+        document.getElementById('coffeeTypeCardOverlay').classList.add('hidden');
+    };
+
+    const enterCoffeeTypeEditMode = () => {
+        const type = getCurrentType();
+        if (!type) return;
+
+        document.getElementById('coffeeTypeEditFarmer').value = type.farmer || '';
+        document.getElementById('coffeeTypeEditRoaster').value = type.roaster || '';
+        document.getElementById('coffeeTypeEditOrigin').value = type.origin || '';
+        document.getElementById('coffeeTypeEditProcessing').value = type.processing || '';
+        document.getElementById('coffeeTypeEditVariety').value = type.variety || '';
+        document.getElementById('coffeeTypeEditRoast').value = type.roast || type.roastType || '';
+        document.getElementById('coffeeTypeEditRating').value = parseInt(type.rating, 10) || '';
+        document.getElementById('coffeeTypeEditShopUrl').value = type.webshopUrl || type.shopUrl || '';
+        document.getElementById('coffeeTypeEditTasteNotes').value = type.tasteNotes || '';
+
+        document.getElementById('coffeeTypeCardView').classList.add('hidden');
+        document.getElementById('coffeeTypeCardEdit').classList.remove('hidden');
+        document.getElementById('coffeeTypeCardEditBtn').classList.add('hidden');
+        document.getElementById('coffeeTypeCardMenuBtn').classList.add('hidden');
+        document.getElementById('coffeeTypeCardActionMenu').classList.add('hidden');
+    };
+
+    const cancelCoffeeTypeEditMode = () => {
+        document.getElementById('coffeeTypeCardEdit').classList.add('hidden');
+        document.getElementById('coffeeTypeCardView').classList.remove('hidden');
+        document.getElementById('coffeeTypeCardEditBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
+        document.getElementById('coffeeTypeCardMenuBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
+    };
+
+    const saveCoffeeTypeEdits = async () => {
+        const user = getCurrentUser();
+        const typeId = getCurrentCoffeeTypeId();
+        if (!user || !typeId) return;
+
+        const nowIso = new Date().toISOString();
+        const updates = {
+            farmer: document.getElementById('coffeeTypeEditFarmer').value || '',
+            roaster: document.getElementById('coffeeTypeEditRoaster').value || '',
+            origin: document.getElementById('coffeeTypeEditOrigin').value || '',
+            processing: document.getElementById('coffeeTypeEditProcessing').value || '',
+            variety: document.getElementById('coffeeTypeEditVariety').value || '',
+            roast: document.getElementById('coffeeTypeEditRoast').value || '',
+            rating: parseInt(document.getElementById('coffeeTypeEditRating').value, 10) || 0,
+            webshopUrl: document.getElementById('coffeeTypeEditShopUrl').value || '',
+            tasteNotes: document.getElementById('coffeeTypeEditTasteNotes').value || '',
+            updatedAt: nowIso
+        };
+
+        try {
+            await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', typeId), updates);
+            setCoffeeTypesState(getCoffeeTypes().map((ct) => (ct.id === typeId ? { ...ct, ...updates } : ct)));
+            renderCoffeeTypesTable();
+            openCoffeeTypeCard(typeId);
+        } catch (err) {
+            console.error('Error saving coffee edits:', err);
+            alert('Failed to save changes.');
+        }
+    };
+
+    const closeCoffeeTypeCardMenu = () => {
+        const menu = document.getElementById('coffeeTypeCardActionMenu');
+        if (menu) menu.classList.add('hidden');
+    };
+
+    return {
+        showBeansForCoffeeTypeFromTable,
+        showBrewsForCoffeeTypeFromTable,
+        openNewBagForCoffeeTypeFromTable,
+        openCoffeeTypeFromTableEdit,
+        deleteCoffeeTypeFromTable,
+        deleteCoffeeType,
+        triggerCoffeeTypePhoto,
+        openCoffeeTypePhoto,
+        removeCoffeeTypePhoto,
+        handleCoffeeTypePhoto,
+        openCoffeeTypeCard,
+        closeCoffeeTypeCard,
+        enterCoffeeTypeEditMode,
+        cancelCoffeeTypeEditMode,
+        saveCoffeeTypeEdits,
+        closeCoffeeTypeCardMenu
+    };
+};

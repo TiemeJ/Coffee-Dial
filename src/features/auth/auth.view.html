@@ -1,0 +1,17 @@
+<div id="signedOutAuthBody" class="hidden flex justify-center">
+    <div class="w-full max-w-md bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] p-6">
+        <div class="mb-5">
+            <h2 class="text-lg font-bold text-coffee-900 dark:text-white mb-1">Coffee Dial</h2>
+            <p class="text-xs text-coffee-600 dark:text-[#a8a29e]">
+                Log your brews, track beans and coffees, and revisit recipes as you dial in the perfect cup. Sync across devices when you sign in.
+            </p>
+        </div>
+        <h3 class="text-sm font-semibold text-coffee-900 dark:text-white mb-1">Sign In</h3>
+        <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-4">Use an email link to sign in without a password.</p>
+        <div class="flex items-center gap-2">
+            <input id="emailLinkLoginEmail" type="email" placeholder="Email for link" class="flex-1 bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors">
+            <button id="emailLinkLoginBtn" data-action-click="sendEmailLinkLogin()" class="px-3 py-2 rounded-lg bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white text-xs font-semibold transition-colors">Email link</button>
+        </div>
+        <div id="emailLinkLoginStatus" class="hidden text-[11px] text-coffee-600 dark:text-[#a8a29e] mt-2"></div>
+    </div>
+</div>

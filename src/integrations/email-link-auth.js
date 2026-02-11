@@ -146,12 +146,14 @@ export const initEmailLinkAuth = ({ auth }) => {
         }
     };
 
-    window.sendEmailLinkActivation = sendActivationLink;
-    window.sendEmailLinkLogin = sendLoginLink;
-
     onAuthStateChanged(auth, (user) => {
         updateActivationUi(user);
     });
 
     handleEmailLink();
+
+    return {
+        sendEmailLinkActivation: sendActivationLink,
+        sendEmailLinkLogin: sendLoginLink
+    };
 };

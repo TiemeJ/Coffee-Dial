@@ -1,0 +1,152 @@
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] overflow-hidden transition-colors duration-300 relative">
+            <!-- Brew Selector & Search/Filter Section -->
+            <div id="viewSelectorContainer" class="hidden p-6 flex flex-col gap-3 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-100/50 dark:bg-[#1c1917]">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-4 w-full sm:w-auto">
+                    <div class="flex items-center gap-2">
+                        <select id="viewSelect" data-action-change="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
+                            <option value="mine">My Brews</option>
+                            </select>
+                    </div>
+                    <div class="relative flex-1 sm:flex-initial">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fa-solid fa-search text-coffee-400"></i>
+                        </div>
+                        <input type="text" id="globalSearch" class="block w-full sm:w-64 p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all" placeholder="Search brews...">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                            <button id="searchClearBtn" data-action-click="clearSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                            <button data-action-click="toggleQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                                <i class="fa-solid fa-filter"></i>
+                            </button>
+                        </div>
+                        <div id="quickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                        </div>
+                        <div id="quickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="activeFiltersContainer" class="hidden flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
+                <button data-action-click="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
+            </div>
+            </div>
+            <div class="overflow-x-auto min-h-[300px]">
+                <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+                    <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
+                        <tr>
+                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" data-action-click="refreshTableData(this)" title="Reset Table"><i class="fa-solid fa-arrow-rotate-left"></i></th>
+                            <th id="th-roaster" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable">
+                                <button type="button" data-action-click="sortBy('roaster')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Roaster</span>
+                                    <span id="brewSortIcon-roaster" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-origin" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('origin')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Origin</span>
+                                    <span id="brewSortIcon-origin" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-farmer" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('farmer')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Blend/Farmer</span>
+                                    <span id="brewSortIcon-farmer" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-variety" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('variety')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Variety</span>
+                                    <span id="brewSortIcon-variety" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-processing" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('processing')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Process</span>
+                                    <span id="brewSortIcon-processing" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-roastType" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('roastType')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Roast</span>
+                                    <span id="brewSortIcon-roastType" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-method" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('method')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Method</span>
+                                    <span id="brewSortIcon-method" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-grinder" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('grinder')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Grinder</span>
+                                    <span id="brewSortIcon-grinder" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-grind" scope="col" class="px-3 py-1.5 whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('grind')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Grind</span>
+                                    <span id="brewSortIcon-grind" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-recipe" scope="col" class="px-3 py-1.5 whitespace-nowrap">Recipe</th>
+                            <th id="th-time" scope="col" class="px-3 py-1.5 text-right whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('time')" class="w-full flex items-center justify-end gap-1">
+                                    <span>Time</span>
+                                    <span id="brewSortIcon-time" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-temp" scope="col" class="px-3 py-1.5 text-center filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('temp')" class="w-full flex items-center justify-center gap-1">
+                                    <span>Temp</span>
+                                    <span id="brewSortIcon-temp" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-drink" scope="col" class="px-3 py-1.5 filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('drink')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Drink</span>
+                                    <span id="brewSortIcon-drink" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-notes" scope="col" class="px-3 py-1.5 whitespace-nowrap">Notes</th>
+                            <th id="th-improve" scope="col" class="px-3 py-1.5 whitespace-nowrap">Improve</th>
+                            <th id="th-rating" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('rating')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Rating</span>
+                                    <span id="brewSortIcon-rating" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th id="th-date" scope="col" class="px-3 py-1.5 whitespace-nowrap w-28">
+                                <button type="button" data-action-click="sortBy('createdAt')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Date</span>
+                                    <span id="brewSortIcon-createdAt" class="text-[10px]"></span>
+                                </button>
+                            </th>
+                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap"><span class="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="coffeeTableBody"></tbody>
+                </table>
+                <div id="loadMoreContainer" class="hidden flex justify-center items-center py-4 border-t border-coffee-200 dark:border-[#44403c]">
+                    <button data-action-click="loadMoreBrews()" class="px-4 py-2 bg-coffee-100 hover:bg-coffee-200 dark:bg-[#34302e] dark:hover:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] rounded-lg font-medium transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-chevron-down"></i>
+                        <span>Load More Brews (<span id="remainingCount">0</span> remaining)</span>
+                    </button>
+                </div>
+            </div>
+            <div id="filterDropdown" class="hidden absolute bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] py-1 min-w-[150px]"></div>
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-coffee-400 dark:text-[#57534e] absolute top-16 left-0 right-0 pointer-events-none">
+                <i class="fa-solid fa-mug-saucer text-4xl mb-3 opacity-50"></i>
+                <p class="text-lg font-medium">Please sign in to view your logs.</p>
+                <p class="text-sm">Connect with Google to sync your coffee data.</p>
+            </div>
+        </div>
+
+        <div class="mt-3 text-xs text-coffee-500 dark:text-[#78716c] italic flex flex-col gap-1 px-1">
+            <span><i class="fa-solid fa-hand-pointer mr-1"></i> Double tap any row to view Card.</span>
+        </div>

@@ -1,0 +1,148 @@
+    <div id="statsModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col my-8 max-h-[90vh]">
+            <div class="p-4 sm:p-6 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917]">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div class="flex justify-between items-center w-full sm:w-auto">
+                        <h3 class="font-bold text-xl text-coffee-900 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-coffee-600 dark:text-[#d6ccc2]"></i>
+                            <span>Brewing Statistics</span>
+                        </h3>
+                        <button data-action-click="closeStats()" class="sm:hidden text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white p-2">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <select id="statsViewSelect" data-action-change="changeStatsView(this.value)" class="flex-1 sm:flex-none bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[140px]">
+                            <option value="mine">My Brews</option>
+                        </select>
+                        <button type="button" data-action-click="triggerAIProfile()" id="statsAIBtn" class="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm whitespace-nowrap">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Profile
+                        </button>
+                        <button data-action-click="closeStats()" class="hidden sm:block text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white ml-2">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="statsModalContent" class="p-6 overflow-y-auto bg-coffee-50/50 dark:bg-[#1c1917]">
+                <div id="aiProfileContainer" class="hidden relative mb-8 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 p-5 rounded-2xl shadow-inner typewriter">
+                    <button data-action-click="hideAiProfile()" class="absolute top-3 right-3 text-indigo-400 hover:text-indigo-600 dark:hover:text-white transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div class="flex items-center gap-2 mb-2 text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase tracking-widest">
+                        <i class="fa-solid fa-sparkles"></i> AI Brew Sommelier
+                    </div>
+                    <p id="aiProfileText" class="text-sm text-coffee-800 dark:text-indigo-100 italic leading-relaxed"></p>
+                </div>
+
+                <div id="statsGeneralView" class="space-y-8">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
+                            <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Hours Without Coffee</div>
+                            <div id="statMonthBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                        </div>
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
+                            <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Total Brews</div>
+                            <div id="statTotalBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                        </div>
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
+                            <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Last 7 Days</div>
+                            <div id="statWeekBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                        </div>
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm text-center">
+                            <div class="text-xs text-coffee-500 dark:text-[#78716c] uppercase font-bold mb-1">Daily Avg</div>
+                            <div id="statAvgBrews" class="text-3xl font-bold text-coffee-900 dark:text-white">-</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col items-center">
+                            <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase">Roast Profile</h4>
+                            <div class="relative w-full h-48"><canvas id="chartRoast"></canvas></div>
+                        </div>
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col items-center">
+                            <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase">Brew Method</h4>
+                            <div class="relative w-full h-48"><canvas id="chartMethod"></canvas></div>
+                        </div>
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col items-center">
+                            <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase">Drink Type</h4>
+                            <div class="relative w-full h-48"><canvas id="chartDrink"></canvas></div>
+                        </div>
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col items-center">
+                            <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase">Star Rating Frequency</h4>
+                            <div class="relative w-full h-48"><canvas id="chartStars"></canvas></div>
+                        </div>
+
+                        <div class="bg-white dark:bg-[#292524] p-4 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm md:col-span-2">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-sm font-bold text-coffee-800 dark:text-white uppercase flex items-center gap-2"><i class="fa-solid fa-seedling text-green-500"></i>Bean-o-meter</h4>
+                                <div class="flex bg-coffee-100 dark:bg-[#1c1917] rounded p-0.5 gap-1">
+                                    <button data-action-click="updateBeanMeter('day')" class="bean-meter-btn px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#292524] shadow-sm text-coffee-800 dark:text-white">Day</button>
+                                    <button data-action-click="updateBeanMeter('week')" class="bean-meter-btn px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e]">Week</button>
+                                    <button data-action-click="updateBeanMeter('month')" class="bean-meter-btn px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e]">Month</button>
+                                    <button data-action-click="updateBeanMeter('year')" class="bean-meter-btn px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e]">Year</button>
+                                </div>
+                            </div>
+                            <div class="relative w-full h-64"><canvas id="chartBeanMeter"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-[#292524] p-5 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm">
+                            <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase border-b border-coffee-100 dark:border-[#44403c] pb-2">Variety Analysis</h4>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-coffee-600 dark:text-[#a8a29e]">Unique Coffees Tried:</span>
+                                    <span id="statUniqueCoffees" data-action-click="toggleStatsUniqueTable(true)" class="font-bold text-xl text-blue-500 dark:text-blue-400 cursor-pointer hover:underline">-</span>
+                                </div>
+                                <div class="text-xs text-gray-400 italic mb-2">*Based on unique combination of Roaster, Origin, and Blend/Farmer.</div>
+                                
+                                <div>
+                                    <span class="block text-sm text-coffee-600 dark:text-[#a8a29e] mb-1">Most Frequently Brewed:</span>
+                                    <div id="statMostBrewed" class="p-3 bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                                        <div class="font-bold text-coffee-800 dark:text-white text-sm" id="mostBrewedName">-</div>
+                                        <div class="text-xs text-coffee-500 dark:text-[#78716c]" id="mostBrewedCount">0 brews</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-[#292524] p-5 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm flex flex-col">
+                            <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase border-b border-coffee-100 dark:border-[#44403c] pb-2"><i class="fa-solid fa-trophy text-yellow-500 mr-2"></i>Hall of Fame (5 Stars)</h4>
+                            <div id="topCoffeesList" class="overflow-y-auto max-h-48 space-y-2 pr-1"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#292524] p-5 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-4 uppercase border-b border-coffee-100 dark:border-[#44403c] pb-2"><i class="fa-solid fa-grip text-amber-600 mr-2"></i>Grinders</h4>
+                        <div id="grinderStatsList" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div id="statsUniqueTableView" class="hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-bold text-coffee-800 dark:text-white uppercase text-sm"><i class="fa-solid fa-ranking-star mr-2 text-yellow-500"></i>Coffee Leaderboard</h4>
+                        <button data-action-click="toggleStatsUniqueTable(false)" class="text-xs font-bold text-blue-500 dark:text-blue-400 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-left"></i> Back to Charts
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-coffee-200 dark:border-[#44403c] shadow-sm bg-white dark:bg-[#292524]">
+                        <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+                            <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
+                                <tr>
+                                    <th class="px-4 py-2">Roaster</th>
+                                    <th class="px-4 py-2">Origin</th>
+                                    <th class="px-4 py-2">Blend/Farmer</th>
+                                    <th class="px-4 py-2 text-center">Avg Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uniqueLeaderboardBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>

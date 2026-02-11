@@ -1,0 +1,56 @@
+    <div id="autoArchiveToast" class="hidden fixed bottom-4 right-4 z-[120] w-[calc(100%-2rem)] max-w-sm">
+        <div class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-xl shadow-2xl p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div class="text-sm font-semibold text-coffee-900 dark:text-white">
+                    O, no! Your bag is empty. It has been archived.
+                </div>
+                <button data-action-click="closeAutoArchiveToast()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button data-action-click="handleAutoArchiveToastAction('unarchive')" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-3 py-1.5 rounded-lg text-xs font-semibold">Unarchive</button>
+                <button data-action-click="handleAutoArchiveToastAction('open')" class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-3 py-1.5 rounded-lg text-xs font-semibold">Open new bag</button>
+                <button data-action-click="handleAutoArchiveToastAction('close')" class="text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-800 dark:hover:text-white px-2 py-1.5 text-xs font-semibold">That's life</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="autoCoffeeTypeToast" class="hidden fixed bottom-4 right-4 z-[120] w-[calc(100%-2rem)] max-w-sm">
+        <div class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-xl shadow-2xl p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div id="autoCoffeeTypeToastText" class="text-sm font-semibold text-coffee-900 dark:text-white">
+                    Coffee created.
+                </div>
+                <button data-action-click="closeCoffeeTypeCreatedToast()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="autoPinToast" class="hidden fixed bottom-4 right-4 z-[120] w-[calc(100%-2rem)] max-w-sm">
+        <div class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-xl shadow-2xl p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div id="autoPinToastText" class="text-sm font-semibold text-coffee-900 dark:text-white">
+                    Autopin updated.
+                </div>
+                <button data-action-click="closeAutoPinToast()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="appConfirmOverlay" class="hidden fixed inset-0 z-[130] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" data-action-click="closeAppConfirm(event)">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]" data-action-click="event.stopPropagation()">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c]">
+                <h3 id="appConfirmTitle" class="font-bold text-lg text-coffee-900 dark:text-white">Confirm action</h3>
+                <p id="appConfirmMessage" class="mt-2 text-sm text-coffee-700 dark:text-[#d6ccc2]"></p>
+            </div>
+            <div class="p-4 flex justify-end gap-2 bg-coffee-50 dark:bg-[#1c1917]">
+                <button id="appConfirmCancelBtn" type="button" data-action-click="resolveAppConfirm(false)" class="px-3 py-1.5 text-sm font-semibold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+                <button id="appConfirmConfirmBtn" type="button" data-action-click="resolveAppConfirm(true)" class="px-3 py-1.5 text-sm font-semibold rounded bg-red-600 hover:bg-red-700 text-white">Confirm</button>
+            </div>
+        </div>
+    </div>

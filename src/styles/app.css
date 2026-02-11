@@ -1,0 +1,133 @@
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            transition: background-color 0.3s ease, color 0.3s ease; 
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain; 
+            padding-top: env(safe-area-inset-top);
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .dark ::-webkit-scrollbar-thumb { background: #57534e; }
+        ::-webkit-scrollbar-thumb { background: #d6ccc2; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a18e84; }
+        
+        /* iOS scroll fix for modals */
+        .ios-scroll { -webkit-overflow-scrolling: touch; overflow-y: auto; }
+        
+        input:focus, select:focus, textarea:focus { outline: none; ring: 2px; border-color: #b08968; box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.2); }
+        .editing-mode { border: 2px solid #ea580c !important; }
+        
+        th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
+        
+        #filterDropdown, #mainMenuDropdown, #aiMenuDropdown, .action-menu { z-index: 50; animation: fadeIn 0.1s ease-out; }
+        #modalOverlay, #statsModal, #imageModalOverlay, #coffeeCardOverlay, #uploadPhotoModal, #galleryModal, #easterEggModal, #preferencesModal, #coffeeScaleModal, #connectScaleModal, #exportModal, #helpModal, #aboutModal, #beansModal, #beanCardOverlay { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .chevron-rotate { transition: transform 0.3s ease; }
+        .group[aria-expanded="true"] .chevron-rotate { transform: rotate(180deg); }
+        
+        /* Drag Handle Styles */
+        .drag-handle { cursor: grab; touch-action: none; }
+        .drag-handle:active { cursor: grabbing; }
+        
+        .sortable-ghost { 
+            opacity: 0.4; 
+            background-color: #f5f5f4; 
+            border: 2px dashed #d6ccc2;
+        }
+        .dark .sortable-ghost { 
+            background-color: #292524; 
+            border: 2px dashed #57534e;
+        }
+
+        .sortable-drag { 
+            opacity: 1 !important; 
+            background-color: white;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            transform: scale(1.05) rotate(2deg);
+            z-index: 1000;
+        }
+        .dark .sortable-drag {
+            background-color: #292524;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Star Rating Styles */
+        .star-rating i { cursor: pointer; transition: color 0.2s; }
+        .star-rating i:hover, .star-rating i.active { color: #fbbf24; }
+        .dark .star-rating i:hover, .star-rating i.active { color: #f59e0b; }
+
+        /* SCA Wheel Styles */
+        .sca-btn { transition: all 0.2s; }
+        .sca-btn:active { transform: scale(0.95); }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
+
+        /* AI Loading and Flash Animations */
+        .ai-loading-pulse { animation: ai-pulse 1.5s infinite; }
+        @keyframes ai-pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        @keyframes ai-flash {
+            0% { background-color: transparent; }
+            30% { background-color: rgba(199, 210, 254, 0.5); } 
+            100% { background-color: transparent; }
+        }
+        .ai-flash-effect { animation: ai-flash 2s ease-out; }
+
+        .typewriter p { overflow: hidden; white-space: normal; margin: 0 auto; letter-spacing: .05em; animation: typing 3.5s steps(40, end); }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+
+        /* Coffee Wave Animation */
+        @keyframes coffee-wave {
+            0% { background-position-x: 0%; }
+            100% { background-position-x: 100%; }
+        }
+        .wave-animate {
+            animation: coffee-wave 3s linear infinite;
+        }
+        
+        /* Paper Boat Animations */
+        @keyframes boat-sail-right {
+            0% { left: -30px; transform: translateY(-50%) rotate(-8deg); opacity: 1; }
+            33% { transform: translateY(-65%) rotate(12deg); opacity: 1; }
+            66% { transform: translateY(-40%) rotate(-10deg); opacity: 1; }
+            100% { left: calc(100% + 30px); transform: translateY(-50%) rotate(8deg); opacity: 1; }
+        }
+        @keyframes boat-sail-left {
+            0% { right: -30px; transform: translateY(-50%) rotate(3deg) scaleX(-1); opacity: 1; }
+            25% { transform: translateY(-55%) rotate(-2deg) scaleX(-1); opacity: 1; }
+            50% { transform: translateY(-45%) rotate(2deg) scaleX(-1); opacity: 1; }
+            75% { transform: translateY(-55%) rotate(-3deg) scaleX(-1); opacity: 1; }
+            100% { right: calc(100% + 30px); transform: translateY(-50%) rotate(3deg) scaleX(-1); opacity: 1; }
+        }
+        @keyframes boat-cycle {
+            0% { opacity: 0; }
+            2% { opacity: 1; }
+            32% { opacity: 1; }
+            34% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        .boat-right {
+            animation: boat-sail-right 6s linear infinite, boat-cycle 18s ease-in-out infinite;
+        }
+        .boat-left {
+            animation: boat-sail-left 6s linear infinite;
+        }
+        
+        /* Disable animations when preference is off */
+        .no-animations .wave-animate,
+        .no-animations .boat-right,
+        .no-animations .boat-left,
+        .no-animations .ai-loading-pulse,
+        .no-animations .ai-flash-effect {
+            animation: none !important;
+        }
+        .no-animations .boat-right,
+        .no-animations .boat-left {
+            display: none;
+        }
+    </style>

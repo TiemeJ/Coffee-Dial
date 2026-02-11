@@ -1,0 +1,166 @@
+export const createBrewsCardUiModule = ({
+    getCurrentView,
+    getCoffees,
+    getFilteredCoffees,
+    getDisplayedBrewsCount,
+    getCoffeeTypeDisplay,
+    getStarDisplay,
+    formatTime,
+    getTempBadge,
+    setCurrentCardCoffee,
+    getCurrentCoffeeCardId,
+    setCurrentCoffeeCardId,
+    setCurrentCardGraphData,
+    updateCoffeeCardActionMenu,
+    cancelBrewQuickEditMode,
+    resetCardPhotoState,
+    toggleCardMode
+}) => {
+    const populateCardData = (c) => {
+        setCurrentCardCoffee(c);
+
+        const hasGraph = !!(
+            (c.scaleCapture && c.scaleCapture.samples && c.scaleCapture.samples.length) ||
+            (c.scaleFlowCapture && c.scaleFlowCapture.samples && c.scaleFlowCapture.samples.length) ||
+            (c.scaleRawCapture && c.scaleRawCapture.samples && c.scaleRawCapture.samples.length)
+        );
+
+        const graphBtn = document.getElementById('cardGraphBtn');
+        if (graphBtn) graphBtn.classList.toggle('hidden', !hasGraph);
+
+        setCurrentCardGraphData(
+            hasGraph
+                ? {
+                      capture: c.scaleCapture || { startAt: null, samples: [] },
+                      flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
+                      rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
+                      firstDrip: Number.isFinite(Number(c.firstDrip)) ? Number(c.firstDrip) : null,
+                      elapsedSeconds: Number.isFinite(Number(c.time)) ? Number(c.time) : null,
+                      recipeSteps: Array.isArray(c.recipeSteps) ? c.recipeSteps : []
+                  }
+                : null
+        );
+
+        const coffeeType = getCoffeeTypeDisplay(c);
+        updateCoffeeCardActionMenu(c);
+
+        document.getElementById('cardRoaster').textContent = coffeeType.farmer !== '-' ? coffeeType.farmer : (coffeeType.roaster !== '-' ? coffeeType.roaster : 'Unknown Blend');
+        document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
+        document.getElementById('cardOrigin').textContent = coffeeType.origin;
+        document.getElementById('cardFarmer').textContent = coffeeType.roaster;
+        document.getElementById('cardProcess').textContent = coffeeType.processing;
+        document.getElementById('cardRoastType').textContent = coffeeType.roastType;
+        document.getElementById('cardMethod').textContent = c.method || '-';
+        document.getElementById('cardWeight').textContent = c.weight ? `${c.weight}g` : '-';
+        document.getElementById('cardRatio').textContent = c.ratio ? `1:${c.ratio}` : '-';
+
+        const outWeight = c.weight && c.ratio ? (c.weight * c.ratio).toFixed(1) : '-';
+        document.getElementById('cardOut').textContent = outWeight !== '-' ? `${outWeight.endsWith('.0') ? parseInt(outWeight, 10) : outWeight}g` : '-';
+
+        const grinderVal = c.grinder || '';
+        const grindVal = c.grind || '-';
+        const titleEl = document.getElementById('cardGrindTitle');
+        const valEl = document.getElementById('cardGrindValue');
+        if (titleEl) titleEl.textContent = grinderVal || 'Grind';
+        if (valEl) valEl.textContent = grindVal;
+
+        document.getElementById('cardTime').textContent = formatTime(c.time);
+        document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
+        document.getElementById('cardDrink').textContent = c.drink || '-';
+
+        const notesEl = document.getElementById('cardNotes');
+        if (notesEl) {
+            if (c.notes) {
+                notesEl.textContent = `"${c.notes}"`;
+                notesEl.classList.remove('hidden');
+            } else {
+                notesEl.classList.add('hidden');
+            }
+        }
+
+        const improveEl = document.getElementById('cardImprove');
+        const improveCon = document.getElementById('cardImproveContainer');
+        if (improveEl && improveCon) {
+            if (c.improve) {
+                improveEl.textContent = `"${c.improve}"`;
+                improveCon.classList.remove('hidden');
+            } else {
+                improveCon.classList.add('hidden');
+            }
+        }
+
+        const cardDateEl = document.getElementById('cardDate');
+        if (cardDateEl) {
+            if (c.createdAt) {
+                const cardDate = new Date(c.createdAt);
+                const cardTimeText = cardDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                const cardDateText = cardDate.toLocaleDateString();
+                cardDateEl.innerHTML = `<span class="block text-[11px]">${cardTimeText}</span><span class="block">${cardDateText}</span>`;
+            } else {
+                cardDateEl.textContent = '-';
+            }
+        }
+    };
+
+    const getBrewTableOrder = () => {
+        const filteredCoffees = getFilteredCoffees();
+        const displayLimit = Math.min(getDisplayedBrewsCount(), filteredCoffees.length);
+        return filteredCoffees.slice(0, displayLimit).map((c) => c.id);
+    };
+
+    const updateCoffeeCardNav = () => {
+        const order = getBrewTableOrder();
+        const idx = order.indexOf(getCurrentCoffeeCardId());
+        const prevBtn = document.getElementById('coffeeCardPrevBtn');
+        const nextBtn = document.getElementById('coffeeCardNextBtn');
+        if (!prevBtn || !nextBtn) return;
+        prevBtn.disabled = idx <= 0;
+        nextBtn.disabled = idx === -1 || idx >= order.length - 1;
+        prevBtn.classList.toggle('opacity-40', prevBtn.disabled);
+        prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
+        nextBtn.classList.toggle('opacity-40', nextBtn.disabled);
+        nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
+    };
+
+    const openCoffeeCard = (id, e) => {
+        if (window.getSelection().toString().length > 0) return;
+        if (e) e.stopPropagation();
+        const c = getCoffees().find((x) => x.id === id);
+        if (!c) return;
+
+        setCurrentCoffeeCardId(id);
+        cancelBrewQuickEditMode();
+        resetCardPhotoState();
+        toggleCardMode('stats');
+        document.getElementById('shareControls')?.classList.add('hidden');
+        populateCardData(c);
+        document.getElementById('coffeeCardOverlay')?.classList.remove('hidden');
+        updateCoffeeCardNav();
+    };
+
+    const navigateCoffeeCard = (direction) => {
+        const order = getBrewTableOrder();
+        const idx = order.indexOf(getCurrentCoffeeCardId());
+        const nextIdx = idx + direction;
+        if (nextIdx < 0 || nextIdx >= order.length) return;
+        openCoffeeCard(order[nextIdx]);
+    };
+
+    const closeCoffeeCard = (e) => {
+        if (!e || e.target.id === 'coffeeCardOverlay') {
+            cancelBrewQuickEditMode();
+            document.getElementById('coffeeCardOverlay')?.classList.add('hidden');
+            const graphModal = document.getElementById('cardGraphModal');
+            if (graphModal) graphModal.classList.add('hidden');
+        }
+    };
+
+    return {
+        populateCardData,
+        getBrewTableOrder,
+        openCoffeeCard,
+        updateCoffeeCardNav,
+        navigateCoffeeCard,
+        closeCoffeeCard
+    };
+};
