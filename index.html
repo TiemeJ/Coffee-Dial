@@ -847,6 +847,12 @@
                                             <span id="coffeeTypesSortIcon-roast" class="text-[10px]"></span>
                                         </button>
                                     </th>
+                                    <th class="px-4 py-3 text-center">
+                                        <button type="button" onclick="setCoffeeTypesSort('rating')" class="flex items-center gap-2 mx-auto">
+                                            <span>Rating</span>
+                                            <span id="coffeeTypesSortIcon-rating" class="text-[10px]"></span>
+                                        </button>
+                                    </th>
                                     <th class="px-4 py-3 text-center w-28">
                                         <button type="button" onclick="setCoffeeTypesSort('createdAt')" class="flex items-center gap-2 mx-auto">
                                             <span>Created</span>
@@ -904,6 +910,7 @@
                 </div>
                 <h3 id="coffeeTypeCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
                 <p id="coffeeTypeCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
+                <div id="coffeeTypeCardRating" class="text-xs mt-1"></div>
             </div>
             <div id="coffeeTypeCardView" class="flex-1 flex flex-col min-h-0">
                 <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4">
@@ -1002,6 +1009,17 @@
                     <div>
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</label>
                         <input id="coffeeTypeEditRoast" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Rating</label>
+                        <select id="coffeeTypeEditRating" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Web Shop URL</label>
@@ -2199,6 +2217,7 @@
                     processing: data.processing || '',
                     variety: data.variety || '',
                     roast: data.roastType || data.roast || '',
+                    rating: 0,
                     tasteNotes: '',
                     webshopUrl: '',
                     imageUrl: imageURL,
@@ -2268,6 +2287,7 @@
                     processing: data.processing || '',
                     variety: data.variety || '',
                     roast: data.roastType || data.roast || '',
+                    rating: 0,
                     tasteNotes: '',
                     webshopUrl: '',
                     imageUrl: imageURL,
@@ -2548,6 +2568,7 @@
                     farmer: bean.farmer || '',
                     processing: bean.processing || '',
                     origin: bean.origin || '',
+                    rating: 0,
                     tasteNotes: bean.tasteNotes || bean.notes || '',
                     roast: bean.roastType || '',
                     webshopUrl: bean.shopUrl || '',
@@ -2803,6 +2824,7 @@
                         processing: beanData.processing || '',
                         variety: beanData.variety || '',
                         roast: beanData.roastType || '',
+                        rating: 0,
                         tasteNotes: '',
                         webshopUrl: '',
                         imageUrl: '',
@@ -3466,6 +3488,7 @@
                 processing: '',
                 variety: '',
                 roast: '',
+                rating: 0,
                 tasteNotes: '',
                 webshopUrl: '',
                 imageUrl: '',
@@ -3695,10 +3718,12 @@
             const roast = type.roast || type.roastType || '-';
             const processing = type.processing || '-';
             const variety = type.variety || '-';
+            const rating = parseInt(type.rating, 10) || 0;
             const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
 
             document.getElementById('coffeeTypeCardTitle').textContent = farmer;
             document.getElementById('coffeeTypeCardSubtitle').textContent = roaster;
+            document.getElementById('coffeeTypeCardRating').innerHTML = getStarDisplay(rating);
             document.getElementById('coffeeTypeCardOrigin').textContent = origin;
             document.getElementById('coffeeTypeCardRoast').textContent = roast;
             document.getElementById('coffeeTypeCardProcess').textContent = processing;
@@ -3798,6 +3823,7 @@
             document.getElementById('coffeeTypeEditProcessing').value = type.processing || '';
             document.getElementById('coffeeTypeEditVariety').value = type.variety || '';
             document.getElementById('coffeeTypeEditRoast').value = type.roast || type.roastType || '';
+            document.getElementById('coffeeTypeEditRating').value = (parseInt(type.rating, 10) || '');
             document.getElementById('coffeeTypeEditShopUrl').value = type.webshopUrl || type.shopUrl || '';
 
             document.getElementById('coffeeTypeCardView').classList.add('hidden');
@@ -3824,6 +3850,7 @@
                 processing: document.getElementById('coffeeTypeEditProcessing').value || '',
                 variety: document.getElementById('coffeeTypeEditVariety').value || '',
                 roast: document.getElementById('coffeeTypeEditRoast').value || '',
+                rating: parseInt(document.getElementById('coffeeTypeEditRating').value, 10) || 0,
                 webshopUrl: document.getElementById('coffeeTypeEditShopUrl').value || '',
                 updatedAt: nowIso
             };
@@ -3969,7 +3996,7 @@
         };
 
         const updateCoffeeTypesSortIcons = () => {
-            const keys = ['farmer', 'roaster', 'origin', 'processing', 'variety', 'roast', 'createdAt'];
+            const keys = ['farmer', 'roaster', 'origin', 'processing', 'variety', 'roast', 'rating', 'createdAt'];
             keys.forEach(key => {
                 const el = document.getElementById(`coffeeTypesSortIcon-${key}`);
                 if (!el) return;
@@ -4014,6 +4041,7 @@
 
             const getSortValue = (type, key) => {
                 if (key === 'roast') return type.roast || type.roastType || '';
+                if (key === 'rating') return parseInt(type.rating, 10) || 0;
                 if (key === 'createdAt') return type.createdAt || '';
                 return type[key] || '';
             };
@@ -4022,7 +4050,12 @@
                 const dir = coffeeTypesSortDir === 'asc' ? 1 : -1;
                 const aVal = getSortValue(a, coffeeTypesSortKey);
                 const bVal = getSortValue(b, coffeeTypesSortKey);
-                let primary = normalizeText(aVal).localeCompare(normalizeText(bVal));
+                let primary;
+                if (coffeeTypesSortKey === 'rating') {
+                    primary = (Number(aVal) || 0) - (Number(bVal) || 0);
+                } else {
+                    primary = normalizeText(aVal).localeCompare(normalizeText(bVal));
+                }
 
                 if (primary === 0) {
                     const aRoaster = normalizeText(a.roaster);
@@ -4068,6 +4101,7 @@
                 const processing = type.processing || '-';
                 const variety = type.variety || '-';
                 const roast = type.roast || type.roastType || '-';
+                const rating = parseInt(type.rating, 10) || 0;
                 const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
                 const menuId = `coffee-types-action-menu-${type.id}`;
                 const buyBtn = (type.webshopUrl || type.shopUrl)
@@ -4086,6 +4120,7 @@
                     <td class="px-4 py-3 text-sm">${processing}</td>
                     <td class="px-4 py-3 text-sm">${variety}</td>
                     <td class="px-4 py-3 text-center text-sm">${roast}</td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap">${getStarDisplay(rating)}</td>
                     <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${createdAt}</td>
                     <td class="px-4 py-3 text-center">
                         <div class="relative inline-block">
@@ -4579,6 +4614,7 @@
                     origin: document.getElementById('beanEditOrigin').value || '',
                     roast: document.getElementById('beanEditRoastType').value || '',
                     variety: document.getElementById('beanEditVariety').value || '',
+                    rating: 0,
                     webshopUrl: document.getElementById('beanEditShopUrl').value || '',
                     imageUrl: bean?.imageURL || '',
                     tasteNotes: '',
