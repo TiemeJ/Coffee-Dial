@@ -1893,6 +1893,19 @@
         </div>
     </div>
 
+    <div id="appConfirmOverlay" class="hidden fixed inset-0 z-[130] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onclick="closeAppConfirm(event)">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]" onclick="event.stopPropagation()">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c]">
+                <h3 id="appConfirmTitle" class="font-bold text-lg text-coffee-900 dark:text-white">Confirm action</h3>
+                <p id="appConfirmMessage" class="mt-2 text-sm text-coffee-700 dark:text-[#d6ccc2]"></p>
+            </div>
+            <div class="p-4 flex justify-end gap-2 bg-coffee-50 dark:bg-[#1c1917]">
+                <button id="appConfirmCancelBtn" type="button" onclick="resolveAppConfirm(false)" class="px-3 py-1.5 text-sm font-semibold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+                <button id="appConfirmConfirmBtn" type="button" onclick="resolveAppConfirm(true)" class="px-3 py-1.5 text-sm font-semibold rounded bg-red-600 hover:bg-red-700 text-white">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // --- CONFIG ---
         const firebaseConfig = {
@@ -2909,7 +2922,19 @@
             } catch(err){ alert(err.message); }
         };
 
-        const discardForm = () => { if(confirm("Discard unsaved changes?")) { resetFormState(); toggleForm(false); } };
+        const discardForm = async () => {
+            const shouldDiscard = await openAppConfirm({
+                title: 'Discard changes?',
+                message: 'This will discard unsaved changes in the form.',
+                confirmLabel: 'Discard',
+                cancelLabel: 'Keep editing',
+                danger: true
+            });
+            if (shouldDiscard) {
+                resetFormState();
+                toggleForm(false);
+            }
+        };
         const toggleActive = async (id, ev) => { if(ev) ev.stopPropagation(); if(currentView !== 'mine') return; const c = coffees.find(x => x.id === id); if(!c) return; try { await updateDoc(doc(db, 'users', currentUser.uid, 'coffees', id), { isActive: !c.isActive }); } catch(e) { console.error(e); } };
 
         const initSortable = () => {
@@ -3359,6 +3384,66 @@
 
         window.closeAutoPinToast = closeAutoPinToast;
 
+        const showToast = (message) => {
+            showAutoPinToast(String(message || 'Done.'));
+        };
+
+        let appConfirmResolver = null;
+
+        const resolveAppConfirm = (result) => {
+            const overlay = document.getElementById('appConfirmOverlay');
+            if (overlay) overlay.classList.add('hidden');
+            if (appConfirmResolver) {
+                const resolve = appConfirmResolver;
+                appConfirmResolver = null;
+                resolve(!!result);
+            }
+        };
+
+        const closeAppConfirm = (event) => {
+            if (!event || event.target.id === 'appConfirmOverlay') {
+                resolveAppConfirm(false);
+            }
+        };
+
+        const openAppConfirm = ({
+            title = 'Confirm action',
+            message = '',
+            confirmLabel = 'Confirm',
+            cancelLabel = 'Cancel',
+            danger = true
+        } = {}) => {
+            const overlay = document.getElementById('appConfirmOverlay');
+            const titleEl = document.getElementById('appConfirmTitle');
+            const messageEl = document.getElementById('appConfirmMessage');
+            const confirmBtn = document.getElementById('appConfirmConfirmBtn');
+            const cancelBtn = document.getElementById('appConfirmCancelBtn');
+            if (!overlay || !titleEl || !messageEl || !confirmBtn || !cancelBtn) return Promise.resolve(false);
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            confirmBtn.textContent = confirmLabel;
+            cancelBtn.textContent = cancelLabel;
+            confirmBtn.className = danger
+                ? 'px-3 py-1.5 text-sm font-semibold rounded bg-red-600 hover:bg-red-700 text-white'
+                : 'px-3 py-1.5 text-sm font-semibold rounded bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white';
+
+            overlay.classList.remove('hidden');
+            return new Promise((resolve) => {
+                appConfirmResolver = resolve;
+            });
+        };
+
+        window.resolveAppConfirm = resolveAppConfirm;
+        window.closeAppConfirm = closeAppConfirm;
+
+        window.alert = (message) => {
+            showToast(message);
+        };
+
+        window.confirm = () => false;
+        window.prompt = () => null;
+
         // --- Coffee Management Functions ---
         const openCoffeeTypes = () => {
             if (!currentUser) return alert("Please sign in.");
@@ -3497,7 +3582,14 @@
 
         const deleteCoffeeType = async () => {
             if (!currentUser || !currentCoffeeTypeId) return;
-            if (!confirm('Delete this coffee? Beans linked to it will be unlinked.')) return;
+            const shouldDelete = await openAppConfirm({
+                title: 'Delete coffee?',
+                message: 'Beans linked to this coffee will be unlinked.',
+                confirmLabel: 'Delete',
+                cancelLabel: 'Cancel',
+                danger: true
+            });
+            if (!shouldDelete) return;
 
             const typeId = currentCoffeeTypeId;
             const nowIso = new Date().toISOString();
@@ -5030,7 +5122,14 @@
         };
 
         const deleteBean = async (beanId) => {
-            if(!confirm("Are you sure? This will not delete brews, but will unlink them from this bean.")) return;
+            const shouldDelete = await openAppConfirm({
+                title: 'Delete bean?',
+                message: 'This will not delete brews, but it will unlink them from this bean.',
+                confirmLabel: 'Delete',
+                cancelLabel: 'Cancel',
+                danger: true
+            });
+            if(!shouldDelete) return;
             const targetBean = beans.find(b => b.id === beanId);
             try {
                 await autoUnpinClosedBagsIfEnabled({
@@ -5210,7 +5309,14 @@
         };
 
         const unfollowUser = async (u) => { 
-            if(!confirm("Unfollow?")) return;
+            const shouldUnfollow = await openAppConfirm({
+                title: 'Unfollow user?',
+                message: 'You can follow them again later.',
+                confirmLabel: 'Unfollow',
+                cancelLabel: 'Cancel',
+                danger: true
+            });
+            if(!shouldUnfollow) return;
             try {
                 const batch = writeBatch(db); batch.delete(doc(db, 'users', currentUser.uid, 'following', u)); batch.delete(doc(db, 'users', u, 'followers', currentUser.uid)); await batch.commit();
                 loadFollowingList(); if(currentView===u){ document.getElementById('viewSelect').value='mine'; changeView('mine'); }
@@ -5352,7 +5458,15 @@
         };
 
         const deletePhoto = async (photoId, photoURL, thumbURL, ev) => {
-            if(ev) ev.stopPropagation(); if(!confirm("Are you sure you want to permanently delete this photo? This cannot be undone.")) return;
+            if (ev) ev.stopPropagation();
+            const shouldDelete = await openAppConfirm({
+                title: 'Delete photo?',
+                message: 'This permanently deletes the photo and cannot be undone.',
+                confirmLabel: 'Delete',
+                cancelLabel: 'Cancel',
+                danger: true
+            });
+            if(!shouldDelete) return;
             try {
                 await deleteDoc(doc(db, 'photos', photoId)); const photoRef = ref(storage, photoURL); await deleteObject(photoRef);
                 if(thumbURL) { const thumbRef = ref(storage, thumbURL); await deleteObject(thumbRef); }
@@ -6110,7 +6224,14 @@
         const performImport = async () => {
             if (!currentUser) return alert("Please sign in.");
             if (!pendingImportBrews.length) return alert('No brews to import.');
-            if (!window.confirm(`Import ${pendingImportBrews.length} brews?`)) return;
+            const shouldImport = await openAppConfirm({
+                title: 'Import brews?',
+                message: `Import ${pendingImportBrews.length} brews?`,
+                confirmLabel: 'Import',
+                cancelLabel: 'Cancel',
+                danger: false
+            });
+            if (!shouldImport) return;
 
             const confirmBtn = document.getElementById('importConfirmBtn');
             if (confirmBtn) {
@@ -7334,7 +7455,20 @@
         const duplicateCoffee = (id) => { const c=coffees.find(x=>x.id===id); if(!c)return; if(currentView!=='mine'){const d={...c};delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture; delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps; document.getElementById('viewSelect').value='mine';changeView('mine');setTimeout(()=>{document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});},500);}else{const d={...c};delete d.scaleCapture; delete d.scaleFlowCapture; delete d.scaleRawCapture; delete d.swirlCount; delete d.pourCount; delete d.bloomTime; delete d.recipeSteps; document.getElementById('editId').value='';populateForm(d);toggleForm(true);document.getElementById('formContainer').classList.remove('editing-mode');document.getElementById('formTitle').innerHTML='<span>Duplicate Brew</span>';document.getElementById('submitBtn').innerHTML='<span>Save Copy</span>';window.scrollTo({top:0,behavior:'smooth'});} };
         const cloneBrew = (id) => duplicateCoffee(id);
 
-        const deleteCoffee = async (id, ev) => { if(ev)ev.stopPropagation(); if(currentView!=='mine')return; if(!confirm('Delete?'))return; await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id)); if(document.getElementById('editId').value==id)resetFormState(); };
+        const deleteCoffee = async (id, ev) => {
+            if (ev) ev.stopPropagation();
+            if (currentView !== 'mine') return;
+            const shouldDelete = await openAppConfirm({
+                title: 'Delete brew?',
+                message: 'This action cannot be undone.',
+                confirmLabel: 'Delete',
+                cancelLabel: 'Cancel',
+                danger: true
+            });
+            if (!shouldDelete) return;
+            await deleteDoc(doc(db,'users',currentUser.uid,'coffees',id));
+            if (document.getElementById('editId').value == id) resetFormState();
+        };
         const resetFormState = (e) => { 
             if(e)e.stopPropagation(); document.getElementById('coffeeForm').reset(); document.getElementById('editId').value=''; setTempMode('numeric'); setNotesMode('manual'); resetSca(); setRating(0); document.getElementById('formContainer').classList.remove('editing-mode'); document.getElementById('formTitle').innerHTML='<span>Add New Brew</span>'; document.getElementById('submitBtn').innerHTML='<span>Save Brew</span>'; document.getElementById('submitBtn').className="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"; document.getElementById('cancelEditBtn').classList.add('hidden'); document.getElementById('isActiveToggle').checked = false; document.getElementById('drinkOther').classList.add('hidden'); document.getElementById('methodOther').classList.add('hidden');
             pendingAIBeanImageFile = null;
