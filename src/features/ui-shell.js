@@ -1,5 +1,5 @@
 export const createUiShellModule = ({
-    getCurrentUser,
+    persistOnboardingSeen,
     closeModal,
     closeCardGraphModal,
     closeGraphModal,
@@ -20,10 +20,11 @@ export const createUiShellModule = ({
 
     const openHelp = () => document.getElementById('helpModal')?.classList.remove('hidden');
 
-    const closeHelp = () => {
+    const closeHelp = async () => {
         document.getElementById('helpModal')?.classList.add('hidden');
-        const user = getCurrentUser();
-        if (user) localStorage.setItem(`tutorialSeen_${user.uid}`, 'true');
+        if (typeof persistOnboardingSeen === 'function') {
+            await persistOnboardingSeen();
+        }
     };
 
     const openAbout = () => document.getElementById('aboutModal')?.classList.remove('hidden');

@@ -78,10 +78,12 @@ export const createSessionAuthViewModule = ({
     const initUserData = async (user) => {
         const userDocRef = doc(db, 'users', user.uid);
         const snap = await getDoc(userDocRef);
+        let shouldShowOnboarding = false;
 
         if (snap.exists()) {
             const data = snap.data();
             setIsPublic(data.isPublic || false);
+            shouldShowOnboarding = data.onboardingSeen !== true;
 
             const coffeeScale = getCoffeeScale?.();
             if (coffeeScale?.setGraphTogglePrefs) {
@@ -119,8 +121,10 @@ export const createSessionAuthViewModule = ({
                 isPublic: false,
                 displayName: user.displayName,
                 pinnedBrews: getPinnedBrewsPreferences(),
-                graphTogglePrefs: {}
+                graphTogglePrefs: {},
+                onboardingSeen: false
             });
+            shouldShowOnboarding = true;
             const coffeeScale = getCoffeeScale?.();
             if (coffeeScale?.setGraphTogglePrefs) {
                 coffeeScale.setGraphTogglePrefs({});
@@ -151,6 +155,17 @@ export const createSessionAuthViewModule = ({
         updatePublicToggleUI();
         document.getElementById('myShareId').value = user.uid;
         renderTable();
+        return { shouldShowOnboarding };
+    };
+
+    const markOnboardingSeen = async () => {
+        const user = getCurrentUser();
+        if (!user) return;
+        try {
+            await setDoc(doc(db, 'users', user.uid), { onboardingSeen: true }, { merge: true });
+        } catch (err) {
+            console.error('Error saving onboarding state', err);
+        }
     };
 
     const changeView = (uid) => {
@@ -284,6 +299,7 @@ export const createSessionAuthViewModule = ({
         googleLogin,
         googleLogout,
         initUserData,
+        markOnboardingSeen,
         changeView,
         initNotificationListener,
         clearViewSubscriptions,

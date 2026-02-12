@@ -198,6 +198,7 @@ export const createAppContainerModules = () => {
             googleLogin,
             googleLogout,
             initUserData,
+            markOnboardingSeen,
             changeView,
             initNotificationListener,
             clearViewSubscriptions,
@@ -270,7 +271,7 @@ export const createAppContainerModules = () => {
             toggleMainMenu,
             handleEscapeKey
         } = createUiShellModule({
-            getCurrentUser: () => currentUser,
+            persistOnboardingSeen: () => markOnboardingSeen(),
             closeModal: (...args) => closeModal(...args),
             closeCardGraphModal: (...args) => closeCardGraphModal(...args),
             closeGraphModal: (...args) => closeGraphModal(...args),
@@ -1546,8 +1547,9 @@ export const createAppContainerModules = () => {
                 document.getElementById('signedOutAuthBody').classList.add('hidden');
                 document.getElementById('signedInContent').classList.remove('hidden');
                 setMenuVisibility(true);
-                await initUserData(user); loadFollowingList(); changeView('mine'); initNotificationListener(user.uid);
-                const hasSeen = localStorage.getItem(`tutorialSeen_${user.uid}`); if (!hasSeen) openHelp();
+                const { shouldShowOnboarding } = await initUserData(user);
+                loadFollowingList(); changeView('mine'); initNotificationListener(user.uid);
+                if (shouldShowOnboarding) openHelp();
                 initZoomListeners(); 
             } else {
                 document.getElementById('authContainer').innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2"><button data-action-click="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button></div>`;
