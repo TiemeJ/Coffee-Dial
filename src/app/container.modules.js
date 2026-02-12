@@ -1209,10 +1209,19 @@ export const createAppContainerModules = () => {
         const setCoffeeDetailsCollapsed = (collapsed) => {
             const body = document.getElementById('coffeeDetailsBody');
             const icon = document.getElementById('coffeeDetailsToggleIcon');
+            const header = document.getElementById('coffeeDetailsHeader');
             if (!body || !icon) return;
             body.classList.toggle('hidden', collapsed);
             icon.classList.toggle('rotate-180', collapsed);
-            localStorage.setItem('coffeeDetailsCollapsed', collapsed ? 'true' : 'false');
+            if (header) {
+                header.classList.toggle('mb-4', !collapsed);
+                header.classList.toggle('pb-2', !collapsed);
+                header.classList.toggle('border-b', !collapsed);
+                header.classList.toggle('border-coffee-200', !collapsed);
+                header.classList.toggle('dark:border-[#44403c]', !collapsed);
+                header.classList.toggle('mb-0', collapsed);
+                header.classList.toggle('pb-0', collapsed);
+            }
             updateCoffeeDetailsTitle();
         };
 
@@ -1224,9 +1233,8 @@ export const createAppContainerModules = () => {
             setCoffeeDetailsCollapsed(!isHidden);
         };
 
-        const initCoffeeDetailsCollapsed = () => {
-            const collapsed = localStorage.getItem('coffeeDetailsCollapsed') === 'true';
-            setCoffeeDetailsCollapsed(collapsed);
+        const initCoffeeDetailsUi = () => {
+            setCoffeeDetailsCollapsed(false);
             ['farmer', 'roaster'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (!el) return;
@@ -1234,11 +1242,11 @@ export const createAppContainerModules = () => {
                 el.addEventListener('change', updateCoffeeDetailsTitle);
             });
         };
-        initCoffeeDetailsCollapsed();
+        initCoffeeDetailsUi();
         
         const toggleForm = (f=null) => { 
             const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
-            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (coffeeScale?.autoConnect) coffeeScale.autoConnect(); const isEditing = c.classList.contains('editing-mode') || !!document.getElementById('editId').value; if (!isEditing && coffeeScale?.applyGraphTogglePrefsForMethod) coffeeScale.applyGraphTogglePrefsForMethod(); } else { o.classList.add('hidden'); } 
+            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (coffeeScale?.autoConnect) coffeeScale.autoConnect(); const isEditing = c.classList.contains('editing-mode') || !!document.getElementById('editId').value; if (!isEditing) { setCoffeeDetailsCollapsed(false); if (coffeeScale?.applyGraphTogglePrefsForMethod) coffeeScale.applyGraphTogglePrefsForMethod(); } } else { o.classList.add('hidden'); } 
         };
         
         const getCoffeeTypeForBrew = (brew) => {
@@ -1378,7 +1386,8 @@ export const createAppContainerModules = () => {
             setRating: (...args) => setRating(...args),
             setNotesMode: (...args) => setNotesMode(...args),
             getCoffeeScale: () => coffeeScale,
-            getGasItems: () => gasItems
+            getGasItems: () => gasItems,
+            fillBeanDetails: (...args) => fillBeanDetails(...args)
         });
 
         const {
@@ -1419,6 +1428,7 @@ export const createAppContainerModules = () => {
             populateForm: (...args) => populateForm(...args),
             updateBeanDropdown: (...args) => updateBeanDropdown(...args),
             setBrewGearScope: (...args) => setBrewGearScope(...args),
+            setCoffeeDetailsCollapsed: (...args) => setCoffeeDetailsCollapsed(...args),
             changeView: (...args) => changeView(...args),
             closeCoffeeCard: (...args) => closeCoffeeCard(...args),
             openCoffeeCard: (...args) => openCoffeeCard(...args),

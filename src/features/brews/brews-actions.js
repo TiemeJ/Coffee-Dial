@@ -24,6 +24,7 @@ export const createBrewsActionsModule = ({
     populateForm,
     updateBeanDropdown,
     setBrewGearScope,
+    setCoffeeDetailsCollapsed,
     changeView,
     closeCoffeeCard,
     openCoffeeCard,
@@ -125,6 +126,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('editId').value = '';
         populateForm(d);
         toggleForm(true);
+        setCoffeeDetailsCollapsed(true);
         document.getElementById('formContainer').classList.remove('editing-mode');
         document.getElementById('formTitle').innerHTML = `<span>${title}</span>`;
         document.getElementById('submitBtn').innerHTML = '<span>Save Copy</span>';
@@ -147,6 +149,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('isActiveToggle').checked = false;
         updateBeanDropdown();
         setBrewGearScope({ includeAll: false });
+        setCoffeeDetailsCollapsed(false);
         document.getElementById('drinkOther').classList.add('hidden');
         document.getElementById('methodOther').classList.add('hidden');
         setSelectedBrewGearIds([]);
@@ -620,6 +623,7 @@ export const createBrewsActionsModule = ({
             populateForm(c);
             document.getElementById('formContainer').classList.add('editing-mode');
             toggleForm(true);
+            setCoffeeDetailsCollapsed(true);
             document.getElementById('formTitle').innerHTML = '<span class="text-orange-500">Edit Brew</span>';
             document.getElementById('submitBtn').innerHTML = '<span>Update</span>';
             document.getElementById('submitBtn').className =
@@ -692,9 +696,11 @@ export const createBrewsActionsModule = ({
                 document.getElementById('editId').value = '';
                 updateBeanDropdown();
                 setBrewGearScope({ includeAll: false });
+                setCoffeeDetailsCollapsed(true);
                 const d = stripBrewGraphFields(c);
                 populateForm(d);
                 toggleForm(true);
+                setCoffeeDetailsCollapsed(true);
                 document.getElementById('formContainer').classList.remove('editing-mode');
                 document.getElementById('formTitle').innerHTML = '<span>Add Friend\'s Brew</span>';
                 document.getElementById('submitBtn').innerHTML = '<span>Save Brew</span>';

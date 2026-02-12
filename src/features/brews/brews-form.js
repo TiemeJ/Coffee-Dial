@@ -1,4 +1,4 @@
-export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, getCoffeeScale, getGasItems }) => {
+export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, getCoffeeScale, getGasItems, fillBeanDetails }) => {
     let brewGearSelection = new Set();
     let brewGearFilter = '';
     let hasBoundBrewGearUi = false;
@@ -229,8 +229,10 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
 
         if (c.beanId) {
             document.getElementById('savedBeanSelect').value = c.beanId;
+            if (fillBeanDetails) fillBeanDetails(c.beanId);
         } else {
             document.getElementById('savedBeanSelect').value = '';
+            if (fillBeanDetails) fillBeanDetails('');
         }
 
         if (coffeeScale?.setCaptureData) {
