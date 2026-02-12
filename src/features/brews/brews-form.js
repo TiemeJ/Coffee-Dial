@@ -23,8 +23,22 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
             document.getElementById('tempProfile').value = c.temp || '';
         }
 
-        const stdDrinks = ['Espresso', 'Lungo', 'Americano', 'Cappuccino', 'Flat White', 'Macchiato', 'Latte Macchiato', 'Filter Coffee', 'Soup', 'Long Soup'];
-        const dVal = c.drink || '';
+        const stdDrinks = [
+            'Espresso',
+            'Lungo',
+            'Americano',
+            'Cappuccino',
+            'Flat White',
+            'Macchiato',
+            'Latte Macchiato',
+            'Filter Coffee',
+            'Soup',
+            'Soup americano',
+            'Soup lungo',
+            'Soup flat white'
+        ];
+        const dValRaw = c.drink || '';
+        const dVal = dValRaw === 'Long Soup' || dValRaw === 'Long soup' ? 'Soup lungo' : dValRaw;
         if (stdDrinks.includes(dVal)) {
             document.getElementById('drinkType').value = dVal;
             document.getElementById('drinkOther').classList.add('hidden');
