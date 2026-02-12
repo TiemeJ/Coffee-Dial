@@ -82,16 +82,18 @@ export const createBeansActionsModule = ({
         const targetBean = getBeans().find((b) => b.id === beanId);
         try {
             const nowIso = new Date().toISOString();
+            const nextFrozen = !isFrozen;
+            const nextFrozenDate = nextFrozen ? nowIso : (targetBean?.frozenDate || null);
             await updateDoc(doc(db, 'users', user.uid, 'beans', beanId), {
-                frozen: !isFrozen,
-                frozenDate: !isFrozen ? nowIso : null,
+                frozen: nextFrozen,
+                frozenDate: nextFrozenDate,
                 updatedAt: nowIso
             });
             let updatedBean = null;
             setBeansState(
                 getBeans().map((bean) => {
                     if (bean.id !== beanId) return bean;
-                    updatedBean = { ...bean, frozen: !isFrozen, frozenDate: !isFrozen ? nowIso : null };
+                    updatedBean = { ...bean, frozen: nextFrozen, frozenDate: nextFrozenDate };
                     return updatedBean;
                 })
             );
