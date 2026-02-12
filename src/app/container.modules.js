@@ -202,6 +202,7 @@ export const createAppContainerModules = () => {
             getCurrentStatsData: () => currentStatsData,
             getCurrentUser: () => currentUser
         });
+        let refreshBrewGearSelectors = () => {};
 
         const {
             googleLogin,
@@ -269,7 +270,8 @@ export const createAppContainerModules = () => {
             applyAnimationPreference: (...args) => applyAnimationPreference(...args),
             setIsPublic: (value) => { isPublic = value; },
             updatePublicToggleUI: (...args) => updatePublicToggleUI(...args),
-            getCoffeeScale: () => coffeeScale
+            getCoffeeScale: () => coffeeScale,
+            refreshBrewGearSelectors: () => refreshBrewGearSelectors()
         });
 
         const {
@@ -670,6 +672,7 @@ export const createAppContainerModules = () => {
                 const gasRef = await addDoc(collection(db, 'users', currentUser.uid, 'gear'), gasData);
                 const newGas = { id: gasRef.id, ...gasData };
                 if (!gasItems.find((item) => item.id === newGas.id)) gasItems.push(newGas);
+                refreshBrewGearSelectors();
                 openGasCard(newGas.id);
                 enterGasEditMode();
             } catch (err) {
@@ -1284,7 +1287,8 @@ export const createAppContainerModules = () => {
             cancelBrewQuickEditMode,
             saveBrewQuickEdits,
             editBrewFromCard,
-            updateCoffeeCardActionMenu
+            updateCoffeeCardActionMenu,
+            refreshQuickEditGearFieldVisibility
         } = createBrewsCardActionsModule({
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
@@ -1292,6 +1296,7 @@ export const createAppContainerModules = () => {
             getCurrentCoffeeCard: () => currentCardCoffee,
             getCoffees: () => coffees,
             getBeans: () => beans,
+            getGasItems: () => gasItems,
             getCoffeeTypes: () => coffeeTypes,
             db,
             doc,
@@ -1368,11 +1373,12 @@ export const createAppContainerModules = () => {
             getCoffeeScale: () => coffeeScale
         });
 
-        const { populateForm } = createBrewsFormModule({
+        const { populateForm, refreshBrewGearField, getSelectedBrewGearIds, setSelectedBrewGearIds } = createBrewsFormModule({
             setTempMode: (...args) => setTempMode(...args),
             setRating: (...args) => setRating(...args),
             setNotesMode: (...args) => setNotesMode(...args),
-            getCoffeeScale: () => coffeeScale
+            getCoffeeScale: () => coffeeScale,
+            getGasItems: () => gasItems
         });
 
         const {
@@ -1422,8 +1428,15 @@ export const createAppContainerModules = () => {
             showCoffeeTypeCreatedToast: (...args) => showCoffeeTypeCreatedToast(...args),
             uploadPendingBeanImage: (...args) => uploadPendingBeanImage(...args),
             clearPendingAIBeanImageFile: (...args) => clearPendingAIBeanImageFile(...args),
-            getCoffeeScale: () => coffeeScale
+            getCoffeeScale: () => coffeeScale,
+            getSelectedBrewGearIds: () => getSelectedBrewGearIds(),
+            setSelectedBrewGearIds: (...args) => setSelectedBrewGearIds(...args)
         });
+        refreshBrewGearSelectors = () => {
+            refreshBrewGearField();
+            refreshQuickEditGearFieldVisibility();
+        };
+        refreshBrewGearSelectors();
 
         const {
             clearSearch,
