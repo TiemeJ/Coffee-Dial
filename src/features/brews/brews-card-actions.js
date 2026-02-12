@@ -29,6 +29,22 @@ export const createBrewsCardActionsModule = ({
     updateBeansLeftForBean,
     autoPinOpenBagsIfEnabled
 }) => {
+    const QUICK_EDIT_METHODS = ['Espresso', 'V60', 'Hario Switch', 'Clever Dripper', 'Aeropress', 'OXO Rapid Brewer', 'French Press', 'Chemex'];
+    const QUICK_EDIT_DRINKS = [
+        'Espresso',
+        'Lungo',
+        'Americano',
+        'Cappuccino',
+        'Flat White',
+        'Macchiato',
+        'Latte Macchiato',
+        'Filter Coffee',
+        'Soup',
+        'Soup americano',
+        'Soup lungo',
+        'Soup flat white'
+    ];
+
     const showBeanForBrew = (brewId = null) => {
         const targetId = brewId || getCurrentCoffeeCardId();
         if (!targetId) return;
@@ -95,8 +111,64 @@ export const createBrewsCardActionsModule = ({
         if (!brew) return;
 
         populateBrewQuickEditBeanOptions(brew.beanId || '');
-        document.getElementById('quickEditMethod').value = brew.method || '';
-        document.getElementById('quickEditDrink').value = brew.drink || '';
+        const methodSelect = document.getElementById('quickEditMethod');
+        const methodOtherInput = document.getElementById('quickEditMethodOther');
+        const drinkSelect = document.getElementById('quickEditDrink');
+        const drinkOtherInput = document.getElementById('quickEditDrinkOther');
+        const methodVal = brew.method || '';
+        const drinkVal = brew.drink || '';
+
+        const applyMethodValue = () => {
+            if (!methodSelect || !methodOtherInput) return;
+            if (QUICK_EDIT_METHODS.includes(methodVal)) {
+                methodSelect.value = methodVal;
+                methodOtherInput.value = '';
+                methodOtherInput.classList.add('hidden');
+            } else if (methodVal) {
+                methodSelect.value = 'Other';
+                methodOtherInput.value = methodVal;
+                methodOtherInput.classList.remove('hidden');
+            } else {
+                methodSelect.value = '';
+                methodOtherInput.value = '';
+                methodOtherInput.classList.add('hidden');
+            }
+        };
+
+        const applyDrinkValue = () => {
+            if (!drinkSelect || !drinkOtherInput) return;
+            if (QUICK_EDIT_DRINKS.includes(drinkVal)) {
+                drinkSelect.value = drinkVal;
+                drinkOtherInput.value = '';
+                drinkOtherInput.classList.add('hidden');
+            } else if (drinkVal) {
+                drinkSelect.value = 'Other';
+                drinkOtherInput.value = drinkVal;
+                drinkOtherInput.classList.remove('hidden');
+            } else {
+                drinkSelect.value = '';
+                drinkOtherInput.value = '';
+                drinkOtherInput.classList.add('hidden');
+            }
+        };
+
+        if (methodSelect && methodOtherInput) {
+            methodSelect.onchange = () => {
+                const isOther = methodSelect.value === 'Other';
+                methodOtherInput.classList.toggle('hidden', !isOther);
+                if (!isOther) methodOtherInput.value = '';
+            };
+        }
+        if (drinkSelect && drinkOtherInput) {
+            drinkSelect.onchange = () => {
+                const isOther = drinkSelect.value === 'Other';
+                drinkOtherInput.classList.toggle('hidden', !isOther);
+                if (!isOther) drinkOtherInput.value = '';
+            };
+        }
+
+        applyMethodValue();
+        applyDrinkValue();
         document.getElementById('quickEditGrinder').value = brew.grinder || '';
         document.getElementById('quickEditGrind').value = brew.grind ?? '';
         document.getElementById('quickEditWeight').value = brew.weight ?? '';
@@ -140,13 +212,19 @@ export const createBrewsCardActionsModule = ({
         const nowIso = new Date().toISOString();
         const weightVal = parseNum(document.getElementById('quickEditWeight').value);
         const yieldVal = parseNum(document.getElementById('quickEditYield').value);
+        const rawMethod = document.getElementById('quickEditMethod').value || '';
+        const rawMethodOther = (document.getElementById('quickEditMethodOther')?.value || '').trim();
+        const finalMethod = rawMethod === 'Other' ? (rawMethodOther || 'Other') : rawMethod;
+        const rawDrink = document.getElementById('quickEditDrink').value || '';
+        const rawDrinkOther = (document.getElementById('quickEditDrinkOther')?.value || '').trim();
+        const finalDrink = rawDrink === 'Other' ? (rawDrinkOther || 'Other') : rawDrink;
         const ratioVal = Number.isFinite(weightVal) && weightVal > 0 && Number.isFinite(yieldVal)
             ? Number((yieldVal / weightVal).toFixed(2))
             : parseNum(document.getElementById('quickEditRatio').value);
 
         const updates = {
-            method: document.getElementById('quickEditMethod').value || '',
-            drink: document.getElementById('quickEditDrink').value || '',
+            method: finalMethod,
+            drink: finalDrink,
             grinder: document.getElementById('quickEditGrinder').value || '',
             grind: parseNum(document.getElementById('quickEditGrind').value),
             weight: weightVal,

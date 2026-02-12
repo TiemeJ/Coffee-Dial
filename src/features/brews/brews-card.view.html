@@ -104,11 +104,39 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Method</label>
-                            <input id="quickEditMethod" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <select id="quickEditMethod" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                                <option value="">Select Method</option>
+                                <option value="Espresso">Espresso</option>
+                                <option value="V60">V60</option>
+                                <option value="Hario Switch">Hario Switch</option>
+                                <option value="Clever Dripper">Clever Dripper</option>
+                                <option value="Aeropress">Aeropress</option>
+                                <option value="OXO Rapid Brewer">OXO Rapid Brewer</option>
+                                <option value="French Press">French Press</option>
+                                <option value="Chemex">Chemex</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input id="quickEditMethodOther" type="text" placeholder="Custom method" class="hidden mt-2 w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Drink</label>
-                            <input id="quickEditDrink" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <select id="quickEditDrink" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                                <option value="">Select Drink</option>
+                                <option value="Espresso">Espresso</option>
+                                <option value="Lungo">Lungo</option>
+                                <option value="Americano">Americano</option>
+                                <option value="Cappuccino">Cappuccino</option>
+                                <option value="Flat White">Flat White</option>
+                                <option value="Macchiato">Macchiato</option>
+                                <option value="Latte Macchiato">Latte Macchiato</option>
+                                <option value="Filter Coffee">Filter Coffee</option>
+                                <option value="Soup">Soup</option>
+                                <option value="Soup americano">Soup americano</option>
+                                <option value="Soup lungo">Soup lungo</option>
+                                <option value="Soup flat white">Soup flat white</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input id="quickEditDrinkOther" type="text" placeholder="Custom drink" class="hidden mt-2 w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Grinder</label>
@@ -170,4 +198,3 @@
             </div>
         </div>
     </div>
-
