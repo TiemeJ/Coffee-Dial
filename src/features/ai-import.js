@@ -100,6 +100,8 @@ export const createAiImportModule = ({
                 const el = document.getElementById(id);
                 if (data[id] && el) {
                     el.value = data[id];
+                    // Keep dependent UI (like collapsed coffee details title) in sync on AI-fill.
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
                     el.classList.add('ai-flash-effect');
                     setTimeout(() => el.classList.remove('ai-flash-effect'), 2000);
                 }

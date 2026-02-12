@@ -1111,8 +1111,12 @@ export const createAppContainerModules = () => {
         const initCoffeeDetailsCollapsed = () => {
             const collapsed = localStorage.getItem('coffeeDetailsCollapsed') === 'true';
             setCoffeeDetailsCollapsed(collapsed);
-            const farmerEl = document.getElementById('farmer');
-            if (farmerEl) farmerEl.addEventListener('input', updateCoffeeDetailsTitle);
+            ['farmer', 'roaster'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', updateCoffeeDetailsTitle);
+                el.addEventListener('change', updateCoffeeDetailsTitle);
+            });
         };
         initCoffeeDetailsCollapsed();
         
