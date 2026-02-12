@@ -23,6 +23,8 @@ export const createSessionAuthViewModule = ({
     setUnsubscribeBeans,
     getUnsubscribeCoffeeTypes,
     setUnsubscribeCoffeeTypes,
+    getUnsubscribeGas,
+    setUnsubscribeGas,
     getUnsubscribeNotifications,
     setUnsubscribeNotifications,
     setHasLoadedBrews,
@@ -33,6 +35,7 @@ export const createSessionAuthViewModule = ({
     getCoffees,
     setBeans,
     setCoffeeTypes,
+    setGasItems,
     renderPinnedTiles,
     renderTable,
     updateAutocompleteLists,
@@ -41,6 +44,7 @@ export const createSessionAuthViewModule = ({
     renderBeansTable,
     updateCoffeeTypeSelectors,
     renderCoffeeTypesTable,
+    renderGasTable,
     getColumnPreferencesKey,
     getColumnPreferences,
     loadColumnPreferencesFromStorage,
@@ -61,12 +65,15 @@ export const createSessionAuthViewModule = ({
         const unsubData = getUnsubscribeData();
         const unsubBeans = getUnsubscribeBeans();
         const unsubCoffeeTypes = getUnsubscribeCoffeeTypes();
+        const unsubGas = getUnsubscribeGas();
         if (unsubData) unsubData();
         if (unsubBeans) unsubBeans();
         if (unsubCoffeeTypes) unsubCoffeeTypes();
+        if (unsubGas) unsubGas();
         setUnsubscribeData(null);
         setUnsubscribeBeans(null);
         setUnsubscribeCoffeeTypes(null);
+        setUnsubscribeGas(null);
     };
 
     const clearNotificationSubscription = () => {
@@ -274,6 +281,28 @@ export const createSessionAuthViewModule = ({
                     }
                     renderPinnedTiles();
                     renderTable();
+                }
+            )
+        );
+
+        const gasRef = collection(db, 'users', targetUid, 'gear');
+        setUnsubscribeGas(
+            onSnapshot(
+                gasRef,
+                (snapshot) => {
+                    const nextGasItems = [];
+                    snapshot.forEach((docSnap) => nextGasItems.push({ id: docSnap.id, ...docSnap.data() }));
+                    setGasItems(nextGasItems);
+                    if (!document.getElementById('gasModal').classList.contains('hidden')) {
+                        renderGasTable();
+                    }
+                },
+                (error) => {
+                    console.error('Error loading gas list:', error);
+                    setGasItems([]);
+                    if (!document.getElementById('gasModal').classList.contains('hidden')) {
+                        renderGasTable();
+                    }
                 }
             )
         );

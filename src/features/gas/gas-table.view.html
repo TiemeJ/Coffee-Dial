@@ -1,0 +1,94 @@
+<div id="gasModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
+        <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917]">
+            <h3 class="font-bold text-xl text-coffee-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-screwdriver-wrench text-coffee-600 dark:text-[#d6ccc2]"></i> GAS list
+            </h3>
+            <div class="flex items-center gap-3">
+                <button data-action-click="createGasItemFromModal()" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Add
+                </button>
+                <button data-action-click="closeGasList()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-[#292524]">
+            <div class="rounded-lg border border-coffee-200 dark:border-[#44403c] overflow-hidden">
+                <div class="bg-coffee-100/50 dark:bg-[#1c1917] p-3 space-y-3 border-b border-coffee-200 dark:border-[#44403c]">
+                    <div class="flex items-center gap-3">
+                        <select id="gasViewSelect" data-action-change="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
+                            <option value="mine">My GAS</option>
+                        </select>
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <i class="fa-solid fa-search text-coffee-400"></i>
+                            </div>
+                            <input id="gasSearch" type="text" placeholder="Search gear..." data-action-input="setGasSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                                <button id="gasSearchClearBtn" data-action-click="clearGasSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
+                                <button data-action-click="toggleGasQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                                    <i class="fa-solid fa-filter"></i>
+                                </button>
+                            </div>
+                            <div id="gasQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                                <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                            </div>
+                            <div id="gasQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                    <div id="gasActiveFiltersContainer" class="hidden flex items-center gap-2 flex-wrap">
+                        <div class="flex items-center gap-2 flex-wrap" id="gasActiveFiltersList"></div>
+                        <button data-action-click="clearGasFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+                        <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
+                            <tr>
+                                <th class="px-4 py-3">
+                                    <button type="button" data-action-click="setGasSort('name')" class="flex items-center gap-2">
+                                        <span>Name</span>
+                                        <span id="gasSortIcon-name" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <button type="button" data-action-click="setGasSort('type')" class="flex items-center gap-2">
+                                        <span>Type</span>
+                                        <span id="gasSortIcon-type" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <button type="button" data-action-click="setGasSort('methods')" class="flex items-center gap-2">
+                                        <span>Methods</span>
+                                        <span id="gasSortIcon-methods" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-right">
+                                    <button type="button" data-action-click="setGasSort('price')" class="flex items-center gap-2 ml-auto">
+                                        <span>Price</span>
+                                        <span id="gasSortIcon-price" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-28">
+                                    <button type="button" data-action-click="setGasSort('createdAt')" class="flex items-center gap-2 mx-auto">
+                                        <span>Created</span>
+                                        <span id="gasSortIcon-createdAt" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-12"><span class="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="gasTableBody" class="divide-y divide-coffee-50 dark:divide-[#1c1917]"></tbody>
+                    </table>
+                </div>
+                <div id="gasEmpty" class="hidden text-center py-8 text-coffee-400 dark:text-[#57534e] bg-white dark:bg-[#292524]">
+                    <p>No gear saved yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

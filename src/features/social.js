@@ -134,7 +134,7 @@ export const createSocialModule = ({
     };
 
     const syncFriendViewSelectValues = (value) => {
-        ['viewSelect', 'beansViewSelect', 'coffeeTypesViewSelect'].forEach((id) => {
+        ['viewSelect', 'beansViewSelect', 'coffeeTypesViewSelect', 'gasViewSelect'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) el.value = value;
         });
@@ -155,6 +155,7 @@ export const createSocialModule = ({
         populateSelect(document.getElementById('viewSelect'), 'Brews');
         populateSelect(document.getElementById('beansViewSelect'), 'Beans');
         populateSelect(document.getElementById('coffeeTypesViewSelect'), 'Coffees');
+        populateSelect(document.getElementById('gasViewSelect'), 'GAS');
     };
 
     const loadFollowingList = async () => {

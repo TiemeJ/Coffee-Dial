@@ -38,6 +38,10 @@ Make coffee dialing practical for beginners and deep enough for advanced brewers
 - Maintain reusable coffee type definitions.
 - Extract and reuse coffee metadata across brew forms.
 
+- GAS (Gear Acquisition Syndrome) List
+- Manage coffee gear inventory with sortable/filterable table and card-edit workflow.
+- Track gear basics (name, price, archived state) with quick archive/delete actions.
+
 - Social & Sharing
 - Public profile mode and friend-following workflows.
 - Share brew-card and media content with others.
@@ -106,6 +110,7 @@ The repository is structured as:
       ├─ beans/
       ├─ brews/
       ├─ coffees/
+      ├─ gas/
       ├─ gallery.mount.js
       ├─ graph-modals/
       ├─ import-export/

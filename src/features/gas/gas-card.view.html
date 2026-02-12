@@ -1,0 +1,112 @@
+<div id="gasCardOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasCard(event)">
+    <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleGasCardOverlayClick(event)">
+        <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
+            <div class="absolute top-4 right-4 flex items-center gap-2">
+                <button id="gasCardEditBtn" data-action-click="enterGasEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
+                    <i class="fa-solid fa-pen-to-square text-lg"></i>
+                </button>
+                <button data-action-click="closeGasCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="absolute right-4 top-full mt-2 flex flex-col items-center z-[10001]">
+                <button id="gasCardMenuBtn" data-action-click="toggleActionMenu('gasCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                    <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                </button>
+                <div id="gasCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
+                    <button data-action-click="enterGasEditMode()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                        <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
+                    </button>
+                    <button id="gasCardActionArchiveBtn" data-action-click="toggleGasArchive()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                        <i class="fa-solid fa-box-archive text-amber-600 w-4"></i> Archive
+                    </button>
+                    <hr class="border-coffee-100 dark:border-[#44403c]">
+                    <button data-action-click="deleteGasItem()" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                        <i class="fa-solid fa-trash w-4"></i> Delete
+                    </button>
+                </div>
+            </div>
+            <h3 id="gasCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white"></h3>
+            <p id="gasCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
+        </div>
+
+        <div id="gasCardView" class="flex-1 flex flex-col min-h-0">
+            <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4">
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Type</span>
+                        <span id="gasCardType" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Price</span>
+                        <span id="gasCardPrice" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Archived</span>
+                        <span id="gasCardArchived" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                    </div>
+                </div>
+                <div>
+                    <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Created</span>
+                    <span id="gasCardCreated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
+                </div>
+                <div>
+                    <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Updated</span>
+                    <span id="gasCardUpdated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
+                </div>
+                <div>
+                    <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Methods</span>
+                    <span id="gasCardMethods" class="text-xs text-coffee-700 dark:text-[#d6ccc2]"></span>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
+                <div class="flex justify-end gap-2">
+                    <button id="gasCardPrevBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" data-action-click="navigateGasCard(-1)">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button id="gasCardNextBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" data-action-click="navigateGasCard(1)">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="gasCardEdit" class="hidden flex-1 flex flex-col min-h-0">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
+                <div class="sm:col-span-2">
+                    <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Name</label>
+                    <input id="gasEditName" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Price</label>
+                    <input id="gasEditPrice" type="number" step="0.01" min="0" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Type</label>
+                    <select id="gasEditType" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                        <option value="Coffee maker">Coffee maker</option>
+                        <option value="Grinder">Grinder</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">Methods</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs text-coffee-800 dark:text-[#d6ccc2]">
+                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Espresso">Espresso</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="V60">V60</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Hario Switch">Hario Switch</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Clever Dripper">Clever Dripper</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Aeropress">Aeropress</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="OXO Rapid Brewer">OXO Rapid Brewer</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="French Press">French Press</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Chemex">Chemex</label>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
+                <button data-action-click="cancelGasEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+                <button data-action-click="saveGasEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
+            </div>
+        </div>
+    </div>
+</div>

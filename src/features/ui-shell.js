@@ -10,9 +10,11 @@ export const createUiShellModule = ({
     closeUploadModal,
     closeCoffeeTypeCard,
     closeBeanCard,
+    closeGasCard,
     closeImageModal,
     closeCoffeeTypes,
     closeBeans,
+    closeGasList,
     closeCoffeeScaleModal,
     closeConnectScaleModal
 }) => {
@@ -215,6 +217,15 @@ export const createUiShellModule = ({
             document.getElementById('coffeeTypesQuickFilterDropdown')?.classList.add('hidden');
             document.getElementById('coffeeTypesQuickFilterValuesDropdown')?.classList.add('hidden');
         }
+
+        if (
+            !e.target.closest('#gasQuickFilterDropdown') &&
+            !e.target.closest('#gasQuickFilterValuesDropdown') &&
+            !e.target.closest('[data-action-click*="toggleGasQuickFilter"]')
+        ) {
+            document.getElementById('gasQuickFilterDropdown')?.classList.add('hidden');
+            document.getElementById('gasQuickFilterValuesDropdown')?.classList.add('hidden');
+        }
     };
 
     const initGlobalCloseHandlers = () => {
@@ -360,9 +371,11 @@ export const createUiShellModule = ({
             closeIfVisible('uploadPhotoModal', () => closeUploadModal()) ||
             closeIfVisible('coffeeTypeCardOverlay', () => closeCoffeeTypeCard(null)) ||
             closeIfVisible('galleryModal', () => document.getElementById('galleryModal')?.classList.add('hidden')) ||
+            closeIfVisible('gasCardOverlay', () => closeGasCard(null)) ||
             closeIfVisible('beanCardOverlay', () => closeBeanCard(null)) ||
             closeIfVisible('imageModalOverlay', () => closeImageModal(null)) ||
             closeIfVisible('coffeeTypesModal', () => closeCoffeeTypes()) ||
+            closeIfVisible('gasModal', () => closeGasList()) ||
             closeIfVisible('beansModal', () => closeBeans()) ||
             closeIfVisible('modalOverlay', () => closeModal());
 

@@ -10,6 +10,7 @@ import { mountBrewsCardView, mountBrewsFormView, mountBrewsTableView } from '../
 import { mountBeansCardView, mountBeansTableView } from '../features/beans/beans.mount.js';
 import { mountCoffeeTypesTableView } from '../features/coffees/coffee-types.mount.js';
 import { mountCoffeeTypeCardView } from '../features/coffees/coffee-type-card.mount.js';
+import { mountGasCardView, mountGasTableView } from '../features/gas/gas.mount.js';
 import { mountGraphModalsView } from '../features/graph-modals/graph-modals.mount.js';
 import { mountSocialModalView } from '../features/social/social.mount.js';
 import { mountMediaModalsView } from '../features/media/media-modals.mount.js';
@@ -31,6 +32,8 @@ await mountBeansTableView();
 await mountBeansCardView();
 await mountCoffeeTypesTableView();
 await mountCoffeeTypeCardView();
+await mountGasTableView();
+await mountGasCardView();
 await mountGraphModalsView();
 await mountSocialModalView();
 await mountMediaModalsView();

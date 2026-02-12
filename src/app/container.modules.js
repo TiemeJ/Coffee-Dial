@@ -10,6 +10,8 @@
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../core/format.js';
         import { createCoffeeTypeCardModule } from '../features/coffees/coffee-type-card.js';
         import { createCoffeeTypesTableModule } from '../features/coffees/coffee-types-table.js';
+        import { createGasTableModule } from '../features/gas/gas-table.js';
+        import { createGasCardModule } from '../features/gas/gas-card.js';
         import { createBeansTableModule } from '../features/beans/beans-table.js';
         import { createBeansActionsModule } from '../features/beans/beans-actions.js';
         import { createBeansMaintenanceModule } from '../features/beans/beans-maintenance.js';
@@ -57,11 +59,13 @@ export const createAppContainerModules = () => {
             hasLoadedBrews,
             hasLoadedBeans,
             coffeeTypes,
+            gasItems,
             following,
             followers,
             unsubscribeData,
             unsubscribeBeans,
             unsubscribeCoffeeTypes,
+            unsubscribeGas,
             unsubscribeNotifications,
             isPublic,
             currentUploadCoffeeId,
@@ -71,10 +75,15 @@ export const createAppContainerModules = () => {
             currentCardGraphData,
             pendingImportBrews,
             currentCoffeeTypeId,
+            currentGasId,
             coffeeTypesSortKey,
             coffeeTypesSortDir,
             coffeeTypesSearch,
             coffeeTypesFilters,
+            gasSortKey,
+            gasSortDir,
+            gasSearch,
+            gasFilters,
             currentStatsData,
             currentBeanMeterPeriod,
             lastGalleryDoc,
@@ -228,6 +237,8 @@ export const createAppContainerModules = () => {
             setUnsubscribeBeans: (value) => { unsubscribeBeans = value; },
             getUnsubscribeCoffeeTypes: () => unsubscribeCoffeeTypes,
             setUnsubscribeCoffeeTypes: (value) => { unsubscribeCoffeeTypes = value; },
+            getUnsubscribeGas: () => unsubscribeGas,
+            setUnsubscribeGas: (value) => { unsubscribeGas = value; },
             getUnsubscribeNotifications: () => unsubscribeNotifications,
             setUnsubscribeNotifications: (value) => { unsubscribeNotifications = value; },
             setHasLoadedBrews: (value) => { hasLoadedBrews = value; },
@@ -238,6 +249,7 @@ export const createAppContainerModules = () => {
             getCoffees: () => coffees,
             setBeans: (value) => { beans = value; },
             setCoffeeTypes: (value) => { coffeeTypes = value; },
+            setGasItems: (value) => { gasItems = value; },
             renderPinnedTiles: (...args) => renderPinnedTiles(...args),
             renderTable: (...args) => renderTable(...args),
             updateAutocompleteLists: (...args) => updateAutocompleteLists(...args),
@@ -246,6 +258,7 @@ export const createAppContainerModules = () => {
             renderBeansTable: (...args) => renderBeansTable(...args),
             updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args),
             renderCoffeeTypesTable: (...args) => renderCoffeeTypesTable(...args),
+            renderGasTable: (...args) => renderGasTable(...args),
             getColumnPreferencesKey: () => columnPreferencesKey,
             getColumnPreferences: () => columnPreferences,
             loadColumnPreferencesFromStorage: (...args) => loadColumnPreferencesFromStorage(...args),
@@ -282,9 +295,11 @@ export const createAppContainerModules = () => {
             closeUploadModal: (...args) => closeUploadModal(...args),
             closeCoffeeTypeCard: (...args) => closeCoffeeTypeCard(...args),
             closeBeanCard: (...args) => closeBeanCard(...args),
+            closeGasCard: (...args) => closeGasCard(...args),
             closeImageModal: (...args) => closeImageModal(...args),
             closeCoffeeTypes: (...args) => closeCoffeeTypes(...args),
             closeBeans: (...args) => closeBeans(...args),
+            closeGasList: (...args) => closeGasList(...args),
             closeCoffeeScaleModal: (...args) => closeCoffeeScaleModal(...args),
             closeConnectScaleModal: (...args) => closeConnectScaleModal(...args)
         });
@@ -633,6 +648,90 @@ export const createAppContainerModules = () => {
             setCoffeeTypesSortDirState: (value) => { coffeeTypesSortDir = value; },
             getStarDisplay,
             openCoffeeTypeCard
+        });
+
+        const createGasItemFromModal = async () => {
+            if (!currentUser) return alert('Please sign in.');
+            const nowIso = new Date().toISOString();
+            const gasData = {
+                uid: currentUser.uid,
+                name: '',
+                price: null,
+                type: 'Other',
+                methods: [],
+                archived: false,
+                createdAt: nowIso,
+                updatedAt: nowIso
+            };
+
+            try {
+                const gasRef = await addDoc(collection(db, 'users', currentUser.uid, 'gear'), gasData);
+                const newGas = { id: gasRef.id, ...gasData };
+                if (!gasItems.find((item) => item.id === newGas.id)) gasItems.push(newGas);
+                openGasCard(newGas.id);
+                enterGasEditMode();
+            } catch (err) {
+                console.error('Error creating gear item:', err);
+                alert('Failed to create gear item.');
+            }
+        };
+
+        const {
+            openGasList,
+            closeGasList,
+            setGasSearch,
+            clearGasSearch,
+            toggleGasQuickFilter,
+            openGasQuickFilterValues,
+            applyGasFilterFromQuick,
+            clearGasFilters,
+            renderGasActiveFilters,
+            setGasSort,
+            updateGasSortIcons,
+            getFilteredSortedGasItems,
+            renderGasTable
+        } = createGasTableModule({
+            getGasItems: () => gasItems,
+            getCurrentView: () => currentView,
+            getGasSearch: () => gasSearch,
+            setGasSearchState: (value) => { gasSearch = value; },
+            getGasFilters: () => gasFilters,
+            setGasFiltersState: (value) => { gasFilters = value; },
+            getGasSortKey: () => gasSortKey,
+            setGasSortKeyState: (value) => { gasSortKey = value; },
+            getGasSortDir: () => gasSortDir,
+            setGasSortDirState: (value) => { gasSortDir = value; },
+            openGasCard: (...args) => openGasCard(...args)
+        });
+
+        const {
+            updateGasCardNav,
+            openGasCard,
+            closeGasCard,
+            enterGasEditMode,
+            cancelGasEditMode,
+            saveGasEdits,
+            toggleGasArchive,
+            deleteGasItem,
+            navigateGasCard,
+            openGasFromTableEdit,
+            toggleGasArchiveFromTable,
+            deleteGasFromTable,
+            closeGasCardMenu
+        } = createGasCardModule({
+            getCurrentUser: () => currentUser,
+            getCurrentView: () => currentView,
+            getCurrentGasId: () => currentGasId,
+            setCurrentGasId: (value) => { currentGasId = value; },
+            getGasItems: () => gasItems,
+            setGasItemsState: (value) => { gasItems = value; },
+            getFilteredSortedGasItems: (...args) => getFilteredSortedGasItems(...args),
+            db,
+            doc,
+            updateDoc,
+            deleteDoc,
+            openAppConfirm,
+            renderGasTable: (...args) => renderGasTable(...args)
         });
 
         const getBeanTableOrder = () => {
@@ -1471,6 +1570,13 @@ export const createAppContainerModules = () => {
                 closeCoffeeTypeCardMenu();
             }
         };
+
+        const handleGasCardOverlayClick = (event) => {
+            event.stopPropagation();
+            if (!event.target.closest('.action-menu') && !event.target.closest('.action-menu-toggle')) {
+                closeGasCardMenu();
+            }
+        };
         // Initialize animation preference
         const initAnimationPreference = () => {
             applyAnimationPreference();
@@ -1521,6 +1627,13 @@ export const createAppContainerModules = () => {
                 if (tryNavigate(dir < 0 ? 'coffeeTypeCardPrevBtn' : 'coffeeTypeCardNextBtn', () => navigateCoffeeTypeCard(dir))) {
                     event.preventDefault();
                 }
+                return;
+            }
+
+            if (isVisible('gasCardOverlay')) {
+                if (tryNavigate(dir < 0 ? 'gasCardPrevBtn' : 'gasCardNextBtn', () => navigateGasCard(dir))) {
+                    event.preventDefault();
+                }
             }
         };
         document.addEventListener('keydown', handleCardKeyNav);
@@ -1533,6 +1646,7 @@ export const createAppContainerModules = () => {
                     'menuStatsBtn',
                     'menuBeansBtn',
                     'menuCoffeesBtn',
+                    'menuGasBtn',
                     'menuGalleryBtn',
                     'menuScaleBtn',
                     'menuExportBtn',
@@ -1593,7 +1707,7 @@ export const createAppContainerModules = () => {
         };
 
         const actions = {
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
             togglePinnedTiles,
             fastRepeatCoffee,
             editBrewFromCard,
@@ -1605,6 +1719,7 @@ export const createAppContainerModules = () => {
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, extractCoffeeTypesFromBeans,
             openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto,
+            openGasList, closeGasList, createGasItemFromModal, setGasSearch, clearGasSearch, toggleGasQuickFilter, openGasQuickFilterValues, applyGasFilterFromQuick, clearGasFilters, setGasSort, openGasCard, closeGasCard, navigateGasCard, enterGasEditMode, cancelGasEditMode, saveGasEdits, toggleGasArchive, deleteGasItem, openGasFromTableEdit, toggleGasArchiveFromTable, deleteGasFromTable,
             closeCoffeeCardMenu,
             toggleCoffeeDetails,
             createCoffeeTypeFromModal,
