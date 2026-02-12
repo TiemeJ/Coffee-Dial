@@ -1373,7 +1373,7 @@ export const createAppContainerModules = () => {
             getCoffeeScale: () => coffeeScale
         });
 
-        const { populateForm, refreshBrewGearField, getSelectedBrewGearIds, setSelectedBrewGearIds } = createBrewsFormModule({
+        const { populateForm, refreshBrewGearField, setBrewGearScope, getSelectedBrewGearIds, setSelectedBrewGearIds } = createBrewsFormModule({
             setTempMode: (...args) => setTempMode(...args),
             setRating: (...args) => setRating(...args),
             setNotesMode: (...args) => setNotesMode(...args),
@@ -1418,6 +1418,7 @@ export const createAppContainerModules = () => {
             toggleForm: (...args) => toggleForm(...args),
             populateForm: (...args) => populateForm(...args),
             updateBeanDropdown: (...args) => updateBeanDropdown(...args),
+            setBrewGearScope: (...args) => setBrewGearScope(...args),
             changeView: (...args) => changeView(...args),
             closeCoffeeCard: (...args) => closeCoffeeCard(...args),
             openCoffeeCard: (...args) => openCoffeeCard(...args),

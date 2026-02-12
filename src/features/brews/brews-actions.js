@@ -23,6 +23,7 @@ export const createBrewsActionsModule = ({
     toggleForm,
     populateForm,
     updateBeanDropdown,
+    setBrewGearScope,
     changeView,
     closeCoffeeCard,
     openCoffeeCard,
@@ -119,6 +120,7 @@ export const createBrewsActionsModule = ({
     const showDuplicateInForm = ({ brew, title }) => {
         closeAllActionMenus();
         updateBeanDropdown();
+        setBrewGearScope({ includeAll: false });
         const d = stripBrewGraphFields(brew);
         document.getElementById('editId').value = '';
         populateForm(d);
@@ -144,6 +146,7 @@ export const createBrewsActionsModule = ({
             'bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
         document.getElementById('isActiveToggle').checked = false;
         updateBeanDropdown();
+        setBrewGearScope({ includeAll: false });
         document.getElementById('drinkOther').classList.add('hidden');
         document.getElementById('methodOther').classList.add('hidden');
         setSelectedBrewGearIds([]);
@@ -612,6 +615,7 @@ export const createBrewsActionsModule = ({
         if (!c) return;
         setTimeout(() => {
             updateBeanDropdown({ includeAll: true });
+            setBrewGearScope({ includeAll: true });
             document.getElementById('editId').value = c.id;
             populateForm(c);
             document.getElementById('formContainer').classList.add('editing-mode');
@@ -687,6 +691,7 @@ export const createBrewsActionsModule = ({
             setTimeout(() => {
                 document.getElementById('editId').value = '';
                 updateBeanDropdown();
+                setBrewGearScope({ includeAll: false });
                 const d = stripBrewGraphFields(c);
                 populateForm(d);
                 toggleForm(true);

@@ -2,10 +2,12 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
     let brewGearSelection = new Set();
     let brewGearFilter = '';
     let hasBoundBrewGearUi = false;
+    let includeArchivedGearInForm = false;
 
     const getBrewGearOptions = () => {
         const items = Array.isArray(getGasItems?.()) ? getGasItems() : [];
         return items
+            .filter((item) => includeArchivedGearInForm || !item?.archived)
             .map((item) => ({ id: item.id, label: (item.name || 'Untitled gear').toString().trim() || 'Untitled gear' }))
             .sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
     };
@@ -146,6 +148,11 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
         }
     };
 
+    const setBrewGearScope = ({ includeAll = false } = {}) => {
+        includeArchivedGearInForm = !!includeAll;
+        refreshBrewGearField();
+    };
+
     const populateForm = (c) => {
         refreshBrewGearField();
         document.getElementById('roaster').value = c.roaster || c.name || '';
@@ -253,6 +260,7 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
     return {
         populateForm,
         refreshBrewGearField,
+        setBrewGearScope,
         getSelectedBrewGearIds,
         setSelectedBrewGearIds
     };
