@@ -47,6 +47,12 @@ export const createGasCardModule = ({
     };
 
     const normalizeType = (type) => (GAS_TYPE_OPTIONS.includes(type) ? type : 'Other');
+    const toInputDate = (value) => {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toISOString().slice(0, 10);
+    };
 
     const getCurrentGasItem = () => getGasItems().find((item) => item.id === getCurrentGasId());
 
@@ -270,8 +276,8 @@ export const createGasCardModule = ({
         document.getElementById('gasCardType').textContent = normalizeType(item.type);
         document.getElementById('gasCardPrice').textContent = formatCurrency(item.price);
         document.getElementById('gasCardArchived').textContent = item.archived ? 'Yes' : 'No';
-        document.getElementById('gasCardCreated').textContent = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-';
-        document.getElementById('gasCardUpdated').textContent = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : '-';
+        const purchasedDate = item.purchasedDate;
+        document.getElementById('gasCardCreated').textContent = purchasedDate ? new Date(purchasedDate).toLocaleDateString() : '-';
         const methods = normalizeMethods(item.methods);
         document.getElementById('gasCardMethods').textContent = methods.length ? methods.join(', ') : '-';
         const imageUrl = item.imageUrl || item.imageURL;
@@ -318,6 +324,7 @@ export const createGasCardModule = ({
         bindGasMethodsUi();
         document.getElementById('gasEditName').value = item.name || '';
         document.getElementById('gasEditPrice').value = item.price ?? '';
+        document.getElementById('gasEditPurchasedDate').value = toInputDate(item.purchasedDate);
         document.getElementById('gasEditType').value = normalizeType(item.type);
         gasMethodsFilter = '';
         const { search } = getGasMethodsUi();
@@ -349,11 +356,13 @@ export const createGasCardModule = ({
         const nowIso = new Date().toISOString();
         const rawPrice = document.getElementById('gasEditPrice').value;
         const parsedPrice = rawPrice === '' ? null : Number(rawPrice);
+        const purchasedDateVal = document.getElementById('gasEditPurchasedDate').value;
         const methods = normalizeMethods([...gasMethodsSelection]);
 
         const updates = {
             name: document.getElementById('gasEditName').value || '',
             price: Number.isFinite(parsedPrice) ? parsedPrice : null,
+            purchasedDate: purchasedDateVal ? new Date(purchasedDateVal).toISOString() : null,
             type: normalizeType(document.getElementById('gasEditType').value),
             methods,
             updatedAt: nowIso

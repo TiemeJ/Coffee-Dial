@@ -660,6 +660,7 @@ export const createAppContainerModules = () => {
                 type: 'Other',
                 methods: [],
                 imageUrl: '',
+                purchasedDate: nowIso,
                 archived: false,
                 createdAt: nowIso,
                 updatedAt: nowIso

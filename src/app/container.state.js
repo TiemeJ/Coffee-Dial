@@ -65,7 +65,7 @@ export const createInitialAppState = () => {
         coffeeTypesSortDir: 'desc',
         coffeeTypesSearch: '',
         coffeeTypesFilters: { roaster: null, farmer: null, origin: null, processing: null, variety: null, roast: null },
-        gasSortKey: 'createdAt',
+        gasSortKey: 'purchasedDate',
         gasSortDir: 'desc',
         gasSearch: '',
         gasFilters: { archived: null, type: null, method: null },

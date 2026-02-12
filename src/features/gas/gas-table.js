@@ -192,7 +192,7 @@ export const createGasTableModule = ({
     };
 
     const updateGasSortIcons = () => {
-        const keys = ['name', 'type', 'methods', 'price', 'createdAt'];
+        const keys = ['name', 'type', 'methods', 'price', 'purchasedDate'];
         const sortKey = getGasSortKey();
         const sortDir = getGasSortDir();
         keys.forEach((key) => {
@@ -227,7 +227,7 @@ export const createGasTableModule = ({
             if (key === 'price') return parsePrice(item.price);
             if (key === 'type') return normalizeType(item.type);
             if (key === 'methods') return normalizeMethods(item.methods).join(', ');
-            if (key === 'createdAt') return item.createdAt || '';
+            if (key === 'purchasedDate') return item.purchasedDate || '';
             return item.name || '';
         };
 
@@ -242,7 +242,7 @@ export const createGasTableModule = ({
                 const aNum = Number(aVal);
                 const bNum = Number(bVal);
                 primary = (Number.isFinite(aNum) ? aNum : -Infinity) - (Number.isFinite(bNum) ? bNum : -Infinity);
-            } else if (sortKey === 'createdAt') {
+            } else if (sortKey === 'purchasedDate') {
                 primary = normalizeText(aVal).localeCompare(normalizeText(bVal));
             } else {
                 primary = normalizeText(aVal).localeCompare(normalizeText(bVal));
@@ -281,7 +281,8 @@ export const createGasTableModule = ({
 
         const createRow = (item) => {
             const menuId = `gas-action-menu-${item.id}`;
-            const createdAt = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-';
+            const purchasedDate = item.purchasedDate;
+            const purchasedDateLabel = purchasedDate ? new Date(purchasedDate).toLocaleDateString() : '-';
             const archiveLabel = item.archived ? 'Unarchive' : 'Archive';
 
             const row = document.createElement('tr');
@@ -292,7 +293,7 @@ export const createGasTableModule = ({
                 <td class="px-4 py-3">${normalizeType(item.type)}</td>
                 <td class="px-4 py-3 text-xs">${getMethodsLabel(item.methods)}</td>
                 <td class="px-4 py-3 text-right font-mono">${formatCurrency(item.price)}</td>
-                <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${createdAt}</td>
+                <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${purchasedDateLabel}</td>
                 <td class="px-4 py-3 text-center">
                     <div class="relative inline-block">
                         <button data-action-click="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
