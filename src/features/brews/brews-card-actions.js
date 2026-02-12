@@ -48,6 +48,7 @@ export const createBrewsCardActionsModule = ({
     let quickEditGearSelection = new Set();
     let quickEditGearFilter = '';
     let hasBoundQuickEditGearUi = false;
+    const isGrinderGear = (item) => (item?.type || '').toString().toLowerCase() === 'grinder';
 
     const getQuickEditGearOptions = () => {
         const items = Array.isArray(getGasItems?.()) ? getGasItems() : [];
@@ -64,6 +65,20 @@ export const createBrewsCardActionsModule = ({
         search: document.getElementById('quickEditGearSearch'),
         dropdown: document.getElementById('quickEditGearDropdown')
     });
+    const getQuickEditGrinderFieldWrap = () => document.getElementById('quickEditGrinderFieldWrap');
+    const hasActiveGrinderGear = () =>
+        (Array.isArray(getGasItems?.()) ? getGasItems() : []).some((item) => !item?.archived && isGrinderGear(item));
+    const resolveGrinderNameFromGearIds = (gearIds) => {
+        if (!Array.isArray(gearIds) || !gearIds.length) return '';
+        const gearMap = new Map((Array.isArray(getGasItems?.()) ? getGasItems() : []).map((item) => [item.id, item]));
+        for (const gearId of gearIds) {
+            const item = gearMap.get(gearId);
+            if (!item || !isGrinderGear(item)) continue;
+            const name = (item.name || '').toString().trim();
+            if (name) return name;
+        }
+        return '';
+    };
 
     const normalizeQuickEditGearIds = (ids) => {
         if (!Array.isArray(ids)) return [];
@@ -172,6 +187,8 @@ export const createBrewsCardActionsModule = ({
     const refreshQuickEditGearFieldVisibility = () => {
         bindQuickEditGearUi();
         const { wrap, search } = getQuickEditGearUi();
+        const grinderWrap = getQuickEditGrinderFieldWrap();
+        if (grinderWrap) grinderWrap.classList.toggle('hidden', hasActiveGrinderGear());
         if (!wrap) return;
         const hasGear = getQuickEditGearOptions().length > 0;
         wrap.classList.toggle('hidden', !hasGear);
@@ -382,6 +399,8 @@ export const createBrewsCardActionsModule = ({
             beanId: selectedBeanId,
             updatedAt: nowIso
         };
+        const grinderNameFromGear = resolveGrinderNameFromGearIds(updates.gearIds);
+        if (grinderNameFromGear) updates.grinder = grinderNameFromGear;
 
         try {
             await updateDoc(doc(db, 'users', user.uid, 'coffees', cardId), updates);

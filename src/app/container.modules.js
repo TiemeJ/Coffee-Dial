@@ -1401,6 +1401,7 @@ export const createAppContainerModules = () => {
             getCoffees: () => coffees,
             getBeans: () => beans,
             getCoffeeTypes: () => coffeeTypes,
+            getGasItems: () => gasItems,
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             db,
             doc,

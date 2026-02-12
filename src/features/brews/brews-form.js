@@ -18,6 +18,11 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
         search: document.getElementById('brewGearSearch'),
         dropdown: document.getElementById('brewGearDropdown')
     });
+    const getBrewGrinderFieldWrap = () => document.getElementById('brewGrinderFieldWrap');
+
+    const isGrinderGear = (item) => (item?.type || '').toString().toLowerCase() === 'grinder';
+    const hasActiveGrinderGear = () =>
+        (Array.isArray(getGasItems?.()) ? getGasItems() : []).some((item) => !item?.archived && isGrinderGear(item));
 
     const normalizeBrewGearSelection = (ids) => {
         if (!Array.isArray(ids)) return [];
@@ -126,6 +131,8 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
     const refreshBrewGearField = () => {
         bindBrewGearUi();
         const { wrap, search } = getBrewGearUi();
+        const grinderWrap = getBrewGrinderFieldWrap();
+        if (grinderWrap) grinderWrap.classList.toggle('hidden', hasActiveGrinderGear());
         if (!wrap) return;
         const hasGear = getBrewGearOptions().length > 0;
         wrap.classList.toggle('hidden', !hasGear);

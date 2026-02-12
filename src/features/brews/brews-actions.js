@@ -6,6 +6,7 @@ export const createBrewsActionsModule = ({
     getCoffees,
     getBeans,
     getCoffeeTypes,
+    getGasItems,
     getBeanCoffeeTypeDisplay,
     db,
     doc,
@@ -39,6 +40,18 @@ export const createBrewsActionsModule = ({
 }) => {
     const clean = (value) => (value || '').toString().toLowerCase().trim();
     const scale = () => getCoffeeScale?.();
+    const isGrinderGear = (item) => (item?.type || '').toString().toLowerCase() === 'grinder';
+    const resolveGrinderNameFromGearIds = (gearIds) => {
+        if (!Array.isArray(gearIds) || !gearIds.length) return '';
+        const gearMap = new Map((Array.isArray(getGasItems?.()) ? getGasItems() : []).map((item) => [item.id, item]));
+        for (const gearId of gearIds) {
+            const item = gearMap.get(gearId);
+            if (!item || !isGrinderGear(item)) continue;
+            const name = (item.name || '').toString().trim();
+            if (name) return name;
+        }
+        return '';
+    };
 
     const stripBrewGraphFields = (brew) => {
         const d = { ...brew };
@@ -183,6 +196,8 @@ export const createBrewsActionsModule = ({
             gearIds: getSelectedBrewGearIds(),
             updatedAt: new Date().toISOString()
         };
+        const grinderNameFromGear = resolveGrinderNameFromGearIds(d.gearIds);
+        if (grinderNameFromGear) d.grinder = grinderNameFromGear;
 
         const firstDripEl = document.getElementById('graphFirstDrip');
         const maxFlowEl = document.getElementById('graphMaxFlow');
