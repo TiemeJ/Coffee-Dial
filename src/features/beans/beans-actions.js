@@ -13,7 +13,6 @@ export const createBeansActionsModule = ({
     autoUnpinClosedBagsIfEnabled,
     autoPinOpenBagsIfEnabled,
     makeBeanSignature,
-    updateBeanCardActionButtons,
     openBeanCard,
     enterBeanEditMode,
     openAppConfirm
@@ -60,7 +59,7 @@ export const createBeansActionsModule = ({
                     return updatedBean;
                 })
             );
-            if (updatedBean && getCurrentBeanCardId() === beanId) updateBeanCardActionButtons(updatedBean);
+            if (updatedBean && getCurrentBeanCardId() === beanId) openBeanCard(beanId);
             if (!isArchived) {
                 await autoUnpinClosedBagsIfEnabled({
                     beanIds: [beanId],
@@ -97,7 +96,7 @@ export const createBeansActionsModule = ({
                     return updatedBean;
                 })
             );
-            if (updatedBean && getCurrentBeanCardId() === beanId) updateBeanCardActionButtons(updatedBean);
+            if (updatedBean && getCurrentBeanCardId() === beanId) openBeanCard(beanId);
             if (!isFrozen) {
                 await autoUnpinClosedBagsIfEnabled({
                     beanIds: [beanId],
