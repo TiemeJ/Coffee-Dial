@@ -40,6 +40,15 @@ export const createBrewsActionsModule = ({
 }) => {
     const clean = (value) => (value || '').toString().toLowerCase().trim();
     const scale = () => getCoffeeScale?.();
+    const closeAllActionMenus = () => {
+        document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
+    };
+    const scrollBrewFormToTop = () => {
+        const formWrapper = document.getElementById('formWrapper');
+        if (!formWrapper) return;
+        const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
+        window.scrollTo({ top, behavior: 'smooth' });
+    };
     const isGrinderGear = (item) => (item?.type || '').toString().toLowerCase() === 'grinder';
     const resolveGrinderNameFromGearIds = (gearIds) => {
         if (!Array.isArray(gearIds) || !gearIds.length) return '';
@@ -107,6 +116,7 @@ export const createBrewsActionsModule = ({
     };
 
     const showDuplicateInForm = ({ brew, title }) => {
+        closeAllActionMenus();
         const d = stripBrewGraphFields(brew);
         document.getElementById('editId').value = '';
         populateForm(d);
@@ -114,7 +124,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('formContainer').classList.remove('editing-mode');
         document.getElementById('formTitle').innerHTML = `<span>${title}</span>`;
         document.getElementById('submitBtn').innerHTML = '<span>Save Copy</span>';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollBrewFormToTop();
     };
 
     const resetFormState = (e) => {
@@ -130,7 +140,6 @@ export const createBrewsActionsModule = ({
         document.getElementById('submitBtn').innerHTML = '<span>Save Brew</span>';
         document.getElementById('submitBtn').className =
             'bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
-        document.getElementById('cancelEditBtn').classList.add('hidden');
         document.getElementById('isActiveToggle').checked = false;
         document.getElementById('drinkOther').classList.add('hidden');
         document.getElementById('methodOther').classList.add('hidden');
@@ -595,18 +604,20 @@ export const createBrewsActionsModule = ({
     };
 
     const editCoffee = (id) => {
+        closeAllActionMenus();
         const c = getCoffees().find((x) => x.id === id);
         if (!c) return;
-        document.getElementById('editId').value = c.id;
-        populateForm(c);
-        document.getElementById('formContainer').classList.add('editing-mode');
-        toggleForm(true);
-        document.getElementById('formTitle').innerHTML = '<span class="text-orange-500">Edit Brew</span>';
-        document.getElementById('submitBtn').innerHTML = '<span>Update</span>';
-        document.getElementById('submitBtn').className =
-            'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
-        document.getElementById('cancelEditBtn').classList.remove('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+            document.getElementById('editId').value = c.id;
+            populateForm(c);
+            document.getElementById('formContainer').classList.add('editing-mode');
+            toggleForm(true);
+            document.getElementById('formTitle').innerHTML = '<span class="text-orange-500">Edit Brew</span>';
+            document.getElementById('submitBtn').innerHTML = '<span>Update</span>';
+            document.getElementById('submitBtn').className =
+                'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
+            scrollBrewFormToTop();
+        }, 0);
     };
 
     const fastDuplicateFromCard = async () => {
@@ -637,6 +648,7 @@ export const createBrewsActionsModule = ({
     };
 
     const fastRepeatCoffee = async (id) => {
+        closeAllActionMenus();
         const c = getCoffees().find((x) => x.id === id);
         if (!c) return;
 
@@ -676,7 +688,7 @@ export const createBrewsActionsModule = ({
                 document.getElementById('formContainer').classList.remove('editing-mode');
                 document.getElementById('formTitle').innerHTML = '<span>Add Friend\'s Brew</span>';
                 document.getElementById('submitBtn').innerHTML = '<span>Save Brew</span>';
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                scrollBrewFormToTop();
             }, 500);
             return;
         }
@@ -687,6 +699,7 @@ export const createBrewsActionsModule = ({
     };
 
     const duplicateCoffee = (id) => {
+        closeAllActionMenus();
         const c = getCoffees().find((x) => x.id === id);
         if (!c) return;
 
@@ -700,7 +713,9 @@ export const createBrewsActionsModule = ({
             return;
         }
 
-        showDuplicateInForm({ brew: c, title: 'Duplicate Brew' });
+        setTimeout(() => {
+            showDuplicateInForm({ brew: c, title: 'Duplicate Brew' });
+        }, 0);
     };
 
     const cloneBrew = (id) => duplicateCoffee(id);
