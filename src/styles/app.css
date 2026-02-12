@@ -130,4 +130,20 @@
         .no-animations .boat-left {
             display: none;
         }
+
+        /* Graph modal controls layout */
+        .graph-action-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .graph-toggle-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        @media (max-width: 350px) {
+            .graph-action-grid {
+                grid-template-columns: 1fr;
+            }
+            .graph-toggle-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
