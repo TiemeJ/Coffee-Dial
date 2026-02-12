@@ -47,15 +47,19 @@ export const createBeansActionsModule = ({
         if (!user) return;
         const targetBean = getBeans().find((b) => b.id === beanId);
         try {
+            const nowIso = new Date().toISOString();
+            const nextArchived = !isArchived;
+            const nextArchivedDate = nextArchived ? nowIso : (targetBean?.archivedDate || null);
             await updateDoc(doc(db, 'users', user.uid, 'beans', beanId), {
-                archived: !isArchived,
-                updatedAt: new Date().toISOString()
+                archived: nextArchived,
+                archivedDate: nextArchivedDate,
+                updatedAt: nowIso
             });
             let updatedBean = null;
             setBeansState(
                 getBeans().map((bean) => {
                     if (bean.id !== beanId) return bean;
-                    updatedBean = { ...bean, archived: !isArchived };
+                    updatedBean = { ...bean, archived: nextArchived, archivedDate: nextArchivedDate };
                     return updatedBean;
                 })
             );
@@ -127,6 +131,7 @@ export const createBeansActionsModule = ({
         delete newBeanData.openedDate;
         delete newBeanData.frozenDate;
         delete newBeanData.roastDate;
+        delete newBeanData.archivedDate;
         delete newBeanData.frozen;
         delete newBeanData.archived;
         delete newBeanData.calculatedStock;
@@ -136,6 +141,7 @@ export const createBeansActionsModule = ({
         newBeanData.frozen = false;
         newBeanData.archived = false;
         newBeanData.frozenDate = null;
+        newBeanData.archivedDate = null;
         newBeanData.openedDate = null;
         newBeanData.createdAt = new Date().toISOString();
         newBeanData.updatedAt = newBeanData.createdAt;

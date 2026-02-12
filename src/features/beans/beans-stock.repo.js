@@ -17,11 +17,10 @@ export const createBeansStockRepoModule = ({ db, doc, updateDoc, writeBatch }) =
         await batch.commit();
     };
 
-    const updateBeanArchive = async ({ uid, beanId, archived, updatedAt }) => {
-        await updateDoc(doc(db, 'users', uid, 'beans', beanId), {
-            archived,
-            updatedAt
-        });
+    const updateBeanArchive = async ({ uid, beanId, archived, archivedDate, updatedAt }) => {
+        const payload = { archived, updatedAt };
+        if (archivedDate !== undefined) payload.archivedDate = archivedDate;
+        await updateDoc(doc(db, 'users', uid, 'beans', beanId), payload);
     };
 
     return {

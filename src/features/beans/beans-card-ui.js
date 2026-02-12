@@ -108,6 +108,7 @@ export const createBeansCardUiModule = ({
         document.getElementById('beanCardOpened').textContent = formatCardDate(bean.openedDate);
         document.getElementById('beanCardFrozen').textContent = formatCardDate(bean.frozenDate);
         document.getElementById('beanCardRoastDate').textContent = formatCardDate(bean.roastDate);
+        document.getElementById('beanCardArchivedDate').textContent = formatCardDate(bean.archivedDate);
 
         const imgEl = document.getElementById('beanCardImage');
         const placeholderEl = document.getElementById('beanCardImagePlaceholder');

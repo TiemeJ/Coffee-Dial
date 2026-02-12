@@ -154,9 +154,15 @@ export const createBeansStockControllerModule = ({
 
         const nowIso = new Date().toISOString();
         try {
-            await repo.updateBeanArchive({ uid: currentUser.uid, beanId, archived: true, updatedAt: nowIso });
+            await repo.updateBeanArchive({
+                uid: currentUser.uid,
+                beanId,
+                archived: true,
+                archivedDate: nowIso,
+                updatedAt: nowIso
+            });
             setBeansState(
-                beans.map((b) => (b.id === beanId ? { ...b, archived: true, updatedAt: nowIso } : b))
+                beans.map((b) => (b.id === beanId ? { ...b, archived: true, archivedDate: nowIso, updatedAt: nowIso } : b))
             );
             await autoUnpinClosedBagsIfEnabled({
                 beanIds: [beanId],

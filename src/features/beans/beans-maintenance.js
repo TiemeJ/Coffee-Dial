@@ -115,6 +115,7 @@ export const createBeansMaintenanceModule = ({
                         ...val.data,
                         createdAt: new Date().toISOString(),
                         archived: false,
+                        archivedDate: null,
                         frozen: false
                     });
                     opCount++;

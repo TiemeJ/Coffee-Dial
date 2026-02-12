@@ -220,6 +220,7 @@ export const createBeansTableModule = ({
             const openedDateInputValue = formatBeanDateForInput(bean.openedDate);
             const frozenDateInputValue = formatBeanDateForInput(bean.frozenDate);
             const roastDateInputValue = formatBeanDateForInput(bean.roastDate);
+            const archivedDateInputValue = formatBeanDateForInput(bean.archivedDate);
             const menuId = `beans-action-menu-${bean.id}`;
             const freezeLabel = bean.frozen ? 'Unfreeze' : 'Freeze';
             const freezeIcon = bean.frozen ? 'fa-sun text-amber-500' : 'fa-snowflake text-sky-500';
@@ -248,8 +249,8 @@ export const createBeansTableModule = ({
                 </td>
                 <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${stockLeftDisplay}</td>
                 <td class="px-4 py-3 text-center">
-                    <input type="date" value="${openedDateInputValue}"
-                        ${isMine ? `data-action-change="saveBeanOpenedDate('${bean.id}', this.value)"` : 'disabled'}
+                    <input type="date" value="${roastDateInputValue}"
+                        ${isMine ? `data-action-change="saveBeanRoastDate('${bean.id}', this.value)"` : 'disabled'}
                         class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed">
                 </td>
                 <td class="px-4 py-3 text-center">
@@ -258,9 +259,13 @@ export const createBeansTableModule = ({
                         class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed">
                 </td>
                 <td class="px-4 py-3 text-center">
-                    <input type="date" value="${roastDateInputValue}"
-                        ${isMine ? `data-action-change="saveBeanRoastDate('${bean.id}', this.value)"` : 'disabled'}
+                    <input type="date" value="${openedDateInputValue}"
+                        ${isMine ? `data-action-change="saveBeanOpenedDate('${bean.id}', this.value)"` : 'disabled'}
                         class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <input type="date" value="${archivedDateInputValue}" disabled
+                        class="w-28 text-center text-xs border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed">
                 </td>
                 <td class="px-4 py-3 text-center">
                      <div class="relative inline-block">
@@ -305,7 +310,7 @@ export const createBeansTableModule = ({
         if (inStockBeans.length > 0) {
             const headerRow = document.createElement('tr');
             headerRow.className = 'bg-green-50 dark:bg-green-900/20';
-            headerRow.innerHTML = '<td colspan="10" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
+            headerRow.innerHTML = '<td colspan="11" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
             tbody.appendChild(headerRow);
             inStockBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
         }
@@ -314,7 +319,7 @@ export const createBeansTableModule = ({
             if (inStockBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'bg-blue-50 dark:bg-blue-900/20';
-                headerRow.innerHTML = '<td colspan="10" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
+                headerRow.innerHTML = '<td colspan="11" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
                 tbody.appendChild(headerRow);
             }
             frozenBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
@@ -324,7 +329,7 @@ export const createBeansTableModule = ({
             if (inStockBeans.length > 0 || frozenBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'bg-gray-50 dark:bg-[#34302e]';
-                headerRow.innerHTML = '<td colspan="10" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
+                headerRow.innerHTML = '<td colspan="11" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
                 tbody.appendChild(headerRow);
             }
             otherBeans.forEach((bean) => tbody.appendChild(createRow(bean)));

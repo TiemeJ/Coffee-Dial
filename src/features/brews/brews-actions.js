@@ -302,6 +302,7 @@ export const createBrewsActionsModule = ({
                         beanData.stock = 250;
                         beanData.beansLeft = 250;
                         beanData.openedDate = nowIso;
+                        beanData.archivedDate = null;
                         if (coffeeTypeId) beanData.coffeeTypeId = coffeeTypeId;
                         const newBeanRef = await addDoc(collection(db, 'users', user.uid, 'beans'), beanData);
                         selectedBeanId = newBeanRef.id;

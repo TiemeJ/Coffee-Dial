@@ -360,6 +360,7 @@ export const createAppContainerModules = () => {
                 beansLeft: 250,
                 openedDate: null,
                 frozenDate: null,
+                archivedDate: null,
                 roastDate: null,
                 createdAt: nowIso,
                 updatedAt: nowIso
@@ -494,6 +495,7 @@ export const createAppContainerModules = () => {
                 beansLeft: 250,
                 openedDate: null,
                 frozenDate: null,
+                archivedDate: null,
                 roastDate: null,
                 createdAt: nowIso,
                 updatedAt: nowIso

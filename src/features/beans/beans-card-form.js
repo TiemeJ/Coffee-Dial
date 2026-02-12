@@ -99,6 +99,7 @@ export const createBeansCardFormModule = ({
         document.getElementById('beanEditOpenedDate').value = toInputDate(bean.openedDate);
         document.getElementById('beanEditFrozenDate').value = toInputDate(bean.frozenDate);
         document.getElementById('beanEditRoastDate').value = toInputDate(bean.roastDate);
+        document.getElementById('beanEditArchivedDate').value = toInputDate(bean.archivedDate);
         document.getElementById('beanEditFrozen').checked = !!bean.frozen;
         document.getElementById('beanEditArchived').checked = !!bean.archived;
 
@@ -136,6 +137,10 @@ export const createBeansCardFormModule = ({
         const frozenChecked = document.getElementById('beanEditFrozen').checked;
         const archivedChecked = document.getElementById('beanEditArchived').checked;
         const nowIso = new Date().toISOString();
+        const baseBean = getBeans().find((b) => b.id === beanCardId);
+        const archivedDateVal = archivedChecked
+            ? (baseBean?.archived ? (baseBean.archivedDate || nowIso) : nowIso)
+            : (baseBean?.archivedDate || null);
 
         let coffeeTypeIdVal = document.getElementById('beanEditCoffeeType').value || '__new__';
         if (coffeeTypeIdVal === '__new__') {
@@ -173,13 +178,13 @@ export const createBeansCardFormModule = ({
             openedDate: openedDateVal ? new Date(openedDateVal).toISOString() : null,
             frozenDate: frozenDateVal ? new Date(frozenDateVal).toISOString() : null,
             roastDate: roastDateVal ? new Date(roastDateVal).toISOString() : null,
+            archivedDate: archivedDateVal,
             frozen: frozenChecked,
             archived: archivedChecked,
             updatedAt: nowIso
         };
 
         if (stockVal !== null) {
-            const baseBean = getBeans().find((b) => b.id === beanCardId);
             updates.beansLeft = computeBeansLeft({ ...baseBean, stock: stockVal });
         } else {
             updates.beansLeft = null;

@@ -187,6 +187,7 @@ export const createAiImportModule = ({
                 stock: 250,
                 beansLeft: 250,
                 openedDate: null,
+                archivedDate: null,
                 imageURL: imageURL
             };
 
