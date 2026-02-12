@@ -61,10 +61,21 @@
                         </button>
                     </div>
                 </div>
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Gear Utilities</h4>
+                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Extract grinders from brew grinder fields, create missing grinder gear, and link brews to matching gear.</p>
+                    <div class="flex flex-col gap-2">
+                        <button id="migrateGrinderToGearBtn" data-action-click="migrateGrinderToGear()" class="text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-2 rounded font-bold transition-colors border border-blue-200 dark:border-blue-800">
+                            <i class="fa-solid fa-shuffle mr-1"></i> Migrate grinder to gear
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2">
+            <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
                 <button data-action-click="hidePreferencesModal()" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button>
                 <button data-action-click="savePreferences()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Save Preferences</button>
+                </div>
             </div>
         </div>
     </div>

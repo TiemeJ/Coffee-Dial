@@ -1732,6 +1732,121 @@ export const createAppContainerModules = () => {
             window.open(url, '_blank', 'noopener,noreferrer');
         };
 
+        const migrateGrinderToGear = async () => {
+            if (!currentUser) return alert('Please sign in.');
+
+            const btn = document.getElementById('migrateGrinderToGearBtn');
+            const originalHtml = btn?.innerHTML;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Migrating...';
+            }
+
+            const normalizeName = (value) =>
+                (value || '')
+                    .toString()
+                    .trim()
+                    .replace(/\s+/g, ' ')
+                    .toLowerCase();
+
+            const denormalizeName = (value) => (value || '').toString().trim().replace(/\s+/g, ' ');
+
+            try {
+                const grinderIdByName = new Map();
+                const discoveredGrinderNameByNorm = new Map();
+
+                gasItems.forEach((item) => {
+                    if (!item) return;
+                    if ((item.type || '').toString().toLowerCase() !== 'grinder') return;
+                    const norm = normalizeName(item.name);
+                    if (!norm || grinderIdByName.has(norm)) return;
+                    grinderIdByName.set(norm, item.id);
+                });
+
+                coffees.forEach((brew) => {
+                    const norm = normalizeName(brew?.grinder);
+                    if (!norm || discoveredGrinderNameByNorm.has(norm)) return;
+                    discoveredGrinderNameByNorm.set(norm, denormalizeName(brew.grinder));
+                });
+
+                const missingNorms = [...discoveredGrinderNameByNorm.keys()].filter((norm) => !grinderIdByName.has(norm));
+                const nowIso = new Date().toISOString();
+                const newGearItems = [];
+
+                for (const norm of missingNorms) {
+                    const name = discoveredGrinderNameByNorm.get(norm);
+                    if (!name) continue;
+                    const newRef = doc(collection(db, 'users', currentUser.uid, 'gear'));
+                    const gearData = {
+                        uid: currentUser.uid,
+                        name,
+                        price: null,
+                        type: 'Grinder',
+                        methods: [],
+                        imageUrl: '',
+                        purchasedDate: nowIso,
+                        archived: false,
+                        createdAt: nowIso,
+                        updatedAt: nowIso
+                    };
+                    newGearItems.push({ id: newRef.id, ...gearData });
+                    grinderIdByName.set(norm, newRef.id);
+                    await setDoc(newRef, gearData);
+                }
+
+                const batchLimit = 400;
+                let currentBatch = writeBatch(db);
+                let opCount = 0;
+                let updatedBrewsCount = 0;
+                const commitJobs = [];
+
+                coffees.forEach((brew) => {
+                    const norm = normalizeName(brew?.grinder);
+                    const grinderGearId = norm ? grinderIdByName.get(norm) : null;
+                    if (!grinderGearId) return;
+
+                    const currentGearIds = Array.isArray(brew.gearIds) ? brew.gearIds.filter(Boolean) : [];
+                    if (currentGearIds.includes(grinderGearId)) return;
+
+                    const nextGearIds = [...new Set([...currentGearIds, grinderGearId])];
+                    const brewRef = doc(db, 'users', currentUser.uid, 'coffees', brew.id);
+                    currentBatch.update(brewRef, {
+                        gearIds: nextGearIds,
+                        updatedAt: new Date().toISOString()
+                    });
+                    opCount++;
+                    updatedBrewsCount++;
+                    const idx = coffees.findIndex((c) => c.id === brew.id);
+                    if (idx !== -1) coffees[idx] = { ...coffees[idx], gearIds: nextGearIds };
+
+                    if (opCount >= batchLimit) {
+                        commitJobs.push(currentBatch.commit());
+                        currentBatch = writeBatch(db);
+                        opCount = 0;
+                    }
+                });
+
+                if (opCount > 0) {
+                    commitJobs.push(currentBatch.commit());
+                }
+                if (commitJobs.length) await Promise.all(commitJobs);
+
+                if (newGearItems.length > 0) {
+                    refreshBrewGearSelectors();
+                }
+
+                alert(`Migration complete. Added ${newGearItems.length} grinder gear item(s) and linked ${updatedBrewsCount} brew(s).`);
+            } catch (err) {
+                console.error('Migrate grinder to gear failed:', err);
+                alert(`Migration failed: ${err.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        };
+
         const actions = {
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, savePreferences, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
             togglePinnedTiles,
@@ -1785,7 +1900,8 @@ export const createAppContainerModules = () => {
             resolveAppConfirm,
             openSelectedBeanForEdit,
             openCoffeeFromBeanEdit,
-            recalculateAllBeanStockLeft
+            recalculateAllBeanStockLeft,
+            migrateGrinderToGear
         };
 
         const searchInput = document.getElementById('globalSearch'); 
