@@ -1,5 +1,5 @@
 <div id="gasCardOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasCard(event)">
-    <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleGasCardOverlayClick(event)">
+    <div id="gasCardPanel" class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleGasCardOverlayClick(event)">
         <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
             <div class="absolute top-4 right-4 flex items-center gap-2">
                 <button id="gasCardEditBtn" data-action-click="enterGasEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
@@ -32,31 +32,53 @@
 
         <div id="gasCardView" class="flex-1 flex flex-col min-h-0">
             <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4">
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                        <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Type</span>
-                        <span id="gasCardType" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="w-36 md:w-40 lg:w-48">
+                        <div id="gasCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
+                            <img id="gasCardImage" class="absolute inset-0 w-full h-full object-contain hidden cursor-pointer" src="" alt="Gear Photo" data-action-click="openGasPhoto(event)">
+                            <div id="gasCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
+                                <i class="fa-solid fa-image text-3xl mb-2"></i>
+                                <p class="text-xs font-medium">Add / Change picture</p>
+                            </div>
+                            <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="triggerGasPhoto(event)" title="Change photo">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="removeGasPhoto(event)" title="Remove photo">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="file" id="gasPhotoInput" accept="image/*" class="hidden" data-action-change="handleGasPhoto(event)">
                     </div>
-                    <div>
-                        <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Price</span>
-                        <span id="gasCardPrice" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                    <div class="flex-1 space-y-4">
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Type</span>
+                                <span id="gasCardType" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Price</span>
+                                <span id="gasCardPrice" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Archived</span>
+                                <span id="gasCardArchived" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Created</span>
+                            <span id="gasCardCreated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Updated</span>
+                            <span id="gasCardUpdated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Methods</span>
+                            <span id="gasCardMethods" class="text-xs text-coffee-700 dark:text-[#d6ccc2]"></span>
+                        </div>
                     </div>
-                    <div>
-                        <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Archived</span>
-                        <span id="gasCardArchived" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
-                    </div>
-                </div>
-                <div>
-                    <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Created</span>
-                    <span id="gasCardCreated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
-                </div>
-                <div>
-                    <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Updated</span>
-                    <span id="gasCardUpdated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
-                </div>
-                <div>
-                    <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Methods</span>
-                    <span id="gasCardMethods" class="text-xs text-coffee-700 dark:text-[#d6ccc2]"></span>
                 </div>
             </div>
             <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
@@ -72,7 +94,7 @@
         </div>
 
         <div id="gasCardEdit" class="hidden flex-1 flex flex-col min-h-0">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 content-start flex-1 overflow-y-auto ios-scroll p-4">
                 <div class="sm:col-span-2">
                     <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Name</label>
                     <input id="gasEditName" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
@@ -91,15 +113,12 @@
                 </div>
                 <div class="sm:col-span-2">
                     <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">Methods</label>
-                    <div class="grid grid-cols-2 gap-2 text-xs text-coffee-800 dark:text-[#d6ccc2]">
-                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Espresso">Espresso</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="V60">V60</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Hario Switch">Hario Switch</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Clever Dripper">Clever Dripper</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Aeropress">Aeropress</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="OXO Rapid Brewer">OXO Rapid Brewer</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="French Press">French Press</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="gasEditMethods" value="Chemex">Chemex</label>
+                    <div id="gasMethodsMultiSelect" class="relative">
+                        <div id="gasMethodsControl" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white min-h-[42px] flex flex-wrap items-center gap-1 cursor-text">
+                            <div id="gasMethodsPills" class="flex flex-wrap items-center gap-1"></div>
+                            <input id="gasMethodsSearch" type="text" placeholder="Search methods..." class="flex-1 min-w-[120px] bg-transparent border-0 outline-none p-0 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e]">
+                        </div>
+                        <div id="gasMethodsDropdown" class="hidden absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#57534e] rounded-lg shadow-xl z-[10020]"></div>
                     </div>
                 </div>
             </div>

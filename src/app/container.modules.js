@@ -659,6 +659,7 @@ export const createAppContainerModules = () => {
                 price: null,
                 type: 'Other',
                 methods: [],
+                imageUrl: '',
                 archived: false,
                 createdAt: nowIso,
                 updatedAt: nowIso
@@ -717,6 +718,10 @@ export const createAppContainerModules = () => {
             openGasFromTableEdit,
             toggleGasArchiveFromTable,
             deleteGasFromTable,
+            triggerGasPhoto,
+            openGasPhoto,
+            removeGasPhoto,
+            handleGasPhoto,
             closeGasCardMenu
         } = createGasCardModule({
             getCurrentUser: () => currentUser,
@@ -727,9 +732,15 @@ export const createAppContainerModules = () => {
             setGasItemsState: (value) => { gasItems = value; },
             getFilteredSortedGasItems: (...args) => getFilteredSortedGasItems(...args),
             db,
+            storage,
             doc,
             updateDoc,
             deleteDoc,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject,
+            imageCompression,
             openAppConfirm,
             renderGasTable: (...args) => renderGasTable(...args)
         });
@@ -1719,7 +1730,7 @@ export const createAppContainerModules = () => {
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, extractCoffeeTypesFromBeans,
             openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto,
-            openGasList, closeGasList, createGasItemFromModal, setGasSearch, clearGasSearch, toggleGasQuickFilter, openGasQuickFilterValues, applyGasFilterFromQuick, clearGasFilters, setGasSort, openGasCard, closeGasCard, navigateGasCard, enterGasEditMode, cancelGasEditMode, saveGasEdits, toggleGasArchive, deleteGasItem, openGasFromTableEdit, toggleGasArchiveFromTable, deleteGasFromTable,
+            openGasList, closeGasList, createGasItemFromModal, setGasSearch, clearGasSearch, toggleGasQuickFilter, openGasQuickFilterValues, applyGasFilterFromQuick, clearGasFilters, setGasSort, openGasCard, closeGasCard, navigateGasCard, enterGasEditMode, cancelGasEditMode, saveGasEdits, toggleGasArchive, deleteGasItem, openGasFromTableEdit, toggleGasArchiveFromTable, deleteGasFromTable, triggerGasPhoto, openGasPhoto, removeGasPhoto, handleGasPhoto,
             closeCoffeeCardMenu,
             toggleCoffeeDetails,
             createCoffeeTypeFromModal,

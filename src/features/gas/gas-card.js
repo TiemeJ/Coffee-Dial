@@ -7,9 +7,15 @@ export const createGasCardModule = ({
     setGasItemsState,
     getFilteredSortedGasItems,
     db,
+    storage,
     doc,
     updateDoc,
     deleteDoc,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject,
+    imageCompression,
     openAppConfirm,
     renderGasTable
 }) => {
@@ -25,19 +31,216 @@ export const createGasCardModule = ({
     ];
     const GAS_TYPE_OPTIONS = ['Coffee maker', 'Grinder', 'Other'];
 
+    let gasMethodsSelection = new Set();
+    let gasMethodsFilter = '';
+    let hasBoundGasMethodsUi = false;
+
     const formatCurrency = (value) => {
         const num = Number(value);
         if (!Number.isFinite(num)) return '-';
         return `EUR ${num.toFixed(2)}`;
     };
 
-    const getCurrentGasItem = () => getGasItems().find((item) => item.id === getCurrentGasId());
-
     const normalizeMethods = (methods) => {
         if (!Array.isArray(methods)) return [];
         return [...new Set(methods.filter((method) => GAS_METHOD_OPTIONS.includes(method)))];
     };
+
     const normalizeType = (type) => (GAS_TYPE_OPTIONS.includes(type) ? type : 'Other');
+
+    const getCurrentGasItem = () => getGasItems().find((item) => item.id === getCurrentGasId());
+
+    const getGasMethodsUi = () => ({
+        root: document.getElementById('gasMethodsMultiSelect'),
+        control: document.getElementById('gasMethodsControl'),
+        pills: document.getElementById('gasMethodsPills'),
+        search: document.getElementById('gasMethodsSearch'),
+        dropdown: document.getElementById('gasMethodsDropdown')
+    });
+    const setGasCardHeightForMode = (mode = 'view') => {
+        const panel = document.getElementById('gasCardPanel');
+        if (!panel) return;
+        panel.style.maxHeight = '85vh';
+        panel.style.minHeight = '48vh';
+    };
+
+    const renderGasMethodsDropdown = () => {
+        const { dropdown } = getGasMethodsUi();
+        if (!dropdown) return;
+
+        const q = (gasMethodsFilter || '').toLowerCase().trim();
+        const visibleOptions = GAS_METHOD_OPTIONS.filter((option) => option.toLowerCase().includes(q));
+
+        if (!visibleOptions.length) {
+            dropdown.innerHTML = '<div class="px-3 py-2 text-xs text-coffee-500 dark:text-[#a8a29e]">No matching methods</div>';
+            return;
+        }
+
+        dropdown.innerHTML = visibleOptions
+            .map((option) => {
+                const selected = gasMethodsSelection.has(option);
+                const selectedCls = selected ? 'bg-coffee-100 dark:bg-[#34302e] font-semibold' : '';
+                const icon = selected ? '<i class="fa-solid fa-check text-coffee-700 dark:text-[#d6ccc2]"></i>' : '';
+                return `<button type="button" data-gas-method-option="${option}" class="w-full text-left px-3 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2] flex items-center justify-between ${selectedCls}"><span>${option}</span>${icon}</button>`;
+            })
+            .join('');
+    };
+
+    const renderGasMethodsPills = () => {
+        const { pills, search } = getGasMethodsUi();
+        if (!pills || !search) return;
+
+        const selected = [...gasMethodsSelection];
+        pills.innerHTML = selected
+            .map((method) => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${method}<button type="button" data-gas-method-remove="${method}" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`)
+            .join('');
+
+        search.placeholder = selected.length ? '' : 'Search methods...';
+    };
+
+    const openGasMethodsDropdown = () => {
+        const { dropdown } = getGasMethodsUi();
+        if (!dropdown) return;
+        renderGasMethodsDropdown();
+        dropdown.classList.remove('hidden');
+    };
+
+    const closeGasMethodsDropdown = () => {
+        const { dropdown } = getGasMethodsUi();
+        if (!dropdown) return;
+        dropdown.classList.add('hidden');
+    };
+
+    const setGasMethodsSelection = (methods) => {
+        gasMethodsSelection = new Set(normalizeMethods(methods));
+        renderGasMethodsPills();
+        renderGasMethodsDropdown();
+    };
+
+    const toggleGasMethodSelection = (method) => {
+        if (!GAS_METHOD_OPTIONS.includes(method)) return;
+        if (gasMethodsSelection.has(method)) gasMethodsSelection.delete(method);
+        else gasMethodsSelection.add(method);
+        renderGasMethodsPills();
+        renderGasMethodsDropdown();
+    };
+
+    const bindGasMethodsUi = () => {
+        if (hasBoundGasMethodsUi) return;
+        const { root, control, search, dropdown } = getGasMethodsUi();
+        if (!root || !control || !search || !dropdown) return;
+
+        hasBoundGasMethodsUi = true;
+
+        control.addEventListener('click', () => {
+            search.focus();
+            openGasMethodsDropdown();
+        });
+
+        control.addEventListener('click', (event) => {
+            const removeBtn = event.target.closest('[data-gas-method-remove]');
+            if (!removeBtn) return;
+            event.stopPropagation();
+            toggleGasMethodSelection(removeBtn.getAttribute('data-gas-method-remove'));
+            search.focus();
+        });
+
+        search.addEventListener('focus', () => openGasMethodsDropdown());
+        search.addEventListener('input', () => {
+            gasMethodsFilter = search.value || '';
+            openGasMethodsDropdown();
+        });
+
+        dropdown.addEventListener('click', (event) => {
+            const optionBtn = event.target.closest('[data-gas-method-option]');
+            if (!optionBtn) return;
+            toggleGasMethodSelection(optionBtn.getAttribute('data-gas-method-option'));
+            search.focus();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!root.contains(event.target)) closeGasMethodsDropdown();
+        });
+    };
+
+    const triggerGasPhoto = (e) => {
+        if (e) e.stopPropagation();
+        if (!getCurrentGasId()) return;
+        document.getElementById('gasPhotoInput')?.click();
+    };
+
+    const openGasPhoto = (e) => {
+        if (e) e.stopPropagation();
+        const item = getCurrentGasItem();
+        const url = item?.imageUrl || item?.imageURL;
+        if (url) window.open(url, '_blank');
+    };
+
+    const removeGasPhoto = async (e) => {
+        if (e) e.stopPropagation();
+        const user = getCurrentUser();
+        const gasId = getCurrentGasId();
+        if (!user || !gasId) return;
+
+        const item = getCurrentGasItem();
+        const url = item?.imageUrl || item?.imageURL;
+        if (!url) return;
+
+        try {
+            const photoRef = ref(storage, url);
+            await deleteObject(photoRef);
+            await updateDoc(doc(db, 'users', user.uid, 'gear', gasId), {
+                imageUrl: null,
+                updatedAt: new Date().toISOString()
+            });
+            setGasItemsState(
+                getGasItems().map((entry) =>
+                    entry.id === gasId ? { ...entry, imageUrl: null, imageURL: null, updatedAt: new Date().toISOString() } : entry
+                )
+            );
+            openGasCard(gasId);
+        } catch (err) {
+            console.error('Remove gear photo failed:', err);
+            alert('Failed to remove image.');
+        }
+    };
+
+    const handleGasPhoto = async (event) => {
+        const file = event.target.files?.[0];
+        const user = getCurrentUser();
+        const gasId = getCurrentGasId();
+        if (!file || !user || !gasId) return;
+
+        const cardView = document.getElementById('gasCardView');
+        const originalClasses = cardView?.className;
+
+        try {
+            if (cardView) cardView.classList.add('ai-loading-pulse');
+            const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: true };
+            const compressedFile = await imageCompression(file, options);
+            const timestamp = Date.now();
+            const storageRef = ref(storage, `photos/${user.uid}/gear_${gasId}_${timestamp}`);
+            const snapshot = await uploadBytes(storageRef, compressedFile);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            const nowIso = new Date().toISOString();
+            await updateDoc(doc(db, 'users', user.uid, 'gear', gasId), {
+                imageUrl: downloadURL,
+                updatedAt: nowIso
+            });
+            setGasItemsState(
+                getGasItems().map((entry) =>
+                    entry.id === gasId ? { ...entry, imageUrl: downloadURL, updatedAt: nowIso } : entry
+                )
+            );
+            openGasCard(gasId);
+        } catch (err) {
+            console.error('Gear photo upload failed:', err);
+            alert('Failed to upload image.');
+        } finally {
+            if (cardView && originalClasses) cardView.className = originalClasses;
+            event.target.value = '';
+        }
+    };
 
     const updateGasCardNav = () => {
         const order = getFilteredSortedGasItems().map((item) => item.id);
@@ -71,6 +274,18 @@ export const createGasCardModule = ({
         document.getElementById('gasCardUpdated').textContent = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : '-';
         const methods = normalizeMethods(item.methods);
         document.getElementById('gasCardMethods').textContent = methods.length ? methods.join(', ') : '-';
+        const imageUrl = item.imageUrl || item.imageURL;
+        const imageEl = document.getElementById('gasCardImage');
+        const imagePlaceholder = document.getElementById('gasCardImagePlaceholder');
+        if (imageUrl) {
+            imageEl.src = imageUrl;
+            imageEl.classList.remove('hidden');
+            imagePlaceholder.classList.add('hidden');
+        } else {
+            imageEl.src = '';
+            imageEl.classList.add('hidden');
+            imagePlaceholder.classList.remove('hidden');
+        }
 
         const archiveBtn = document.getElementById('gasCardActionArchiveBtn');
         if (archiveBtn) archiveBtn.innerHTML = `<i class="fa-solid fa-box-archive text-amber-600 w-4"></i> ${item.archived ? 'Unarchive' : 'Archive'}`;
@@ -79,6 +294,7 @@ export const createGasCardModule = ({
         document.getElementById('gasCardEdit').classList.add('hidden');
         document.getElementById('gasCardEditBtn').classList.toggle('hidden', !isMine);
         document.getElementById('gasCardMenuBtn').classList.toggle('hidden', !isMine);
+        setGasCardHeightForMode('view');
 
         updateGasCardNav();
         document.getElementById('gasCardOverlay').classList.remove('hidden');
@@ -90,6 +306,8 @@ export const createGasCardModule = ({
         document.getElementById('gasCardView').classList.remove('hidden');
         document.getElementById('gasCardEditBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
         document.getElementById('gasCardMenuBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
+        closeGasMethodsDropdown();
+        setGasCardHeightForMode('view');
         document.getElementById('gasCardOverlay').classList.add('hidden');
     };
 
@@ -97,19 +315,21 @@ export const createGasCardModule = ({
         const item = getCurrentGasItem();
         if (!item) return;
 
+        bindGasMethodsUi();
         document.getElementById('gasEditName').value = item.name || '';
         document.getElementById('gasEditPrice').value = item.price ?? '';
         document.getElementById('gasEditType').value = normalizeType(item.type);
-        const selectedMethods = new Set(normalizeMethods(item.methods));
-        document.querySelectorAll('input[name="gasEditMethods"]').forEach((input) => {
-            input.checked = selectedMethods.has(input.value);
-        });
+        gasMethodsFilter = '';
+        const { search } = getGasMethodsUi();
+        if (search) search.value = '';
+        setGasMethodsSelection(item.methods);
 
         document.getElementById('gasCardView').classList.add('hidden');
         document.getElementById('gasCardEdit').classList.remove('hidden');
         document.getElementById('gasCardEditBtn').classList.add('hidden');
         document.getElementById('gasCardMenuBtn').classList.add('hidden');
         document.getElementById('gasCardActionMenu').classList.add('hidden');
+        setGasCardHeightForMode('edit');
     };
 
     const cancelGasEditMode = () => {
@@ -117,6 +337,8 @@ export const createGasCardModule = ({
         document.getElementById('gasCardView').classList.remove('hidden');
         document.getElementById('gasCardEditBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
         document.getElementById('gasCardMenuBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
+        closeGasMethodsDropdown();
+        setGasCardHeightForMode('view');
     };
 
     const saveGasEdits = async () => {
@@ -127,9 +349,8 @@ export const createGasCardModule = ({
         const nowIso = new Date().toISOString();
         const rawPrice = document.getElementById('gasEditPrice').value;
         const parsedPrice = rawPrice === '' ? null : Number(rawPrice);
-        const methods = normalizeMethods(
-            Array.from(document.querySelectorAll('input[name="gasEditMethods"]:checked')).map((input) => input.value)
-        );
+        const methods = normalizeMethods([...gasMethodsSelection]);
+
         const updates = {
             name: document.getElementById('gasEditName').value || '',
             price: Number.isFinite(parsedPrice) ? parsedPrice : null,
@@ -142,6 +363,7 @@ export const createGasCardModule = ({
             await updateDoc(doc(db, 'users', user.uid, 'gear', gasId), updates);
             setGasItemsState(getGasItems().map((item) => (item.id === gasId ? { ...item, ...updates } : item)));
             renderGasTable();
+            closeGasMethodsDropdown();
             openGasCard(gasId);
         } catch (err) {
             console.error('Error saving gear edits:', err);
@@ -239,6 +461,10 @@ export const createGasCardModule = ({
         openGasFromTableEdit,
         toggleGasArchiveFromTable,
         deleteGasFromTable,
+        triggerGasPhoto,
+        openGasPhoto,
+        removeGasPhoto,
+        handleGasPhoto,
         closeGasCardMenu
     };
 };
