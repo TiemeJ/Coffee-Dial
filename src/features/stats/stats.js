@@ -14,6 +14,22 @@ export const createStatsModule = ({
     Chart
 }) => {
     const chartInstances = {};
+    const formatCurrencyEur = (value) => {
+        const num = Number(value);
+        if (!Number.isFinite(num)) return 'EUR 0.00';
+        return `EUR ${num.toFixed(2)}`;
+    };
+    const renderGasAlert = (totalSpent = 0) => {
+        const totalEl = document.getElementById('statGasTotal');
+        const funnyEl = document.getElementById('statGasFunny');
+        if (totalEl) totalEl.textContent = formatCurrencyEur(totalSpent);
+        if (funnyEl) {
+            if (totalSpent <= 0) funnyEl.textContent = 'Your wallet is still in pre-infusion mode.';
+            else if (totalSpent < 250) funnyEl.textContent = 'Mild GAS symptoms detected. Your bank app is calm... for now.';
+            else if (totalSpent < 1000) funnyEl.textContent = 'Classic GAS phase: one more grinder away from financial enlightenment.';
+            else funnyEl.textContent = 'Full GAS syndrome. Your espresso is dialed in, your budget is not.';
+        }
+    };
 
     const closeStats = () => {
         document.getElementById('statsModal')?.classList.add('hidden');
@@ -55,16 +71,23 @@ export const createStatsModule = ({
         document.getElementById('aiProfileContainer')?.classList.add('hidden');
         const user = getCurrentUser();
         let dataToUse = [];
+        let gearToUse = [];
         if (uid === 'mine') {
-            const q = collection(db, 'users', user.uid, 'coffees');
-            const snap = await getDocs(q);
-            snap.forEach((d) => dataToUse.push({ id: d.id, ...d.data() }));
+            const brewsQ = collection(db, 'users', user.uid, 'coffees');
+            const brewsSnap = await getDocs(brewsQ);
+            brewsSnap.forEach((d) => dataToUse.push({ id: d.id, ...d.data() }));
+            const gearQ = collection(db, 'users', user.uid, 'gear');
+            const gearSnap = await getDocs(gearQ);
+            gearSnap.forEach((d) => gearToUse.push({ id: d.id, ...d.data() }));
         } else {
-            const q = collection(db, 'users', uid, 'coffees');
-            const snap = await getDocs(q);
-            snap.forEach((d) => dataToUse.push({ id: d.id, ...d.data() }));
+            const brewsQ = collection(db, 'users', uid, 'coffees');
+            const brewsSnap = await getDocs(brewsQ);
+            brewsSnap.forEach((d) => dataToUse.push({ id: d.id, ...d.data() }));
+            const gearQ = collection(db, 'users', uid, 'gear');
+            const gearSnap = await getDocs(gearQ);
+            gearSnap.forEach((d) => gearToUse.push({ id: d.id, ...d.data() }));
         }
-        calculateStats(dataToUse);
+        calculateStats(dataToUse, gearToUse);
     };
 
     const renderCharts = (roast, method, drink, stars) => {
@@ -99,8 +122,13 @@ export const createStatsModule = ({
         });
     };
 
-    const calculateStats = (dataToUse) => {
+    const calculateStats = (dataToUse, gearToUse = []) => {
         setCurrentStatsData(dataToUse);
+        const gasTotalSpent = gearToUse.reduce((sum, item) => {
+            const price = Number(item?.price);
+            return Number.isFinite(price) ? sum + price : sum;
+        }, 0);
+        renderGasAlert(gasTotalSpent);
         const total = dataToUse.length;
         if (total === 0) {
             document.getElementById('statTotalBrews').innerText = '0';
