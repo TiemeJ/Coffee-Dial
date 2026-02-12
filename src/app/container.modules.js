@@ -1417,6 +1417,7 @@ export const createAppContainerModules = () => {
             setRating: (...args) => setRating(...args),
             toggleForm: (...args) => toggleForm(...args),
             populateForm: (...args) => populateForm(...args),
+            updateBeanDropdown: (...args) => updateBeanDropdown(...args),
             changeView: (...args) => changeView(...args),
             closeCoffeeCard: (...args) => closeCoffeeCard(...args),
             openCoffeeCard: (...args) => openCoffeeCard(...args),

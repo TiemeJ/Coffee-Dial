@@ -16,7 +16,7 @@ export const createBrewFormLookupModule = ({
         });
     };
 
-    const updateBeanDropdown = () => {
+    const updateBeanDropdown = ({ includeAll = false } = {}) => {
         const select = document.getElementById('savedBeanSelect');
         if (!select) return;
 
@@ -34,7 +34,7 @@ export const createBrewFormLookupModule = ({
         select.innerHTML = '<option value="">-- create new bean and coffee --</option>';
 
         getBeans()
-            .filter((bean) => !bean.archived && !bean.frozen)
+            .filter((bean) => includeAll || (!bean.archived && !bean.frozen))
             .sort((a, b) => {
                 const aDisplay = getBeanCoffeeTypeDisplay(a);
                 const bDisplay = getBeanCoffeeTypeDisplay(b);
