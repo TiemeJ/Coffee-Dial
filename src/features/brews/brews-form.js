@@ -1,5 +1,146 @@
-export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, getCoffeeScale }) => {
+export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, getCoffeeScale, getGasItems }) => {
+    let brewGearSelection = new Set();
+    let brewGearFilter = '';
+    let hasBoundBrewGearUi = false;
+
+    const getBrewGearOptions = () => {
+        const items = Array.isArray(getGasItems?.()) ? getGasItems() : [];
+        return items
+            .map((item) => ({ id: item.id, label: (item.name || 'Untitled gear').toString().trim() || 'Untitled gear' }))
+            .sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+    };
+
+    const getBrewGearUi = () => ({
+        wrap: document.getElementById('brewGearMultiSelectWrap'),
+        root: document.getElementById('brewGearMultiSelect'),
+        control: document.getElementById('brewGearControl'),
+        pills: document.getElementById('brewGearPills'),
+        search: document.getElementById('brewGearSearch'),
+        dropdown: document.getElementById('brewGearDropdown')
+    });
+
+    const normalizeBrewGearSelection = (ids) => {
+        if (!Array.isArray(ids)) return [];
+        const validIds = new Set(getBrewGearOptions().map((option) => option.id));
+        return [...new Set(ids.filter((id) => validIds.has(id)))];
+    };
+
+    const renderBrewGearPills = () => {
+        const { pills, search } = getBrewGearUi();
+        if (!pills || !search) return;
+        const optionMap = new Map(getBrewGearOptions().map((option) => [option.id, option.label]));
+        const selectedIds = [...brewGearSelection];
+        pills.innerHTML = selectedIds
+            .map((id) => {
+                const label = optionMap.get(id) || 'Unknown gear';
+                return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${label}<button type="button" data-brew-gear-remove="${id}" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`;
+            })
+            .join('');
+        search.placeholder = selectedIds.length ? '' : 'Search gear...';
+    };
+
+    const renderBrewGearDropdown = () => {
+        const { dropdown } = getBrewGearUi();
+        if (!dropdown) return;
+        const q = (brewGearFilter || '').toLowerCase().trim();
+        const options = getBrewGearOptions().filter((option) => option.label.toLowerCase().includes(q));
+        if (!options.length) {
+            dropdown.innerHTML = '<div class="px-3 py-2 text-xs text-coffee-500 dark:text-[#a8a29e]">No matching gear</div>';
+            return;
+        }
+        dropdown.innerHTML = options
+            .map((option) => {
+                const selected = brewGearSelection.has(option.id);
+                const selectedCls = selected ? 'bg-coffee-100 dark:bg-[#34302e] font-semibold' : '';
+                const icon = selected ? '<i class="fa-solid fa-check text-coffee-700 dark:text-[#d6ccc2]"></i>' : '';
+                return `<button type="button" data-brew-gear-option="${option.id}" class="w-full text-left px-3 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2] flex items-center justify-between ${selectedCls}"><span>${option.label}</span>${icon}</button>`;
+            })
+            .join('');
+    };
+
+    const closeBrewGearDropdown = () => {
+        const { dropdown } = getBrewGearUi();
+        if (dropdown) dropdown.classList.add('hidden');
+    };
+
+    const openBrewGearDropdown = () => {
+        const { dropdown } = getBrewGearUi();
+        if (!dropdown) return;
+        renderBrewGearDropdown();
+        dropdown.classList.remove('hidden');
+    };
+
+    const setSelectedBrewGearIds = (ids) => {
+        brewGearSelection = new Set(normalizeBrewGearSelection(ids));
+        renderBrewGearPills();
+        renderBrewGearDropdown();
+    };
+
+    const getSelectedBrewGearIds = () => [...brewGearSelection];
+
+    const toggleBrewGearSelection = (id) => {
+        if (!id) return;
+        if (brewGearSelection.has(id)) brewGearSelection.delete(id);
+        else brewGearSelection.add(id);
+        renderBrewGearPills();
+        renderBrewGearDropdown();
+    };
+
+    const bindBrewGearUi = () => {
+        if (hasBoundBrewGearUi) return;
+        const { root, control, search, dropdown } = getBrewGearUi();
+        if (!root || !control || !search || !dropdown) return;
+        hasBoundBrewGearUi = true;
+
+        control.addEventListener('click', () => {
+            search.focus();
+            openBrewGearDropdown();
+        });
+
+        control.addEventListener('click', (event) => {
+            const removeBtn = event.target.closest('[data-brew-gear-remove]');
+            if (!removeBtn) return;
+            event.stopPropagation();
+            toggleBrewGearSelection(removeBtn.getAttribute('data-brew-gear-remove'));
+            search.focus();
+        });
+
+        search.addEventListener('focus', () => openBrewGearDropdown());
+        search.addEventListener('input', () => {
+            brewGearFilter = search.value || '';
+            openBrewGearDropdown();
+        });
+
+        dropdown.addEventListener('click', (event) => {
+            const optionBtn = event.target.closest('[data-brew-gear-option]');
+            if (!optionBtn) return;
+            toggleBrewGearSelection(optionBtn.getAttribute('data-brew-gear-option'));
+            search.focus();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!root.contains(event.target)) closeBrewGearDropdown();
+        });
+    };
+
+    const refreshBrewGearField = () => {
+        bindBrewGearUi();
+        const { wrap, search } = getBrewGearUi();
+        if (!wrap) return;
+        const hasGear = getBrewGearOptions().length > 0;
+        wrap.classList.toggle('hidden', !hasGear);
+        if (!hasGear) {
+            brewGearFilter = '';
+            setSelectedBrewGearIds([]);
+            if (search) search.value = '';
+            closeBrewGearDropdown();
+        } else {
+            setSelectedBrewGearIds([...brewGearSelection]);
+        }
+    };
+
     const populateForm = (c) => {
+        refreshBrewGearField();
         document.getElementById('roaster').value = c.roaster || c.name || '';
         document.getElementById('farmer').value = c.farmer || '';
         document.getElementById('origin').value = c.origin || c.beanType || '';
@@ -14,6 +155,7 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
         document.getElementById('time').value = c.time || '';
         document.getElementById('notes').value = c.notes || '';
         document.getElementById('improve').value = c.improve || '';
+        setSelectedBrewGearIds(c.gearIds || []);
 
         if (!isNaN(parseFloat(c.temp)) && isFinite(c.temp)) {
             setTempMode('numeric');
@@ -102,6 +244,9 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
     };
 
     return {
-        populateForm
+        populateForm,
+        refreshBrewGearField,
+        getSelectedBrewGearIds,
+        setSelectedBrewGearIds
     };
 };

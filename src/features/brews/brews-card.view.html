@@ -142,6 +142,16 @@
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Grinder</label>
                             <input id="quickEditGrinder" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                         </div>
+                        <div id="quickEditGearMultiSelectWrap" class="hidden sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">Gear</label>
+                            <div id="quickEditGearMultiSelect" class="relative">
+                                <div id="quickEditGearControl" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white min-h-[42px] flex flex-wrap items-center gap-1 cursor-text">
+                                    <div id="quickEditGearPills" class="flex flex-wrap items-center gap-1"></div>
+                                    <input id="quickEditGearSearch" type="text" placeholder="Search gear..." class="flex-1 min-w-[120px] bg-transparent border-0 outline-none p-0 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e]">
+                                </div>
+                                <div id="quickEditGearDropdown" class="hidden absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#57534e] rounded-lg shadow-xl z-[10020]"></div>
+                            </div>
+                        </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Grind</label>
                             <input id="quickEditGrind" type="number" step="any" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">

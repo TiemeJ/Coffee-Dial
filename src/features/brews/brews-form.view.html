@@ -130,6 +130,16 @@
                                 <input type="text" id="grinder" name="grinder" list="grinderList" placeholder="e.g. Niche Zero" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
                                 <datalist id="grinderList"></datalist>
                             </div>
+                            <div id="brewGearMultiSelectWrap" class="hidden lg:col-span-2">
+                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Gear</label>
+                                <div id="brewGearMultiSelect" class="relative">
+                                    <div id="brewGearControl" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white min-h-[42px] flex flex-wrap items-center gap-1 cursor-text">
+                                        <div id="brewGearPills" class="flex flex-wrap items-center gap-1"></div>
+                                        <input id="brewGearSearch" type="text" placeholder="Search gear..." class="flex-1 min-w-[120px] bg-transparent border-0 outline-none p-0 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e]">
+                                    </div>
+                                    <div id="brewGearDropdown" class="hidden absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#57534e] rounded-lg shadow-xl z-[10020]"></div>
+                                </div>
+                            </div>
                              <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Grind Size</label><input type="number" step="any" id="grind" name="grind" placeholder="e.g. 14" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]"></div>
                             
                             <!-- Recipe Block -->

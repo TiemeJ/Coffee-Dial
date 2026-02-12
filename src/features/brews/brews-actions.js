@@ -33,7 +33,9 @@ export const createBrewsActionsModule = ({
     showCoffeeTypeCreatedToast,
     uploadPendingBeanImage,
     clearPendingAIBeanImageFile,
-    getCoffeeScale
+    getCoffeeScale,
+    getSelectedBrewGearIds,
+    setSelectedBrewGearIds
 }) => {
     const clean = (value) => (value || '').toString().toLowerCase().trim();
     const scale = () => getCoffeeScale?.();
@@ -119,6 +121,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('isActiveToggle').checked = false;
         document.getElementById('drinkOther').classList.add('hidden');
         document.getElementById('methodOther').classList.add('hidden');
+        setSelectedBrewGearIds([]);
         clearPendingAIBeanImageFile();
         if (scale()?.resetCaptureData) scale().resetCaptureData();
         if (scale()?.setRecipeSteps) scale().setRecipeSteps([]);
@@ -177,6 +180,7 @@ export const createBrewsActionsModule = ({
             improve: f.get('improve') || '',
             rating: parseInt(f.get('rating'), 10) || 0,
             isActive: isActiveChecked,
+            gearIds: getSelectedBrewGearIds(),
             updatedAt: new Date().toISOString()
         };
 
@@ -326,7 +330,8 @@ export const createBrewsActionsModule = ({
                 (d.temp && d.temp !== 'M') ||
                 d.notes ||
                 d.improve ||
-                d.rating > 0;
+                d.rating > 0 ||
+                (Array.isArray(d.gearIds) && d.gearIds.length > 0);
 
             const col = collection(db, 'users', user.uid, 'coffees');
             let didSaveBrew = false;

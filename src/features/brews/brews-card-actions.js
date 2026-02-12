@@ -4,6 +4,7 @@ export const createBrewsCardActionsModule = ({
     getCurrentCoffeeCardId,
     getCoffees,
     getBeans,
+    getGasItems,
     getCoffeeTypes,
     getCurrentCoffeeCard,
     db,
@@ -44,6 +45,145 @@ export const createBrewsCardActionsModule = ({
         'Soup lungo',
         'Soup flat white'
     ];
+    let quickEditGearSelection = new Set();
+    let quickEditGearFilter = '';
+    let hasBoundQuickEditGearUi = false;
+
+    const getQuickEditGearOptions = () => {
+        const items = Array.isArray(getGasItems?.()) ? getGasItems() : [];
+        return items
+            .map((item) => ({ id: item.id, label: (item.name || 'Untitled gear').toString().trim() || 'Untitled gear' }))
+            .sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+    };
+
+    const getQuickEditGearUi = () => ({
+        wrap: document.getElementById('quickEditGearMultiSelectWrap'),
+        root: document.getElementById('quickEditGearMultiSelect'),
+        control: document.getElementById('quickEditGearControl'),
+        pills: document.getElementById('quickEditGearPills'),
+        search: document.getElementById('quickEditGearSearch'),
+        dropdown: document.getElementById('quickEditGearDropdown')
+    });
+
+    const normalizeQuickEditGearIds = (ids) => {
+        if (!Array.isArray(ids)) return [];
+        const validIds = new Set(getQuickEditGearOptions().map((option) => option.id));
+        return [...new Set(ids.filter((id) => validIds.has(id)))];
+    };
+
+    const renderQuickEditGearPills = () => {
+        const { pills, search } = getQuickEditGearUi();
+        if (!pills || !search) return;
+        const optionMap = new Map(getQuickEditGearOptions().map((option) => [option.id, option.label]));
+        const selectedIds = [...quickEditGearSelection];
+        pills.innerHTML = selectedIds
+            .map((id) => {
+                const label = optionMap.get(id) || 'Unknown gear';
+                return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${label}<button type="button" data-quick-gear-remove="${id}" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`;
+            })
+            .join('');
+        search.placeholder = selectedIds.length ? '' : 'Search gear...';
+    };
+
+    const renderQuickEditGearDropdown = () => {
+        const { dropdown } = getQuickEditGearUi();
+        if (!dropdown) return;
+        const q = (quickEditGearFilter || '').toLowerCase().trim();
+        const options = getQuickEditGearOptions().filter((option) => option.label.toLowerCase().includes(q));
+        if (!options.length) {
+            dropdown.innerHTML = '<div class="px-3 py-2 text-xs text-coffee-500 dark:text-[#a8a29e]">No matching gear</div>';
+            return;
+        }
+        dropdown.innerHTML = options
+            .map((option) => {
+                const selected = quickEditGearSelection.has(option.id);
+                const selectedCls = selected ? 'bg-coffee-100 dark:bg-[#34302e] font-semibold' : '';
+                const icon = selected ? '<i class="fa-solid fa-check text-coffee-700 dark:text-[#d6ccc2]"></i>' : '';
+                return `<button type="button" data-quick-gear-option="${option.id}" class="w-full text-left px-3 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2] flex items-center justify-between ${selectedCls}"><span>${option.label}</span>${icon}</button>`;
+            })
+            .join('');
+    };
+
+    const closeQuickEditGearDropdown = () => {
+        const { dropdown } = getQuickEditGearUi();
+        if (dropdown) dropdown.classList.add('hidden');
+    };
+
+    const openQuickEditGearDropdown = () => {
+        const { dropdown } = getQuickEditGearUi();
+        if (!dropdown) return;
+        renderQuickEditGearDropdown();
+        dropdown.classList.remove('hidden');
+    };
+
+    const setQuickEditGearSelection = (ids) => {
+        quickEditGearSelection = new Set(normalizeQuickEditGearIds(ids));
+        renderQuickEditGearPills();
+        renderQuickEditGearDropdown();
+    };
+
+    const getQuickEditSelectedGearIds = () => [...quickEditGearSelection];
+
+    const toggleQuickEditGearSelection = (id) => {
+        if (!id) return;
+        if (quickEditGearSelection.has(id)) quickEditGearSelection.delete(id);
+        else quickEditGearSelection.add(id);
+        renderQuickEditGearPills();
+        renderQuickEditGearDropdown();
+    };
+
+    const bindQuickEditGearUi = () => {
+        if (hasBoundQuickEditGearUi) return;
+        const { root, control, search, dropdown } = getQuickEditGearUi();
+        if (!root || !control || !search || !dropdown) return;
+        hasBoundQuickEditGearUi = true;
+
+        control.addEventListener('click', () => {
+            search.focus();
+            openQuickEditGearDropdown();
+        });
+
+        control.addEventListener('click', (event) => {
+            const removeBtn = event.target.closest('[data-quick-gear-remove]');
+            if (!removeBtn) return;
+            event.stopPropagation();
+            toggleQuickEditGearSelection(removeBtn.getAttribute('data-quick-gear-remove'));
+            search.focus();
+        });
+
+        search.addEventListener('focus', () => openQuickEditGearDropdown());
+        search.addEventListener('input', () => {
+            quickEditGearFilter = search.value || '';
+            openQuickEditGearDropdown();
+        });
+
+        dropdown.addEventListener('click', (event) => {
+            const optionBtn = event.target.closest('[data-quick-gear-option]');
+            if (!optionBtn) return;
+            toggleQuickEditGearSelection(optionBtn.getAttribute('data-quick-gear-option'));
+            search.focus();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!root.contains(event.target)) closeQuickEditGearDropdown();
+        });
+    };
+
+    const refreshQuickEditGearFieldVisibility = () => {
+        bindQuickEditGearUi();
+        const { wrap, search } = getQuickEditGearUi();
+        if (!wrap) return;
+        const hasGear = getQuickEditGearOptions().length > 0;
+        wrap.classList.toggle('hidden', !hasGear);
+        if (!hasGear) {
+            quickEditGearFilter = '';
+            setQuickEditGearSelection([]);
+            if (search) search.value = '';
+            closeQuickEditGearDropdown();
+        } else {
+            setQuickEditGearSelection([...quickEditGearSelection]);
+        }
+    };
 
     const showBeanForBrew = (brewId = null) => {
         const targetId = brewId || getCurrentCoffeeCardId();
@@ -169,6 +309,8 @@ export const createBrewsCardActionsModule = ({
 
         applyMethodValue();
         applyDrinkValue();
+        refreshQuickEditGearFieldVisibility();
+        setQuickEditGearSelection(brew.gearIds || []);
         document.getElementById('quickEditGrinder').value = brew.grinder || '';
         document.getElementById('quickEditGrind').value = brew.grind ?? '';
         document.getElementById('quickEditWeight').value = brew.weight ?? '';
@@ -198,6 +340,7 @@ export const createBrewsCardActionsModule = ({
         viewEl.classList.remove('hidden');
         document.getElementById('coffeeCardEditBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
         document.getElementById('coffeeCardMenuBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
+        closeQuickEditGearDropdown();
     };
 
     const saveBrewQuickEdits = async () => {
@@ -235,6 +378,7 @@ export const createBrewsCardActionsModule = ({
             notes: document.getElementById('quickEditNotes').value || '',
             improve: document.getElementById('quickEditImprove').value || '',
             isActive: !!document.getElementById('quickEditIsActive').checked,
+            gearIds: getQuickEditSelectedGearIds(),
             beanId: selectedBeanId,
             updatedAt: nowIso
         };
@@ -268,6 +412,7 @@ export const createBrewsCardActionsModule = ({
 
             const idx = getCoffees().findIndex((c) => c.id === cardId);
             if (idx !== -1) getCoffees()[idx] = { ...getCoffees()[idx], ...updates };
+            closeQuickEditGearDropdown();
             openCoffeeCard(cardId);
         } catch (err) {
             console.error('Error saving quick edits:', err);
@@ -326,6 +471,7 @@ export const createBrewsCardActionsModule = ({
         cancelBrewQuickEditMode,
         saveBrewQuickEdits,
         editBrewFromCard,
-        updateCoffeeCardActionMenu
+        updateCoffeeCardActionMenu,
+        refreshQuickEditGearFieldVisibility
     };
 };

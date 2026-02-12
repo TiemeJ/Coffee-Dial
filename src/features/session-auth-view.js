@@ -55,7 +55,8 @@ export const createSessionAuthViewModule = ({
     applyAnimationPreference,
     setIsPublic,
     updatePublicToggleUI,
-    getCoffeeScale
+    getCoffeeScale,
+    refreshBrewGearSelectors
 }) => {
     const googleLogin = () => signInWithPopup(auth, provider).catch((e) => alert(e.message));
 
@@ -293,6 +294,7 @@ export const createSessionAuthViewModule = ({
                     const nextGasItems = [];
                     snapshot.forEach((docSnap) => nextGasItems.push({ id: docSnap.id, ...docSnap.data() }));
                     setGasItems(nextGasItems);
+                    if (refreshBrewGearSelectors) refreshBrewGearSelectors();
                     if (!document.getElementById('gasModal').classList.contains('hidden')) {
                         renderGasTable();
                     }
@@ -300,6 +302,7 @@ export const createSessionAuthViewModule = ({
                 (error) => {
                     console.error('Error loading gas list:', error);
                     setGasItems([]);
+                    if (refreshBrewGearSelectors) refreshBrewGearSelectors();
                     if (!document.getElementById('gasModal').classList.contains('hidden')) {
                         renderGasTable();
                     }
