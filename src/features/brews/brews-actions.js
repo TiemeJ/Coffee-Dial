@@ -710,6 +710,9 @@ export const createBrewsActionsModule = ({
         if (getCurrentView() !== 'mine') return;
         const user = getCurrentUser();
         if (!user) return;
+        const coffees = getCoffees();
+        const brewToDelete = coffees.find((x) => x.id === id);
+        const beanId = brewToDelete?.beanId || null;
 
         const shouldDelete = await openAppConfirm({
             title: 'Delete brew?',
@@ -720,8 +723,23 @@ export const createBrewsActionsModule = ({
         });
         if (!shouldDelete) return;
 
-        await deleteDoc(doc(db, 'users', user.uid, 'coffees', id));
-        if (document.getElementById('editId').value === id) resetFormState();
+        try {
+            await deleteDoc(doc(db, 'users', user.uid, 'coffees', id));
+
+            const idx = coffees.findIndex((c) => c.id === id);
+            if (idx !== -1) coffees.splice(idx, 1);
+
+            if (beanId) {
+                await updateBeansLeftForBean(beanId);
+                await autoPinOpenBagsIfEnabled({ beanId });
+            }
+
+            if (getCurrentCoffeeCardId() === id) closeCoffeeCard(null);
+            if (document.getElementById('editId').value === id) resetFormState();
+        } catch (err) {
+            console.error('Error deleting brew:', err);
+            alert('Failed to delete brew.');
+        }
     };
 
     return {
