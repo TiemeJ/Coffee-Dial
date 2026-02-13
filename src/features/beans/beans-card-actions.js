@@ -59,7 +59,16 @@ export const createBeansCardActionsModule = ({
             fillBeanDetails(beanId);
         }
         toggleForm(true);
-        document.getElementById('formWrapper')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const formWrapper = document.getElementById('formWrapper');
+        if (!formWrapper) return;
+        const scrollToFormTop = (behavior = 'smooth') => {
+            const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
+            const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
+            window.scrollTo({ top: Math.max(0, top - headerHeight - 8), behavior });
+        };
+        scrollToFormTop('smooth');
+        requestAnimationFrame(() => scrollToFormTop('auto'));
+        setTimeout(() => scrollToFormTop('auto'), 140);
     };
 
     return {

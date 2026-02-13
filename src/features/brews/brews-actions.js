@@ -62,8 +62,14 @@ export const createBrewsActionsModule = ({
     const scrollBrewFormToTop = () => {
         const formWrapper = document.getElementById('formWrapper');
         if (!formWrapper) return;
-        const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
-        window.scrollTo({ top, behavior: 'smooth' });
+        const scrollToFormTop = (behavior = 'smooth') => {
+            const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
+            const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
+            window.scrollTo({ top: Math.max(0, top - headerHeight - 8), behavior });
+        };
+        scrollToFormTop('smooth');
+        requestAnimationFrame(() => scrollToFormTop('auto'));
+        setTimeout(() => scrollToFormTop('auto'), 140);
     };
     const fillCoffeeDetailsForNewBeanFromBrew = (brew) => {
         const source = brew || {};

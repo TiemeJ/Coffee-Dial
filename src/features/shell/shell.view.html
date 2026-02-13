@@ -6,6 +6,12 @@
         </div>
 
         <div class="flex items-center gap-4">
+            <div class="relative">
+                <button id="menuAddBrewBtn" data-action-click="openAddBrewFromPinned(event)" class="hidden w-9 h-9 rounded-full hover:bg-coffee-50 dark:hover:bg-[#44403c] transition-colors text-coffee-600 dark:text-[#a8a29e] border border-coffee-200 dark:border-[#57534e] flex items-center justify-center leading-none" title="Add brew" aria-label="Add brew">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
             <div id="authContainer">
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                     <button id="loginBtn" data-action-click="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">

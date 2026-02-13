@@ -1712,6 +1712,7 @@ export const createAppContainerModules = () => {
             currentUser = user;
             const setMenuVisibility = (loggedIn) => {
                 const ids = [
+                    'menuAddBrewBtn',
                     'menuStatsBtn',
                     'menuBeansBtn',
                     'menuCoffeesBtn',
@@ -1981,6 +1982,29 @@ export const createAppContainerModules = () => {
             document.getElementById('brewsTableMount')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
+        const openAddBrewFromPinned = (event = null) => {
+            if (event?.stopPropagation) event.stopPropagation();
+            if (currentView !== 'mine') {
+                changeView('mine');
+            }
+            resetFormState(null);
+            toggleForm(true);
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+            const formWrapper = document.getElementById('formWrapper');
+            if (formWrapper) {
+                const scrollToFormTop = (behavior = 'smooth') => {
+                    const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
+                    const targetTop = formWrapper.getBoundingClientRect().top + window.pageYOffset;
+                    window.scrollTo({ top: Math.max(0, targetTop - headerHeight - 8), behavior });
+                };
+                scrollToFormTop('smooth');
+                requestAnimationFrame(() => scrollToFormTop('auto'));
+                setTimeout(() => scrollToFormTop('auto'), 140);
+            }
+        };
+
         const actions = {
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openImportExportModal, closeImportExportModal, setImportExportMode, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, openBrewsTablePrefs, hideBrewsTablePrefsModal, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
             togglePinnedTiles,
@@ -2039,7 +2063,8 @@ export const createAppContainerModules = () => {
             recalculateAllBeanStockLeft,
             migrateGrinderToGear,
             fillLegacyGrinderFromGear,
-            showBrewsForGear
+            showBrewsForGear,
+            openAddBrewFromPinned
         };
 
         const searchInput = document.getElementById('globalSearch'); 
