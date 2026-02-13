@@ -1701,7 +1701,6 @@ export const createAppContainerModules = () => {
                     'menuCoffeesBtn',
                     'menuGasBtn',
                     'menuGalleryBtn',
-                    'menuScaleBtn',
                     'menuImportExportBtn',
                     'menuPreferencesBtn',
                     'menuHelpDivider'
