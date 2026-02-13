@@ -1,6 +1,7 @@
 export const createBeansMaintenanceModule = ({
     getCurrentUser,
     getBeans,
+    setBeansState,
     getCoffees,
     db,
     doc,
@@ -160,10 +161,88 @@ export const createBeansMaintenanceModule = ({
         }
     };
 
+    const backfillBeanDatesFromBrews = async () => {
+        const user = getCurrentUser();
+        if (!user) return;
+
+        const btn = document.getElementById('backfillBeanDatesBtn');
+        const originalText = btn?.innerHTML;
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Backfilling...';
+        }
+
+        try {
+            const beans = getBeans();
+            const coffees = getCoffees();
+            const nowIso = new Date().toISOString();
+            const parseMs = (value) => {
+                if (!value) return NaN;
+                const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+                return dateObj instanceof Date ? dateObj.getTime() : NaN;
+            };
+
+            const brewsByBeanId = new Map();
+            coffees.forEach((brew) => {
+                if (!brew?.beanId) return;
+                const createdMs = parseMs(brew.createdAt);
+                if (!Number.isFinite(createdMs)) return;
+                if (!brewsByBeanId.has(brew.beanId)) brewsByBeanId.set(brew.beanId, []);
+                brewsByBeanId.get(brew.beanId).push(createdMs);
+            });
+
+            const updatesByBeanId = new Map();
+            beans.forEach((bean) => {
+                const brewTimes = brewsByBeanId.get(bean.id);
+                if (!brewTimes || !brewTimes.length) return;
+
+                const needsOpenedDate = !bean.openedDate;
+                const needsArchivedDate = !!bean.archived && !bean.archivedDate;
+                if (!needsOpenedDate && !needsArchivedDate) return;
+
+                const sortedTimes = [...brewTimes].sort((a, b) => a - b);
+                const payload = { updatedAt: nowIso };
+                if (needsOpenedDate) payload.openedDate = new Date(sortedTimes[0]).toISOString();
+                if (needsArchivedDate) payload.archivedDate = new Date(sortedTimes[sortedTimes.length - 1]).toISOString();
+                updatesByBeanId.set(bean.id, payload);
+            });
+
+            if (!updatesByBeanId.size) {
+                alert('No beans needed date backfill.');
+                return;
+            }
+
+            const batch = writeBatch(db);
+            updatesByBeanId.forEach((payload, beanId) => {
+                batch.update(doc(db, 'users', user.uid, 'beans', beanId), payload);
+            });
+            await batch.commit();
+
+            setBeansState(
+                beans.map((bean) => {
+                    const patch = updatesByBeanId.get(bean.id);
+                    return patch ? { ...bean, ...patch } : bean;
+                })
+            );
+
+            await autoPinOpenBagsIfEnabled();
+            alert(`Backfilled dates for ${updatesByBeanId.size} bean${updatesByBeanId.size === 1 ? '' : 's'}.`);
+        } catch (err) {
+            console.error('Error backfilling bean dates:', err);
+            alert(`Date backfill failed: ${err.message}`);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    };
+
     return {
         saveBeanRoastDate,
         saveBeanOpenedDate,
         saveBeanFrozenDate,
-        syncLegacyBeans
+        syncLegacyBeans,
+        backfillBeanDatesFromBrews
     };
 };

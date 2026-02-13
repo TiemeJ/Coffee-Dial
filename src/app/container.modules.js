@@ -951,10 +951,12 @@ export const createAppContainerModules = () => {
             saveBeanRoastDate,
             saveBeanOpenedDate,
             saveBeanFrozenDate,
-            syncLegacyBeans
+            syncLegacyBeans,
+            backfillBeanDatesFromBrews
         } = createBeansMaintenanceModule({
             getCurrentUser: () => currentUser,
             getBeans: () => beans,
+            setBeansState: (value) => { beans = value; },
             getCoffees: () => coffees,
             db,
             doc,
@@ -1902,7 +1904,7 @@ export const createAppContainerModules = () => {
             closeCoffeeTypeCardMenu,
             closeBeanCardMenu,
             // New Beans Functions
-            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, extractCoffeeTypesFromBeans,
+            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, backfillBeanDatesFromBrews, extractCoffeeTypesFromBeans,
             openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto,
             openGasList, closeGasList, createGasItemFromModal, setGasSearch, clearGasSearch, toggleGasQuickFilter, openGasQuickFilterValues, applyGasFilterFromQuick, clearGasFilters, setGasSort, openGasCard, closeGasCard, navigateGasCard, enterGasEditMode, cancelGasEditMode, saveGasEdits, toggleGasArchive, deleteGasItem, openGasFromTableEdit, toggleGasArchiveFromTable, deleteGasFromTable, triggerGasPhoto, openGasPhoto, removeGasPhoto, handleGasPhoto,
             closeCoffeeCardMenu,
