@@ -449,11 +449,18 @@ export const createAppContainerModules = () => {
             closeAutoArchiveToast,
             handleAutoArchiveToastAction,
             showCoffeeTypeCreatedToast,
-            closeCoffeeTypeCreatedToast
+            closeCoffeeTypeCreatedToast,
+            showBeanCreatedToast,
+            closeBeanCreatedToast,
+            handleBeanCreatedToastAction
         } = createNotificationUxModule({
             getCoffeeTypes: () => coffeeTypes,
             onAutoArchiveUnarchive: async (beanId) => toggleBeanArchive(beanId, true),
-            onAutoArchiveOpen: async (beanId) => openNewBag(beanId, { openCard: true, editAfter: true })
+            onAutoArchiveOpen: async (beanId) => openNewBag(beanId, { openCard: true, editAfter: true }),
+            onBeanCreatedEdit: async (beanId) => {
+                openBeanCard(beanId);
+                enterBeanEditMode();
+            }
         });
 
         // --- Coffee Management Functions ---
@@ -1462,6 +1469,7 @@ export const createAppContainerModules = () => {
             getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
             getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
             showCoffeeTypeCreatedToast: (...args) => showCoffeeTypeCreatedToast(...args),
+            showBeanCreatedToast: (...args) => showBeanCreatedToast(...args),
             uploadPendingBeanImage: (...args) => uploadPendingBeanImage(...args),
             clearPendingAIBeanImageFile: (...args) => clearPendingAIBeanImageFile(...args),
             getCoffeeScale: () => coffeeScale,
@@ -1930,6 +1938,8 @@ export const createAppContainerModules = () => {
             closeAutoArchiveToast,
             handleAutoArchiveToastAction,
             closeCoffeeTypeCreatedToast,
+            closeBeanCreatedToast,
+            handleBeanCreatedToastAction,
             closeAutoPinToast,
             closeAppConfirm,
             resolveAppConfirm,

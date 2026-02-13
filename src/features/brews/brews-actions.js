@@ -36,6 +36,7 @@ export const createBrewsActionsModule = ({
     getPinnedBrewsPreferences,
     getFirstBrewDateForBean,
     showCoffeeTypeCreatedToast,
+    showBeanCreatedToast,
     uploadPendingBeanImage,
     clearPendingAIBeanImageFile,
     getCoffeeScale,
@@ -429,6 +430,11 @@ export const createBrewsActionsModule = ({
                         if (coffeeTypeId) beanData.coffeeTypeId = coffeeTypeId;
                         const newBeanRef = await addDoc(collection(db, 'users', user.uid, 'beans'), beanData);
                         selectedBeanId = newBeanRef.id;
+                        showBeanCreatedToast?.({
+                            beanId: selectedBeanId,
+                            roaster: beanData.roaster,
+                            farmer: beanData.farmer
+                        });
                         await uploadPendingBeanImage(selectedBeanId);
                     }
                 }
