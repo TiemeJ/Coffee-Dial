@@ -304,6 +304,7 @@ export const createGasTableModule = ({
                                 <i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card
                             </button>
                             ${isMine ? `<button data-action-click="openGasFromTableEdit('${item.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit</button>` : ''}
+                            ${isMine ? `<button data-action-click="openGasMergeFromTable('${item.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-code-merge text-purple-500 w-4"></i> Merge</button>` : ''}
                             ${isMine ? `<button data-action-click="toggleGasArchiveFromTable('${item.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-box-archive text-amber-600 w-4"></i> ${archiveLabel}</button>` : ''}
                             ${isMine ? `<hr class="border-coffee-100 dark:border-[#44403c]"><button data-action-click="deleteGasFromTable('${item.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button>` : ''}
                         </div>

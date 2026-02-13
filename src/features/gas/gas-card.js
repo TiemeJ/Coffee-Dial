@@ -570,6 +570,11 @@ export const createGasCardModule = ({
         deleteGasItem(gasId);
     };
 
+    const openGasMergeFromTable = (gasId) => {
+        openGasCard(gasId);
+        openGasMergeModal();
+    };
+
     const mergeGasItem = async () => {
         const user = getCurrentUser();
         const sourceId = getCurrentGasId();
@@ -681,6 +686,7 @@ export const createGasCardModule = ({
         deleteGasItem,
         navigateGasCard,
         openGasFromTableEdit,
+        openGasMergeFromTable,
         toggleGasArchiveFromTable,
         deleteGasFromTable,
         openGasMergeModal,
