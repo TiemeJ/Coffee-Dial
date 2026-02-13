@@ -122,6 +122,25 @@
 
                     <div class="bg-white dark:bg-[#292524] p-5 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm">
                         <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3 uppercase border-b border-coffee-100 dark:border-[#44403c] pb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-hourglass-half text-amber-500"></i>
+                            <span>Open bean time</span>
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div id="statBeanShortestCard" class="rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/70 dark:bg-emerald-900/10 p-3">
+                                <div class="text-[11px] uppercase font-bold text-emerald-700 dark:text-emerald-300 mb-1">Shortest</div>
+                                <div id="statBeanShortestName" class="text-sm font-semibold text-coffee-800 dark:text-white truncate">-</div>
+                                <div id="statBeanShortestTime" class="text-xs text-emerald-700 dark:text-emerald-300">-</div>
+                            </div>
+                            <div id="statBeanLongestCard" class="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50/70 dark:bg-rose-900/10 p-3">
+                                <div class="text-[11px] uppercase font-bold text-rose-700 dark:text-rose-300 mb-1">Longest</div>
+                                <div id="statBeanLongestName" class="text-sm font-semibold text-coffee-800 dark:text-white truncate">-</div>
+                                <div id="statBeanLongestTime" class="text-xs text-rose-700 dark:text-rose-300">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#292524] p-5 rounded-xl border border-coffee-100 dark:border-[#44403c] shadow-sm">
+                        <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3 uppercase border-b border-coffee-100 dark:border-[#44403c] pb-2 flex items-center gap-2">
                             <i class="fa-solid fa-wallet text-rose-500"></i>
                             <span>GAS Alert</span>
                         </h4>

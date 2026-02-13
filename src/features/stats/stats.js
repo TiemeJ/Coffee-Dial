@@ -7,6 +7,7 @@ export const createStatsModule = ({
     getDocs,
     getCoffeeTypeDisplay,
     getCoffeeTypeForBrew,
+    openBeanCard,
     setCurrentStatsData,
     getCurrentStatsData,
     setCurrentBeanMeterPeriod,
@@ -14,6 +15,7 @@ export const createStatsModule = ({
     Chart
 }) => {
     const chartInstances = {};
+    let currentStatsUid = 'mine';
     const formatCurrencyEur = (value) => {
         const num = Number(value);
         if (!Number.isFinite(num)) return 'EUR 0.00';
@@ -68,10 +70,12 @@ export const createStatsModule = ({
     };
 
     const changeStatsView = async (uid) => {
+        currentStatsUid = uid;
         document.getElementById('aiProfileContainer')?.classList.add('hidden');
         const user = getCurrentUser();
         let dataToUse = [];
         let gearToUse = [];
+        let beansToUse = [];
         if (uid === 'mine') {
             const brewsQ = collection(db, 'users', user.uid, 'coffees');
             const brewsSnap = await getDocs(brewsQ);
@@ -79,6 +83,9 @@ export const createStatsModule = ({
             const gearQ = collection(db, 'users', user.uid, 'gear');
             const gearSnap = await getDocs(gearQ);
             gearSnap.forEach((d) => gearToUse.push({ id: d.id, ...d.data() }));
+            const beansQ = collection(db, 'users', user.uid, 'beans');
+            const beansSnap = await getDocs(beansQ);
+            beansSnap.forEach((d) => beansToUse.push({ id: d.id, ...d.data() }));
         } else {
             const brewsQ = collection(db, 'users', uid, 'coffees');
             const brewsSnap = await getDocs(brewsQ);
@@ -86,8 +93,11 @@ export const createStatsModule = ({
             const gearQ = collection(db, 'users', uid, 'gear');
             const gearSnap = await getDocs(gearQ);
             gearSnap.forEach((d) => gearToUse.push({ id: d.id, ...d.data() }));
+            const beansQ = collection(db, 'users', uid, 'beans');
+            const beansSnap = await getDocs(beansQ);
+            beansSnap.forEach((d) => beansToUse.push({ id: d.id, ...d.data() }));
         }
-        calculateStats(dataToUse, gearToUse);
+        calculateStats(dataToUse, gearToUse, beansToUse);
     };
 
     const renderCharts = (roast, method, drink, stars) => {
@@ -122,13 +132,95 @@ export const createStatsModule = ({
         });
     };
 
-    const calculateStats = (dataToUse, gearToUse = []) => {
+    const calculateStats = (dataToUse, gearToUse = [], beansToUse = []) => {
         setCurrentStatsData(dataToUse);
         const gasTotalSpent = gearToUse.reduce((sum, item) => {
             const price = Number(item?.price);
             return Number.isFinite(price) ? sum + price : sum;
         }, 0);
         renderGasAlert(gasTotalSpent);
+        const oneDay = 24 * 60 * 60 * 1000;
+        const toMs = (value) => {
+            if (!value) return NaN;
+            const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+            return dateObj instanceof Date ? dateObj.getTime() : NaN;
+        };
+        const beanName = (bean) => {
+            const roaster = (bean?.roaster || '').toString().trim();
+            const farmer = (bean?.farmer || '').toString().trim();
+            return farmer && roaster ? `${farmer} - ${roaster}` : farmer || roaster || 'Unnamed bean';
+        };
+        const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+        const formatDuration = (ms) => {
+            if (!Number.isFinite(ms) || ms < 0) return '-';
+            const days = ms / oneDay;
+            if (days < 1) return '< 1 day open';
+            if (days < 10) return `${days.toFixed(1)} days open`;
+            return `${Math.round(days)} days open`;
+        };
+        const openDurations = (beansToUse || [])
+            .map((bean) => {
+                const openedMs = toMs(bean?.openedDate);
+                if (!Number.isFinite(openedMs)) return null;
+                const archivedMs = toMs(bean?.archivedDate);
+                const isArchived = !!bean?.archived;
+                if (isArchived && !Number.isFinite(archivedMs)) return null;
+                const endMs = isArchived && Number.isFinite(archivedMs) ? archivedMs : Date.now();
+                const bagWeightGr = Number(bean?.stock);
+                return {
+                    id: bean.id,
+                    name: beanName(bean),
+                    isArchived,
+                    bagWeightGr: Number.isFinite(bagWeightGr) && bagWeightGr > 0 ? bagWeightGr : null,
+                    durationMs: Math.max(0, endMs - openedMs)
+                };
+            })
+            .filter(Boolean);
+        const shortestCandidates = openDurations
+            .filter((item) => item.isArchived && Number.isFinite(item.bagWeightGr) && item.bagWeightGr > 0)
+            .map((item) => ({
+                ...item,
+                durationMsPerGram: item.durationMs / item.bagWeightGr
+            }));
+        const longestCandidates = openDurations;
+        const shortestCardEl = document.getElementById('statBeanShortestCard');
+        const longestCardEl = document.getElementById('statBeanLongestCard');
+        const wireCard = (el, beanId) => {
+            if (!el) return;
+            if (!beanId || currentStatsUid !== 'mine') {
+                el.onclick = null;
+                return;
+            }
+            el.onclick = () => {
+                openBeanCard?.(beanId);
+            };
+        };
+
+        if (!shortestCandidates.length) {
+            setText('statBeanShortestName', '-');
+            setText('statBeanShortestTime', 'No archived beans with opened date and bag weight');
+            wireCard(shortestCardEl, null);
+        } else {
+            const shortest = [...shortestCandidates].sort((a, b) => a.durationMsPerGram - b.durationMsPerGram)[0];
+            setText('statBeanShortestName', shortest.name);
+            setText('statBeanShortestTime', formatDuration(shortest.durationMs));
+            wireCard(shortestCardEl, shortest.id);
+        }
+
+        if (!longestCandidates.length) {
+            setText('statBeanLongestName', '-');
+            setText('statBeanLongestTime', 'No opened date found');
+            wireCard(longestCardEl, null);
+        } else {
+            const longest = [...longestCandidates].sort((a, b) => b.durationMs - a.durationMs)[0];
+            setText('statBeanLongestName', longest.name);
+            setText('statBeanLongestTime', formatDuration(longest.durationMs));
+            wireCard(longestCardEl, longest.id);
+        }
+
         const total = dataToUse.length;
         if (total === 0) {
             document.getElementById('statTotalBrews').innerText = '0';
@@ -146,7 +238,6 @@ export const createStatsModule = ({
         }
 
         const now = new Date();
-        const oneDay = 24 * 60 * 60 * 1000;
         const last7 = dataToUse.filter((c) => now - new Date(c.createdAt) < 7 * oneDay).length;
         const firstDate = new Date(Math.min(...dataToUse.map((c) => new Date(c.createdAt || now))));
         const diffDays = Math.max(1, Math.round(Math.abs((now - firstDate) / oneDay)));

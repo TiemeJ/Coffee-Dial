@@ -1119,6 +1119,7 @@ export const createAppContainerModules = () => {
             getDocs,
             getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
             getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
+            openBeanCard: (...args) => openBeanCard(...args),
             setCurrentStatsData: (value) => { currentStatsData = value; },
             getCurrentStatsData: () => currentStatsData,
             setCurrentBeanMeterPeriod: (value) => { currentBeanMeterPeriod = value; },
