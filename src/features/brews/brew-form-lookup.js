@@ -32,13 +32,24 @@ export const createBrewFormLookupModule = ({
 
         const currentValue = select.value;
         select.innerHTML = '<option value="">-- create new bean and coffee --</option>';
+        const getOpenedAtMs = (bean) => {
+            const raw = bean?.openedDate;
+            if (!raw) return Number.NEGATIVE_INFINITY;
+            const dateObj = typeof raw.toDate === 'function' ? raw.toDate() : new Date(raw);
+            const ms = dateObj instanceof Date ? dateObj.getTime() : NaN;
+            return Number.isFinite(ms) ? ms : Number.NEGATIVE_INFINITY;
+        };
 
         getBeans()
             .filter((bean) => includeAll || (!bean.archived && !bean.frozen))
             .sort((a, b) => {
+                const openedDelta = getOpenedAtMs(b) - getOpenedAtMs(a);
+                if (openedDelta !== 0) return openedDelta;
                 const aDisplay = getBeanCoffeeTypeDisplay(a);
                 const bDisplay = getBeanCoffeeTypeDisplay(b);
-                return (aDisplay.roaster || '').localeCompare(bDisplay.roaster || '');
+                const aLabel = `${aDisplay.roaster || ''}${aDisplay.farmer || ''}`.toLowerCase();
+                const bLabel = `${bDisplay.roaster || ''}${bDisplay.farmer || ''}`.toLowerCase();
+                return aLabel.localeCompare(bLabel);
             })
             .forEach((bean) => {
                 const option = document.createElement('option');

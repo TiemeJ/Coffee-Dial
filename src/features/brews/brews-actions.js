@@ -474,10 +474,19 @@ export const createBrewsActionsModule = ({
     const populateBrewQuickEditBeanOptions = (selectedBeanId = '') => {
         const select = document.getElementById('quickEditBeanId');
         if (!select) return;
+        const getOpenedAtMs = (bean) => {
+            const raw = bean?.openedDate;
+            if (!raw) return Number.NEGATIVE_INFINITY;
+            const dateObj = typeof raw.toDate === 'function' ? raw.toDate() : new Date(raw);
+            const ms = dateObj instanceof Date ? dateObj.getTime() : NaN;
+            return Number.isFinite(ms) ? ms : Number.NEGATIVE_INFINITY;
+        };
         const beans = getBeans();
         let options = '<option value="">-- no bean --</option>';
         const beanOptions = [...beans]
             .sort((a, b) => {
+                const openedDelta = getOpenedAtMs(b) - getOpenedAtMs(a);
+                if (openedDelta !== 0) return openedDelta;
                 const aLabel = getBeanLabelForBrew(a).toLowerCase();
                 const bLabel = getBeanLabelForBrew(b).toLowerCase();
                 return aLabel.localeCompare(bLabel);
