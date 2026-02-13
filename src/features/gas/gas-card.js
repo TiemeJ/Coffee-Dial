@@ -51,6 +51,9 @@ export const createGasCardModule = ({
     let hasBoundGasMethodsUi = false;
     let gasMergeTargetId = null;
     let hasBoundGasMergeUi = false;
+    let gasBulkFilterGearSelection = new Set();
+    let gasBulkFilterGearSearch = '';
+    let hasBoundGasBulkUi = false;
 
     const formatCurrency = (value) => {
         const num = Number(value);
@@ -195,6 +198,18 @@ export const createGasCardModule = ({
         dropdown: document.getElementById('gasMergeTargetDropdown'),
         mergeBtn: document.getElementById('gasMergeConfirmBtn')
     });
+    const getGasBulkUi = () => ({
+        overlay: document.getElementById('gasBulkAddModal'),
+        sourceLabel: document.getElementById('gasBulkSourceLabel'),
+        methodSelect: document.getElementById('gasBulkMethodSelect'),
+        drinkSelect: document.getElementById('gasBulkDrinkSelect'),
+        gearRoot: document.getElementById('gasBulkGearFilterMultiSelect'),
+        gearControl: document.getElementById('gasBulkGearFilterControl'),
+        gearPills: document.getElementById('gasBulkGearFilterPills'),
+        gearSearch: document.getElementById('gasBulkGearFilterSearch'),
+        gearDropdown: document.getElementById('gasBulkGearFilterDropdown'),
+        addBtn: document.getElementById('gasBulkAddConfirmBtn')
+    });
 
     const getMergeSourceItem = () => getGasItems().find((item) => item.id === getCurrentGasId());
 
@@ -299,6 +314,157 @@ export const createGasCardModule = ({
         });
     };
 
+    const getBulkSourceItem = () => getGasItems().find((item) => item.id === getCurrentGasId());
+
+    const getBrewMethodOptions = () =>
+        [...new Set(getCoffees().map((brew) => (brew?.method || '').toString().trim()).filter(Boolean))].sort((a, b) =>
+            a.localeCompare(b, undefined, { sensitivity: 'base' })
+        );
+    const getBrewDrinkOptions = () =>
+        [...new Set(getCoffees().map((brew) => (brew?.drink || '').toString().trim()).filter(Boolean))].sort((a, b) =>
+            a.localeCompare(b, undefined, { sensitivity: 'base' })
+        );
+    const getBulkGearFilterCandidates = () => {
+        const sourceId = getCurrentGasId();
+        return getGasItems()
+            .filter((item) => item.id !== sourceId)
+            .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
+    };
+
+    const renderBulkGearFilterPills = () => {
+        const { gearPills, gearSearch } = getGasBulkUi();
+        if (!gearPills || !gearSearch) return;
+        const selectedIds = [...gasBulkFilterGearSelection];
+        const gearById = new Map(getGasItems().map((item) => [item.id, item]));
+        gearPills.innerHTML = selectedIds
+            .map((id) => gearById.get(id))
+            .filter(Boolean)
+            .map(
+                (item) =>
+                    `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${item.name || 'Untitled gear'}<button type="button" data-gas-bulk-gear-remove="${item.id}" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`
+            )
+            .join('');
+        gearSearch.placeholder = selectedIds.length ? '' : 'Search gear...';
+    };
+
+    const renderBulkGearFilterDropdown = () => {
+        const { gearDropdown } = getGasBulkUi();
+        if (!gearDropdown) return;
+        const q = (gasBulkFilterGearSearch || '').toLowerCase().trim();
+        const visible = getBulkGearFilterCandidates().filter((item) => (item.name || '').toLowerCase().includes(q));
+        if (!visible.length) {
+            gearDropdown.innerHTML = '<div class="px-3 py-2 text-xs text-coffee-500 dark:text-[#a8a29e]">No matching gear</div>';
+            return;
+        }
+        gearDropdown.innerHTML = visible
+            .map((item) => {
+                const selected = gasBulkFilterGearSelection.has(item.id);
+                const selectedCls = selected ? 'bg-coffee-100 dark:bg-[#34302e] font-semibold' : '';
+                const icon = selected ? '<i class="fa-solid fa-check text-coffee-700 dark:text-[#d6ccc2]"></i>' : '';
+                return `<button type="button" data-gas-bulk-gear-option="${item.id}" class="w-full text-left px-3 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2] flex items-center justify-between ${selectedCls}"><span class="truncate pr-2">${item.name || 'Untitled gear'}</span>${icon}</button>`;
+            })
+            .join('');
+    };
+
+    const openBulkGearFilterDropdown = () => {
+        const { gearDropdown } = getGasBulkUi();
+        if (!gearDropdown) return;
+        renderBulkGearFilterDropdown();
+        gearDropdown.classList.remove('hidden');
+    };
+
+    const closeBulkGearFilterDropdown = () => {
+        const { gearDropdown } = getGasBulkUi();
+        if (!gearDropdown) return;
+        gearDropdown.classList.add('hidden');
+    };
+
+    const toggleBulkGearFilterSelection = (gearId) => {
+        if (!gearId) return;
+        if (gasBulkFilterGearSelection.has(gearId)) gasBulkFilterGearSelection.delete(gearId);
+        else gasBulkFilterGearSelection.add(gearId);
+        renderBulkGearFilterPills();
+        renderBulkGearFilterDropdown();
+    };
+
+    const openGasBulkAddModal = () => {
+        const source = getBulkSourceItem();
+        const { overlay, sourceLabel, methodSelect, drinkSelect, gearSearch, addBtn } = getGasBulkUi();
+        if (!source || !overlay || !methodSelect || !drinkSelect || !gearSearch || !addBtn) return;
+        document.getElementById('gasCardActionMenu')?.classList.add('hidden');
+
+        if (sourceLabel) sourceLabel.textContent = source.name || 'this gear item';
+        gasBulkFilterGearSelection = new Set();
+        gasBulkFilterGearSearch = '';
+        gearSearch.value = '';
+
+        const methods = getBrewMethodOptions();
+        methodSelect.innerHTML = '<option value="">Any method</option>' + methods.map((value) => `<option value="${value}">${value}</option>`).join('');
+        methodSelect.value = '';
+
+        const drinks = getBrewDrinkOptions();
+        drinkSelect.innerHTML = '<option value="">Any drink</option>' + drinks.map((value) => `<option value="${value}">${value}</option>`).join('');
+        drinkSelect.value = '';
+
+        renderBulkGearFilterPills();
+        renderBulkGearFilterDropdown();
+        closeBulkGearFilterDropdown();
+
+        addBtn.disabled = false;
+        addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        addBtn.innerHTML = 'Bulk add';
+
+        overlay.classList.remove('hidden');
+        methodSelect.focus();
+    };
+
+    const closeGasBulkAddModal = (event = null) => {
+        const { overlay } = getGasBulkUi();
+        if (!overlay) return;
+        if (event && event.target !== overlay) return;
+        overlay.classList.add('hidden');
+        closeBulkGearFilterDropdown();
+        gasBulkFilterGearSelection = new Set();
+        gasBulkFilterGearSearch = '';
+    };
+
+    const bindGasBulkUi = () => {
+        if (hasBoundGasBulkUi) return;
+        const { gearRoot, gearControl, gearSearch, gearDropdown } = getGasBulkUi();
+        if (!gearRoot || !gearControl || !gearSearch || !gearDropdown) return;
+        hasBoundGasBulkUi = true;
+
+        gearControl.addEventListener('click', () => {
+            gearSearch.focus();
+            openBulkGearFilterDropdown();
+        });
+
+        gearControl.addEventListener('click', (event) => {
+            const removeBtn = event.target.closest('[data-gas-bulk-gear-remove]');
+            if (!removeBtn) return;
+            event.stopPropagation();
+            toggleBulkGearFilterSelection(removeBtn.getAttribute('data-gas-bulk-gear-remove'));
+            gearSearch.focus();
+        });
+
+        gearSearch.addEventListener('focus', () => openBulkGearFilterDropdown());
+        gearSearch.addEventListener('input', () => {
+            gasBulkFilterGearSearch = gearSearch.value || '';
+            openBulkGearFilterDropdown();
+        });
+
+        gearDropdown.addEventListener('click', (event) => {
+            const optionBtn = event.target.closest('[data-gas-bulk-gear-option]');
+            if (!optionBtn) return;
+            toggleBulkGearFilterSelection(optionBtn.getAttribute('data-gas-bulk-gear-option'));
+            gearSearch.focus();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!gearRoot.contains(event.target)) closeBulkGearFilterDropdown();
+        });
+    };
+
     const triggerGasPhoto = (e) => {
         if (e) e.stopPropagation();
         if (!getCurrentGasId()) return;
@@ -399,6 +565,7 @@ export const createGasCardModule = ({
         const item = getGasItems().find((entry) => entry.id === gasId);
         if (!item) return;
         bindGasMergeUi();
+        bindGasBulkUi();
 
         setCurrentGasId(item.id);
         const isMine = getCurrentView() === 'mine';
@@ -441,6 +608,7 @@ export const createGasCardModule = ({
     const closeGasCard = (event) => {
         if (event && event.target !== event.currentTarget) return;
         closeGasMergeModal();
+        closeGasBulkAddModal();
         document.getElementById('gasCardEdit').classList.add('hidden');
         document.getElementById('gasCardView').classList.remove('hidden');
         document.getElementById('gasCardEditBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
@@ -593,6 +761,108 @@ export const createGasCardModule = ({
         openGasMergeModal();
     };
 
+    const openGasBulkAddFromTable = (gasId) => {
+        closeAllActionMenus();
+        openGasCard(gasId);
+        openGasBulkAddModal();
+    };
+
+    const bulkAddGearToBrews = async () => {
+        const user = getCurrentUser();
+        const source = getBulkSourceItem();
+        const { methodSelect, drinkSelect, addBtn } = getGasBulkUi();
+        if (!user || !source || !methodSelect || !drinkSelect || !addBtn) return;
+
+        const filterMethod = (methodSelect.value || '').toString();
+        const filterDrink = (drinkSelect.value || '').toString();
+        const requiredGearIds = [...gasBulkFilterGearSelection];
+        const isSourceGrinder = normalizeType(source.type) === 'Grinder';
+        const sourceName = (source.name || '').toString();
+
+        const originalLabel = addBtn.innerHTML;
+        addBtn.disabled = true;
+        addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        addBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Bulk adding...';
+
+        try {
+            const coffees = getCoffees();
+            const nowIso = new Date().toISOString();
+            const updates = [];
+
+            coffees.forEach((brew) => {
+                if (filterMethod && (brew.method || '') !== filterMethod) return;
+                if (filterDrink && (brew.drink || '') !== filterDrink) return;
+
+                const currentGearIds = Array.isArray(brew.gearIds) ? [...new Set(brew.gearIds.filter(Boolean))] : [];
+                const hasAllRequiredGear = requiredGearIds.every((gearId) => currentGearIds.includes(gearId));
+                if (!hasAllRequiredGear) return;
+
+                const nextGearIds = currentGearIds.includes(source.id) ? currentGearIds : [...currentGearIds, source.id];
+                const grinderValue = isSourceGrinder ? sourceName : brew.grinder;
+                const gearChanged =
+                    nextGearIds.length !== currentGearIds.length ||
+                    nextGearIds.some((id, idx) => id !== currentGearIds[idx]);
+                const grinderChanged = isSourceGrinder && (brew.grinder || '') !== sourceName;
+                if (!gearChanged && !grinderChanged) return;
+
+                updates.push({
+                    brewId: brew.id,
+                    gearIds: nextGearIds,
+                    grinder: grinderValue,
+                    updatedAt: nowIso
+                });
+            });
+
+            if (!updates.length) {
+                alert('No matching brews to update.');
+                return;
+            }
+
+            const batchLimit = 450;
+            let batch = writeBatch(db);
+            let opCount = 0;
+            for (const update of updates) {
+                const payload = {
+                    gearIds: update.gearIds,
+                    updatedAt: update.updatedAt
+                };
+                if (isSourceGrinder) payload.grinder = update.grinder;
+                batch.update(doc(collection(db, 'users', user.uid, 'coffees'), update.brewId), payload);
+                opCount += 1;
+                if (opCount >= batchLimit) {
+                    await batch.commit();
+                    batch = writeBatch(db);
+                    opCount = 0;
+                }
+            }
+            if (opCount > 0) await batch.commit();
+
+            const updateMap = new Map(updates.map((entry) => [entry.brewId, entry]));
+            setCoffeesState(
+                coffees.map((brew) => {
+                    const patch = updateMap.get(brew.id);
+                    if (!patch) return brew;
+                    return {
+                        ...brew,
+                        gearIds: patch.gearIds,
+                        grinder: isSourceGrinder ? patch.grinder : brew.grinder,
+                        updatedAt: patch.updatedAt
+                    };
+                })
+            );
+
+            closeGasBulkAddModal();
+            alert(`Bulk add complete. Updated ${updates.length} brew(s).`);
+        } catch (err) {
+            console.error('Bulk add gear to brews failed:', err);
+            alert(`Bulk add failed: ${err.message}`);
+        } finally {
+            addBtn.disabled = false;
+            addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            addBtn.innerHTML = originalLabel || 'Bulk add';
+        }
+    };
+
     const mergeGasItem = async () => {
         const user = getCurrentUser();
         const sourceId = getCurrentGasId();
@@ -705,6 +975,10 @@ export const createGasCardModule = ({
         navigateGasCard,
         openGasFromTableEdit,
         openGasMergeFromTable,
+        openGasBulkAddModal,
+        closeGasBulkAddModal,
+        openGasBulkAddFromTable,
+        bulkAddGearToBrews,
         toggleGasArchiveFromTable,
         deleteGasFromTable,
         openGasMergeModal,

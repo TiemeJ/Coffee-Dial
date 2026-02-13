@@ -20,6 +20,9 @@
                     <button data-action-click="showBrewsForGear()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                         <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
                     </button>
+                    <button data-action-click="openGasBulkAddModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                        <i class="fa-solid fa-layer-group text-teal-600 w-4"></i> Bulk add to
+                    </button>
                     <button data-action-click="openGasMergeModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                         <i class="fa-solid fa-code-merge text-purple-500 w-4"></i> Merge
                     </button>
@@ -139,6 +142,46 @@
                 <button data-action-click="cancelGasEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
                 <button data-action-click="saveGasEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<div id="gasBulkAddModal" class="hidden fixed inset-0 z-[10020] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasBulkAddModal(event)">
+    <div class="bg-white dark:bg-[#292524] w-full max-w-sm min-h-[56vh] rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col" data-action-click="event.stopPropagation()">
+        <div class="p-4 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] flex items-center justify-between">
+            <h3 class="text-sm font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-layer-group text-teal-600 mr-2"></i>Bulk add to brews</h3>
+            <button data-action-click="closeGasBulkAddModal(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="p-4 space-y-3 flex-1">
+            <p class="text-xs text-coffee-600 dark:text-[#a8a29e]">Add <span id="gasBulkSourceLabel" class="font-semibold text-coffee-800 dark:text-[#d6ccc2]">this gear item</span> to brews that match all selected criteria.</p>
+            <div>
+                <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Method</label>
+                <select id="gasBulkMethodSelect" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    <option value="">Any method</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Drink</label>
+                <select id="gasBulkDrinkSelect" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    <option value="">Any drink</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Gear</label>
+                <div id="gasBulkGearFilterMultiSelect" class="relative">
+                    <div id="gasBulkGearFilterControl" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white min-h-[42px] flex flex-wrap items-center gap-1 cursor-text">
+                        <div id="gasBulkGearFilterPills" class="flex flex-wrap items-center gap-1"></div>
+                        <input id="gasBulkGearFilterSearch" type="text" placeholder="Search gear..." class="flex-1 min-w-[120px] bg-transparent border-0 outline-none p-0 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e]">
+                    </div>
+                    <div id="gasBulkGearFilterDropdown" class="hidden absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#57534e] rounded-lg shadow-xl z-[10030]"></div>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
+            <button data-action-click="closeGasBulkAddModal(null)" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+            <button id="gasBulkAddConfirmBtn" data-action-click="bulkAddGearToBrews()" class="px-3 py-1.5 text-xs font-bold rounded bg-teal-600 hover:bg-teal-700 text-white">Bulk add</button>
         </div>
     </div>
 </div>
