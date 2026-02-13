@@ -5,12 +5,16 @@ export const createGasCardModule = ({
     setCurrentGasId,
     getGasItems,
     setGasItemsState,
+    getCoffees,
+    setCoffeesState,
     getFilteredSortedGasItems,
     db,
     storage,
     doc,
+    collection,
     updateDoc,
     deleteDoc,
+    writeBatch,
     ref,
     uploadBytes,
     getDownloadURL,
@@ -34,6 +38,8 @@ export const createGasCardModule = ({
     let gasMethodsSelection = new Set();
     let gasMethodsFilter = '';
     let hasBoundGasMethodsUi = false;
+    let gasMergeTargetId = null;
+    let hasBoundGasMergeUi = false;
 
     const formatCurrency = (value) => {
         const num = Number(value);
@@ -169,6 +175,116 @@ export const createGasCardModule = ({
         });
     };
 
+    const getGasMergeUi = () => ({
+        overlay: document.getElementById('gasMergeModal'),
+        input: document.getElementById('gasMergeTargetSearch'),
+        dropdown: document.getElementById('gasMergeTargetDropdown'),
+        mergeBtn: document.getElementById('gasMergeConfirmBtn')
+    });
+
+    const getMergeSourceItem = () => getGasItems().find((item) => item.id === getCurrentGasId());
+
+    const getGasMergeCandidates = () => {
+        const sourceId = getCurrentGasId();
+        return getGasItems()
+            .filter((item) => item.id !== sourceId)
+            .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
+    };
+
+    const updateGasMergeConfirmState = () => {
+        const { mergeBtn } = getGasMergeUi();
+        if (!mergeBtn) return;
+        mergeBtn.disabled = !gasMergeTargetId;
+        mergeBtn.classList.toggle('opacity-50', !gasMergeTargetId);
+        mergeBtn.classList.toggle('cursor-not-allowed', !gasMergeTargetId);
+    };
+
+    const renderGasMergeDropdown = () => {
+        const { dropdown, input } = getGasMergeUi();
+        if (!dropdown) return;
+
+        const q = (input?.value || '').toLowerCase().trim();
+        const candidates = getGasMergeCandidates().filter((item) => (item.name || '').toLowerCase().includes(q));
+
+        if (!candidates.length) {
+            dropdown.innerHTML = '<div class="px-3 py-2 text-xs text-coffee-500 dark:text-[#a8a29e]">No matching gear</div>';
+            return;
+        }
+
+        dropdown.innerHTML = candidates
+            .map((item) => {
+                const selected = item.id === gasMergeTargetId;
+                const selectedCls = selected ? 'bg-coffee-100 dark:bg-[#34302e] font-semibold' : '';
+                const icon = selected ? '<i class="fa-solid fa-check text-coffee-700 dark:text-[#d6ccc2]"></i>' : '';
+                return `<button type="button" data-gas-merge-target-id="${item.id}" class="w-full text-left px-3 py-2 text-xs hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2] flex items-center justify-between ${selectedCls}"><span class="truncate pr-2">${item.name || 'Untitled gear'}</span>${icon}</button>`;
+            })
+            .join('');
+    };
+
+    const selectGasMergeTarget = (targetId) => {
+        gasMergeTargetId = targetId || null;
+        const { input } = getGasMergeUi();
+        if (input) {
+            const selected = getGasItems().find((item) => item.id === gasMergeTargetId);
+            input.value = selected?.name || '';
+        }
+        updateGasMergeConfirmState();
+        renderGasMergeDropdown();
+    };
+
+    const openGasMergeModal = () => {
+        const source = getMergeSourceItem();
+        const { overlay, input, dropdown } = getGasMergeUi();
+        if (!source || !overlay || !input || !dropdown) return;
+        document.getElementById('gasCardActionMenu')?.classList.add('hidden');
+
+        const title = document.getElementById('gasMergeSourceLabel');
+        if (title) title.textContent = source.name || 'this gear item';
+
+        gasMergeTargetId = null;
+        input.value = '';
+        updateGasMergeConfirmState();
+        renderGasMergeDropdown();
+        dropdown.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        input.focus();
+    };
+
+    const closeGasMergeModal = (event = null) => {
+        const { overlay, dropdown } = getGasMergeUi();
+        if (!overlay) return;
+        if (event && event.target !== overlay) return;
+        overlay.classList.add('hidden');
+        dropdown?.classList.add('hidden');
+        gasMergeTargetId = null;
+    };
+
+    const bindGasMergeUi = () => {
+        if (hasBoundGasMergeUi) return;
+        const { input, dropdown } = getGasMergeUi();
+        if (!input || !dropdown) return;
+        hasBoundGasMergeUi = true;
+
+        input.addEventListener('focus', () => {
+            renderGasMergeDropdown();
+            dropdown.classList.remove('hidden');
+        });
+
+        input.addEventListener('input', () => {
+            gasMergeTargetId = null;
+            updateGasMergeConfirmState();
+            renderGasMergeDropdown();
+            dropdown.classList.remove('hidden');
+        });
+
+        dropdown.addEventListener('click', (event) => {
+            const optionBtn = event.target.closest('[data-gas-merge-target-id]');
+            if (!optionBtn) return;
+            selectGasMergeTarget(optionBtn.getAttribute('data-gas-merge-target-id'));
+            dropdown.classList.add('hidden');
+        });
+    };
+
     const triggerGasPhoto = (e) => {
         if (e) e.stopPropagation();
         if (!getCurrentGasId()) return;
@@ -267,6 +383,7 @@ export const createGasCardModule = ({
         if (ev) ev.stopPropagation();
         const item = getGasItems().find((entry) => entry.id === gasId);
         if (!item) return;
+        bindGasMergeUi();
 
         setCurrentGasId(item.id);
         const isMine = getCurrentView() === 'mine';
@@ -308,6 +425,7 @@ export const createGasCardModule = ({
 
     const closeGasCard = (event) => {
         if (event && event.target !== event.currentTarget) return;
+        closeGasMergeModal();
         document.getElementById('gasCardEdit').classList.add('hidden');
         document.getElementById('gasCardView').classList.remove('hidden');
         document.getElementById('gasCardEditBtn').classList.toggle('hidden', getCurrentView() !== 'mine');
@@ -452,6 +570,101 @@ export const createGasCardModule = ({
         deleteGasItem(gasId);
     };
 
+    const mergeGasItem = async () => {
+        const user = getCurrentUser();
+        const sourceId = getCurrentGasId();
+        const targetId = gasMergeTargetId;
+        if (!user || !sourceId || !targetId || sourceId === targetId) return;
+
+        const sourceItem = getGasItems().find((item) => item.id === sourceId);
+        const targetItem = getGasItems().find((item) => item.id === targetId);
+        if (!sourceItem || !targetItem) return;
+        const isTargetGrinder = normalizeType(targetItem.type) === 'Grinder';
+        const targetGrinderName = (targetItem.name || '').toString();
+
+        const { mergeBtn } = getGasMergeUi();
+        const originalLabel = mergeBtn?.innerHTML;
+        if (mergeBtn) {
+            mergeBtn.disabled = true;
+            mergeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            mergeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Merging...';
+        }
+
+        try {
+            const coffees = getCoffees();
+            const updates = [];
+            const nowIso = new Date().toISOString();
+            coffees.forEach((brew) => {
+                const gearIds = Array.isArray(brew.gearIds) ? brew.gearIds : [];
+                if (!gearIds.includes(sourceId)) return;
+                const nextIds = [];
+                gearIds.forEach((id) => {
+                    const mapped = id === sourceId ? targetId : id;
+                    if (!nextIds.includes(mapped)) nextIds.push(mapped);
+                });
+                updates.push({
+                    brewId: brew.id,
+                    gearIds: nextIds,
+                    grinder: isTargetGrinder ? targetGrinderName : brew.grinder,
+                    updatedAt: nowIso
+                });
+            });
+
+            if (updates.length) {
+                const batchLimit = 450;
+                let batch = writeBatch(db);
+                let opCount = 0;
+                for (const update of updates) {
+                    const payload = {
+                        gearIds: update.gearIds,
+                        updatedAt: update.updatedAt
+                    };
+                    if (isTargetGrinder) payload.grinder = targetGrinderName;
+                    batch.update(doc(collection(db, 'users', user.uid, 'coffees'), update.brewId), payload);
+                    opCount += 1;
+                    if (opCount >= batchLimit) {
+                        await batch.commit();
+                        batch = writeBatch(db);
+                        opCount = 0;
+                    }
+                }
+                if (opCount > 0) await batch.commit();
+
+                const updateMap = new Map(updates.map((entry) => [entry.brewId, entry.gearIds]));
+                const grinderMap = new Map(updates.map((entry) => [entry.brewId, entry.grinder]));
+                const updatedAtMap = new Map(updates.map((entry) => [entry.brewId, entry.updatedAt]));
+                setCoffeesState(
+                    coffees.map((brew) =>
+                        updateMap.has(brew.id)
+                            ? {
+                                  ...brew,
+                                  gearIds: updateMap.get(brew.id),
+                                  grinder: isTargetGrinder ? grinderMap.get(brew.id) : brew.grinder,
+                                  updatedAt: updatedAtMap.get(brew.id)
+                              }
+                            : brew
+                    )
+                );
+            }
+
+            await deleteDoc(doc(db, 'users', user.uid, 'gear', sourceId));
+            setGasItemsState(getGasItems().filter((item) => item.id !== sourceId));
+            renderGasTable();
+            closeGasMergeModal();
+            openGasCard(targetId);
+        } catch (err) {
+            console.error('Error merging gear item:', err);
+            alert('Failed to merge gear item.');
+        } finally {
+            if (mergeBtn) {
+                mergeBtn.disabled = !gasMergeTargetId;
+                mergeBtn.classList.toggle('opacity-50', mergeBtn.disabled);
+                mergeBtn.classList.toggle('cursor-not-allowed', mergeBtn.disabled);
+                mergeBtn.innerHTML = originalLabel || 'Merge';
+            }
+        }
+    };
+
     const closeGasCardMenu = () => {
         const menu = document.getElementById('gasCardActionMenu');
         if (menu) menu.classList.add('hidden');
@@ -470,6 +683,9 @@ export const createGasCardModule = ({
         openGasFromTableEdit,
         toggleGasArchiveFromTable,
         deleteGasFromTable,
+        openGasMergeModal,
+        closeGasMergeModal,
+        mergeGasItem,
         triggerGasPhoto,
         openGasPhoto,
         removeGasPhoto,

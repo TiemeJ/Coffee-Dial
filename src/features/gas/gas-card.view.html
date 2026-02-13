@@ -17,6 +17,9 @@
                     <button data-action-click="enterGasEditMode()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                         <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
                     </button>
+                    <button data-action-click="openGasMergeModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                        <i class="fa-solid fa-code-merge text-purple-500 w-4"></i> Merge
+                    </button>
                     <button id="gasCardActionArchiveBtn" data-action-click="toggleGasArchive()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                         <i class="fa-solid fa-box-archive text-amber-600 w-4"></i> Archive
                     </button>
@@ -126,6 +129,31 @@
                 <button data-action-click="cancelGasEditMode()" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
                 <button data-action-click="saveGasEdits()" class="px-3 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<div id="gasMergeModal" class="hidden fixed inset-0 z-[10020] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasMergeModal(event)">
+    <div class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c]" data-action-click="event.stopPropagation()">
+        <div class="p-4 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] flex items-center justify-between">
+            <h3 class="text-sm font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-code-merge text-purple-500 mr-2"></i>Merge gear item</h3>
+            <button data-action-click="closeGasMergeModal(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="p-4 space-y-3">
+            <p class="text-xs text-coffee-600 dark:text-[#a8a29e]">Merging will move all brew gear links from <span id="gasMergeSourceLabel" class="font-semibold text-coffee-800 dark:text-[#d6ccc2]">this gear item</span> to the selected item and then delete the source item.</p>
+            <div>
+                <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Merge with</label>
+                <div class="relative">
+                    <input id="gasMergeTargetSearch" type="text" placeholder="Search gear..." class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    <div id="gasMergeTargetDropdown" class="hidden absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#57534e] rounded-lg shadow-xl z-[10030]"></div>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
+            <button data-action-click="closeGasMergeModal(null)" class="px-3 py-1.5 text-xs font-bold rounded border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-50 dark:hover:bg-[#34302e]">Cancel</button>
+            <button id="gasMergeConfirmBtn" data-action-click="mergeGasItem()" class="px-3 py-1.5 text-xs font-bold rounded bg-purple-600 hover:bg-purple-700 text-white">Merge</button>
         </div>
     </div>
 </div>

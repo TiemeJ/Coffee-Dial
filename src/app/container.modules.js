@@ -747,7 +747,10 @@ export const createAppContainerModules = () => {
             openGasPhoto,
             removeGasPhoto,
             handleGasPhoto,
-            closeGasCardMenu
+            closeGasCardMenu,
+            openGasMergeModal,
+            closeGasMergeModal,
+            mergeGasItem
         } = createGasCardModule({
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
@@ -755,12 +758,16 @@ export const createAppContainerModules = () => {
             setCurrentGasId: (value) => { currentGasId = value; },
             getGasItems: () => gasItems,
             setGasItemsState: (value) => { gasItems = value; },
+            getCoffees: () => coffees,
+            setCoffeesState: (value) => { coffees = value; },
             getFilteredSortedGasItems: (...args) => getFilteredSortedGasItems(...args),
             db,
             storage,
             doc,
+            collection,
             updateDoc,
             deleteDoc,
+            writeBatch,
             ref,
             uploadBytes,
             getDownloadURL,
@@ -1893,6 +1900,83 @@ export const createAppContainerModules = () => {
             }
         };
 
+        const fillLegacyGrinderFromGear = async () => {
+            if (!currentUser) return alert('Please sign in.');
+
+            const btn = document.getElementById('fillLegacyGrinderFromGearBtn');
+            const originalHtml = btn?.innerHTML;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Filling...';
+            }
+
+            try {
+                const grinderNameByGearId = new Map(
+                    gasItems
+                        .filter((item) => (item?.type || '').toString().toLowerCase() === 'grinder')
+                        .map((item) => [item.id, (item.name || '').toString().trim()])
+                );
+
+                const updates = [];
+                coffees.forEach((brew) => {
+                    const gearIds = Array.isArray(brew?.gearIds) ? brew.gearIds : [];
+                    const firstAssociatedGrinderName = gearIds
+                        .map((gearId) => grinderNameByGearId.get(gearId))
+                        .find((name) => !!name);
+                    if (!firstAssociatedGrinderName) return;
+                    if ((brew.grinder || '') === firstAssociatedGrinderName) return;
+                    updates.push({
+                        brewId: brew.id,
+                        grinder: firstAssociatedGrinderName,
+                        updatedAt: new Date().toISOString()
+                    });
+                });
+
+                if (!updates.length) {
+                    alert('No brews needed legacy grinder updates.');
+                    return;
+                }
+
+                const batchLimit = 400;
+                let currentBatch = writeBatch(db);
+                let opCount = 0;
+                const commitJobs = [];
+
+                for (const update of updates) {
+                    const brewRef = doc(db, 'users', currentUser.uid, 'coffees', update.brewId);
+                    currentBatch.update(brewRef, {
+                        grinder: update.grinder,
+                        updatedAt: update.updatedAt
+                    });
+                    opCount += 1;
+                    if (opCount >= batchLimit) {
+                        commitJobs.push(currentBatch.commit());
+                        currentBatch = writeBatch(db);
+                        opCount = 0;
+                    }
+                }
+
+                if (opCount > 0) commitJobs.push(currentBatch.commit());
+                if (commitJobs.length) await Promise.all(commitJobs);
+
+                const updateByBrewId = new Map(updates.map((entry) => [entry.brewId, entry]));
+                coffees = coffees.map((brew) => {
+                    const patch = updateByBrewId.get(brew.id);
+                    return patch ? { ...brew, grinder: patch.grinder, updatedAt: patch.updatedAt } : brew;
+                });
+
+                alert(`Legacy grinder field updated for ${updates.length} brew(s).`);
+            } catch (err) {
+                console.error('Fill legacy grinder from gear failed:', err);
+                alert(`Legacy grinder fill failed: ${err.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        };
+
         const actions = {
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openImportExportModal, closeImportExportModal, setImportExportMode, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, openBrewsTablePrefs, hideBrewsTablePrefsModal, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
             togglePinnedTiles,
@@ -1906,7 +1990,7 @@ export const createAppContainerModules = () => {
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, backfillBeanDatesFromBrews, extractCoffeeTypesFromBeans,
             openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto,
-            openGasList, closeGasList, createGasItemFromModal, setGasSearch, clearGasSearch, toggleGasQuickFilter, openGasQuickFilterValues, applyGasFilterFromQuick, clearGasFilters, setGasSort, openGasCard, closeGasCard, navigateGasCard, enterGasEditMode, cancelGasEditMode, saveGasEdits, toggleGasArchive, deleteGasItem, openGasFromTableEdit, toggleGasArchiveFromTable, deleteGasFromTable, triggerGasPhoto, openGasPhoto, removeGasPhoto, handleGasPhoto,
+            openGasList, closeGasList, createGasItemFromModal, setGasSearch, clearGasSearch, toggleGasQuickFilter, openGasQuickFilterValues, applyGasFilterFromQuick, clearGasFilters, setGasSort, openGasCard, closeGasCard, navigateGasCard, enterGasEditMode, cancelGasEditMode, saveGasEdits, toggleGasArchive, deleteGasItem, openGasFromTableEdit, toggleGasArchiveFromTable, deleteGasFromTable, triggerGasPhoto, openGasPhoto, removeGasPhoto, handleGasPhoto, openGasMergeModal, closeGasMergeModal, mergeGasItem,
             closeCoffeeCardMenu,
             toggleCoffeeDetails,
             createCoffeeTypeFromModal,
@@ -1949,7 +2033,8 @@ export const createAppContainerModules = () => {
             openSelectedBeanForEdit,
             openCoffeeFromBeanEdit,
             recalculateAllBeanStockLeft,
-            migrateGrinderToGear
+            migrateGrinderToGear,
+            fillLegacyGrinderFromGear
         };
 
         const searchInput = document.getElementById('globalSearch'); 
