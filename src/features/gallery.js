@@ -2,6 +2,8 @@ export const createGalleryModule = ({
     getCurrentUser,
     getCurrentUploadCoffeeId,
     setCurrentUploadCoffeeId,
+    getLastGalleryVisit,
+    setLastGalleryVisit,
     getCurrentGalleryMode,
     setCurrentGalleryMode,
     getLastGalleryDoc,
@@ -24,6 +26,7 @@ export const createGalleryModule = ({
     startAfter,
     getDocs,
     doc,
+    updateDoc,
     deleteDoc,
     deleteObject,
     imageCompression,
@@ -135,7 +138,16 @@ export const createGalleryModule = ({
     const openGallery = async () => {
         document.getElementById('galleryModal')?.classList.remove('hidden');
         const hasNotification = !document.getElementById('galleryBadge')?.classList.contains('hidden');
-        localStorage.setItem('lastGalleryVisit', new Date().toISOString());
+        const user = getCurrentUser();
+        const nowIso = new Date().toISOString();
+        setLastGalleryVisit(nowIso);
+        if (user) {
+            try {
+                await updateDoc(doc(db, 'users', user.uid), { lastGalleryVisit: nowIso });
+            } catch (error) {
+                console.error('Failed to update last gallery visit', error);
+            }
+        }
         document.getElementById('menuBadge')?.classList.add('hidden');
         document.getElementById('galleryBadge')?.classList.add('hidden');
         if (hasNotification) switchGalleryTab('shared');

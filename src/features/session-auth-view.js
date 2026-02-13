@@ -56,7 +56,9 @@ export const createSessionAuthViewModule = ({
     setIsPublic,
     updatePublicToggleUI,
     getCoffeeScale,
-    refreshBrewGearSelectors
+    refreshBrewGearSelectors,
+    getLastGalleryVisit,
+    setLastGalleryVisit
 }) => {
     const googleLogin = () => signInWithPopup(auth, provider).catch((e) => alert(e.message));
 
@@ -92,6 +94,7 @@ export const createSessionAuthViewModule = ({
             const data = snap.data();
             setIsPublic(data.isPublic || false);
             shouldShowOnboarding = data.onboardingSeen !== true;
+            setLastGalleryVisit(data.lastGalleryVisit || null);
 
             const coffeeScale = getCoffeeScale?.();
             if (coffeeScale?.setGraphTogglePrefs) {
@@ -130,9 +133,11 @@ export const createSessionAuthViewModule = ({
                 displayName: user.displayName,
                 pinnedBrews: getPinnedBrewsPreferences(),
                 graphTogglePrefs: {},
-                onboardingSeen: false
+                onboardingSeen: false,
+                lastGalleryVisit: null
             });
             shouldShowOnboarding = true;
+            setLastGalleryVisit(null);
             const coffeeScale = getCoffeeScale?.();
             if (coffeeScale?.setGraphTogglePrefs) {
                 coffeeScale.setGraphTogglePrefs({});
@@ -314,17 +319,39 @@ export const createSessionAuthViewModule = ({
     const initNotificationListener = (uid) => {
         clearNotificationSubscription();
         const q = query(collection(db, 'photos'), where('sharedWith', 'array-contains', uid), orderBy('createdAt', 'desc'), limit(1));
-        setUnsubscribeNotifications(
-            onSnapshot(q, (snapshot) => {
-                if (!snapshot.empty) {
-                    const latestPhotoDate = snapshot.docs[0].data().createdAt;
-                    const lastVisit = localStorage.getItem('lastGalleryVisit');
-                    const hasNew = !lastVisit || new Date(latestPhotoDate) > new Date(lastVisit);
-                    document.getElementById('menuBadge').classList.toggle('hidden', !hasNew);
-                    document.getElementById('galleryBadge').classList.toggle('hidden', !hasNew);
-                }
-            })
-        );
+        let latestPhotoDate = null;
+
+        const syncGalleryBadge = () => {
+            const menuBadge = document.getElementById('menuBadge');
+            const galleryBadge = document.getElementById('galleryBadge');
+            if (!menuBadge || !galleryBadge) return;
+            if (!latestPhotoDate) {
+                menuBadge.classList.add('hidden');
+                galleryBadge.classList.add('hidden');
+                return;
+            }
+            const lastVisit = getLastGalleryVisit();
+            const hasNew = !lastVisit || new Date(latestPhotoDate) > new Date(lastVisit);
+            menuBadge.classList.toggle('hidden', !hasNew);
+            galleryBadge.classList.toggle('hidden', !hasNew);
+        };
+
+        const unsubPhotos = onSnapshot(q, (snapshot) => {
+            latestPhotoDate = snapshot.empty ? null : snapshot.docs[0].data().createdAt;
+            syncGalleryBadge();
+        });
+
+        const userDocRef = doc(db, 'users', uid);
+        const unsubUser = onSnapshot(userDocRef, (snapshot) => {
+            const data = snapshot.exists() ? snapshot.data() : {};
+            setLastGalleryVisit(data?.lastGalleryVisit || null);
+            syncGalleryBadge();
+        });
+
+        setUnsubscribeNotifications(() => {
+            unsubPhotos();
+            unsubUser();
+        });
     };
 
     return {

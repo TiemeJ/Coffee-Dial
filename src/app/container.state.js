@@ -72,6 +72,7 @@ export const createInitialAppState = () => {
         currentStatsData: [],
         currentBeanMeterPeriod: 'day',
         lastGalleryDoc: null,
+        lastGalleryVisit: null,
         currentGalleryMode: 'mine',
         isGalleryLoading: false,
         BREWS_PER_PAGE: DEFAULT_BREWS_PER_PAGE,

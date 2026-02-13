@@ -88,6 +88,7 @@ export const createAppContainerModules = () => {
             currentStatsData,
             currentBeanMeterPeriod,
             lastGalleryDoc,
+            lastGalleryVisit,
             currentGalleryMode,
             isGalleryLoading,
             displayedBrewsCount,
@@ -278,7 +279,9 @@ export const createAppContainerModules = () => {
             setIsPublic: (value) => { isPublic = value; },
             updatePublicToggleUI: (...args) => updatePublicToggleUI(...args),
             getCoffeeScale: () => coffeeScale,
-            refreshBrewGearSelectors: () => refreshBrewGearSelectors()
+            refreshBrewGearSelectors: () => refreshBrewGearSelectors(),
+            getLastGalleryVisit: () => lastGalleryVisit,
+            setLastGalleryVisit: (value) => { lastGalleryVisit = value; }
         });
 
         const {
@@ -1044,6 +1047,8 @@ export const createAppContainerModules = () => {
             getCurrentUser: () => currentUser,
             getCurrentUploadCoffeeId: () => currentUploadCoffeeId,
             setCurrentUploadCoffeeId: (value) => { currentUploadCoffeeId = value; },
+            getLastGalleryVisit: () => lastGalleryVisit,
+            setLastGalleryVisit: (value) => { lastGalleryVisit = value; },
             getCurrentGalleryMode: () => currentGalleryMode,
             setCurrentGalleryMode: (value) => { currentGalleryMode = value; },
             getLastGalleryDoc: () => lastGalleryDoc,
@@ -1066,6 +1071,7 @@ export const createAppContainerModules = () => {
             startAfter,
             getDocs,
             doc,
+            updateDoc,
             deleteDoc,
             deleteObject,
             imageCompression,
