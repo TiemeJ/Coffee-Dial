@@ -454,11 +454,21 @@ export const createBrewsActionsModule = ({
 
     const getBeanLabelForBrew = (bean) => {
         if (!bean) return 'Unknown bean';
+        const formatOpenedDate = (value) => {
+            if (!value) return '';
+            const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+            if (isNaN(dateObj)) return '';
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const yy = String(dateObj.getFullYear()).slice(-2);
+            return `${dd}-${mm}-${yy}`;
+        };
         const display = getBeanCoffeeTypeDisplay ? getBeanCoffeeTypeDisplay(bean) : bean;
         const farmer = display?.farmer && display.farmer !== '-' ? display.farmer : '';
         const roaster = display?.roaster && display.roaster !== '-' ? display.roaster : '';
-        if (farmer && roaster) return `${farmer} - ${roaster}`;
-        return farmer || roaster || 'Unknown bean';
+        const baseLabel = farmer && roaster ? `${farmer} - ${roaster}` : farmer || roaster || 'Unknown bean';
+        const openedDate = formatOpenedDate(bean.openedDate);
+        return openedDate ? `${baseLabel} (${openedDate})` : baseLabel;
     };
 
     const populateBrewQuickEditBeanOptions = (selectedBeanId = '') => {
