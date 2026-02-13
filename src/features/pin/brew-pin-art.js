@@ -1,5 +1,12 @@
-export const createBrewPinArtModule = ({ resolveLinkedBean, getCoffeeTypeForBrew, getBeanCalculatedStock, openCoffeeCard }) => {
+export const createBrewPinArtModule = ({
+    resolveLinkedBean,
+    getCoffeeTypeForBrew,
+    getBeanCalculatedStock,
+    openCoffeeCard,
+    openBeanCardWithOrder
+}) => {
     let chooserOpenFor = null;
+    const LONG_PRESS_MS = 420;
 
     const buildBrewLabel = (brew) => {
         const method = (brew?.method || 'Unknown method').toString().trim();
@@ -97,6 +104,7 @@ export const createBrewPinArtModule = ({ resolveLinkedBean, getCoffeeTypeForBrew
         });
 
         const sortedGroups = [...grouped.values()].sort((a, b) => a.minOrder - b.minOrder);
+        const beanOrder = Array.from(new Set(sortedGroups.map((group) => group.bean?.id).filter(Boolean)));
         grid.innerHTML = '';
 
         sortedGroups.forEach((group) => {
@@ -143,6 +151,8 @@ export const createBrewPinArtModule = ({ resolveLinkedBean, getCoffeeTypeForBrew
             const card = document.createElement('button');
             card.className = 'relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-coffee-200 dark:border-[#44403c] shadow-sm hover:shadow-md transition-all text-left group';
             card.type = 'button';
+            let pressTimer = null;
+            let longPressHandled = false;
 
             if (imageUrl) {
                 card.innerHTML = `
@@ -168,7 +178,33 @@ export const createBrewPinArtModule = ({ resolveLinkedBean, getCoffeeTypeForBrew
                 `;
             }
 
+            const clearPressTimer = () => {
+                if (pressTimer) clearTimeout(pressTimer);
+                pressTimer = null;
+            };
+
+            card.addEventListener('pointerdown', () => {
+                clearPressTimer();
+                longPressHandled = false;
+                pressTimer = setTimeout(() => {
+                    if (!bean?.id) return;
+                    longPressHandled = true;
+                    closeChooser();
+                    openBeanCardWithOrder?.(bean.id, beanOrder);
+                }, LONG_PRESS_MS);
+            });
+
+            card.addEventListener('pointerup', clearPressTimer);
+            card.addEventListener('pointerleave', clearPressTimer);
+            card.addEventListener('pointercancel', clearPressTimer);
+            card.addEventListener('contextmenu', (event) => event.preventDefault());
+
             card.addEventListener('click', () => {
+                clearPressTimer();
+                if (longPressHandled) {
+                    longPressHandled = false;
+                    return;
+                }
                 const sortedBrews = [...group.brews].sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
                 if (sortedBrews.length === 1) {
                     closeChooser();

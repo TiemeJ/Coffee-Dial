@@ -1,5 +1,6 @@
 export const createBeansCardUiModule = ({
     getBeans,
+    getCoffeeTypeForBean,
     getCurrentView,
     getCurrentBeanCardId,
     setCurrentBeanCardId,
@@ -11,12 +12,15 @@ export const createBeansCardUiModule = ({
     deleteBean,
     showBrewsForBean,
     showCoffeeForBean,
+    openCoffeeTypeCard,
     openBeanShopUrl,
     enterBeanEditMode,
     cancelBeanEditMode,
     toggleBeanFrozen,
     toggleBeanArchive
 }) => {
+    let navigationOrderOverride = null;
+
     const formatCardDate = (value) => {
         if (!value) return '-';
         const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
@@ -62,8 +66,13 @@ export const createBeansCardUiModule = ({
         }
     };
 
+    const getBeanCardOrder = () =>
+        Array.isArray(navigationOrderOverride) && navigationOrderOverride.length
+            ? navigationOrderOverride
+            : getBeanTableOrder();
+
     const updateBeanCardNav = () => {
-        const order = getBeanTableOrder();
+        const order = getBeanCardOrder();
         const idx = order.indexOf(getCurrentBeanCardId());
         const prevBtn = document.getElementById('beanCardPrevBtn');
         const nextBtn = document.getElementById('beanCardNextBtn');
@@ -77,8 +86,11 @@ export const createBeansCardUiModule = ({
         nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
     };
 
-    const openBeanCard = (beanId, ev) => {
+    const openBeanCard = (beanId, ev, keepNavigationOrder = false) => {
         if (ev) ev.stopPropagation();
+        if (!keepNavigationOrder && navigationOrderOverride?.length && !navigationOrderOverride.includes(beanId)) {
+            navigationOrderOverride = null;
+        }
         const bean = getBeans().find((b) => b.id === beanId);
         if (!bean) return;
 
@@ -110,16 +122,42 @@ export const createBeansCardUiModule = ({
         document.getElementById('beanCardRoastDate').textContent = formatCardDate(bean.roastDate);
         document.getElementById('beanCardArchivedDate').textContent = formatCardDate(bean.archivedDate);
 
+        const coffeeType = getCoffeeTypeForBean(bean);
+        const coffeeImageUrl = coffeeType?.imageUrl || coffeeType?.imageURL || '';
         const imgEl = document.getElementById('beanCardImage');
         const placeholderEl = document.getElementById('beanCardImagePlaceholder');
-        if (bean.imageURL) {
-            imgEl.src = bean.imageURL;
+        if (coffeeImageUrl) {
+            imgEl.src = coffeeImageUrl;
             imgEl.classList.remove('hidden');
             placeholderEl.classList.add('hidden');
         } else {
             imgEl.src = '';
             imgEl.classList.add('hidden');
             placeholderEl.classList.remove('hidden');
+        }
+        if (imgEl) {
+            if (bean.coffeeTypeId) {
+                imgEl.classList.add('cursor-pointer');
+                imgEl.onclick = (event) => {
+                    event.stopPropagation();
+                    openCoffeeTypeCard(bean.coffeeTypeId);
+                };
+            } else {
+                imgEl.classList.remove('cursor-pointer');
+                imgEl.onclick = null;
+            }
+        }
+        if (placeholderEl) {
+            if (bean.coffeeTypeId) {
+                placeholderEl.classList.add('cursor-pointer');
+                placeholderEl.onclick = (event) => {
+                    event.stopPropagation();
+                    openCoffeeTypeCard(bean.coffeeTypeId);
+                };
+            } else {
+                placeholderEl.classList.remove('cursor-pointer');
+                placeholderEl.onclick = null;
+            }
         }
 
         const brewBtn = document.getElementById('beanCardBrewBtn');
@@ -251,16 +289,23 @@ export const createBeansCardUiModule = ({
         cancelBeanEditMode();
     };
 
+    const openBeanCardWithOrder = (beanId, order = [], ev = null) => {
+        const cleanedOrder = Array.from(new Set((order || []).filter(Boolean)));
+        navigationOrderOverride = cleanedOrder.length ? cleanedOrder : null;
+        openBeanCard(beanId, ev, true);
+    };
+
     const navigateBeanCard = (direction) => {
-        const order = getBeanTableOrder();
+        const order = getBeanCardOrder();
         const idx = order.indexOf(getCurrentBeanCardId());
         const nextIdx = idx + direction;
         if (nextIdx < 0 || nextIdx >= order.length) return;
-        openBeanCard(order[nextIdx]);
+        openBeanCard(order[nextIdx], null, true);
     };
 
     const closeBeanCard = (e) => {
         if (!e || e.target.id === 'beanCardOverlay') {
+            navigationOrderOverride = null;
             document.getElementById('beanCardOverlay').classList.add('hidden');
         }
     };
@@ -274,6 +319,7 @@ export const createBeansCardUiModule = ({
         updateBeanCardActionButtons,
         updateBeanCardNav,
         openBeanCard,
+        openBeanCardWithOrder,
         navigateBeanCard,
         closeBeanCard,
         closeBeanCardMenu

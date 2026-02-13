@@ -37,7 +37,7 @@ export const createBrewsActionsModule = ({
     getFirstBrewDateForBean,
     showCoffeeTypeCreatedToast,
     showBeanCreatedToast,
-    uploadPendingBeanImage,
+    uploadPendingCoffeeTypeImage,
     clearPendingAIBeanImageFile,
     getCoffeeScale,
     getSelectedBrewGearIds,
@@ -351,7 +351,6 @@ export const createBrewsActionsModule = ({
 
         try {
             const existingBrewForUpdate = eid ? coffees.find((c) => c.id === eid) : null;
-            let createdCoffeeTypeId = null;
 
             const makeCoffeeTypeKey = (obj) =>
                 [
@@ -388,21 +387,7 @@ export const createBrewsActionsModule = ({
                 if (!coffeeTypes.find((ct) => ct.id === typeRef.id)) {
                     coffeeTypes.push({ id: typeRef.id, ...typeData });
                 }
-                createdCoffeeTypeId = typeRef.id;
                 return { id: typeRef.id, created: true };
-            };
-
-            const applyImageToCreatedCoffeeType = async (uploadedImageUrl) => {
-                if (!uploadedImageUrl || !createdCoffeeTypeId) return;
-                const createdType = coffeeTypes.find((ct) => ct.id === createdCoffeeTypeId);
-                if (createdType?.imageUrl || createdType?.imageURL) return;
-                await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', createdCoffeeTypeId), {
-                    imageUrl: uploadedImageUrl,
-                    updatedAt: new Date().toISOString()
-                });
-                if (createdType) {
-                    createdType.imageUrl = uploadedImageUrl;
-                }
             };
 
             if (!selectedBeanId) {
@@ -427,8 +412,7 @@ export const createBrewsActionsModule = ({
                     const updates = { updatedAt: beanData.updatedAt };
                     if (!existingBean.coffeeTypeId && coffeeTypeId) updates.coffeeTypeId = coffeeTypeId;
                     await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), updates);
-                    const uploadedImageUrl = await uploadPendingBeanImage(selectedBeanId);
-                    await applyImageToCreatedCoffeeType(uploadedImageUrl);
+                    await uploadPendingCoffeeTypeImage(coffeeTypeId);
                 } else {
                     const coffeeTypeInfo = await ensureCoffeeTypeId();
                     const coffeeTypeId = coffeeTypeInfo?.id || null;
@@ -451,14 +435,21 @@ export const createBrewsActionsModule = ({
                             roaster: beanData.roaster,
                             farmer: beanData.farmer
                         });
-                        const uploadedImageUrl = await uploadPendingBeanImage(selectedBeanId);
-                        await applyImageToCreatedCoffeeType(uploadedImageUrl);
+                        await uploadPendingCoffeeTypeImage(coffeeTypeId);
                     }
                 }
             } else {
-                await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), { updatedAt: beanData.updatedAt });
-                const uploadedImageUrl = await uploadPendingBeanImage(selectedBeanId);
-                await applyImageToCreatedCoffeeType(uploadedImageUrl);
+                const selectedBean = beans.find((b) => b.id === selectedBeanId);
+                let coffeeTypeId = selectedBean?.coffeeTypeId || null;
+                if (!coffeeTypeId) {
+                    const coffeeTypeInfo = await ensureCoffeeTypeId();
+                    coffeeTypeId = coffeeTypeInfo?.id || null;
+                    if (coffeeTypeInfo?.created) showCoffeeTypeCreatedToast(coffeeTypeId);
+                }
+                const updates = { updatedAt: beanData.updatedAt };
+                if (!selectedBean?.coffeeTypeId && coffeeTypeId) updates.coffeeTypeId = coffeeTypeId;
+                await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), updates);
+                await uploadPendingCoffeeTypeImage(coffeeTypeId);
             }
 
             if (selectedBeanId) d.beanId = selectedBeanId;

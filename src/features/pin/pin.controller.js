@@ -18,6 +18,7 @@ export const createPinControllerModule = ({
     getCoffeeTypeForBrew,
     getCoffeeTypeDisplay,
     openCoffeeCard,
+    openBeanCardWithOrder,
     renderTable
 }) => {
     const repo = createPinRepoModule({ db, doc, writeBatch });
@@ -26,7 +27,8 @@ export const createPinControllerModule = ({
         resolveLinkedBean: (...args) => view.resolveLinkedBean(...args),
         getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
         getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
-        openCoffeeCard: (...args) => openCoffeeCard(...args)
+        openCoffeeCard: (...args) => openCoffeeCard(...args),
+        openBeanCardWithOrder: (...args) => openBeanCardWithOrder(...args)
     });
 
     let expandedBeans = new Set();

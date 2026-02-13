@@ -120,17 +120,21 @@ export const createAiImportModule = ({
         }
     };
 
-    const uploadPendingBeanImage = async (beanId) => {
+    const uploadPendingCoffeeTypeImage = async (coffeeTypeId) => {
         const user = getCurrentUser();
-        if (!pendingAIBeanImageFile || !beanId || !user) return null;
+        if (!pendingAIBeanImageFile || !coffeeTypeId || !user) return null;
 
-        const storageRef = ref(storage, `photos/${user.uid}/bean_${beanId}_${Date.now()}`);
+        const storageRef = ref(storage, `photos/${user.uid}/coffee_type_${coffeeTypeId}_${Date.now()}`);
         const snapshot = await uploadBytes(storageRef, pendingAIBeanImageFile);
         const imageURL = await getDownloadURL(snapshot.ref);
-        await updateDoc(doc(db, 'users', user.uid, 'beans', beanId), {
-            imageURL,
+        await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', coffeeTypeId), {
+            imageUrl: imageURL,
             updatedAt: new Date().toISOString()
         });
+        const nextCoffeeTypes = getCoffeeTypes().map((type) =>
+            type.id === coffeeTypeId ? { ...type, imageUrl: imageURL, updatedAt: new Date().toISOString() } : type
+        );
+        setCoffeeTypes(nextCoffeeTypes);
 
         pendingAIBeanImageFile = null;
         return imageURL;
@@ -188,8 +192,7 @@ export const createAiImportModule = ({
                 stock: 250,
                 beansLeft: 250,
                 openedDate: null,
-                archivedDate: null,
-                imageURL: imageURL
+                archivedDate: null
             };
 
             const batch = writeBatch(db);
@@ -279,7 +282,7 @@ export const createAiImportModule = ({
         triggerBeansAIScan,
         triggerCoffeeTypesAIScan,
         handleAIFile,
-        uploadPendingBeanImage,
+        uploadPendingCoffeeTypeImage,
         clearPendingAIBeanImageFile,
         handleBeansAIFile,
         handleCoffeeTypesAIFile

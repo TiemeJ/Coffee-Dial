@@ -19,7 +19,6 @@
         import { createBeansStockControllerModule } from '../features/beans/beans-stock.controller.js';
         import { createBeansCardActionsModule } from '../features/beans/beans-card-actions.js';
         import { createBeansCardFormModule } from '../features/beans/beans-card-form.js';
-        import { createBeansCardPhotoModule } from '../features/beans/beans-card-photo.js';
         import { createBeansCardUiModule } from '../features/beans/beans-card-ui.js';
         import { createSocialModule } from '../features/social.js';
         import { createGalleryModule } from '../features/gallery.js';
@@ -184,7 +183,7 @@ export const createAppContainerModules = () => {
             triggerBeansAIScan,
             triggerCoffeeTypesAIScan,
             handleAIFile,
-            uploadPendingBeanImage,
+            uploadPendingCoffeeTypeImage,
             clearPendingAIBeanImageFile,
             handleBeansAIFile,
             handleCoffeeTypesAIFile
@@ -860,11 +859,13 @@ export const createAppContainerModules = () => {
             updateBeanCardActionButtons,
             updateBeanCardNav,
             openBeanCard,
+            openBeanCardWithOrder,
             navigateBeanCard,
             closeBeanCard,
             closeBeanCardMenu
         } = createBeansCardUiModule({
             getBeans: () => beans,
+            getCoffeeTypeForBean: (...args) => getCoffeeTypeForBean(...args),
             getCurrentView: () => currentView,
             getCurrentBeanCardId: () => currentBeanCardId,
             setCurrentBeanCardId: (value) => { currentBeanCardId = value; },
@@ -876,33 +877,12 @@ export const createAppContainerModules = () => {
             deleteBean: (...args) => deleteBean(...args),
             showBrewsForBean: (...args) => showBrewsForBean(...args),
             showCoffeeForBean: (...args) => showCoffeeForBean(...args),
+            openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
             openBeanShopUrl: (...args) => openBeanShopUrl(...args),
             enterBeanEditMode: (...args) => enterBeanEditMode(...args),
             cancelBeanEditMode: (...args) => cancelBeanEditMode(...args),
             toggleBeanFrozen: (...args) => toggleBeanFrozen(...args),
             toggleBeanArchive: (...args) => toggleBeanArchive(...args)
-        });
-
-        const {
-            triggerBeanPhoto,
-            openBeanPhoto,
-            removeBeanPhoto,
-            handleBeanPhoto
-        } = createBeansCardPhotoModule({
-            getCurrentUser: () => currentUser,
-            getCurrentBeanCardId: () => currentBeanCardId,
-            getBeans: () => beans,
-            setBeansState: (value) => { beans = value; },
-            storage,
-            ref,
-            deleteObject,
-            db,
-            doc,
-            updateDoc,
-            imageCompression,
-            uploadBytes,
-            getDownloadURL,
-            openBeanCard: (...args) => openBeanCard(...args)
         });
 
         const {
@@ -1485,7 +1465,7 @@ export const createAppContainerModules = () => {
             getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
             showCoffeeTypeCreatedToast: (...args) => showCoffeeTypeCreatedToast(...args),
             showBeanCreatedToast: (...args) => showBeanCreatedToast(...args),
-            uploadPendingBeanImage: (...args) => uploadPendingBeanImage(...args),
+            uploadPendingCoffeeTypeImage: (...args) => uploadPendingCoffeeTypeImage(...args),
             clearPendingAIBeanImageFile: (...args) => clearPendingAIBeanImageFile(...args),
             getCoffeeScale: () => coffeeScale,
             getSelectedBrewGearIds: () => getSelectedBrewGearIds(),
@@ -1556,6 +1536,7 @@ export const createAppContainerModules = () => {
             getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
             openCoffeeCard: (...args) => openCoffeeCard(...args),
+            openBeanCardWithOrder: (...args) => openBeanCardWithOrder(...args),
             renderTable: (...args) => renderTable(...args)
         });
 
@@ -2001,7 +1982,7 @@ export const createAppContainerModules = () => {
         };
 
         const actions = {
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openImportExportModal, closeImportExportModal, setImportExportMode, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, openBrewsTablePrefs, hideBrewsTablePrefsModal, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
+            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openImportExportModal, closeImportExportModal, setImportExportMode, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, openBrewsTablePrefs, hideBrewsTablePrefsModal, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
             togglePinnedTiles,
             fastRepeatCoffee,
             editBrewFromCard,
