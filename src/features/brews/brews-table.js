@@ -484,6 +484,7 @@ export const createBrewsTableModule = ({
     const renderTable = () => {
         const tableBody = document.getElementById('coffeeTableBody');
         const empty = document.getElementById('emptyState');
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
         if (!tableBody || !empty) return;
 
         updateBrewSortIcons();
@@ -497,6 +498,7 @@ export const createBrewsTableModule = ({
         tableBody.innerHTML = '';
         const filteredCoffees = getFilteredCoffees();
         if (filteredCoffees.length === 0) {
+            loadMoreContainer?.classList.add('hidden');
             empty.classList.remove('hidden');
             return;
         }
@@ -508,7 +510,6 @@ export const createBrewsTableModule = ({
             for (let i = 0; i < displayLimit; i += 1) {
                 tableBody.appendChild(generateRow(historyBrews[i]));
             }
-            const loadMoreContainer = document.getElementById('loadMoreContainer');
             const remainingCount = historyBrews.length - displayLimit;
             if (loadMoreContainer) {
                 if (remainingCount > 0) {
