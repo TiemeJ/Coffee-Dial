@@ -39,7 +39,10 @@
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
-                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" data-action-click="refreshTableData(this)" title="Reset table"><i class="fa-solid fa-arrow-rotate-left"></i></th>
+                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" data-action-click="refreshTableData(this)" title="Clear search, filters, and sorting">
+                                <i class="fa-solid fa-arrow-rotate-left"></i>
+                                <span class="sr-only">Clear search, filters, and sorting</span>
+                            </th>
                             <th id="th-roaster" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable">
                                 <button type="button" data-action-click="sortBy('roaster')" class="w-full flex items-center gap-1 text-left">
                                     <span>Roaster</span>
@@ -161,4 +164,5 @@
 
         <div class="mt-3 text-xs text-coffee-500 dark:text-[#78716c] italic flex flex-col gap-1 px-1">
             <span><i class="fa-solid fa-hand-pointer mr-1"></i> Double tap any row to view card.</span>
+            <span><i class="fa-solid fa-arrow-up-down mr-1"></i> Rows cannot be moved manually in table view.</span>
         </div>
