@@ -1515,6 +1515,7 @@ export const createAppContainerModules = () => {
             getCoffees: () => coffees,
             getBeans: () => beans,
             getCoffeeTypes: () => coffeeTypes,
+            getGasItems: () => gasItems,
             getCurrentView: () => currentView,
             getCurrentSort: () => currentSort,
             setCurrentSort: (value) => { currentSort = value; },

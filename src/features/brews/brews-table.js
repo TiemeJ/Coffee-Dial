@@ -1,6 +1,7 @@
 const DEFAULT_ACTIVE_FILTERS = {
     bean: null,
     coffeeType: null,
+    gear: null,
     method: null,
     temp: null,
     roastType: null,
@@ -19,6 +20,7 @@ export const createBrewsTableModule = ({
     getCoffees,
     getBeans,
     getCoffeeTypes,
+    getGasItems,
     getCurrentView,
     getCurrentSort,
     setCurrentSort,
@@ -42,6 +44,7 @@ export const createBrewsTableModule = ({
         const labelMap = {
             bean: 'Bean',
             coffeeType: 'Coffee',
+            gear: 'Gear',
             method: 'Method',
             temp: 'Temperature',
             roastType: 'Roast',
@@ -156,6 +159,7 @@ export const createBrewsTableModule = ({
         const activeFilters = getActiveFilters();
         const beans = getBeans();
         const coffeeTypes = getCoffeeTypes();
+        const gasItems = getGasItems();
 
         Object.entries(activeFilters).forEach(([key, value]) => {
             if (!value) return;
@@ -177,6 +181,11 @@ export const createBrewsTableModule = ({
                 if (type) displayValue = `${type.roaster || 'Unknown'}${type.farmer ? ` - ${type.farmer}` : ''}`;
             }
 
+            if (key === 'gear') {
+                const gear = gasItems.find((item) => item.id === value);
+                if (gear) displayValue = gear.name || 'Unnamed gear';
+            }
+
             list.innerHTML += `<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${label}:</span><b>${displayValue}</b><button data-action-click="applyFilter('${key}',null)" class="ml-1 hover:text-red-200">x</button></div>`;
         });
 
@@ -194,6 +203,7 @@ export const createBrewsTableModule = ({
             const filterCategories = [
                 { key: 'bean', label: 'Bean' },
                 { key: 'coffeeType', label: 'Coffee' },
+                { key: 'gear', label: 'Gear' },
                 { key: 'method', label: 'Method' },
                 { key: 'drink', label: 'Drink' },
                 { key: 'roaster', label: 'Roaster' },
@@ -244,6 +254,21 @@ export const createBrewsTableModule = ({
                 id: type.id,
                 display: `${type.roaster || 'Unknown'}${type.farmer ? ` - ${type.farmer}` : ''}`
             }));
+        } else if (key === 'gear') {
+            const usedGearIds = new Set();
+            getCoffees().forEach((brew) => {
+                const gearIds = Array.isArray(brew.gearIds) ? brew.gearIds : [];
+                gearIds.forEach((gearId) => {
+                    if (gearId) usedGearIds.add(gearId);
+                });
+            });
+            uniqueValues = getGasItems()
+                .filter((item) => usedGearIds.has(item.id))
+                .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                .map((item) => ({
+                    id: item.id,
+                    display: item.name || 'Unnamed gear'
+                }));
         } else {
             const vals = getCoffees().map((c) =>
                 key === 'roaster' ? (c.roaster || c.name) : key === 'origin' ? (c.origin || c.beanType) : c[key]
@@ -256,7 +281,7 @@ export const createBrewsTableModule = ({
         } else {
             let html = `<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] flex items-center justify-between"><span>${label}</span><button data-action-click="toggleQuickFilter(event)" class="text-coffee-400 hover:text-coffee-600 dark:hover:text-white"><i class="fa-solid fa-arrow-left"></i></button></div>`;
             html += `<button data-action-click="applyFilterFromQuick('${key}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`;
-            if (key === 'bean' || key === 'coffeeType') {
+            if (key === 'bean' || key === 'coffeeType' || key === 'gear') {
                 uniqueValues.forEach((item) => {
                     const isActive = getActiveFilters()[key] === item.id;
                     const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
@@ -331,10 +356,11 @@ export const createBrewsTableModule = ({
             const proc = !activeFilters.processing || c.processing === activeFilters.processing;
             const dr = !activeFilters.drink || c.drink === activeFilters.drink;
             const gri = !activeFilters.grinder || c.grinder === activeFilters.grinder;
+            const gearMatch = !activeFilters.gear || (Array.isArray(c.gearIds) && c.gearIds.includes(activeFilters.gear));
             const beanMatch = !activeFilters.bean || c.beanId === activeFilters.bean;
             const typeMatch = !activeFilters.coffeeType || typeId === activeFilters.coffeeType;
 
-            return m && t && r && rost && orig && farm && varr && proc && dr && gri && beanMatch && typeMatch;
+            return m && t && r && rost && orig && farm && varr && proc && dr && gri && gearMatch && beanMatch && typeMatch;
         });
 
         const currentSort = getCurrentSort();
@@ -398,6 +424,9 @@ export const createBrewsTableModule = ({
         setCurrentSort({ key: null, direction: 'asc' });
         updateBrewSortIcons();
         setActiveFilters({
+            bean: null,
+            coffeeType: null,
+            gear: null,
             method: null,
             temp: null,
             roastType: null,
