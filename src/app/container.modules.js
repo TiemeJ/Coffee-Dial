@@ -34,7 +34,7 @@
         import { createBrewsCardShareModule } from '../features/brews/brews-card-share.js';
         import { createBrewsCardGraphModule } from '../features/brews/brews-card-graph.js';
         import { createBrewsCardPhotoModule } from '../features/brews/brews-card-photo.js';
-        import { createBrewsPinAutopinModule } from '../features/brews/brews-pin-autopin.js';
+        import { createBrewsPinAutopinModule } from '../features/pin/brews-pin-autopin.js';
         import { createBrewsPreferencesModule } from '../features/preferences.js';
         import { createSessionAuthViewModule } from '../features/session-auth-view.js';
         import { createAiImportModule } from '../features/ai-import.js';
@@ -1553,6 +1553,7 @@ export const createAppContainerModules = () => {
             getBeans: () => beans,
             getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
             getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
+            getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
             openCoffeeCard: (...args) => openCoffeeCard(...args),
             renderTable: (...args) => renderTable(...args)

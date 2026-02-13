@@ -1,6 +1,7 @@
 export const DEFAULT_PINNED_BREWS_PREFERENCES = {
     animationsEnabled: true,
     organizeByBeans: true,
+    coffeeArtEnabled: false,
     pinOpenBags: false,
     pinOpenBagsBestOnly: false,
     swapRoasterFarmer: false
@@ -24,6 +25,7 @@ export const createBrewsPreferencesModule = ({
     const PREF_TOGGLE_IDS = [
         'animationsToggle',
         'organizeByBeansToggle',
+        'coffeeArtToggle',
         'pinOpenBagsToggle',
         'pinOpenBagsBestOnlyToggle',
         'swapRoasterFarmerToggle'
@@ -66,14 +68,32 @@ export const createBrewsPreferencesModule = ({
         row.classList.toggle('cursor-not-allowed', !enabled);
     };
 
+    const updateCoffeeArtToggleState = (organizeByBeansEnabled = null) => {
+        const row = document.getElementById('coffeeArtRow');
+        const toggle = document.getElementById('coffeeArtToggle');
+        if (!row || !toggle) return;
+
+        const enabled =
+            typeof organizeByBeansEnabled === 'boolean'
+                ? organizeByBeansEnabled
+                : !!document.getElementById('organizeByBeansToggle')?.checked;
+
+        toggle.disabled = !enabled;
+        if (!enabled) toggle.checked = false;
+        row.classList.toggle('opacity-50', !enabled);
+        row.classList.toggle('cursor-not-allowed', !enabled);
+    };
+
     const collectPinnedBrewsPreferencesFromForm = () => {
+        const organizeByBeansEnabled = !!document.getElementById('organizeByBeansToggle')?.checked;
         const pinOpenBagsEnabled = !!document.getElementById('pinOpenBagsToggle')?.checked;
         const pinOpenBagsBestOnlyEnabled =
             pinOpenBagsEnabled && !!document.getElementById('pinOpenBagsBestOnlyToggle')?.checked;
         return {
             ...getPinnedBrewsPreferences(),
             animationsEnabled: !!document.getElementById('animationsToggle')?.checked,
-            organizeByBeans: !!document.getElementById('organizeByBeansToggle')?.checked,
+            organizeByBeans: organizeByBeansEnabled,
+            coffeeArtEnabled: organizeByBeansEnabled && !!document.getElementById('coffeeArtToggle')?.checked,
             pinOpenBags: pinOpenBagsEnabled,
             pinOpenBagsBestOnly: pinOpenBagsBestOnlyEnabled,
             swapRoasterFarmer: !!document.getElementById('swapRoasterFarmerToggle')?.checked
@@ -86,6 +106,14 @@ export const createBrewsPreferencesModule = ({
         const pinOpenBagsBestOnlyEnabled = !!nextPinnedPrefs.pinOpenBagsBestOnly;
         const pinOpenBagsWasEnabled = !!currentPrefs.pinOpenBags;
         const pinOpenBagsBestOnlyWasEnabled = !!currentPrefs.pinOpenBagsBestOnly;
+        const organizeByBeansEnabled = !!nextPinnedPrefs.organizeByBeans;
+
+        if (!organizeByBeansEnabled) {
+            nextPinnedPrefs = {
+                ...nextPinnedPrefs,
+                coffeeArtEnabled: false
+            };
+        }
 
         setPinnedBrewsPreferences(nextPinnedPrefs);
         applyAnimationPreference();
@@ -151,6 +179,7 @@ export const createBrewsPreferencesModule = ({
             el.addEventListener('change', () => {
                 if (isHydratingPreferences) return;
                 if (id === 'pinOpenBagsToggle') updateBestOnlyToggleState();
+                if (id === 'organizeByBeansToggle') updateCoffeeArtToggleState();
                 scheduleAutoSavePreferences();
             });
         });
@@ -163,11 +192,13 @@ export const createBrewsPreferencesModule = ({
         isHydratingPreferences = true;
         document.getElementById('animationsToggle').checked = !!pinnedPrefs.animationsEnabled;
         document.getElementById('organizeByBeansToggle').checked = !!pinnedPrefs.organizeByBeans;
+        document.getElementById('coffeeArtToggle').checked = !!pinnedPrefs.organizeByBeans && !!pinnedPrefs.coffeeArtEnabled;
         document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;
         document.getElementById('pinOpenBagsBestOnlyToggle').checked = !!pinnedPrefs.pinOpenBagsBestOnly;
         document.getElementById('swapRoasterFarmerToggle').checked = !!pinnedPrefs.swapRoasterFarmer;
 
         updateBestOnlyToggleState(pinOpenBagsEnabled);
+        updateCoffeeArtToggleState(!!pinnedPrefs.organizeByBeans);
         bindPreferencesAutoSave();
         isHydratingPreferences = false;
 
@@ -178,6 +209,7 @@ export const createBrewsPreferencesModule = ({
         loadLegacyPinnedBrewsPreferences,
         applyAnimationPreference,
         updateBestOnlyToggleState,
+        updateCoffeeArtToggleState,
         openPreferences
     };
 };

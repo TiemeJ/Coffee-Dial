@@ -9,6 +9,7 @@ import { mountPinnedSection } from '../features/pin/pin.mount.js';
 import {
     mountBrewsCardView,
     mountBrewsFormView,
+    mountBrewsPinArtView,
     mountBrewsTablePrefsView,
     mountBrewsTableView
 } from '../features/brews/brews.mount.js';
@@ -30,6 +31,7 @@ import { mountOverlayHostView } from '../core/overlay-host.mount.js';
 await mountShellHeader();
 await mountSignedOutAuth();
 await mountPinnedSection();
+await mountBrewsPinArtView();
 await mountBrewsFormView();
 await mountBrewsTableView();
 await mountBrewsTablePrefsView();

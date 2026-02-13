@@ -1,0 +1,15 @@
+<div id="brewPinArtRoot" class="hidden">
+    <div id="brewPinArtGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
+</div>
+
+<div id="brewPinArtChooser" class="hidden fixed inset-0 z-[95] bg-black/50 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div id="brewPinArtChooserCard" class="w-full max-w-sm bg-white dark:bg-[#292524] rounded-xl border border-coffee-200 dark:border-[#44403c] shadow-2xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-coffee-200 dark:border-[#44403c] flex items-center justify-between">
+            <h4 id="brewPinArtChooserTitle" class="text-sm font-bold text-coffee-900 dark:text-white">Choose pinned brew</h4>
+            <button id="brewPinArtChooserClose" class="text-coffee-500 hover:text-coffee-800 dark:text-[#78716c] dark:hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div id="brewPinArtChooserList" class="p-3 max-h-72 overflow-y-auto space-y-2 bg-coffee-50 dark:bg-[#1c1917]"></div>
+    </div>
+</div>

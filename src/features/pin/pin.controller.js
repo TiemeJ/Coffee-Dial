@@ -1,5 +1,6 @@
 import { createPinRepoModule } from './pin.repo.js';
 import { createPinViewModule } from './pin.view.js';
+import { createBrewPinArtModule } from './brew-pin-art.js';
 
 export const createPinControllerModule = ({
     db,
@@ -14,28 +15,46 @@ export const createPinControllerModule = ({
     getBeans,
     getPinnedBrewsPreferences,
     getBeanCalculatedStock,
+    getCoffeeTypeForBrew,
     getCoffeeTypeDisplay,
     openCoffeeCard,
     renderTable
 }) => {
     const repo = createPinRepoModule({ db, doc, writeBatch });
     const view = createPinViewModule({ getBeanCalculatedStock, getCoffeeTypeDisplay });
+    const artView = createBrewPinArtModule({
+        resolveLinkedBean: (...args) => view.resolveLinkedBean(...args),
+        getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
+        getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
+        openCoffeeCard: (...args) => openCoffeeCard(...args)
+    });
 
     let expandedBeans = new Set();
     let lastPinnedBeanKeys = [];
     let sortableInstances = [];
+
+    const destroySortable = () => {
+        sortableInstances.forEach((instance) => instance.destroy());
+        sortableInstances = [];
+    };
 
     const resolveBeanKey = (brew) => {
         const linkedBean = view.resolveLinkedBean({ brew, beans: getBeans() });
         return linkedBean ? linkedBean.id : `no-bean-${brew.id}`;
     };
 
-    const updatePinnedHeaderToggleIcon = (beanKeys = [], organizeByBeans = true) => {
+    const updatePinnedHeaderToggleIcon = (beanKeys = [], organizeByBeans = true, coffeeArtEnabled = false) => {
         lastPinnedBeanKeys = organizeByBeans ? beanKeys : [];
         const icon = document.getElementById('pinnedToggleIcon');
         const header = document.getElementById('pinnedHeaderToggle');
         if (!icon || !header) return;
-        if (!organizeByBeans || !beanKeys.length) {
+        header.classList.toggle('hidden', !!coffeeArtEnabled);
+        if (coffeeArtEnabled) {
+            icon.classList.add('hidden');
+            header.classList.remove('cursor-pointer');
+            return;
+        }
+        if (!organizeByBeans || coffeeArtEnabled || !beanKeys.length) {
             icon.classList.add('hidden');
             header.classList.remove('cursor-pointer');
             return;
@@ -48,8 +67,7 @@ export const createPinControllerModule = ({
     };
 
     const initSortable = () => {
-        sortableInstances.forEach((instance) => instance.destroy());
-        sortableInstances = [];
+        destroySortable();
 
         const currentSort = getCurrentSort();
         const activeFilters = getActiveFilters();
@@ -116,6 +134,28 @@ export const createPinControllerModule = ({
 
     const renderPinnedTiles = () => {
         const pinnedPrefs = getPinnedBrewsPreferences();
+        const pinnedGrid = document.getElementById('pinnedGrid');
+        const isCoffeeArtEnabled = !!pinnedPrefs.organizeByBeans && !!pinnedPrefs.coffeeArtEnabled;
+
+        if (isCoffeeArtEnabled) {
+            destroySortable();
+            if (pinnedGrid) pinnedGrid.classList.add('hidden');
+            const result = artView.renderPinnedArtView({
+                coffees: getCoffees(),
+                beans: getBeans(),
+                pinnedBrewsPreferences: pinnedPrefs
+            });
+            const section = document.getElementById('pinnedSection');
+            if (section) section.classList.toggle('hidden', !result.hasArt);
+            updatePinnedHeaderToggleIcon([], !!pinnedPrefs.organizeByBeans, true);
+            return;
+        }
+
+        artView.closeChooser();
+        const artRoot = document.getElementById('brewPinArtRoot');
+        if (artRoot) artRoot.classList.add('hidden');
+        if (pinnedGrid) pinnedGrid.classList.remove('hidden');
+
         const result = view.renderPinnedTilesView({
             coffees: getCoffees(),
             beans: getBeans(),
@@ -130,7 +170,7 @@ export const createPinControllerModule = ({
             openCoffeeCard
         });
 
-        updatePinnedHeaderToggleIcon(result.beanKeys, !!pinnedPrefs.organizeByBeans);
+        updatePinnedHeaderToggleIcon(result.beanKeys, !!pinnedPrefs.organizeByBeans, false);
         if (result.hasTiles) initSortable();
     };
 
