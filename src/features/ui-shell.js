@@ -23,6 +23,7 @@ export const createUiShellModule = ({
         htmlOverflow: '',
         bodyOverflow: ''
     };
+    let lastTouchY = null;
 
     const FOCUSABLE_SELECTOR = [
         'a[href]',
@@ -309,11 +310,42 @@ export const createUiShellModule = ({
         );
 
         document.addEventListener(
+            'touchstart',
+            (event) => {
+                if (event.touches && event.touches.length > 0) {
+                    lastTouchY = event.touches[0].clientY;
+                }
+            },
+            { passive: true, capture: true }
+        );
+
+        document.addEventListener(
             'touchmove',
             (event) => {
                 const topModal = getTopModal();
                 if (!topModal) return;
-                if (!topModal.contains(event.target)) event.preventDefault();
+                if (!topModal.contains(event.target)) {
+                    event.preventDefault();
+                    return;
+                }
+
+                const scrollable = findScrollableAncestorWithin(event.target, topModal);
+                if (!scrollable) {
+                    event.preventDefault();
+                    return;
+                }
+
+                if (!event.touches || event.touches.length === 0 || lastTouchY === null) return;
+                const currentY = event.touches[0].clientY;
+                const deltaY = lastTouchY - currentY;
+                lastTouchY = currentY;
+
+                if (!deltaY) return;
+                const atTop = scrollable.scrollTop <= 0;
+                const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
+                if ((deltaY < 0 && atTop) || (deltaY > 0 && atBottom)) {
+                    event.preventDefault();
+                }
             },
             { passive: false, capture: true }
         );

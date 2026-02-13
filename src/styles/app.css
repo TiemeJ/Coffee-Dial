@@ -16,6 +16,12 @@
         
         /* iOS scroll fix for modals */
         .ios-scroll { -webkit-overflow-scrolling: touch; overflow-y: auto; }
+
+        /* Keep fullscreen fixed modals clear of iPhone Dynamic Island/notch area */
+        [id$="Modal"].fixed.inset-0,
+        [id$="Overlay"].fixed.inset-0 {
+            padding-top: max(1rem, calc(env(safe-area-inset-top) + 0.5rem));
+        }
         
         input:focus, select:focus, textarea:focus { outline: none; ring: 2px; border-color: #b08968; box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.2); }
         .editing-mode { border: 2px solid #ea580c !important; }
