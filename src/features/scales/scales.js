@@ -1416,10 +1416,10 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   function setTimerRunningState(running, options = {}) {
     const { skipFinalizeMetrics = false } = options;
     timerRunning = running;
-    timerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
+    timerBtn.textContent = timerRunning ? "Stop timer" : "Start timer";
     updateTimerIcon();
     if (connectTimerBtn) {
-      connectTimerBtn.textContent = timerRunning ? "Stop Timer" : "Start Timer";
+      connectTimerBtn.textContent = timerRunning ? "Stop timer" : "Start timer";
     }
     if (timerRunning) {
       startLiveTimer();
@@ -1469,11 +1469,11 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     tareBtn.disabled = false;
     timerBtn.disabled = false;
     resetTimerBtn.disabled = false;
-    timerBtn.textContent = "Start Timer";
+    timerBtn.textContent = "Start timer";
     if (connectTareBtn) connectTareBtn.disabled = false;
     if (connectTimerBtn) connectTimerBtn.disabled = false;
     if (connectResetTimerBtn) connectResetTimerBtn.disabled = false;
-    if (connectTimerBtn) connectTimerBtn.textContent = "Start Timer";
+    if (connectTimerBtn) connectTimerBtn.textContent = "Start timer";
     timerRunning = false;
   }
 
@@ -1719,7 +1719,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     tareBtn.disabled = true;
     timerBtn.disabled = true;
     resetTimerBtn.disabled = true;
-    timerBtn.textContent = "Start Timer";
+    timerBtn.textContent = "Start timer";
     timerRunning = false;
     isConnected = false;
     updateTimerIcon();
@@ -1734,7 +1734,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     if (connectTareBtn) connectTareBtn.disabled = true;
     if (connectTimerBtn) connectTimerBtn.disabled = true;
     if (connectResetTimerBtn) connectResetTimerBtn.disabled = true;
-    if (connectTimerBtn) connectTimerBtn.textContent = "Start Timer";
+    if (connectTimerBtn) connectTimerBtn.textContent = "Start timer";
     stopHeartbeat();
   }
 

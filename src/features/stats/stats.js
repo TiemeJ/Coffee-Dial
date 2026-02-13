@@ -55,7 +55,7 @@ export const createStatsModule = ({
         document.getElementById('statsModal')?.classList.remove('hidden');
         const sl = document.getElementById('statsViewSelect');
         if (!sl) return;
-        sl.innerHTML = '<option value="mine">My Brews</option>';
+        sl.innerHTML = '<option value="mine">My brews</option>';
         getFollowing().forEach((f) => {
             const o = document.createElement('option');
             o.value = f.uid;

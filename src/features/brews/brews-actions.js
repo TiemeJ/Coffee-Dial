@@ -134,7 +134,7 @@ export const createBrewsActionsModule = ({
         setCoffeeDetailsCollapsed(true);
         document.getElementById('formContainer').classList.remove('editing-mode');
         document.getElementById('formTitle').innerHTML = `<span>${title}</span>`;
-        document.getElementById('submitBtn').innerHTML = '<span>Save Copy</span>';
+        document.getElementById('submitBtn').innerHTML = '<span>Save copy</span>';
         setAiAddVisibility(false);
         scrollBrewFormToTop();
     };
@@ -148,8 +148,8 @@ export const createBrewsActionsModule = ({
         resetSca();
         setRating(0);
         document.getElementById('formContainer').classList.remove('editing-mode');
-        document.getElementById('formTitle').innerHTML = '<span>Add New Brew</span>';
-        document.getElementById('submitBtn').innerHTML = '<span>Save Brew</span>';
+        document.getElementById('formTitle').innerHTML = '<span>Add new brew</span>';
+        document.getElementById('submitBtn').innerHTML = '<span>Save brew</span>';
         document.getElementById('submitBtn').className =
             'bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
         document.getElementById('isActiveToggle').checked = false;
@@ -650,7 +650,7 @@ export const createBrewsActionsModule = ({
             document.getElementById('formContainer').classList.add('editing-mode');
             toggleForm(true);
             setCoffeeDetailsCollapsed(true);
-            document.getElementById('formTitle').innerHTML = '<span class="text-orange-500">Edit Brew</span>';
+            document.getElementById('formTitle').innerHTML = '<span class="text-orange-500">Edit brew</span>';
             document.getElementById('submitBtn').innerHTML = '<span>Update</span>';
             document.getElementById('submitBtn').className =
                 'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
@@ -729,8 +729,8 @@ export const createBrewsActionsModule = ({
                 toggleForm(true);
                 setCoffeeDetailsCollapsed(true);
                 document.getElementById('formContainer').classList.remove('editing-mode');
-                document.getElementById('formTitle').innerHTML = '<span>Add Friend\'s Brew</span>';
-                document.getElementById('submitBtn').innerHTML = '<span>Save Brew</span>';
+                document.getElementById('formTitle').innerHTML = '<span>Add friend\'s brew</span>';
+                document.getElementById('submitBtn').innerHTML = '<span>Save brew</span>';
                 setAiAddVisibility(false);
                 scrollBrewFormToTop();
             }, 500);

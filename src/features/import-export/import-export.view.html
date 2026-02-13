@@ -2,7 +2,7 @@
     <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
         <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
             <h3 class="font-bold text-coffee-900 dark:text-white">
-                <i class="fa-solid fa-right-left mr-2"></i>Import / Export
+                <i class="fa-solid fa-right-left mr-2"></i>Import & export
             </h3>
             <button data-action-click="closeImportExportModal()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
                 <i class="fa-solid fa-xmark"></i>
@@ -24,7 +24,7 @@
             <div id="importExportExportPanel" class="space-y-4">
                 <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Choose your export options:</p>
                 <div>
-                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Type</label>
+                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export type</label>
                     <select id="exportType" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
                         <option value="brews">Brews (Coffee Dial format)</option>
                         <option value="brews-beanconqueror">Brews (Bean Conqueror format)</option>
@@ -32,7 +32,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Format</label>
+                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export format</label>
                     <select id="exportFormat" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
                         <option value="csv">CSV (.csv)</option>
                         <option value="json">JSON (.json)</option>
@@ -55,7 +55,7 @@
 
             <div id="importExportImportPanel" class="hidden space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">CSV File (Beanconqueror)</label>
+                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">CSV file (Beanconqueror)</label>
                     <input id="importFileInput" type="file" accept=".csv" data-action-change="handleImportFileChange(event)" class="w-full text-sm text-coffee-700 dark:text-[#d6ccc2] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-coffee-100 file:text-coffee-800 hover:file:bg-coffee-200 dark:file:bg-[#1c1917] dark:file:text-[#d6ccc2]">
                 </div>
                 <div id="importSummary" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 p-3 rounded-lg text-xs text-blue-800 dark:text-blue-300">

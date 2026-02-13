@@ -5,7 +5,7 @@
                 <div class="flex items-center gap-4 w-full sm:w-auto">
                     <div class="flex items-center gap-2">
                         <select id="viewSelect" data-action-change="changeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
-                            <option value="mine">My Brews</option>
+                            <option value="mine">My brews</option>
                             </select>
                     </div>
                     <div class="relative flex-1 sm:flex-initial">
@@ -32,14 +32,14 @@
             </div>
             <div id="activeFiltersContainer" class="hidden flex items-center gap-2 flex-wrap">
                 <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
-                <button data-action-click="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear All</button>
+                <button data-action-click="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear all</button>
             </div>
             </div>
             <div class="overflow-x-auto min-h-[300px]">
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
-                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" data-action-click="refreshTableData(this)" title="Reset Table"><i class="fa-solid fa-arrow-rotate-left"></i></th>
+                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap cursor-pointer hover:text-coffee-600 dark:hover:text-white transition-colors" data-action-click="refreshTableData(this)" title="Reset table"><i class="fa-solid fa-arrow-rotate-left"></i></th>
                             <th id="th-roaster" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable">
                                 <button type="button" data-action-click="sortBy('roaster')" class="w-full flex items-center gap-1 text-left">
                                     <span>Roaster</span>
@@ -147,7 +147,7 @@
                 <div id="loadMoreContainer" class="hidden flex justify-center items-center py-4 border-t border-coffee-200 dark:border-[#44403c]">
                     <button data-action-click="loadMoreBrews()" class="px-4 py-2 bg-coffee-100 hover:bg-coffee-200 dark:bg-[#34302e] dark:hover:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] rounded-lg font-medium transition-colors flex items-center gap-2">
                         <i class="fa-solid fa-chevron-down"></i>
-                        <span>Load More Brews (<span id="remainingCount">0</span> remaining)</span>
+                        <span>Load more brews (<span id="remainingCount">0</span> remaining)</span>
                     </button>
                 </div>
             </div>
@@ -160,5 +160,5 @@
         </div>
 
         <div class="mt-3 text-xs text-coffee-500 dark:text-[#78716c] italic flex flex-col gap-1 px-1">
-            <span><i class="fa-solid fa-hand-pointer mr-1"></i> Double tap any row to view Card.</span>
+            <span><i class="fa-solid fa-hand-pointer mr-1"></i> Double tap any row to view card.</span>
         </div>

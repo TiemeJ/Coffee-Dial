@@ -1723,7 +1723,7 @@ export const createAppContainerModules = () => {
                 if (shouldShowOnboarding) openHelp();
                 initZoomListeners(); 
             } else {
-                document.getElementById('authContainer').innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2"><button data-action-click="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign In</button></div>`;
+                document.getElementById('authContainer').innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2"><button data-action-click="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign in</button></div>`;
                 document.getElementById('viewSelectorContainer').classList.add('hidden');
                 document.getElementById('coffeeTableBody').innerHTML = '';
                 document.getElementById('emptyState').classList.add('hidden');
