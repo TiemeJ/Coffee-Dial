@@ -21,7 +21,7 @@ import { mountSocialModalView } from '../features/social/social.mount.js';
 import { mountMediaModalsView } from '../features/media/media-modals.mount.js';
 import { mountStatsView } from '../features/stats/stats.mount.js';
 import { mountPreferencesView } from '../features/preferences.mount.js';
-import { mountImportExportView } from '../features/import-export.mount.js';
+import { mountImportExportView } from '../features/import-export/import-export.mount.js';
 import { mountGalleryView } from '../features/gallery.mount.js';
 import { mountScalesView } from '../features/scales/scales.mount.js';
 import { mountUiShellView } from '../features/ui-shell.mount.js';

@@ -15,6 +15,37 @@ export const createImportExportModule = ({
     getCoffeeTypeForBrew,
     openAppConfirm
 }) => {
+    const setImportExportMode = (mode = 'export') => {
+        const isImport = mode === 'import';
+        const exportPanel = document.getElementById('importExportExportPanel');
+        const importPanel = document.getElementById('importExportImportPanel');
+        const exportTab = document.getElementById('importExportTabExport');
+        const importTab = document.getElementById('importExportTabImport');
+
+        if (exportPanel) exportPanel.classList.toggle('hidden', isImport);
+        if (importPanel) importPanel.classList.toggle('hidden', !isImport);
+
+        if (exportTab) {
+            exportTab.classList.toggle('bg-white', !isImport);
+            exportTab.classList.toggle('dark:bg-[#292524]', !isImport);
+            exportTab.classList.toggle('text-coffee-800', !isImport);
+            exportTab.classList.toggle('dark:text-white', !isImport);
+            exportTab.classList.toggle('shadow-sm', !isImport);
+            exportTab.classList.toggle('text-coffee-500', isImport);
+            exportTab.classList.toggle('dark:text-[#a8a29e]', isImport);
+        }
+
+        if (importTab) {
+            importTab.classList.toggle('bg-white', isImport);
+            importTab.classList.toggle('dark:bg-[#292524]', isImport);
+            importTab.classList.toggle('text-coffee-800', isImport);
+            importTab.classList.toggle('dark:text-white', isImport);
+            importTab.classList.toggle('shadow-sm', isImport);
+            importTab.classList.toggle('text-coffee-500', !isImport);
+            importTab.classList.toggle('dark:text-[#a8a29e]', !isImport);
+        }
+    };
+
     const resetImportState = () => {
         setPendingImportBrews([]);
         const summaryEl = document.getElementById('importSummary');
@@ -69,14 +100,28 @@ export const createImportExportModule = ({
         previewEl.classList.remove('hidden');
     };
 
-    const openImportModal = () => {
+    const openImportExportModal = (mode = 'export') => {
         if (!getCurrentUser()) return alert('Please sign in.');
-        resetImportState();
-        document.getElementById('importModal')?.classList.remove('hidden');
+        if (mode === 'import') resetImportState();
+        if (mode === 'export') {
+            const brews = getFilteredCoffees();
+            const countEl = document.getElementById('exportBrewCount');
+            if (countEl) countEl.textContent = brews.length;
+        }
+        setImportExportMode(mode);
+        document.getElementById('importExportModal')?.classList.remove('hidden');
+    };
+
+    const closeImportExportModal = () => {
+        document.getElementById('importExportModal')?.classList.add('hidden');
+    };
+
+    const openImportModal = () => {
+        openImportExportModal('import');
     };
 
     const closeImportModal = () => {
-        document.getElementById('importModal')?.classList.add('hidden');
+        closeImportExportModal();
     };
 
     const handleImportFileChange = async (event) => {
@@ -146,7 +191,7 @@ export const createImportExportModule = ({
             }
 
             resetImportState();
-            closeImportModal();
+            closeImportExportModal();
             alert('Import complete.');
         } catch (err) {
             console.error('Import failed', err);
@@ -160,13 +205,11 @@ export const createImportExportModule = ({
     };
 
     const openExportModal = () => {
-        const brews = getFilteredCoffees();
-        document.getElementById('exportBrewCount').textContent = brews.length;
-        document.getElementById('exportModal')?.classList.remove('hidden');
+        openImportExportModal('export');
     };
 
     const closeExportModal = () => {
-        document.getElementById('exportModal')?.classList.add('hidden');
+        closeImportExportModal();
     };
 
     const performExport = () => {
@@ -189,7 +232,7 @@ export const createImportExportModule = ({
             else if (format === 'json') exportCoffeesAsJSON(getBeans());
         }
 
-        closeExportModal();
+        closeImportExportModal();
     };
 
     const exportBrewsAsCSV = (brews) => {
@@ -336,6 +379,9 @@ export const createImportExportModule = ({
     return {
         resetImportState,
         renderImportPreview,
+        openImportExportModal,
+        closeImportExportModal,
+        setImportExportMode,
         openImportModal,
         closeImportModal,
         handleImportFileChange,

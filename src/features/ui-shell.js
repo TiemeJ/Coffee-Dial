@@ -5,8 +5,7 @@ export const createUiShellModule = ({
     closeGraphModal,
     closeCoffeeCard,
     closeStats,
-    closeExportModal,
-    closeImportModal,
+    closeImportExportModal,
     closeUploadModal,
     closeCoffeeTypeCard,
     closeBeanCard,
@@ -364,8 +363,7 @@ export const createUiShellModule = ({
             closeIfVisible('statsModal', () => closeStats()) ||
             closeIfVisible('helpModal', () => closeHelp()) ||
             closeIfVisible('aboutModal', () => closeAbout()) ||
-            closeIfVisible('exportModal', () => closeExportModal()) ||
-            closeIfVisible('importModal', () => closeImportModal()) ||
+            closeIfVisible('importExportModal', () => closeImportExportModal()) ||
             closeIfVisible('preferencesModal', () => document.getElementById('preferencesModal')?.classList.add('hidden')) ||
             closeIfVisible('brewsTablePrefsModal', () => document.getElementById('brewsTablePrefsModal')?.classList.add('hidden')) ||
             closeIfVisible('coffeeScaleModal', () => closeCoffeeScaleModal?.()) ||

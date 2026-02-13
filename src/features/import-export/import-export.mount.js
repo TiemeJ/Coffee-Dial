@@ -11,5 +11,5 @@ const mountView = async (mountId, viewPath) => {
 };
 
 export const mountImportExportView = async () => {
-    await mountView('importExportModalMount', './src/features/import-export.view.html');
+    await mountView('importExportModalMount', './src/features/import-export/import-export.view.html');
 };

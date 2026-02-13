@@ -1,0 +1,102 @@
+<div id="importExportModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+        <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
+            <h3 class="font-bold text-coffee-900 dark:text-white">
+                <i class="fa-solid fa-right-left mr-2"></i>Import / Export
+            </h3>
+            <button data-action-click="closeImportExportModal()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="px-6 pt-4">
+            <div class="flex gap-2 bg-coffee-50 dark:bg-[#1c1917] rounded-lg p-1 border border-coffee-200 dark:border-[#44403c]">
+                <button id="importExportTabExport" data-action-click="setImportExportMode('export')" class="flex-1 px-3 py-2 rounded-md text-xs font-bold bg-white dark:bg-[#292524] text-coffee-800 dark:text-white shadow-sm">
+                    <i class="fa-solid fa-download mr-1"></i>Export
+                </button>
+                <button id="importExportTabImport" data-action-click="setImportExportMode('import')" class="flex-1 px-3 py-2 rounded-md text-xs font-bold text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700 dark:hover:text-white">
+                    <i class="fa-solid fa-cloud-arrow-up mr-1"></i>Import
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6 max-h-[60vh] overflow-y-auto">
+            <div id="importExportExportPanel" class="space-y-4">
+                <p class="text-sm text-coffee-600 dark:text-[#a8a29e]">Choose your export options:</p>
+                <div>
+                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Type</label>
+                    <select id="exportType" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
+                        <option value="brews">Brews (Coffee Dial format)</option>
+                        <option value="brews-beanconqueror">Brews (Bean Conqueror format)</option>
+                        <option value="coffees">Coffee beans (Bean Conqueror format)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">Export Format</label>
+                    <select id="exportFormat" class="w-full bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
+                        <option value="csv">CSV (.csv)</option>
+                        <option value="json">JSON (.json)</option>
+                    </select>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 p-3 rounded-lg">
+                    <p class="text-xs text-blue-800 dark:text-blue-300">
+                        <i class="fa-solid fa-info-circle mr-1"></i>You have <span id="exportBrewCount">0</span> brews to export.
+                    </p>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button data-action-click="closeImportExportModal()" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">
+                        Cancel
+                    </button>
+                    <button data-action-click="performExport()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <div id="importExportImportPanel" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-coffee-800 dark:text-white mb-2">CSV File (Beanconqueror)</label>
+                    <input id="importFileInput" type="file" accept=".csv" data-action-change="handleImportFileChange(event)" class="w-full text-sm text-coffee-700 dark:text-[#d6ccc2] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-coffee-100 file:text-coffee-800 hover:file:bg-coffee-200 dark:file:bg-[#1c1917] dark:file:text-[#d6ccc2]">
+                </div>
+                <div id="importSummary" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 p-3 rounded-lg text-xs text-blue-800 dark:text-blue-300">
+                    Select a CSV file to preview the import.
+                </div>
+                <div id="importPreview" class="hidden">
+                    <div class="text-[11px] font-semibold text-coffee-500 dark:text-[#78716c] uppercase tracking-wide mb-2">
+                        Preview (first 10 rows)
+                    </div>
+                    <div class="border border-coffee-200 dark:border-[#44403c] rounded-lg overflow-hidden">
+                        <div class="max-h-52 overflow-auto">
+                            <table class="w-full text-xs">
+                                <thead class="bg-coffee-50 dark:bg-[#1c1917] text-coffee-600 dark:text-[#a8a29e]">
+                                    <tr>
+                                        <th class="px-2 py-2 text-left">Date</th>
+                                        <th class="px-2 py-2 text-left">Method</th>
+                                        <th class="px-2 py-2 text-left">Farmer</th>
+                                        <th class="px-2 py-2 text-left">Grinder</th>
+                                        <th class="px-2 py-2 text-right">Grind</th>
+                                        <th class="px-2 py-2 text-right">In</th>
+                                        <th class="px-2 py-2 text-right">Ratio</th>
+                                        <th class="px-2 py-2 text-right">Time</th>
+                                        <th class="px-2 py-2 text-right">Temp</th>
+                                        <th class="px-2 py-2 text-left">Drink</th>
+                                        <th class="px-2 py-2 text-right">Rating</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="importPreviewBody" class="bg-white dark:bg-[#292524] text-coffee-800 dark:text-[#e7e5e4]"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button data-action-click="closeImportExportModal()" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">
+                        Cancel
+                    </button>
+                    <button id="importConfirmBtn" data-action-click="performImport()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2" disabled>
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
