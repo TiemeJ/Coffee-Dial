@@ -1979,6 +1979,22 @@ export const createAppContainerModules = () => {
             }
         };
 
+        const showBrewsForGear = (gearId = null) => {
+            const targetId = gearId || currentGasId;
+            if (!targetId) return;
+
+            closeGasCardMenu?.();
+            closeGasCard?.(null);
+            closeGasList?.();
+            clearSearch();
+            clearAllFilters();
+            applyFilter('gear', targetId);
+            displayedBrewsCount = BREWS_PER_PAGE;
+            renderTable();
+            renderActiveFilters();
+            document.getElementById('brewsTableMount')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
         const actions = {
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openImportExportModal, closeImportExportModal, setImportExportMode, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto, openBeanShopUrl, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, openBrewsTablePrefs, hideBrewsTablePrefsModal, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
             togglePinnedTiles,
@@ -2036,7 +2052,8 @@ export const createAppContainerModules = () => {
             openCoffeeFromBeanEdit,
             recalculateAllBeanStockLeft,
             migrateGrinderToGear,
-            fillLegacyGrinderFromGear
+            fillLegacyGrinderFromGear,
+            showBrewsForGear
         };
 
         const searchInput = document.getElementById('globalSearch'); 
