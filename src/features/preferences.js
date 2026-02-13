@@ -7,9 +7,6 @@ export const DEFAULT_PINNED_BREWS_PREFERENCES = {
 };
 
 export const createBrewsPreferencesModule = ({
-    columnDefs,
-    getColumnPreferences,
-    setColumnPreferences,
     getPinnedBrewsPreferences,
     setPinnedBrewsPreferences,
     getCurrentUser,
@@ -23,25 +20,6 @@ export const createBrewsPreferencesModule = ({
     pinBestBrewsForAllOpenBags,
     showAutoPinToast
 }) => {
-    const columnPreferencesKey = 'columnPreferences';
-
-    const loadColumnPreferencesFromStorage = () => {
-        const raw = localStorage.getItem(columnPreferencesKey);
-        if (!raw) return;
-        try {
-            const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === 'object') {
-                setColumnPreferences({ ...getColumnPreferences(), ...parsed });
-            }
-        } catch (err) {
-            console.error('Failed to parse column preferences', err);
-        }
-    };
-
-    const saveColumnPreferencesToStorage = (prefs) => {
-        localStorage.setItem(columnPreferencesKey, JSON.stringify(prefs));
-    };
-
     const loadLegacyPinnedBrewsPreferences = () => {
         const animationsRaw = localStorage.getItem('animationsEnabled');
         const organizeRaw = localStorage.getItem('organizeByBeans');
@@ -76,19 +54,6 @@ export const createBrewsPreferencesModule = ({
     };
 
     const openPreferences = () => {
-        const list = document.getElementById('preferencesList');
-        list.innerHTML = '';
-
-        const columnPreferences = getColumnPreferences();
-        columnDefs.forEach((col) => {
-            const isChecked = columnPreferences[col.id] !== false;
-            const div = document.createElement('div');
-            div.className =
-                'flex items-center justify-between p-2 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]';
-            div.innerHTML = `<span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">${col.label}</span><div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="pref_${col.id}" ${isChecked ? 'checked' : ''} class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="pref_${col.id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>`;
-            list.appendChild(div);
-        });
-
         const pinnedPrefs = getPinnedBrewsPreferences();
         const pinOpenBagsEnabled = !!pinnedPrefs.pinOpenBags;
 
@@ -110,15 +75,6 @@ export const createBrewsPreferencesModule = ({
     };
 
     const savePreferences = async () => {
-        const newPrefs = {};
-        columnDefs.forEach((col) => {
-            const cb = document.getElementById(`pref_${col.id}`);
-            newPrefs[col.id] = !!cb?.checked;
-        });
-
-        setColumnPreferences(newPrefs);
-        saveColumnPreferencesToStorage(newPrefs);
-
         const pinOpenBagsEnabled = !!document.getElementById('pinOpenBagsToggle')?.checked;
         const pinOpenBagsBestOnlyEnabled =
             pinOpenBagsEnabled && !!document.getElementById('pinOpenBagsBestOnlyToggle')?.checked;
@@ -174,9 +130,6 @@ export const createBrewsPreferencesModule = ({
     };
 
     return {
-        columnPreferencesKey,
-        loadColumnPreferencesFromStorage,
-        saveColumnPreferencesToStorage,
         loadLegacyPinnedBrewsPreferences,
         applyAnimationPreference,
         updateBestOnlyToggleState,

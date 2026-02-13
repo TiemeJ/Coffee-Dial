@@ -21,3 +21,7 @@ export const mountBrewsTableView = async () => {
 export const mountBrewsCardView = async () => {
     await mountView('brewsCardMount', './src/features/brews/brews-card.view.html');
 };
+
+export const mountBrewsTablePrefsView = async () => {
+    await mountView('brewsTablePrefsModalMount', './src/features/brews/brews-table-prefs.view.html');
+};

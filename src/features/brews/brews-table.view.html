@@ -127,7 +127,19 @@
                                     <span id="brewSortIcon-createdAt" class="text-[10px]"></span>
                                 </button>
                             </th>
-                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap"><span class="sr-only">Actions</span></th>
+                            <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap">
+                                <div class="flex flex-col items-center justify-center gap-0.5">
+                                    <button
+                                        type="button"
+                                        data-action-click="openBrewsTablePrefs()"
+                                        class="w-6 h-6 rounded text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center"
+                                        title="Table columns"
+                                    >
+                                        <i class="fa-solid fa-table-columns text-[11px]"></i>
+                                    </button>
+                                    <span class="sr-only">Actions</span>
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="coffeeTableBody"></tbody>

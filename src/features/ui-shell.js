@@ -367,6 +367,7 @@ export const createUiShellModule = ({
             closeIfVisible('exportModal', () => closeExportModal()) ||
             closeIfVisible('importModal', () => closeImportModal()) ||
             closeIfVisible('preferencesModal', () => document.getElementById('preferencesModal')?.classList.add('hidden')) ||
+            closeIfVisible('brewsTablePrefsModal', () => document.getElementById('brewsTablePrefsModal')?.classList.add('hidden')) ||
             closeIfVisible('coffeeScaleModal', () => closeCoffeeScaleModal?.()) ||
             closeIfVisible('uploadPhotoModal', () => closeUploadModal()) ||
             closeIfVisible('coffeeTypeCardOverlay', () => closeCoffeeTypeCard(null)) ||

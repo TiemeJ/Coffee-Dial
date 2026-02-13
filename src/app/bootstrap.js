@@ -6,7 +6,12 @@ import { initViewBindings } from './view-bindings.js';
 import { mountShellHeader } from '../features/shell/shell.controller.js';
 import { mountSignedOutAuth } from '../features/auth/auth.controller.js';
 import { mountPinnedSection } from '../features/pin/pin.mount.js';
-import { mountBrewsCardView, mountBrewsFormView, mountBrewsTableView } from '../features/brews/brews.mount.js';
+import {
+    mountBrewsCardView,
+    mountBrewsFormView,
+    mountBrewsTablePrefsView,
+    mountBrewsTableView
+} from '../features/brews/brews.mount.js';
 import { mountBeansCardView, mountBeansTableView } from '../features/beans/beans.mount.js';
 import { mountCoffeeTypesTableView } from '../features/coffees/coffee-types.mount.js';
 import { mountCoffeeTypeCardView } from '../features/coffees/coffee-type-card.mount.js';
@@ -27,6 +32,7 @@ await mountSignedOutAuth();
 await mountPinnedSection();
 await mountBrewsFormView();
 await mountBrewsTableView();
+await mountBrewsTablePrefsView();
 await mountBrewsCardView();
 await mountBeansTableView();
 await mountBeansCardView();

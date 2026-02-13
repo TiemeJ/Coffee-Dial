@@ -31,21 +31,6 @@
                         </div>
                     </div>
                 </div>
-                <div>
-                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-3">Table Columns</h4>
-                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Select the columns you want to see in the brew table. These settings are stored on your device.</p>
-                    <div id="preferencesList" class="space-y-3"></div>
-                </div>
-                <div class="mt-6">
-                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Email Login</h4>
-                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Enable passwordless sign-in for browsers that cannot use Google.</p>
-                    <div class="space-y-2">
-                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Email</label>
-                        <input id="emailLinkActivationEmail" type="email" placeholder="you@example.com" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors" />
-                        <button id="emailLinkActivationBtn" data-action-click="sendEmailLinkActivation()" class="w-full bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Send login link</button>
-                        <div id="emailLinkActivationStatus" class="hidden text-xs text-coffee-600 dark:text-[#a8a29e]"></div>
-                    </div>
-                </div>
                 <div class="mt-6">
                     <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Beans Utilities</h4>
                     <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Scan brews to sync legacy beans and extract coffee types.</p>
@@ -68,6 +53,16 @@
                         <button id="migrateGrinderToGearBtn" data-action-click="migrateGrinderToGear()" class="text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-2 rounded font-bold transition-colors border border-blue-200 dark:border-blue-800">
                             <i class="fa-solid fa-shuffle mr-1"></i> Migrate grinder to gear
                         </button>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Email Login</h4>
+                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Enable passwordless sign-in for browsers that cannot use Google.</p>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Email</label>
+                        <input id="emailLinkActivationEmail" type="email" placeholder="you@example.com" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors" />
+                        <button id="emailLinkActivationBtn" data-action-click="sendEmailLinkActivation()" class="w-full bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Send login link</button>
+                        <div id="emailLinkActivationStatus" class="hidden text-xs text-coffee-600 dark:text-[#a8a29e]"></div>
                     </div>
                 </div>
             </div>
