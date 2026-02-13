@@ -5,7 +5,25 @@
             transition: background-color 0.3s ease, color 0.3s ease; 
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: contain; 
-            padding-top: env(safe-area-inset-top);
+            padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+        }
+
+        /* Fixed app header with iOS safe-area support (Safari + fullscreen PWA). */
+        .app-header {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+
+        @supports (padding-top: constant(safe-area-inset-top)) {
+            body {
+                padding-top: calc(4rem + constant(safe-area-inset-top));
+            }
+            .app-header {
+                padding-top: constant(safe-area-inset-top);
+            }
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
