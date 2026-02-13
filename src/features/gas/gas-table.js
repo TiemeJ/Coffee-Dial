@@ -292,7 +292,6 @@ export const createGasTableModule = ({
                 <td class="px-4 py-3 font-semibold">${item.name || '-'}</td>
                 <td class="px-4 py-3">${normalizeType(item.type)}</td>
                 <td class="px-4 py-3 text-xs">${getMethodsLabel(item.methods)}</td>
-                <td class="px-4 py-3 text-right font-mono">${formatCurrency(item.price)}</td>
                 <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${purchasedDateLabel}</td>
                 <td class="px-4 py-3 text-center">
                     <div class="relative inline-block">
@@ -321,7 +320,7 @@ export const createGasTableModule = ({
         if (activeItems.length > 0) {
             const headerRow = document.createElement('tr');
             headerRow.className = 'bg-green-50 dark:bg-green-900/20';
-            headerRow.innerHTML = '<td colspan="6" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Active</td>';
+            headerRow.innerHTML = '<td colspan="5" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Active</td>';
             tbody.appendChild(headerRow);
             activeItems.forEach((item) => tbody.appendChild(createRow(item)));
         }
@@ -329,7 +328,7 @@ export const createGasTableModule = ({
         if (archivedItems.length > 0) {
             const headerRow = document.createElement('tr');
             headerRow.className = 'bg-gray-50 dark:bg-[#34302e]';
-            headerRow.innerHTML = '<td colspan="6" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Archived</td>';
+            headerRow.innerHTML = '<td colspan="5" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Archived</td>';
             tbody.appendChild(headerRow);
             archivedItems.forEach((item) => tbody.appendChild(createRow(item)));
         }

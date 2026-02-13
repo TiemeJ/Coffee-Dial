@@ -33,7 +33,18 @@ export const createGasCardModule = ({
         'French Press',
         'Chemex'
     ];
-    const GAS_TYPE_OPTIONS = ['Coffee maker', 'Grinder', 'Other'];
+    const GAS_TYPE_OPTIONS = [
+        'Basket',
+        'Burrs',
+        'Coffee maker',
+        'Distributor',
+        'Dripper',
+        'Filter',
+        'Grinder',
+        'Other',
+        'Tamper',
+        'Water'
+    ];
 
     let gasMethodsSelection = new Set();
     let gasMethodsFilter = '';
@@ -53,6 +64,9 @@ export const createGasCardModule = ({
     };
 
     const normalizeType = (type) => (GAS_TYPE_OPTIONS.includes(type) ? type : 'Other');
+    const closeAllActionMenus = () => {
+        document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
+    };
     const toInputDate = (value) => {
         if (!value) return '';
         const date = new Date(value);
@@ -381,6 +395,7 @@ export const createGasCardModule = ({
 
     const openGasCard = (gasId, ev) => {
         if (ev) ev.stopPropagation();
+        closeAllActionMenus();
         const item = getGasItems().find((entry) => entry.id === gasId);
         if (!item) return;
         bindGasMergeUi();
@@ -558,6 +573,7 @@ export const createGasCardModule = ({
     };
 
     const openGasFromTableEdit = (gasId) => {
+        closeAllActionMenus();
         openGasCard(gasId);
         enterGasEditMode();
     };
@@ -567,10 +583,12 @@ export const createGasCardModule = ({
     };
 
     const deleteGasFromTable = (gasId) => {
+        closeAllActionMenus();
         deleteGasItem(gasId);
     };
 
     const openGasMergeFromTable = (gasId) => {
+        closeAllActionMenus();
         openGasCard(gasId);
         openGasMergeModal();
     };
