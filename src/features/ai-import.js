@@ -122,7 +122,7 @@ export const createAiImportModule = ({
 
     const uploadPendingBeanImage = async (beanId) => {
         const user = getCurrentUser();
-        if (!pendingAIBeanImageFile || !beanId || !user) return;
+        if (!pendingAIBeanImageFile || !beanId || !user) return null;
 
         const storageRef = ref(storage, `photos/${user.uid}/bean_${beanId}_${Date.now()}`);
         const snapshot = await uploadBytes(storageRef, pendingAIBeanImageFile);
@@ -133,6 +133,7 @@ export const createAiImportModule = ({
         });
 
         pendingAIBeanImageFile = null;
+        return imageURL;
     };
 
     const clearPendingAIBeanImageFile = () => {

@@ -351,6 +351,7 @@ export const createBrewsActionsModule = ({
 
         try {
             const existingBrewForUpdate = eid ? coffees.find((c) => c.id === eid) : null;
+            let createdCoffeeTypeId = null;
 
             const makeCoffeeTypeKey = (obj) =>
                 [
@@ -387,7 +388,21 @@ export const createBrewsActionsModule = ({
                 if (!coffeeTypes.find((ct) => ct.id === typeRef.id)) {
                     coffeeTypes.push({ id: typeRef.id, ...typeData });
                 }
+                createdCoffeeTypeId = typeRef.id;
                 return { id: typeRef.id, created: true };
+            };
+
+            const applyImageToCreatedCoffeeType = async (uploadedImageUrl) => {
+                if (!uploadedImageUrl || !createdCoffeeTypeId) return;
+                const createdType = coffeeTypes.find((ct) => ct.id === createdCoffeeTypeId);
+                if (createdType?.imageUrl || createdType?.imageURL) return;
+                await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', createdCoffeeTypeId), {
+                    imageUrl: uploadedImageUrl,
+                    updatedAt: new Date().toISOString()
+                });
+                if (createdType) {
+                    createdType.imageUrl = uploadedImageUrl;
+                }
             };
 
             if (!selectedBeanId) {
@@ -412,7 +427,8 @@ export const createBrewsActionsModule = ({
                     const updates = { updatedAt: beanData.updatedAt };
                     if (!existingBean.coffeeTypeId && coffeeTypeId) updates.coffeeTypeId = coffeeTypeId;
                     await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), updates);
-                    await uploadPendingBeanImage(selectedBeanId);
+                    const uploadedImageUrl = await uploadPendingBeanImage(selectedBeanId);
+                    await applyImageToCreatedCoffeeType(uploadedImageUrl);
                 } else {
                     const coffeeTypeInfo = await ensureCoffeeTypeId();
                     const coffeeTypeId = coffeeTypeInfo?.id || null;
@@ -435,12 +451,14 @@ export const createBrewsActionsModule = ({
                             roaster: beanData.roaster,
                             farmer: beanData.farmer
                         });
-                        await uploadPendingBeanImage(selectedBeanId);
+                        const uploadedImageUrl = await uploadPendingBeanImage(selectedBeanId);
+                        await applyImageToCreatedCoffeeType(uploadedImageUrl);
                     }
                 }
             } else {
                 await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), { updatedAt: beanData.updatedAt });
-                await uploadPendingBeanImage(selectedBeanId);
+                const uploadedImageUrl = await uploadPendingBeanImage(selectedBeanId);
+                await applyImageToCreatedCoffeeType(uploadedImageUrl);
             }
 
             if (selectedBeanId) d.beanId = selectedBeanId;
