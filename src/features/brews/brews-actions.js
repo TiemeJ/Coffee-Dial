@@ -33,6 +33,7 @@ export const createBrewsActionsModule = ({
     archiveBeanIfStockDepleted,
     updateBeansLeftForBean,
     autoPinOpenBagsIfEnabled,
+    getPinnedBrewsPreferences,
     getFirstBrewDateForBean,
     showCoffeeTypeCreatedToast,
     uploadPendingBeanImage,
@@ -47,6 +48,12 @@ export const createBrewsActionsModule = ({
         const btn = document.getElementById('aiScanBtn');
         if (!btn) return;
         btn.classList.toggle('hidden', !visible);
+    };
+    const refreshManualPinningVisibility = () => {
+        const isActiveRow = document.getElementById('isActiveRow');
+        if (!isActiveRow) return;
+        const hideManualPinning = !!getPinnedBrewsPreferences?.()?.pinOpenBags;
+        isActiveRow.classList.toggle('hidden', hideManualPinning);
     };
     const closeAllActionMenus = () => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
@@ -135,6 +142,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('formContainer').classList.remove('editing-mode');
         document.getElementById('formTitle').innerHTML = `<span>${title}</span>`;
         document.getElementById('submitBtn').innerHTML = '<span>Save copy</span>';
+        refreshManualPinningVisibility();
         setAiAddVisibility(false);
         scrollBrewFormToTop();
     };
@@ -153,6 +161,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('submitBtn').className =
             'bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
         document.getElementById('isActiveToggle').checked = false;
+        refreshManualPinningVisibility();
         updateBeanDropdown();
         setBrewGearScope({ includeAll: false });
         setCoffeeDetailsCollapsed(false);
@@ -654,6 +663,7 @@ export const createBrewsActionsModule = ({
             document.getElementById('submitBtn').innerHTML = '<span>Update</span>';
             document.getElementById('submitBtn').className =
                 'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
+            refreshManualPinningVisibility();
             setAiAddVisibility(false);
             scrollBrewFormToTop();
         }, 0);
@@ -818,6 +828,7 @@ export const createBrewsActionsModule = ({
         duplicateCoffee,
         cloneBrew,
         deleteCoffee,
-        resetFormState
+        resetFormState,
+        refreshManualPinningVisibility
     };
 };

@@ -28,7 +28,8 @@ export const createBrewsCardActionsModule = ({
     getFirstBrewDateForBean,
     archiveBeanIfStockDepleted,
     updateBeansLeftForBean,
-    autoPinOpenBagsIfEnabled
+    autoPinOpenBagsIfEnabled,
+    getPinnedBrewsPreferences
 }) => {
     const QUICK_EDIT_METHODS = ['Espresso', 'V60', 'Hario Switch', 'Clever Dripper', 'Aeropress', 'OXO Rapid Brewer', 'French Press', 'Chemex'];
     const QUICK_EDIT_DRINKS = [
@@ -476,14 +477,18 @@ export const createBrewsCardActionsModule = ({
         if (!c) return;
 
         if (getCurrentView() === 'mine') {
-            const pinLabel = c.isActive ? 'Unpin' : 'Pin to Active';
+            const pinLabel = c.isActive ? 'Unpin' : 'Pin to active';
             const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
+            const showManualPinning = !getPinnedBrewsPreferences?.()?.pinOpenBags;
+            const pinAction = showManualPinning
+                ? `<button data-action-click="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button>`
+                : '';
             menu.innerHTML = `
                 <button data-action-click="enterBrewQuickEditMode();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 w-4"></i> Quick edit</button>
                 <button data-action-click="closeCoffeeCard(null); editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button>
                 <button data-action-click="fastDuplicateFromCard();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button>
                 <button data-action-click="duplicateFromCard();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button>
-                <button data-action-click="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button>
+                ${pinAction}
                 <button data-action-click="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload photo</button>
                 <button data-action-click="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button>
                 <button data-action-click="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button>

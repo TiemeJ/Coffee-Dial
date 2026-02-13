@@ -135,7 +135,12 @@ export const createAppContainerModules = () => {
             renderPinnedTiles: (...args) => renderPinnedTiles(...args),
             pinBrewsFromOpenBags: (...args) => pinBrewsFromOpenBags(...args),
             pinBestBrewsForAllOpenBags: (...args) => pinBestBrewsForAllOpenBags(...args),
-            showAutoPinToast
+            showAutoPinToast,
+            onPinnedBrewsPreferencesChanged: () => {
+                refreshManualPinningVisibility?.();
+                const currentCard = currentCardCoffee;
+                if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
+            }
         });
 
         const applyAnimationClass = (enabled) => {
@@ -1261,7 +1266,7 @@ export const createAppContainerModules = () => {
         
         const toggleForm = (f=null) => { 
             const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
-            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (coffeeScale?.autoConnect) coffeeScale.autoConnect(); const isEditing = c.classList.contains('editing-mode') || !!document.getElementById('editId').value; if (!isEditing) { setCoffeeDetailsCollapsed(false); if (coffeeScale?.applyGraphTogglePrefsForMethod) coffeeScale.applyGraphTogglePrefsForMethod(); } } else { o.classList.add('hidden'); } 
+            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); refreshManualPinningVisibility?.(); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (coffeeScale?.autoConnect) coffeeScale.autoConnect(); const isEditing = c.classList.contains('editing-mode') || !!document.getElementById('editId').value; if (!isEditing) { setCoffeeDetailsCollapsed(false); if (coffeeScale?.applyGraphTogglePrefsForMethod) coffeeScale.applyGraphTogglePrefsForMethod(); } } else { o.classList.add('hidden'); } 
         };
         
         const getCoffeeTypeForBrew = (brew) => {
@@ -1342,7 +1347,8 @@ export const createAppContainerModules = () => {
             getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
             archiveBeanIfStockDepleted: (...args) => archiveBeanIfStockDepleted(...args),
             updateBeansLeftForBean: (...args) => updateBeansLeftForBean(...args),
-            autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args)
+            autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
+            getPinnedBrewsPreferences: () => pinnedBrewsPreferences
         });
 
         const { resetCardPhotoState, triggerCardPhoto, handleCardPhoto } = createBrewsCardPhotoModule();
@@ -1416,7 +1422,8 @@ export const createAppContainerModules = () => {
             duplicateCoffee,
             cloneBrew,
             deleteCoffee,
-            resetFormState
+            resetFormState,
+            refreshManualPinningVisibility
         } = createBrewsActionsModule({
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
@@ -1452,6 +1459,7 @@ export const createAppContainerModules = () => {
             archiveBeanIfStockDepleted: (...args) => archiveBeanIfStockDepleted(...args),
             updateBeansLeftForBean: (...args) => updateBeansLeftForBean(...args),
             autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
+            getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
             getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
             showCoffeeTypeCreatedToast: (...args) => showCoffeeTypeCreatedToast(...args),
             uploadPendingBeanImage: (...args) => uploadPendingBeanImage(...args),
@@ -1460,6 +1468,7 @@ export const createAppContainerModules = () => {
             getSelectedBrewGearIds: () => getSelectedBrewGearIds(),
             setSelectedBrewGearIds: (...args) => setSelectedBrewGearIds(...args)
         });
+        refreshManualPinningVisibility();
         refreshBrewGearSelectors = () => {
             refreshBrewGearField();
             refreshQuickEditGearFieldVisibility();
@@ -1497,6 +1506,7 @@ export const createAppContainerModules = () => {
             getBrewsPerPage: () => BREWS_PER_PAGE,
             getColumnDefs: () => columnDefs,
             getColumnPreferences: () => columnPreferences,
+            getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
             getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
             getStarDisplay,

@@ -18,7 +18,8 @@ export const createBrewsPreferencesModule = ({
     renderPinnedTiles,
     pinBrewsFromOpenBags,
     pinBestBrewsForAllOpenBags,
-    showAutoPinToast
+    showAutoPinToast,
+    onPinnedBrewsPreferencesChanged
 }) => {
     const PREF_TOGGLE_IDS = [
         'animationsToggle',
@@ -120,6 +121,7 @@ export const createBrewsPreferencesModule = ({
 
         renderTable();
         renderPinnedTiles();
+        onPinnedBrewsPreferencesChanged?.(nextPinnedPrefs);
 
     };
 
