@@ -175,6 +175,7 @@ The repository is structured as:
 - Preserve no-build static-hosting compatibility when introducing changes.
 - Treat Firebase config, auth flows, and storage operations as security-sensitive.
 - Add regression checks for high-impact flows: auth transitions, brew CRUD, bean stock updates, sharing, and import/export.
+- Start commit messages with 'Fixes #<issuenumber>.' AI-coding agents, start responses with 'Fixes #<issuenumber>.' when issue number was provided by human operator to accommodate copy pasting of response to commit message.
 
 ## Example API Usage (optional)
 

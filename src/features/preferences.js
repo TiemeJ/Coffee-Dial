@@ -20,6 +20,18 @@ export const createBrewsPreferencesModule = ({
     pinBestBrewsForAllOpenBags,
     showAutoPinToast
 }) => {
+    const PREF_TOGGLE_IDS = [
+        'animationsToggle',
+        'organizeByBeansToggle',
+        'pinOpenBagsToggle',
+        'pinOpenBagsBestOnlyToggle',
+        'swapRoasterFarmerToggle'
+    ];
+    let isHydratingPreferences = false;
+    let hasBoundAutoSave = false;
+    let autoSaveTimer = null;
+    let saveQueue = Promise.resolve();
+
     const loadLegacyPinnedBrewsPreferences = () => {
         const animationsRaw = localStorage.getItem('animationsEnabled');
         const organizeRaw = localStorage.getItem('organizeByBeans');
@@ -53,44 +65,26 @@ export const createBrewsPreferencesModule = ({
         row.classList.toggle('cursor-not-allowed', !enabled);
     };
 
-    const openPreferences = () => {
-        const pinnedPrefs = getPinnedBrewsPreferences();
-        const pinOpenBagsEnabled = !!pinnedPrefs.pinOpenBags;
-
-        document.getElementById('animationsToggle').checked = !!pinnedPrefs.animationsEnabled;
-        document.getElementById('organizeByBeansToggle').checked = !!pinnedPrefs.organizeByBeans;
-        document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;
-        document.getElementById('pinOpenBagsBestOnlyToggle').checked = !!pinnedPrefs.pinOpenBagsBestOnly;
-        document.getElementById('swapRoasterFarmerToggle').checked = !!pinnedPrefs.swapRoasterFarmer;
-
-        updateBestOnlyToggleState(pinOpenBagsEnabled);
-
-        const pinOpenToggle = document.getElementById('pinOpenBagsToggle');
-        if (pinOpenToggle && !pinOpenToggle.dataset.bound) {
-            pinOpenToggle.addEventListener('change', () => updateBestOnlyToggleState());
-            pinOpenToggle.dataset.bound = 'true';
-        }
-
-        document.getElementById('preferencesModal').classList.remove('hidden');
-    };
-
-    const savePreferences = async () => {
+    const collectPinnedBrewsPreferencesFromForm = () => {
         const pinOpenBagsEnabled = !!document.getElementById('pinOpenBagsToggle')?.checked;
         const pinOpenBagsBestOnlyEnabled =
             pinOpenBagsEnabled && !!document.getElementById('pinOpenBagsBestOnlyToggle')?.checked;
-
-        const currentPrefs = getPinnedBrewsPreferences();
-        const pinOpenBagsWasEnabled = !!currentPrefs.pinOpenBags;
-        const pinOpenBagsBestOnlyWasEnabled = !!currentPrefs.pinOpenBagsBestOnly;
-
-        const nextPinnedPrefs = {
-            ...currentPrefs,
+        return {
+            ...getPinnedBrewsPreferences(),
             animationsEnabled: !!document.getElementById('animationsToggle')?.checked,
             organizeByBeans: !!document.getElementById('organizeByBeansToggle')?.checked,
             pinOpenBags: pinOpenBagsEnabled,
             pinOpenBagsBestOnly: pinOpenBagsBestOnlyEnabled,
             swapRoasterFarmer: !!document.getElementById('swapRoasterFarmerToggle')?.checked
         };
+    };
+
+    const persistPinnedBrewsPreferences = async (nextPinnedPrefs) => {
+        const currentPrefs = getPinnedBrewsPreferences();
+        const pinOpenBagsEnabled = !!nextPinnedPrefs.pinOpenBags;
+        const pinOpenBagsBestOnlyEnabled = !!nextPinnedPrefs.pinOpenBagsBestOnly;
+        const pinOpenBagsWasEnabled = !!currentPrefs.pinOpenBags;
+        const pinOpenBagsBestOnlyWasEnabled = !!currentPrefs.pinOpenBagsBestOnly;
 
         setPinnedBrewsPreferences(nextPinnedPrefs);
         applyAnimationPreference();
@@ -124,16 +118,64 @@ export const createBrewsPreferencesModule = ({
         localStorage.removeItem('organizeByBeans');
         localStorage.removeItem('pinOpenBags');
 
-        document.getElementById('preferencesModal').classList.add('hidden');
         renderTable();
         renderPinnedTiles();
+
+    };
+
+    const enqueuePinnedBrewsPreferencesSave = (nextPinnedPrefs) => {
+        saveQueue = saveQueue
+            .then(() => persistPinnedBrewsPreferences(nextPinnedPrefs))
+            .catch((err) => {
+                console.error('Failed to persist preferences', err);
+            });
+        return saveQueue;
+    };
+
+    const scheduleAutoSavePreferences = () => {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+            const nextPinnedPrefs = collectPinnedBrewsPreferencesFromForm();
+            enqueuePinnedBrewsPreferencesSave(nextPinnedPrefs);
+        }, 120);
+    };
+
+    const bindPreferencesAutoSave = () => {
+        if (hasBoundAutoSave) return;
+        hasBoundAutoSave = true;
+        PREF_TOGGLE_IDS.forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('change', () => {
+                if (isHydratingPreferences) return;
+                if (id === 'pinOpenBagsToggle') updateBestOnlyToggleState();
+                scheduleAutoSavePreferences();
+            });
+        });
+    };
+
+    const openPreferences = () => {
+        const pinnedPrefs = getPinnedBrewsPreferences();
+        const pinOpenBagsEnabled = !!pinnedPrefs.pinOpenBags;
+
+        isHydratingPreferences = true;
+        document.getElementById('animationsToggle').checked = !!pinnedPrefs.animationsEnabled;
+        document.getElementById('organizeByBeansToggle').checked = !!pinnedPrefs.organizeByBeans;
+        document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;
+        document.getElementById('pinOpenBagsBestOnlyToggle').checked = !!pinnedPrefs.pinOpenBagsBestOnly;
+        document.getElementById('swapRoasterFarmerToggle').checked = !!pinnedPrefs.swapRoasterFarmer;
+
+        updateBestOnlyToggleState(pinOpenBagsEnabled);
+        bindPreferencesAutoSave();
+        isHydratingPreferences = false;
+
+        document.getElementById('preferencesModal').classList.remove('hidden');
     };
 
     return {
         loadLegacyPinnedBrewsPreferences,
         applyAnimationPreference,
         updateBestOnlyToggleState,
-        openPreferences,
-        savePreferences
+        openPreferences
     };
 };

@@ -5,6 +5,7 @@ export const createBrewsTablePrefModule = ({
     renderTable
 }) => {
     const columnPreferencesKey = 'columnPreferences';
+    let hasBoundAutoSave = false;
 
     const loadColumnPreferencesFromStorage = () => {
         const raw = localStorage.getItem(columnPreferencesKey);
@@ -41,6 +42,7 @@ export const createBrewsTablePrefModule = ({
 
     const openBrewsTablePrefs = () => {
         renderBrewsTablePrefsList();
+        bindBrewsTablePrefsAutoSave();
         document.getElementById('brewsTablePrefsModal')?.classList.remove('hidden');
     };
 
@@ -48,7 +50,7 @@ export const createBrewsTablePrefModule = ({
         document.getElementById('brewsTablePrefsModal')?.classList.add('hidden');
     };
 
-    const saveBrewsTablePrefs = () => {
+    const applyBrewsTablePrefsFromForm = () => {
         const newPrefs = {};
         columnDefs.forEach((col) => {
             const cb = document.getElementById(`brew_pref_${col.id}`);
@@ -57,8 +59,19 @@ export const createBrewsTablePrefModule = ({
 
         setColumnPreferences(newPrefs);
         saveColumnPreferencesToStorage(newPrefs);
-        hideBrewsTablePrefsModal();
         renderTable();
+    };
+
+    const bindBrewsTablePrefsAutoSave = () => {
+        if (hasBoundAutoSave) return;
+        const list = document.getElementById('brewsTablePrefsList');
+        if (!list) return;
+        hasBoundAutoSave = true;
+        list.addEventListener('change', (event) => {
+            const target = event.target;
+            if (!target || !target.id || !target.id.startsWith('brew_pref_')) return;
+            applyBrewsTablePrefsFromForm();
+        });
     };
 
     return {
@@ -66,7 +79,6 @@ export const createBrewsTablePrefModule = ({
         loadColumnPreferencesFromStorage,
         saveColumnPreferencesToStorage,
         openBrewsTablePrefs,
-        hideBrewsTablePrefsModal,
-        saveBrewsTablePrefs
+        hideBrewsTablePrefsModal
     };
 };
