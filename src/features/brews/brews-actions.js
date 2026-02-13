@@ -64,6 +64,58 @@ export const createBrewsActionsModule = ({
         const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
         window.scrollTo({ top, behavior: 'smooth' });
     };
+    const fillCoffeeDetailsForNewBeanFromBrew = (brew) => {
+        const source = brew || {};
+        const normalizeValue = (value) => (value === '-' ? '' : value || '');
+        const bean = source.beanId ? getBeans().find((item) => item.id === source.beanId) : null;
+        const beanDisplay = bean && getBeanCoffeeTypeDisplay ? getBeanCoffeeTypeDisplay(bean) : null;
+        const resolved = {
+            roaster: normalizeValue(beanDisplay?.roaster) || source.roaster || source.name || '',
+            farmer: normalizeValue(beanDisplay?.farmer) || source.farmer || '',
+            origin: normalizeValue(beanDisplay?.origin) || source.origin || source.beanType || '',
+            variety: normalizeValue(beanDisplay?.variety) || source.variety || '',
+            processing: normalizeValue(beanDisplay?.processing) || source.processing || '',
+            roastType: normalizeValue(beanDisplay?.roastType) || source.roastType || source.roast || ''
+        };
+        const setValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value || '';
+        };
+        setValue('roaster', resolved.roaster);
+        setValue('farmer', resolved.farmer);
+        setValue('origin', resolved.origin);
+        setValue('variety', resolved.variety);
+        setValue('processing', resolved.processing);
+        setValue('roastType', resolved.roastType);
+        const savedBeanSelect = document.getElementById('savedBeanSelect');
+        if (savedBeanSelect) savedBeanSelect.value = '';
+        const savedBeanEditBtn = document.getElementById('savedBeanEditBtn');
+        if (savedBeanEditBtn) savedBeanEditBtn.disabled = true;
+        ['roaster', 'farmer'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    };
+    const buildFriendRepeatSource = (brew) => {
+        const base = stripBrewGraphFields(brew || {});
+        const normalizeValue = (value) => (value === '-' ? '' : value || '');
+        const linkedBean = base.beanId ? getBeans().find((item) => item.id === base.beanId) : null;
+        const beanDisplay = linkedBean && getBeanCoffeeTypeDisplay ? getBeanCoffeeTypeDisplay(linkedBean) : null;
+        return {
+            ...base,
+            roaster: normalizeValue(base.roaster) || normalizeValue(base.name) || normalizeValue(beanDisplay?.roaster),
+            farmer: normalizeValue(base.farmer) || normalizeValue(beanDisplay?.farmer),
+            origin: normalizeValue(base.origin) || normalizeValue(base.beanType) || normalizeValue(beanDisplay?.origin),
+            variety: normalizeValue(base.variety) || normalizeValue(beanDisplay?.variety),
+            processing: normalizeValue(base.processing) || normalizeValue(beanDisplay?.processing),
+            roastType: normalizeValue(base.roastType) || normalizeValue(base.roast) || normalizeValue(beanDisplay?.roastType),
+            notes: '',
+            improve: '',
+            rating: 0
+        };
+    };
     const isGrinderGear = (item) => (item?.type || '').toString().toLowerCase() === 'grinder';
     const resolveGrinderNameFromGearIds = (gearIds) => {
         if (!Array.isArray(gearIds) || !gearIds.length) return '';
@@ -137,6 +189,24 @@ export const createBrewsActionsModule = ({
         const d = stripBrewGraphFields(brew);
         document.getElementById('editId').value = '';
         populateForm(d);
+        toggleForm(true);
+        setCoffeeDetailsCollapsed(true);
+        document.getElementById('formContainer').classList.remove('editing-mode');
+        document.getElementById('formTitle').innerHTML = `<span>${title}</span>`;
+        document.getElementById('submitBtn').innerHTML = '<span>Save copy</span>';
+        refreshManualPinningVisibility();
+        setAiAddVisibility(false);
+        scrollBrewFormToTop();
+    };
+    const showFriendRepeatInForm = ({ brew, title }) => {
+        closeAllActionMenus();
+        updateBeanDropdown();
+        setBrewGearScope({ includeAll: false });
+        const d = stripBrewGraphFields(brew);
+        delete d.beanId;
+        document.getElementById('editId').value = '';
+        populateForm(d);
+        fillCoffeeDetailsForNewBeanFromBrew(d);
         toggleForm(true);
         setCoffeeDetailsCollapsed(true);
         document.getElementById('formContainer').classList.remove('editing-mode');
@@ -727,22 +797,11 @@ export const createBrewsActionsModule = ({
         closeCoffeeCard(null);
 
         if (getCurrentView() !== 'mine') {
+            const friendDraft = buildFriendRepeatSource(c);
             document.getElementById('viewSelect').value = 'mine';
             changeView('mine');
             setTimeout(() => {
-                document.getElementById('editId').value = '';
-                updateBeanDropdown();
-                setBrewGearScope({ includeAll: false });
-                setCoffeeDetailsCollapsed(true);
-                const d = stripBrewGraphFields(c);
-                populateForm(d);
-                toggleForm(true);
-                setCoffeeDetailsCollapsed(true);
-                document.getElementById('formContainer').classList.remove('editing-mode');
-                document.getElementById('formTitle').innerHTML = '<span>Add friend\'s brew</span>';
-                document.getElementById('submitBtn').innerHTML = '<span>Save brew</span>';
-                setAiAddVisibility(false);
-                scrollBrewFormToTop();
+                showFriendRepeatInForm({ brew: friendDraft, title: 'Repeat brew' });
             }, 500);
             return;
         }
@@ -758,11 +817,11 @@ export const createBrewsActionsModule = ({
         if (!c) return;
 
         if (getCurrentView() !== 'mine') {
-            const d = stripBrewGraphFields(c);
+            const friendDraft = buildFriendRepeatSource(c);
             document.getElementById('viewSelect').value = 'mine';
             changeView('mine');
             setTimeout(() => {
-                showDuplicateInForm({ brew: d, title: 'Repeat brew' });
+                showFriendRepeatInForm({ brew: friendDraft, title: 'Repeat brew' });
             }, 500);
             return;
         }
