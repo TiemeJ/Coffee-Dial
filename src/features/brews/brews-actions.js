@@ -43,6 +43,11 @@ export const createBrewsActionsModule = ({
 }) => {
     const clean = (value) => (value || '').toString().toLowerCase().trim();
     const scale = () => getCoffeeScale?.();
+    const setAiAddVisibility = (visible) => {
+        const btn = document.getElementById('aiScanBtn');
+        if (!btn) return;
+        btn.classList.toggle('hidden', !visible);
+    };
     const closeAllActionMenus = () => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
     };
@@ -130,6 +135,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('formContainer').classList.remove('editing-mode');
         document.getElementById('formTitle').innerHTML = `<span>${title}</span>`;
         document.getElementById('submitBtn').innerHTML = '<span>Save Copy</span>';
+        setAiAddVisibility(false);
         scrollBrewFormToTop();
     };
 
@@ -158,6 +164,7 @@ export const createBrewsActionsModule = ({
         if (scale()?.setRecipeSteps) scale().setRecipeSteps([]);
         if (scale()?.syncGraphFormFields) scale().syncGraphFormFields();
         if (scale()?.applyGraphTogglePrefsForMethod) scale().applyGraphTogglePrefsForMethod();
+        setAiAddVisibility(true);
     };
 
     const handleFormSubmit = async (e) => {
@@ -647,6 +654,7 @@ export const createBrewsActionsModule = ({
             document.getElementById('submitBtn').innerHTML = '<span>Update</span>';
             document.getElementById('submitBtn').className =
                 'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
+            setAiAddVisibility(false);
             scrollBrewFormToTop();
         }, 0);
     };
@@ -723,13 +731,14 @@ export const createBrewsActionsModule = ({
                 document.getElementById('formContainer').classList.remove('editing-mode');
                 document.getElementById('formTitle').innerHTML = '<span>Add Friend\'s Brew</span>';
                 document.getElementById('submitBtn').innerHTML = '<span>Save Brew</span>';
+                setAiAddVisibility(false);
                 scrollBrewFormToTop();
             }, 500);
             return;
         }
 
         setTimeout(() => {
-            showDuplicateInForm({ brew: c, title: 'Duplicate Brew' });
+            showDuplicateInForm({ brew: c, title: 'Repeat brew' });
         }, 200);
     };
 
@@ -743,13 +752,13 @@ export const createBrewsActionsModule = ({
             document.getElementById('viewSelect').value = 'mine';
             changeView('mine');
             setTimeout(() => {
-                showDuplicateInForm({ brew: d, title: 'Duplicate Brew' });
+                showDuplicateInForm({ brew: d, title: 'Repeat brew' });
             }, 500);
             return;
         }
 
         setTimeout(() => {
-            showDuplicateInForm({ brew: c, title: 'Duplicate Brew' });
+            showDuplicateInForm({ brew: c, title: 'Repeat brew' });
         }, 0);
     };
 

@@ -19,15 +19,15 @@
                     
                     <!-- SECTION 1: COFFEE DETAILS -->
                     <div class="bg-coffee-50 dark:bg-[#1c1917]/50 p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] relative">
-                         <div id="coffeeDetailsHeader" class="flex justify-between items-center mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c]">
+                         <div id="coffeeDetailsHeader" data-action-click="toggleCoffeeDetails(event)" class="flex justify-between items-center mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] cursor-pointer select-none" title="Collapse or expand coffee details">
                                       <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
                                           <i class="fa-solid fa-seedling text-coffee-600 dark:text-[#a8a29e]"></i> <span id="coffeeDetailsTitle">Coffee Details</span>
                                       </h3>
                             <!-- AI & Saved Beans Controls -->
-                            <div class="flex items-center gap-2">
+                            <div data-action-click="event.stopPropagation()" class="flex items-center gap-2">
                                  <div class="relative">
                                     <button type="button" data-action-click="toggleAiMenu(event)" id="aiScanBtn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
-                                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Scan Bag
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI add
                                     </button>
                                     <!-- AI Menu -->
                                     <div id="aiMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
