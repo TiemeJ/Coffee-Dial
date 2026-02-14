@@ -873,7 +873,6 @@ export const createAppContainerModules = () => {
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             getBeanTableOrder: (...args) => getBeanTableOrder(...args),
             openBrewWithBean: (...args) => openBrewWithBean(...args),
-            openNewBag: (...args) => openNewBag(...args),
             deleteBean: (...args) => deleteBean(...args),
             showBrewsForBean: (...args) => showBrewsForBean(...args),
             showCoffeeForBean: (...args) => showCoffeeForBean(...args),

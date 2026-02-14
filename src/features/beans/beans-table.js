@@ -281,10 +281,7 @@ export const createBeansTableModule = ({
                                  <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
                              </button>
                              ${goToCoffeeBtn}
-                             ${isMine ? `<button data-action-click="openNewBag('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                 <i class="fa-solid fa-bag-shopping text-green-600 w-4"></i> New bag
-                             </button>
-                             <button data-action-click="toggleBeanFrozen('${bean.id}', ${bean.frozen ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                             ${isMine ? `<button data-action-click="toggleBeanFrozen('${bean.id}', ${bean.frozen ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                  <i class="fa-solid ${freezeIcon} w-4"></i> ${freezeLabel}
                              </button>
                              <button data-action-click="toggleBeanArchive('${bean.id}', ${bean.archived ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">

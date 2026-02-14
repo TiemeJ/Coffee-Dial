@@ -8,7 +8,6 @@ export const createBeansCardUiModule = ({
     getBeanCoffeeTypeDisplay,
     getBeanTableOrder,
     openBrewWithBean,
-    openNewBag,
     deleteBean,
     showBrewsForBean,
     showCoffeeForBean,
@@ -176,7 +175,6 @@ export const createBeansCardUiModule = ({
         }
 
         const brewBtn = document.getElementById('beanCardBrewBtn');
-        const openNewBagBtn = document.getElementById('beanCardOpenNewBagBtn');
         const deleteBtn = document.getElementById('beanCardDeleteBtn');
         const showBrewsBtn = document.getElementById('beanCardShowBrewsBtn');
         const showCoffeeBtn = document.getElementById('beanCardShowCoffeeBtn');
@@ -184,7 +182,6 @@ export const createBeansCardUiModule = ({
         const brewActionBtn = document.getElementById('beanCardActionBrew');
         const brewsActionBtn = document.getElementById('beanCardActionBrews');
         const coffeeActionBtn = document.getElementById('beanCardActionCoffee');
-        const openBagActionBtn = document.getElementById('beanCardActionOpenBag');
         const deleteActionBtn = document.getElementById('beanCardActionDelete');
         const editBtn = document.getElementById('beanCardEditBtn');
         const menuBtn = document.getElementById('beanCardMenuBtn');
@@ -197,11 +194,6 @@ export const createBeansCardUiModule = ({
                 openBrewWithBean(bean.id);
             };
             brewBtn.classList.toggle('hidden', !isMine);
-        }
-
-        if (openNewBagBtn) {
-            openNewBagBtn.onclick = () => openNewBag(bean.id);
-            openNewBagBtn.classList.toggle('hidden', !isMine);
         }
 
         if (deleteBtn) {
@@ -228,11 +220,6 @@ export const createBeansCardUiModule = ({
         }
 
         if (brewsActionBtn) brewsActionBtn.onclick = () => showBrewsForBean(bean.id);
-
-        if (openBagActionBtn) {
-            openBagActionBtn.onclick = () => openNewBag(bean.id);
-            openBagActionBtn.classList.toggle('hidden', !isMine);
-        }
 
         if (deleteActionBtn) {
             deleteActionBtn.onclick = () => {
