@@ -16,8 +16,11 @@ export const createBeansCardActionsModule = ({
     clearCoffeeTypesFilters,
     openCoffeeTypeCard,
     fillBeanDetails,
-    toggleForm
+    toggleForm,
+    shouldUseLegacyBrewForm,
+    openBrewFormModal
 }) => {
+    const isLegacyBrewFormEnabled = () => shouldUseLegacyBrewForm?.() !== false;
     const showBrewsForBean = (beanId = null) => {
         const targetId = beanId || getCurrentBeanCardId();
         if (!targetId) return;
@@ -53,6 +56,10 @@ export const createBeansCardActionsModule = ({
             fillBeanDetails(beanId);
         }
         toggleForm(true);
+        if (!isLegacyBrewFormEnabled()) {
+            openBrewFormModal?.(null, { reset: false, syncTitleFromForm: true });
+            return;
+        }
         const formWrapper = document.getElementById('formWrapper');
         if (!formWrapper) return;
         const scrollToFormTop = (behavior = 'smooth') => {

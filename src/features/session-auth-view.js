@@ -58,7 +58,8 @@ export const createSessionAuthViewModule = ({
     getCoffeeScale,
     refreshBrewGearSelectors,
     getLastGalleryVisit,
-    setLastGalleryVisit
+    setLastGalleryVisit,
+    applyBrewFormInlineVisibility
 }) => {
     const googleLogin = () => signInWithPopup(auth, provider).catch((e) => alert(e.message));
 
@@ -167,6 +168,7 @@ export const createSessionAuthViewModule = ({
         applyAnimationPreference();
         updatePublicToggleUI();
         document.getElementById('myShareId').value = user.uid;
+        applyBrewFormInlineVisibility?.();
         renderTable();
         return { shouldShowOnboarding };
     };
@@ -191,20 +193,9 @@ export const createSessionAuthViewModule = ({
         const user = getCurrentUser();
         if (!user) return;
 
-        const targetUid = uid === 'mine' ? user.uid : uid;
         const isMine = uid === 'mine';
-        const formContainer = document.getElementById('formContainer');
-        const formWrapper = document.getElementById('formWrapper');
-
-        if (isMine) {
-            formWrapper.classList.remove('hidden');
-            formContainer.classList.remove('hidden');
-            toggleForm(false);
-        } else {
-            formWrapper.classList.add('hidden');
-            formContainer.classList.add('hidden');
-            toggleForm(false);
-        }
+        const targetUid = isMine ? user.uid : uid;
+        applyBrewFormInlineVisibility?.();
 
         const brewsRef = collection(db, 'users', targetUid, 'coffees');
         setUnsubscribeData(

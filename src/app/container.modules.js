@@ -105,6 +105,23 @@ export const createAppContainerModules = () => {
             activeFilters
         } = initialState;
         const BREWS_PER_PAGE = initialState.BREWS_PER_PAGE;
+        let openBrewFormModalRef = null;
+        const openBrewFormModalBridge = (event = null, options = {}) => openBrewFormModalRef?.(event, options);
+        const isLegacyBrewFormEnabled = () => pinnedBrewsPreferences?.useLegacyBrewForm !== false;
+        const applyBrewFormInlineVisibility = () => {
+            const formMount = document.getElementById('brewsFormMount');
+            const formContainer = document.getElementById('formContainer');
+            if (!formMount) return;
+            const shouldShowInline = currentView === 'mine' && isLegacyBrewFormEnabled();
+            const modal = document.getElementById('brewFormModal');
+            const modalOpen = !!modal && !modal.classList.contains('hidden');
+            formMount.classList.toggle('hidden', !shouldShowInline);
+            if (formContainer) {
+                if (shouldShowInline || modalOpen) formContainer.classList.remove('hidden');
+                else formContainer.classList.add('hidden');
+            }
+            if (!shouldShowInline && !modalOpen) toggleForm?.(false);
+        };
 
         const {
             columnPreferencesKey,
@@ -138,6 +155,7 @@ export const createAppContainerModules = () => {
             pinBestBrewsForAllOpenBags: (...args) => pinBestBrewsForAllOpenBags(...args),
             showAutoPinToast,
             onPinnedBrewsPreferencesChanged: () => {
+                applyBrewFormInlineVisibility?.();
                 refreshManualPinningVisibility?.();
                 const currentCard = currentCardCoffee;
                 if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
@@ -287,7 +305,8 @@ export const createAppContainerModules = () => {
             getCoffeeScale: () => coffeeScale,
             refreshBrewGearSelectors: () => refreshBrewGearSelectors(),
             getLastGalleryVisit: () => lastGalleryVisit,
-            setLastGalleryVisit: (value) => { lastGalleryVisit = value; }
+            setLastGalleryVisit: (value) => { lastGalleryVisit = value; },
+            applyBrewFormInlineVisibility: (...args) => applyBrewFormInlineVisibility(...args)
         });
 
         const {
@@ -827,7 +846,9 @@ export const createAppContainerModules = () => {
             clearCoffeeTypesFilters: (...args) => clearCoffeeTypesFilters(...args),
             openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
             fillBeanDetails: (...args) => fillBeanDetails(...args),
-            toggleForm: (...args) => toggleForm(...args)
+            toggleForm: (...args) => toggleForm(...args),
+            shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
+            openBrewFormModal: (...args) => openBrewFormModalBridge(...args)
         });
 
         const {
@@ -1492,7 +1513,9 @@ export const createAppContainerModules = () => {
             clearPendingAIBeanImageFile: (...args) => clearPendingAIBeanImageFile(...args),
             getCoffeeScale: () => coffeeScale,
             getSelectedBrewGearIds: () => getSelectedBrewGearIds(),
-            setSelectedBrewGearIds: (...args) => setSelectedBrewGearIds(...args)
+            setSelectedBrewGearIds: (...args) => setSelectedBrewGearIds(...args),
+            shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
+            openBrewFormModal: (...args) => openBrewFormModalBridge(...args)
         });
         refreshManualPinningVisibility();
         refreshBrewGearSelectors = () => {
@@ -2006,15 +2029,31 @@ export const createAppContainerModules = () => {
             document.getElementById('brewsTableMount')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
-        const { openBrewFormModal, closeBrewFormModal, submitBrewFormModal } = createBrewsFormModalModule({
+        const { openBrewFormModal, closeBrewFormModal, discardBrewFormModal, submitBrewFormModal } = createBrewsFormModalModule({
             getCurrentView: () => currentView,
             changeView: (...args) => changeView(...args),
             resetFormState: (...args) => resetFormState(...args),
             toggleForm: (...args) => toggleForm(...args),
             openAppConfirm: (...args) => openAppConfirm(...args)
         });
+        openBrewFormModalRef = (...args) => openBrewFormModal(...args);
+        applyBrewFormInlineVisibility();
 
-        const openAddBrewFromPinned = (event = null) => openBrewFormModal(event);
+        const openAddBrewFromPinned = (event = null) => {
+            if (!isLegacyBrewFormEnabled()) {
+                openBrewFormModal(event, { reset: true, title: 'Add new brew' });
+                return;
+            }
+            if (event?.stopPropagation) event.stopPropagation();
+            if (currentView !== 'mine') changeView('mine');
+            resetFormState(null);
+            toggleForm(true);
+            const formWrapper = document.getElementById('formWrapper');
+            if (!formWrapper) return;
+            const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
+            const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
+            window.scrollTo({ top: Math.max(0, top - headerHeight - 8), behavior: 'smooth' });
+        };
 
         const actions = {
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openImportExportModal, closeImportExportModal, setImportExportMode, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, openBrewsTablePrefs, hideBrewsTablePrefsModal, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
@@ -2077,6 +2116,7 @@ export const createAppContainerModules = () => {
             showBrewsForGear,
             openAddBrewFromPinned,
             closeBrewFormModal,
+            discardBrewFormModal,
             submitBrewFormModal
         };
 

@@ -41,7 +41,9 @@ export const createBrewsActionsModule = ({
     clearPendingAIBeanImageFile,
     getCoffeeScale,
     getSelectedBrewGearIds,
-    setSelectedBrewGearIds
+    setSelectedBrewGearIds,
+    shouldUseLegacyBrewForm,
+    openBrewFormModal
 }) => {
     const clean = (value) => (value || '').toString().toLowerCase().trim();
     const scale = () => getCoffeeScale?.();
@@ -70,6 +72,18 @@ export const createBrewsActionsModule = ({
         scrollToFormTop('smooth');
         requestAnimationFrame(() => scrollToFormTop('auto'));
         setTimeout(() => scrollToFormTop('auto'), 140);
+    };
+    const isLegacyBrewFormEnabled = () => shouldUseLegacyBrewForm?.() !== false;
+    const presentPreparedForm = ({ title = null, syncTitleFromForm = true } = {}) => {
+        if (isLegacyBrewFormEnabled()) {
+            scrollBrewFormToTop();
+            return;
+        }
+        openBrewFormModal?.(null, {
+            reset: false,
+            title,
+            syncTitleFromForm
+        });
     };
     const fillCoffeeDetailsForNewBeanFromBrew = (brew) => {
         const source = brew || {};
@@ -203,7 +217,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('submitBtn').innerHTML = '<span>Save copy</span>';
         refreshManualPinningVisibility();
         setAiAddVisibility(false);
-        scrollBrewFormToTop();
+        presentPreparedForm({ title, syncTitleFromForm: true });
     };
     const showFriendRepeatInForm = ({ brew, title }) => {
         closeAllActionMenus();
@@ -221,7 +235,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('submitBtn').innerHTML = '<span>Save copy</span>';
         refreshManualPinningVisibility();
         setAiAddVisibility(false);
-        scrollBrewFormToTop();
+        presentPreparedForm({ title, syncTitleFromForm: true });
     };
 
     const resetFormState = (e) => {
@@ -761,7 +775,7 @@ export const createBrewsActionsModule = ({
                 'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
             refreshManualPinningVisibility();
             setAiAddVisibility(false);
-            scrollBrewFormToTop();
+            presentPreparedForm({ title: 'Edit brew', syncTitleFromForm: true });
         }, 0);
     };
 

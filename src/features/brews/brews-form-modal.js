@@ -23,10 +23,13 @@ export const createBrewsFormModalModule = ({
     const getModalBody = () => document.getElementById('brewFormModalBody');
     const getFormWrapper = () => document.getElementById('formWrapper');
     const getFormContainerHeader = () => document.getElementById('formContainerHeader');
+    const getFormContainer = () => document.getElementById('formContainer');
     const getFormContent = () => document.getElementById('formContent');
     const getCoffeeForm = () => document.getElementById('coffeeForm');
     const getFormActionButtons = () => document.getElementById('formActionButtons');
     const getFormMount = () => document.getElementById('brewsFormMount');
+    const getModalTitle = () => document.getElementById('brewFormModalTitle');
+    const getFormTitle = () => document.getElementById('formTitle');
     const isModalOpen = () => {
         const modal = getModal();
         return !!modal && !modal.classList.contains('hidden');
@@ -82,6 +85,22 @@ export const createBrewsFormModalModule = ({
         if (!shouldDiscard) return false;
         resetFormState();
         return true;
+    };
+
+    const setModalTitleFromForm = () => {
+        const modalTitle = getModalTitle();
+        if (!modalTitle) return;
+        const iconHtml = '<i class="fa-solid fa-plus-circle text-coffee-700 dark:text-[#d6ccc2]"></i>';
+        const titleText = (getFormTitle()?.textContent || 'Add new brew').trim();
+        modalTitle.innerHTML = `${iconHtml} ${titleText}`;
+    };
+
+    const setModalTitle = (title) => {
+        const modalTitle = getModalTitle();
+        if (!modalTitle) return;
+        const iconHtml = '<i class="fa-solid fa-plus-circle text-coffee-700 dark:text-[#d6ccc2]"></i>';
+        const titleText = (title || 'Add new brew').toString().trim();
+        modalTitle.innerHTML = `${iconHtml} ${titleText}`;
     };
 
     const moveFormToModal = () => {
@@ -153,16 +172,26 @@ export const createBrewsFormModalModule = ({
         originalNextSibling = null;
     };
 
-    const openBrewFormModal = (event = null) => {
+    const openBrewFormModal = (event = null, options = {}) => {
         if (event?.stopPropagation) event.stopPropagation();
         if (getCurrentView() !== 'mine') changeView('mine');
+        const {
+            reset = true,
+            title = null,
+            syncTitleFromForm = false
+        } = options;
 
         const modal = getModal();
         if (!modal) return;
         if (!moveFormToModal()) return;
+        const formContainer = getFormContainer();
+        if (formContainer) formContainer.classList.remove('hidden');
 
-        resetFormState(null);
+        if (reset) resetFormState(null);
         toggleForm(true);
+        if (syncTitleFromForm) setModalTitleFromForm();
+        else if (title !== null) setModalTitle(title);
+        else if (reset) setModalTitle('Add new brew');
         initialSnapshot = snapshotFormState();
         attachBeforeUnload();
 
@@ -191,6 +220,18 @@ export const createBrewsFormModalModule = ({
         detachBeforeUnload();
     };
 
+    const discardBrewFormModal = async (event = null) => {
+        if (event?.stopPropagation) event.stopPropagation();
+        const modal = getModal();
+        if (!modal || modal.classList.contains('hidden')) return;
+        const canDiscard = await confirmDiscardIfNeeded();
+        if (!canDiscard) return;
+        if (!hasUnsavedChanges()) {
+            resetFormState();
+        }
+        await closeBrewFormModal(null, { force: true });
+    };
+
     const submitBrewFormModal = (event = null) => {
         if (event?.stopPropagation) event.stopPropagation();
         const form = getCoffeeForm();
@@ -206,6 +247,8 @@ export const createBrewsFormModalModule = ({
     return {
         openBrewFormModal,
         closeBrewFormModal,
-        submitBrewFormModal
+        discardBrewFormModal,
+        submitBrewFormModal,
+        setModalTitleFromForm
     };
 };
