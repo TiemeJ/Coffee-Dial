@@ -50,18 +50,18 @@ export const createSocialModule = ({
         if (!tProf || !tFoll || !cProf || !cFoll) return;
 
         if (tab === 'profile') {
-            tProf.classList.add('bg-coffee-50', 'dark:bg-[#1c1917]', 'text-coffee-700', 'dark:text-[#d6ccc2]');
-            tProf.classList.remove('text-coffee-500', 'dark:text-[#78716c]');
-            tFoll.classList.remove('bg-coffee-50', 'dark:bg-[#1c1917]', 'text-coffee-700', 'dark:text-[#d6ccc2]');
-            tFoll.classList.add('text-coffee-500', 'dark:text-[#78716c]');
+            tProf.classList.add('bg-white', 'dark:bg-[#292524]', 'text-coffee-800', 'dark:text-white', 'shadow-sm');
+            tProf.classList.remove('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700', 'dark:hover:text-white');
+            tFoll.classList.remove('bg-white', 'dark:bg-[#292524]', 'text-coffee-800', 'dark:text-white', 'shadow-sm');
+            tFoll.classList.add('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700', 'dark:hover:text-white');
             cProf.classList.remove('hidden');
             cFoll.classList.add('hidden');
             loadFollowersList();
         } else {
-            tFoll.classList.add('bg-coffee-50', 'dark:bg-[#1c1917]', 'text-coffee-700', 'dark:text-[#d6ccc2]');
-            tFoll.classList.remove('text-coffee-500', 'dark:text-[#78716c]');
-            tProf.classList.remove('bg-coffee-50', 'dark:bg-[#1c1917]', 'text-coffee-700', 'dark:text-[#d6ccc2]');
-            tProf.classList.add('text-coffee-500', 'dark:text-[#78716c]');
+            tFoll.classList.add('bg-white', 'dark:bg-[#292524]', 'text-coffee-800', 'dark:text-white', 'shadow-sm');
+            tFoll.classList.remove('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700', 'dark:hover:text-white');
+            tProf.classList.remove('bg-white', 'dark:bg-[#292524]', 'text-coffee-800', 'dark:text-white', 'shadow-sm');
+            tProf.classList.add('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700', 'dark:hover:text-white');
             cFoll.classList.remove('hidden');
             cProf.classList.add('hidden');
         }
