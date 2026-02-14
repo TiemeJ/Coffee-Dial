@@ -39,25 +39,7 @@
             </div>
             <div id="coffeeTypeCardView" class="flex-1 flex flex-col min-h-0">
                 <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4">
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="w-36 md:w-40 lg:w-48">
-                        <div id="coffeeTypeCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
-                            <img id="coffeeTypeCardImage" class="absolute inset-0 w-full h-full object-contain hidden cursor-pointer" src="" alt="Coffee Photo" data-action-click="openCoffeeTypePhoto(event)">
-                            <div id="coffeeTypeCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
-                                <i class="fa-solid fa-image text-3xl mb-2"></i>
-                                <p class="text-xs font-medium">Add / Change picture</p>
-                            </div>
-                            <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="triggerCoffeeTypePhoto(event)" title="Change photo">
-                                    <i class="fa-solid fa-camera"></i>
-                                </button>
-                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="removeCoffeeTypePhoto(event)" title="Remove photo">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <input type="file" id="coffeeTypePhotoInput" accept="image/*" class="hidden" data-action-change="handleCoffeeTypePhoto(event)">
-                    </div>
+                <div class="flex items-start gap-4">
                     <div class="flex-1 space-y-4">
                         <div class="grid grid-cols-2 gap-3 text-sm">
                             <div>
@@ -81,11 +63,29 @@
                             <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Created</span>
                             <span id="coffeeTypeCardCreated" class="text-xs text-coffee-600 dark:text-[#a8a29e]"></span>
                         </div>
-                        <div>
-                            <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Taste Notes</span>
-                            <p id="coffeeTypeCardTasteNotes" class="text-sm text-coffee-700 dark:text-[#d6ccc2] italic bg-yellow-50 dark:bg-yellow-900/10 p-2 rounded-lg border border-yellow-100 dark:border-yellow-900/20"></p>
-                        </div>
                     </div>
+                    <div class="w-28 sm:w-32 mr-4 sm:mr-5">
+                        <div id="coffeeTypeCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
+                            <img id="coffeeTypeCardImage" class="absolute inset-0 w-full h-full object-contain hidden cursor-pointer" src="" alt="Coffee Photo" data-action-click="openCoffeeTypePhoto(event)">
+                            <div id="coffeeTypeCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
+                                <i class="fa-solid fa-image text-3xl mb-2"></i>
+                                <p class="text-xs font-medium">Add / Change picture</p>
+                            </div>
+                            <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="triggerCoffeeTypePhoto(event)" title="Change photo">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="removeCoffeeTypePhoto(event)" title="Remove photo">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="file" id="coffeeTypePhotoInput" accept="image/*" class="hidden" data-action-change="handleCoffeeTypePhoto(event)">
+                    </div>
+                </div>
+                <div class="w-full">
+                    <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Taste Notes</span>
+                    <p id="coffeeTypeCardTasteNotes" class="text-sm text-coffee-700 dark:text-[#d6ccc2] italic bg-yellow-50 dark:bg-yellow-900/10 p-2 rounded-lg border border-yellow-100 dark:border-yellow-900/20"></p>
                 </div>
                 </div>
                 <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
