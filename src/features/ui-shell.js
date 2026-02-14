@@ -24,6 +24,21 @@ export const createUiShellModule = ({
         bodyOverflow: ''
     };
     let lastTouchY = null;
+    const getMainMenuDropdown = () => document.getElementById('mainMenuDropdown');
+    const getMainMenuBtn = () => document.getElementById('mainMenuBtn');
+    const setMainMenuButtonActive = (isActive) => {
+        const btn = getMainMenuBtn();
+        if (!btn) return;
+        btn.classList.toggle('bg-coffee-100', isActive);
+        btn.classList.toggle('dark:bg-[#44403c]', isActive);
+    };
+    const setMainMenuOpen = (isOpen) => {
+        const dropdown = getMainMenuDropdown();
+        if (!dropdown) return;
+        dropdown.classList.toggle('hidden', !isOpen);
+        setMainMenuButtonActive(isOpen);
+        if (!isOpen) getMainMenuBtn()?.blur();
+    };
 
     const FOCUSABLE_SELECTOR = [
         'a[href]',
@@ -173,7 +188,7 @@ export const createUiShellModule = ({
             !document.getElementById('mainMenuDropdown')?.contains(e.target) &&
             !e.target.closest('[data-action-click*="toggleMainMenu"]')
         ) {
-            document.getElementById('mainMenuDropdown')?.classList.add('hidden');
+            setMainMenuOpen(false);
         }
 
         if (
@@ -363,7 +378,10 @@ export const createUiShellModule = ({
 
     const toggleMainMenu = (e) => {
         if (e) e.stopPropagation();
-        document.getElementById('mainMenuDropdown')?.classList.toggle('hidden');
+        const dropdown = getMainMenuDropdown();
+        if (!dropdown) return;
+        const willOpen = dropdown.classList.contains('hidden');
+        setMainMenuOpen(willOpen);
     };
 
     const handleEscapeKey = (event) => {
