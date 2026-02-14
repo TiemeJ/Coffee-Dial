@@ -186,9 +186,10 @@ export const createBrewsFormModalModule = ({
         if (!moveFormToModal()) return;
         const formContainer = getFormContainer();
         if (formContainer) formContainer.classList.remove('hidden');
+        const isExpanded = formContainer?.getAttribute('aria-expanded') === 'true';
 
         if (reset) resetFormState(null);
-        toggleForm(true);
+        if (reset || !isExpanded) toggleForm(true);
         if (syncTitleFromForm) setModalTitleFromForm();
         else if (title !== null) setModalTitle(title);
         else if (reset) setModalTitle('Add new brew');
