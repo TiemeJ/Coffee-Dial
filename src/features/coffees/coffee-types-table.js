@@ -309,7 +309,7 @@ export const createCoffeeTypesTableModule = ({
                             </button>` : ''}
                             ${buyBtn}
                             ${isMine ? `<button data-action-click="openNewBagForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                <i class="fa-solid fa-bag-shopping text-emerald-600 w-4"></i> New bag
+                                <i class="fa-solid fa-bag-shopping text-sky-600 w-4"></i> Open bag
                             </button>` : ''}
                             <button data-action-click="showBeansForCoffeeTypeFromTable('${type.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                 <i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to beans
