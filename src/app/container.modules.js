@@ -19,6 +19,7 @@
         import { createBeansStockControllerModule } from '../features/beans/beans-stock.controller.js';
         import { createBeansCardActionsModule } from '../features/beans/beans-card-actions.js';
         import { createBeansCardFormModule } from '../features/beans/beans-card-form.js';
+        import { createBeansCardPhotoModule } from '../features/beans/beans-card-photo.js';
         import { createBeansCardUiModule } from '../features/beans/beans-card-ui.js';
         import { createSocialModule } from '../features/social.js';
         import { createGalleryModule } from '../features/gallery.js';
@@ -883,6 +884,29 @@ export const createAppContainerModules = () => {
             cancelBeanEditMode: (...args) => cancelBeanEditMode(...args),
             toggleBeanFrozen: (...args) => toggleBeanFrozen(...args),
             toggleBeanArchive: (...args) => toggleBeanArchive(...args)
+        });
+
+        const {
+            triggerBeanPhoto,
+            openBeanPhoto,
+            removeBeanPhoto,
+            handleBeanPhoto
+        } = createBeansCardPhotoModule({
+            getCurrentUser: () => currentUser,
+            getCurrentView: () => currentView,
+            getCurrentBeanCardId: () => currentBeanCardId,
+            getBeans: () => beans,
+            setBeansState: (value) => { beans = value; },
+            db,
+            storage,
+            doc,
+            updateDoc,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject,
+            imageCompression,
+            openBeanCard: (...args) => openBeanCard(...args)
         });
 
         const {
@@ -2019,7 +2043,7 @@ export const createAppContainerModules = () => {
             closeBeanCardMenu,
             // New Beans Functions
             openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, backfillBeanDatesFromBrews, extractCoffeeTypesFromBeans,
-            openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto,
+            openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto,
             openGasList, closeGasList, createGasItemFromModal, setGasSearch, clearGasSearch, toggleGasQuickFilter, openGasQuickFilterValues, applyGasFilterFromQuick, clearGasFilters, setGasSort, openGasCard, closeGasCard, navigateGasCard, enterGasEditMode, cancelGasEditMode, saveGasEdits, toggleGasArchive, deleteGasItem, openGasFromTableEdit, openGasMergeFromTable, openGasBulkAddFromTable, toggleGasArchiveFromTable, deleteGasFromTable, triggerGasPhoto, openGasPhoto, removeGasPhoto, handleGasPhoto, openGasMergeModal, closeGasMergeModal, mergeGasItem, openGasBulkAddModal, closeGasBulkAddModal, bulkAddGearToBrews,
             closeCoffeeCardMenu,
             toggleCoffeeDetails,

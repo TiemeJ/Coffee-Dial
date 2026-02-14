@@ -124,8 +124,12 @@ export const createBeansCardUiModule = ({
 
         const coffeeType = getCoffeeTypeForBean(bean);
         const coffeeImageUrl = coffeeType?.imageUrl || coffeeType?.imageURL || '';
+        const beanImageUrl = bean.imageURL || bean.imageUrl || '';
         const imgEl = document.getElementById('beanCardImage');
         const placeholderEl = document.getElementById('beanCardImagePlaceholder');
+        const beanImgEl = document.getElementById('beanCardBeanImage');
+        const beanPlaceholderEl = document.getElementById('beanCardBeanImagePlaceholder');
+        const beanImageControlsEl = document.getElementById('beanCardBeanImageControls');
         if (coffeeImageUrl) {
             imgEl.src = coffeeImageUrl;
             imgEl.classList.remove('hidden');
@@ -158,6 +162,18 @@ export const createBeansCardUiModule = ({
                 placeholderEl.classList.remove('cursor-pointer');
                 placeholderEl.onclick = null;
             }
+        }
+        if (beanImageUrl) {
+            beanImgEl.src = beanImageUrl;
+            beanImgEl.classList.remove('hidden');
+            beanPlaceholderEl.classList.add('hidden');
+        } else {
+            beanImgEl.src = '';
+            beanImgEl.classList.add('hidden');
+            beanPlaceholderEl.classList.remove('hidden');
+        }
+        if (beanImageControlsEl) {
+            beanImageControlsEl.classList.toggle('hidden', !isMine);
         }
 
         const brewBtn = document.getElementById('beanCardBrewBtn');

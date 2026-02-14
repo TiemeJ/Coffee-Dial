@@ -45,17 +45,8 @@
                 <p id="beanCardSubtitle" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></p>
             </div>
             <div id="beanCardView" class="flex-1 flex flex-col min-h-0">
-                <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4">
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="w-36 md:w-40 lg:w-48">
-                        <div id="beanCardImageSection" class="relative w-full aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
-                            <img id="beanCardImage" class="absolute inset-0 w-full h-full object-contain hidden" src="" alt="Coffee Photo">
-                            <div id="beanCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
-                                <i class="fa-solid fa-image text-3xl mb-2"></i>
-                                <p class="text-xs font-medium">No coffee image</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="space-y-4 flex-1 overflow-y-auto ios-scroll p-4 pt-4">
+                <div class="flex items-start gap-4">
                     <div class="flex-1 space-y-4">
                         <div class="grid grid-cols-2 gap-3 text-sm">
                             <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Origin</span><span id="beanCardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
@@ -63,14 +54,43 @@
                             <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Variety</span><span id="beanCardVariety" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                             <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</span><span id="beanCardRoast" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
                         </div>
-                        <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-3 border border-coffee-100 dark:border-[#44403c]">
-                            <div class="grid grid-cols-3 gap-2 text-center text-sm">
-                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Weight</div><div id="beanCardStock" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
-                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Beans left</div><div id="beanCardStockLeft" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
-                                <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Status</div><div id="beanCardStatus" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
+                    </div>
+                    <div id="beanCardImageSection" class="relative shrink-0 w-28 sm:w-32 aspect-[3/4] mt-0 mr-4 sm:mr-5 bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
+                        <img id="beanCardImage" class="absolute inset-0 w-full h-full object-contain hidden" src="" alt="Coffee Photo">
+                        <div id="beanCardImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
+                            <i class="fa-solid fa-image text-3xl mb-2"></i>
+                            <p class="text-xs font-medium">No coffee image</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mr-4 sm:mr-5 bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-3 border border-coffee-100 dark:border-[#44403c]">
+                    <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Weight</div><div id="beanCardStock" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Beans left</div><div id="beanCardStockLeft" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
+                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Status</div><div id="beanCardStatus" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
+                    </div>
+                </div>
+                <div class="flex items-end gap-4">
+                    <div id="beanCardBeanImageSection" class="relative shrink-0 w-24 h-24 group">
+                        <div class="absolute inset-0 rounded-full overflow-hidden border border-coffee-200/70 dark:border-[#57534e]/80 bg-coffee-100/50 dark:bg-[#2a2624]/60">
+                            <img id="beanCardBeanImage" class="absolute inset-0 w-full h-full object-cover hidden cursor-pointer" src="" alt="Bean Photo" data-action-click="openBeanPhoto(event)">
+                            <div id="beanCardBeanImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-3 text-coffee-400 dark:text-[#57534e]">
+                                <i class="fa-solid fa-image text-xl mb-1"></i>
+                                <p class="text-[10px] font-medium text-center leading-tight">Add / Change</p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-4 gap-3 text-xs">
+                        <div id="beanCardBeanImageControls" class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="bg-black/50 text-white w-7 h-7 rounded-full flex items-center justify-center" data-action-click="triggerBeanPhoto(event)" title="Change photo">
+                                <i class="fa-solid fa-camera text-xs"></i>
+                            </button>
+                            <button class="bg-black/50 text-white w-7 h-7 rounded-full flex items-center justify-center" data-action-click="removeBeanPhoto(event)" title="Remove photo">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                        <input type="file" id="beanPhotoInput" accept="image/*" class="hidden" data-action-change="handleBeanPhoto(event)">
+                    </div>
+                    <div class="flex-1 flex justify-end">
+                        <div class="w-56 grid grid-cols-2 gap-3 text-xs text-left ml-auto">
                             <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast</span><span id="beanCardRoastDate"></span></div>
                             <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Frozen</span><span id="beanCardFrozen"></span></div>
                             <div><span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Opened</span><span id="beanCardOpened"></span></div>
