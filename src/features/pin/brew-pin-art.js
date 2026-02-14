@@ -111,8 +111,19 @@ export const createBrewPinArtModule = ({
             const bean = group.bean;
             const previewBrew = group.brews[0] || null;
             const coffeeType = getCoffeeTypeForBrew?.(previewBrew) || null;
-            const roaster = (bean?.roaster || 'Unknown coffee').trim();
-            const farmer = (bean?.farmer || '-').trim();
+            const roaster = (
+                coffeeType?.roaster ||
+                bean?.roaster ||
+                previewBrew?.roaster ||
+                previewBrew?.name ||
+                'Unknown coffee'
+            ).trim();
+            const farmer = (
+                coffeeType?.farmer ||
+                bean?.farmer ||
+                previewBrew?.farmer ||
+                '-'
+            ).trim();
             const swapTitle = !!pinnedBrewsPreferences?.swapRoasterFarmer;
             const titleText = swapTitle ? (farmer && farmer !== '-' ? farmer : roaster) : roaster;
             const subtitleText = swapTitle ? roaster : farmer;
