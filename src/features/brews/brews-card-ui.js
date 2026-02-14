@@ -16,6 +16,26 @@ export const createBrewsCardUiModule = ({
     resetCardPhotoState,
     toggleCardMode
 }) => {
+    let navigationOrderOverride = null;
+    let pinnedNavigationAccent = false;
+
+    const getCardOrder = () =>
+        Array.isArray(navigationOrderOverride) && navigationOrderOverride.length
+            ? navigationOrderOverride
+            : getBrewTableOrder();
+
+    const updatePinnedNavAccent = () => {
+        const prevBtn = document.getElementById('coffeeCardPrevBtn');
+        const nextBtn = document.getElementById('coffeeCardNextBtn');
+        if (!prevBtn || !nextBtn) return;
+        [prevBtn, nextBtn].forEach((btn) => {
+            btn.classList.toggle('text-emerald-600', pinnedNavigationAccent);
+            btn.classList.toggle('dark:text-emerald-400', pinnedNavigationAccent);
+            btn.classList.toggle('border-emerald-300', pinnedNavigationAccent);
+            btn.classList.toggle('dark:border-emerald-700', pinnedNavigationAccent);
+        });
+    };
+
     const populateCardData = (c) => {
         setCurrentCardCoffee(c);
 
@@ -109,11 +129,12 @@ export const createBrewsCardUiModule = ({
     };
 
     const updateCoffeeCardNav = () => {
-        const order = getBrewTableOrder();
+        const order = getCardOrder();
         const idx = order.indexOf(getCurrentCoffeeCardId());
         const prevBtn = document.getElementById('coffeeCardPrevBtn');
         const nextBtn = document.getElementById('coffeeCardNextBtn');
         if (!prevBtn || !nextBtn) return;
+        updatePinnedNavAccent();
         prevBtn.disabled = idx <= 0;
         nextBtn.disabled = idx === -1 || idx >= order.length - 1;
         prevBtn.classList.toggle('opacity-40', prevBtn.disabled);
@@ -122,9 +143,14 @@ export const createBrewsCardUiModule = ({
         nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
     };
 
-    const openCoffeeCard = (id, e) => {
+    const openCoffeeCard = (id, e, options = {}) => {
+        const keepNavigationOrder = !!options.keepNavigationOrder;
         if (window.getSelection().toString().length > 0) return;
         if (e) e.stopPropagation();
+        if (!keepNavigationOrder) {
+            navigationOrderOverride = null;
+            pinnedNavigationAccent = false;
+        }
         const c = getCoffees().find((x) => x.id === id);
         if (!c) return;
 
@@ -138,16 +164,25 @@ export const createBrewsCardUiModule = ({
         updateCoffeeCardNav();
     };
 
+    const openCoffeeCardWithOrder = (id, order = [], e = null, options = {}) => {
+        const cleanedOrder = Array.from(new Set((order || []).filter(Boolean)));
+        navigationOrderOverride = cleanedOrder.length ? cleanedOrder : null;
+        pinnedNavigationAccent = !!options.pinnedNavigationAccent;
+        openCoffeeCard(id, e, { keepNavigationOrder: true });
+    };
+
     const navigateCoffeeCard = (direction) => {
-        const order = getBrewTableOrder();
+        const order = getCardOrder();
         const idx = order.indexOf(getCurrentCoffeeCardId());
         const nextIdx = idx + direction;
         if (nextIdx < 0 || nextIdx >= order.length) return;
-        openCoffeeCard(order[nextIdx]);
+        openCoffeeCard(order[nextIdx], null, { keepNavigationOrder: true });
     };
 
     const closeCoffeeCard = (e) => {
         if (!e || e.target.id === 'coffeeCardOverlay') {
+            navigationOrderOverride = null;
+            pinnedNavigationAccent = false;
             cancelBrewQuickEditMode();
             document.getElementById('coffeeCardOverlay')?.classList.add('hidden');
             const graphModal = document.getElementById('cardGraphModal');
@@ -159,6 +194,7 @@ export const createBrewsCardUiModule = ({
         populateCardData,
         getBrewTableOrder,
         openCoffeeCard,
+        openCoffeeCardWithOrder,
         updateCoffeeCardNav,
         navigateCoffeeCard,
         closeCoffeeCard

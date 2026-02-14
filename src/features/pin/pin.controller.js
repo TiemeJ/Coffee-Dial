@@ -18,6 +18,7 @@ export const createPinControllerModule = ({
     getCoffeeTypeForBrew,
     getCoffeeTypeDisplay,
     openCoffeeCard,
+    openCoffeeCardWithOrder,
     openBeanCardWithOrder,
     renderTable
 }) => {
@@ -27,13 +28,32 @@ export const createPinControllerModule = ({
         resolveLinkedBean: (...args) => view.resolveLinkedBean(...args),
         getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
         getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
-        openCoffeeCard: (...args) => openCoffeeCard(...args),
+        openCoffeeCard: (...args) => openPinnedCoffeeCard(...args),
         openBeanCardWithOrder: (...args) => openBeanCardWithOrder(...args)
     });
 
     let expandedBeans = new Set();
     let lastPinnedBeanKeys = [];
     let sortableInstances = [];
+
+    const getPinnedBrewOrderIds = () =>
+        getCoffees()
+            .filter((c) => c.isActive)
+            .sort((a, b) => {
+                const orderDelta = (a.customOrder || 0) - (b.customOrder || 0);
+                if (orderDelta !== 0) return orderDelta;
+                return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+            })
+            .map((brew) => brew.id);
+
+    const openPinnedCoffeeCard = (brewId, event = null) => {
+        const order = getPinnedBrewOrderIds();
+        if (typeof openCoffeeCardWithOrder === 'function') {
+            openCoffeeCardWithOrder(brewId, order, event, { pinnedNavigationAccent: true });
+            return;
+        }
+        openCoffeeCard?.(brewId, event);
+    };
 
     const destroySortable = () => {
         sortableInstances.forEach((instance) => instance.destroy());
@@ -169,7 +189,7 @@ export const createPinControllerModule = ({
             onToggleBeanExpansion: (beanKey) => {
                 toggleBeanExpansion(beanKey);
             },
-            openCoffeeCard
+            openCoffeeCard: (...args) => openPinnedCoffeeCard(...args)
         });
 
         updatePinnedHeaderToggleIcon(result.beanKeys, !!pinnedPrefs.organizeByBeans, false);

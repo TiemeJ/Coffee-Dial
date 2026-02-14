@@ -1359,6 +1359,7 @@ export const createAppContainerModules = () => {
             populateCardData,
             getBrewTableOrder,
             openCoffeeCard,
+            openCoffeeCardWithOrder,
             updateCoffeeCardNav,
             navigateCoffeeCard,
             closeCoffeeCard
@@ -1536,6 +1537,7 @@ export const createAppContainerModules = () => {
             getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
             openCoffeeCard: (...args) => openCoffeeCard(...args),
+            openCoffeeCardWithOrder: (...args) => openCoffeeCardWithOrder(...args),
             openBeanCardWithOrder: (...args) => openBeanCardWithOrder(...args),
             renderTable: (...args) => renderTable(...args)
         });
