@@ -1,0 +1,29 @@
+<div
+    id="brewFormModal"
+    class="hidden fixed inset-0 z-[10030] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2"
+    data-action-click="closeBrewFormModal(event)"
+>
+    <div
+        class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col"
+        data-action-click="event.stopPropagation()"
+    >
+        <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917]">
+            <h3 class="font-bold text-xl text-coffee-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-plus-circle text-coffee-700 dark:text-[#d6ccc2]"></i>
+                Add new brew
+            </h3>
+            <button data-action-click="closeBrewFormModal(event)" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        <div id="brewFormModalBody" class="flex-1 overflow-y-auto px-2 pt-2 pb-4 md:px-3 md:pt-3 bg-white dark:bg-[#292524]"></div>
+        <div class="px-5 py-3 border-t border-coffee-200 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] flex justify-end gap-3">
+            <button type="button" data-action-click="closeBrewFormModal(event)" class="text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] px-4 py-2.5 rounded-lg font-medium transition-colors">
+                Discard
+            </button>
+            <button type="button" data-action-click="submitBrewFormModal(event)" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2">
+                <i class="fa-solid fa-check"></i> <span>Save brew</span>
+            </button>
+        </div>
+    </div>
+</div>

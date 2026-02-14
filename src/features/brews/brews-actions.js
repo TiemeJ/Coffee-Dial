@@ -526,6 +526,11 @@ export const createBrewsActionsModule = ({
 
             resetFormState();
             toggleForm(false);
+            document.dispatchEvent(
+                new CustomEvent('brew:form-saved', {
+                    detail: { editId: eid || null }
+                })
+            );
         } catch (err) {
             alert(err.message);
         }

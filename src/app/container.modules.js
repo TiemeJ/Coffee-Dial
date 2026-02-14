@@ -34,6 +34,7 @@
         import { createBrewsCardShareModule } from '../features/brews/brews-card-share.js';
         import { createBrewsCardGraphModule } from '../features/brews/brews-card-graph.js';
         import { createBrewsCardPhotoModule } from '../features/brews/brews-card-photo.js';
+        import { createBrewsFormModalModule } from '../features/brews/brews-form-modal.js';
         import { createBrewsPinAutopinModule } from '../features/pin/brews-pin-autopin.js';
         import { createBrewsPreferencesModule } from '../features/preferences.js';
         import { createSessionAuthViewModule } from '../features/session-auth-view.js';
@@ -2005,28 +2006,15 @@ export const createAppContainerModules = () => {
             document.getElementById('brewsTableMount')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
-        const openAddBrewFromPinned = (event = null) => {
-            if (event?.stopPropagation) event.stopPropagation();
-            if (currentView !== 'mine') {
-                changeView('mine');
-            }
-            resetFormState(null);
-            toggleForm(true);
-            if (document.activeElement && typeof document.activeElement.blur === 'function') {
-                document.activeElement.blur();
-            }
-            const formWrapper = document.getElementById('formWrapper');
-            if (formWrapper) {
-                const scrollToFormTop = (behavior = 'smooth') => {
-                    const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
-                    const targetTop = formWrapper.getBoundingClientRect().top + window.pageYOffset;
-                    window.scrollTo({ top: Math.max(0, targetTop - headerHeight - 8), behavior });
-                };
-                scrollToFormTop('smooth');
-                requestAnimationFrame(() => scrollToFormTop('auto'));
-                setTimeout(() => scrollToFormTop('auto'), 140);
-            }
-        };
+        const { openBrewFormModal, closeBrewFormModal, submitBrewFormModal } = createBrewsFormModalModule({
+            getCurrentView: () => currentView,
+            changeView: (...args) => changeView(...args),
+            resetFormState: (...args) => resetFormState(...args),
+            toggleForm: (...args) => toggleForm(...args),
+            openAppConfirm: (...args) => openAppConfirm(...args)
+        });
+
+        const openAddBrewFromPinned = (event = null) => openBrewFormModal(event);
 
         const actions = {
             triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openImportExportModal, closeImportExportModal, setImportExportMode, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, openBrewsTablePrefs, hideBrewsTablePrefsModal, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
@@ -2087,7 +2075,9 @@ export const createAppContainerModules = () => {
             migrateGrinderToGear,
             fillLegacyGrinderFromGear,
             showBrewsForGear,
-            openAddBrewFromPinned
+            openAddBrewFromPinned,
+            closeBrewFormModal,
+            submitBrewFormModal
         };
 
         const searchInput = document.getElementById('globalSearch'); 

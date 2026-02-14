@@ -9,6 +9,7 @@ import { mountPinnedSection } from '../features/pin/pin.mount.js';
 import {
     mountBrewsCardView,
     mountBrewsFormView,
+    mountBrewsFormModalView,
     mountBrewsPinArtView,
     mountBrewsTablePrefsView,
     mountBrewsTableView
@@ -33,6 +34,7 @@ await mountSignedOutAuth();
 await mountPinnedSection();
 await mountBrewsPinArtView();
 await mountBrewsFormView();
+await mountBrewsFormModalView();
 await mountBrewsTableView();
 await mountBrewsTablePrefsView();
 await mountBrewsCardView();

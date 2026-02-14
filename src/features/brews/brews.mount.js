@@ -14,6 +14,10 @@ export const mountBrewsFormView = async () => {
     await mountView('brewsFormMount', './src/features/brews/brews-form.view.html');
 };
 
+export const mountBrewsFormModalView = async () => {
+    await mountView('brewFormModalMount', './src/features/brews/brews-form-modal.view.html');
+};
+
 export const mountBrewsTableView = async () => {
     await mountView('brewsTableMount', './src/features/brews/brews-table.view.html');
 };
