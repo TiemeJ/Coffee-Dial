@@ -88,7 +88,6 @@ export const createBeansCardFormModule = ({
             return `${yyyy}-${mm}-${dd}`;
         };
 
-        document.getElementById('beanEditShopUrl').value = bean.shopUrl || '';
         const coffeeTypeSelect = document.getElementById('beanEditCoffeeType');
         coffeeTypeSelect.value = bean.coffeeTypeId || '__new__';
         applyBeanEditCoffeeType(coffeeTypeSelect.value);
@@ -154,7 +153,7 @@ export const createBeansCardFormModule = ({
                 roast: document.getElementById('beanEditRoastType').value || '',
                 variety: document.getElementById('beanEditVariety').value || '',
                 rating: 0,
-                webshopUrl: document.getElementById('beanEditShopUrl').value || '',
+                webshopUrl: '',
                 imageUrl: bean?.imageURL || '',
                 tasteNotes: '',
                 createdAt: nowIso,
@@ -172,7 +171,6 @@ export const createBeansCardFormModule = ({
             processing: document.getElementById('beanEditProcessing').value || '',
             variety: document.getElementById('beanEditVariety').value || '',
             roastType: document.getElementById('beanEditRoastType').value || '',
-            shopUrl: document.getElementById('beanEditShopUrl').value || '',
             coffeeTypeId: coffeeTypeIdVal,
             stock: stockVal,
             openedDate: openedDateVal ? new Date(openedDateVal).toISOString() : null,

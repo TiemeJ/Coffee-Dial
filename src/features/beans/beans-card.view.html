@@ -15,9 +15,6 @@
                         <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                     </button>
                     <div id="beanCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
-                        <button id="beanCardActionBuy" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
-                        </button>
                         <button id="beanCardActionEdit" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                             <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
                         </button>
@@ -101,9 +98,6 @@
                 </div>
                 <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
                     <div class="flex flex-wrap gap-2">
-                        <button id="beanCardBuyBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-cart-shopping"></i> Buy
-                        </button>
                         <button id="beanCardBrewBtn" class="px-3 py-1.5 text-xs font-bold rounded bg-coffee-700 hover:bg-coffee-800 text-white flex items-center gap-2">
                             <i class="fa-solid fa-mug-saucer"></i> Brew
                         </button>
@@ -159,10 +153,6 @@
                     <div>
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast type</label>
                         <input id="beanEditRoastType" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Shop URL</label>
-                        <input id="beanEditShopUrl" type="url" placeholder="https://" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Weight (g)</label>

@@ -13,7 +13,6 @@ export const createBeansCardUiModule = ({
     showBrewsForBean,
     showCoffeeForBean,
     openCoffeeTypeCard,
-    openBeanShopUrl,
     enterBeanEditMode,
     cancelBeanEditMode,
     toggleBeanFrozen,
@@ -179,10 +178,8 @@ export const createBeansCardUiModule = ({
         const brewBtn = document.getElementById('beanCardBrewBtn');
         const openNewBagBtn = document.getElementById('beanCardOpenNewBagBtn');
         const deleteBtn = document.getElementById('beanCardDeleteBtn');
-        const buyBtn = document.getElementById('beanCardBuyBtn');
         const showBrewsBtn = document.getElementById('beanCardShowBrewsBtn');
         const showCoffeeBtn = document.getElementById('beanCardShowCoffeeBtn');
-        const buyActionBtn = document.getElementById('beanCardActionBuy');
         const editActionBtn = document.getElementById('beanCardActionEdit');
         const brewActionBtn = document.getElementById('beanCardActionBrew');
         const brewsActionBtn = document.getElementById('beanCardActionBrews');
@@ -266,30 +263,6 @@ export const createBeansCardUiModule = ({
                 coffeeActionBtn.disabled = true;
                 coffeeActionBtn.classList.add('opacity-40', 'cursor-not-allowed');
                 coffeeActionBtn.onclick = null;
-            }
-        }
-
-        if (buyBtn) {
-            if (bean.shopUrl) {
-                buyBtn.disabled = false;
-                buyBtn.classList.remove('opacity-40', 'cursor-not-allowed');
-                buyBtn.onclick = () => openBeanShopUrl(bean.id);
-            } else {
-                buyBtn.disabled = true;
-                buyBtn.classList.add('opacity-40', 'cursor-not-allowed');
-                buyBtn.onclick = null;
-            }
-        }
-
-        if (buyActionBtn) {
-            if (bean.shopUrl) {
-                buyActionBtn.disabled = false;
-                buyActionBtn.classList.remove('opacity-40', 'cursor-not-allowed');
-                buyActionBtn.onclick = () => openBeanShopUrl(bean.id);
-            } else {
-                buyActionBtn.disabled = true;
-                buyActionBtn.classList.add('opacity-40', 'cursor-not-allowed');
-                buyActionBtn.onclick = null;
             }
         }
 

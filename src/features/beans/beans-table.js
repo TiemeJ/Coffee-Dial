@@ -226,11 +226,6 @@ export const createBeansTableModule = ({
             const freezeIcon = bean.frozen ? 'fa-sun text-amber-500' : 'fa-snowflake text-sky-500';
             const archiveLabel = bean.archived ? 'Unarchive' : 'Archive';
             const archiveIcon = bean.archived ? 'fa-box-open text-amber-600' : 'fa-box-archive text-amber-600';
-            const buyMoreBtn = bean.shopUrl
-                ? `<button data-action-click="openBeanShopUrl('${bean.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                    <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
-                </button>`
-                : '';
             const goToCoffeeBtn = bean.coffeeTypeId
                 ? `<button data-action-click="showCoffeeForBean('${bean.coffeeTypeId}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                     <i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee
@@ -276,7 +271,6 @@ export const createBeansTableModule = ({
                              <button data-action-click="openBeanCard('${bean.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                  <i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card
                              </button>
-                             ${buyMoreBtn}
                              ${isMine ? `<button data-action-click="openBeanCard('${bean.id}', event); enterBeanEditMode();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                  <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
                              </button>` : ''}

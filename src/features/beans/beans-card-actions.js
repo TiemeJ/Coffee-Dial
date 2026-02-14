@@ -18,12 +18,6 @@ export const createBeansCardActionsModule = ({
     fillBeanDetails,
     toggleForm
 }) => {
-    const openBeanShopUrl = (beanId, ev) => {
-        if (ev) ev.stopPropagation();
-        const bean = getBeans().find((b) => b.id === beanId);
-        if (bean && bean.shopUrl) window.open(bean.shopUrl, '_blank');
-    };
-
     const showBrewsForBean = (beanId = null) => {
         const targetId = beanId || getCurrentBeanCardId();
         if (!targetId) return;
@@ -72,7 +66,6 @@ export const createBeansCardActionsModule = ({
     };
 
     return {
-        openBeanShopUrl,
         showBrewsForBean,
         showCoffeeForBean,
         openBrewWithBean
