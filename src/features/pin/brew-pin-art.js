@@ -8,8 +8,9 @@ export const createBrewPinArtModule = ({
     let chooserOpenFor = null;
     const LONG_PRESS_MS = 420;
 
-    const buildBrewLabel = (brew) => {
+    const buildBrewLabel = (brew, includeDrink = true) => {
         const method = (brew?.method || 'Unknown method').toString().trim();
+        if (!includeDrink) return method;
         const drink = (brew?.drink || 'Unknown drink').toString().trim();
         return `${method} (${drink})`;
     };
@@ -22,7 +23,7 @@ export const createBrewPinArtModule = ({
         if (list) list.innerHTML = '';
     };
 
-    const openChooser = ({ beanName, brews }) => {
+    const openChooser = ({ beanName, brews, includeDrinkInLabel = true }) => {
         const chooser = document.getElementById('brewPinArtChooser');
         const title = document.getElementById('brewPinArtChooserTitle');
         const list = document.getElementById('brewPinArtChooserList');
@@ -35,7 +36,7 @@ export const createBrewPinArtModule = ({
         brews.forEach((brew) => {
             const btn = document.createElement('button');
             btn.className = 'w-full text-left px-3 py-2 rounded-lg border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#292524] text-sm text-coffee-800 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors';
-            btn.textContent = buildBrewLabel(brew);
+            btn.textContent = buildBrewLabel(brew, includeDrinkInLabel);
             btn.addEventListener('click', () => {
                 closeChooser();
                 openCoffeeCard(brew.id);
@@ -223,7 +224,11 @@ export const createBrewPinArtModule = ({
                     openCoffeeCard(sortedBrews[0].id);
                     return;
                 }
-                openChooser({ beanName: titleText, brews: sortedBrews });
+                openChooser({
+                    beanName: titleText,
+                    brews: sortedBrews,
+                    includeDrinkInLabel: pinnedBrewsPreferences?.pinBestPerMethodDrink !== false
+                });
             });
 
             grid.appendChild(card);
