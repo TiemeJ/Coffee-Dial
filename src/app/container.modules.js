@@ -8,8 +8,7 @@
         import { closeAutoPinToast, showAutoPinToast, showToast } from '../core/notify.js';
         import { closeAppConfirm, openAppConfirm, resolveAppConfirm, installDialogAdapters } from '../core/confirm.js';
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../core/format.js';
-        import { createCoffeeTypeCardModule } from '../features/coffees/coffee-type-card.js';
-        import { createCoffeeTypesTableModule } from '../features/coffees/coffee-types-table.js';
+        import { createCoffeesCoordinator } from './coordinators/coffees.coordinator.js';
         import { createGasTableModule } from '../features/gas/gas-table.js';
         import { createGasCardModule } from '../features/gas/gas-card.js';
         import { createBeansCoordinator } from './coordinators/beans.coordinator.js';
@@ -573,119 +572,16 @@ export const createAppContainerModules = () => {
         });
 
         // --- Coffee Management Functions ---
-        const openCoffeeTypes = () => {
-            if (!currentUser) return alert("Please sign in.");
-            document.getElementById('coffeeTypesModal').classList.remove('hidden');
-            renderCoffeeTypesTable();
-        };
-
-        const closeCoffeeTypes = () => {
-            document.getElementById('coffeeTypesModal').classList.add('hidden');
-        };
-
-        const createCoffeeTypeFromModal = async () => {
-            if (!currentUser) return alert("Please sign in.");
-            const nowIso = new Date().toISOString();
-            const typeData = {
-                uid: currentUser.uid,
-                roaster: '',
-                farmer: '',
-                origin: '',
-                processing: '',
-                variety: '',
-                roast: '',
-                rating: 0,
-                tasteNotes: '',
-                webshopUrl: '',
-                imageUrl: '',
-                createdAt: nowIso,
-                updatedAt: nowIso
-            };
-
-            try {
-                const typeRef = await addDoc(collection(db, 'users', currentUser.uid, 'coffeeTypes'), typeData);
-                const newType = { id: typeRef.id, ...typeData };
-                if (!coffeeTypes.find(ct => ct.id === newType.id)) coffeeTypes.push(newType);
-                openCoffeeTypeCard(newType.id);
-                enterCoffeeTypeEditMode();
-            } catch (err) {
-                console.error('Error creating coffee:', err);
-                alert('Failed to create coffee.');
-            }
-        };
-
-        const openCoffeeTypeShopUrl = (typeId, ev) => {
-            if (ev) ev.stopPropagation();
-            const type = coffeeTypes.find(ct => ct.id === typeId);
-            const url = type?.webshopUrl || type?.shopUrl;
-            if (!url) return;
-            window.open(url, '_blank', 'noopener,noreferrer');
-        };
-
-        const openNewBagForCoffeeType = async () => {
-            if (!currentUser || !currentCoffeeTypeId) return;
-            const type = coffeeTypes.find(ct => ct.id === currentCoffeeTypeId);
-            if (!type) return;
-            const nowIso = new Date().toISOString();
-            const newBeanData = {
-                coffeeTypeId: type.id,
-                roaster: type.roaster || '',
-                farmer: type.farmer || '',
-                origin: type.origin || '',
-                processing: type.processing || '',
-                variety: type.variety || '',
-                roastType: type.roast || type.roastType || '',
-                shopUrl: type.webshopUrl || type.shopUrl || '',
-                archived: false,
-                frozen: false,
-                stock: 250,
-                beansLeft: 250,
-                openedDate: null,
-                frozenDate: null,
-                archivedDate: null,
-                roastDate: null,
-                createdAt: nowIso,
-                updatedAt: nowIso
-            };
-
-            try {
-                const ref = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), newBeanData);
-                const newBean = { id: ref.id, ...newBeanData };
-                beans.push(newBean);
-                renderBeansTable();
-                await autoPinOpenBagsIfEnabled();
-                openBeanCard(ref.id);
-                enterBeanEditMode();
-                closeCoffeeTypeCard(null);
-            } catch (err) {
-                console.error('Error creating bean from coffee type:', err);
-                alert('Failed to create bean.');
-            }
-        };
-
-        const showBeansForCoffeeType = () => {
-            if (!currentCoffeeTypeId) return;
-            closeCoffeeTypeCard(null);
-            closeCoffeeTypes();
-            openBeans();
-            clearBeansSearch();
-            clearBeansFilters();
-            applyBeansFilterFromQuick('coffeeType', currentCoffeeTypeId);
-        };
-
-        const showBrewsForCoffeeType = () => {
-            if (!currentCoffeeTypeId) return;
-            closeCoffeeTypeCard(null);
-            closeCoffeeTypes();
-            clearSearch();
-            clearAllFilters();
-            activeFilters.coffeeType = currentCoffeeTypeId;
-            displayedBrewsCount = BREWS_PER_PAGE;
-            renderTable();
-            renderActiveFilters();
-        };
-
         const {
+            openCoffeeTypes,
+            closeCoffeeTypes,
+            createCoffeeTypeFromModal,
+            openCoffeeTypeShopUrl,
+            openNewBagForCoffeeType,
+            showBeansForCoffeeType,
+            showBrewsForCoffeeType,
+            updateCoffeeTypeCardNav,
+            navigateCoffeeTypeCard,
             showBeansForCoffeeTypeFromTable,
             showBrewsForCoffeeTypeFromTable,
             openNewBagForCoffeeTypeFromTable,
@@ -701,61 +597,7 @@ export const createAppContainerModules = () => {
             enterCoffeeTypeEditMode,
             cancelCoffeeTypeEditMode,
             saveCoffeeTypeEdits,
-            closeCoffeeTypeCardMenu
-        } = createCoffeeTypeCardModule({
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCurrentCoffeeTypeId: () => currentCoffeeTypeId,
-            setCurrentCoffeeTypeId: (value) => { currentCoffeeTypeId = value; },
-            getCoffeeTypes: () => coffeeTypes,
-            setCoffeeTypesState: (value) => { coffeeTypes = value; },
-            getBeans: () => beans,
-            setBeansState: (value) => { beans = value; },
-            db,
-            storage,
-            doc,
-            updateDoc,
-            writeBatch,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            deleteObject,
-            openAppConfirm,
-            getStarDisplay,
-            renderCoffeeTypesTable: () => renderCoffeeTypesTable(),
-            updateCoffeeTypeSelectors,
-            renderPinnedTiles: () => renderPinnedTiles(),
-            renderTable: () => renderTable(),
-            openCoffeeTypeShopUrl,
-            showBeansForCoffeeType,
-            showBrewsForCoffeeType,
-            openNewBagForCoffeeType,
-            updateCoffeeTypeCardNav: () => updateCoffeeTypeCardNav()
-        });
-
-        const updateCoffeeTypeCardNav = () => {
-            const order = getFilteredSortedCoffeeTypes().map(type => type.id);
-            const idx = order.indexOf(currentCoffeeTypeId);
-            const prevBtn = document.getElementById('coffeeTypeCardPrevBtn');
-            const nextBtn = document.getElementById('coffeeTypeCardNextBtn');
-            if (!prevBtn || !nextBtn) return;
-            prevBtn.disabled = idx <= 0;
-            nextBtn.disabled = idx === -1 || idx >= order.length - 1;
-            prevBtn.classList.toggle('opacity-40', prevBtn.disabled);
-            prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
-            nextBtn.classList.toggle('opacity-40', nextBtn.disabled);
-            nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
-        };
-
-        const navigateCoffeeTypeCard = (direction) => {
-            const order = getFilteredSortedCoffeeTypes().map(type => type.id);
-            const idx = order.indexOf(currentCoffeeTypeId);
-            const nextIdx = idx + direction;
-            if (nextIdx < 0 || nextIdx >= order.length) return;
-            openCoffeeTypeCard(order[nextIdx]);
-        };
-
-        const {
+            closeCoffeeTypeCardMenu,
             setCoffeeTypesSearch,
             clearCoffeeTypesSearch,
             toggleCoffeeTypesQuickFilter,
@@ -767,9 +609,24 @@ export const createAppContainerModules = () => {
             updateCoffeeTypesSortIcons,
             getFilteredSortedCoffeeTypes,
             renderCoffeeTypesTable
-        } = createCoffeeTypesTableModule({
-            getCoffeeTypes: () => coffeeTypes,
+        } = createCoffeesCoordinator({
+            db,
+            storage,
+            doc,
+            updateDoc,
+            writeBatch,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject,
+            addDoc,
+            collection,
+            getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
+            getCurrentCoffeeTypeId: () => currentCoffeeTypeId,
+            setCurrentCoffeeTypeId: (value) => { currentCoffeeTypeId = value; },
+            getCoffeeTypes: () => coffeeTypes,
+            setCoffeeTypesState: (value) => { coffeeTypes = value; },
             getCoffeeTypesSearch: () => coffeeTypesSearch,
             setCoffeeTypesSearchState: (value) => { coffeeTypesSearch = value; },
             getCoffeeTypesFilters: () => coffeeTypesFilters,
@@ -778,8 +635,27 @@ export const createAppContainerModules = () => {
             setCoffeeTypesSortKeyState: (value) => { coffeeTypesSortKey = value; },
             getCoffeeTypesSortDir: () => coffeeTypesSortDir,
             setCoffeeTypesSortDirState: (value) => { coffeeTypesSortDir = value; },
+            getBeans: () => beans,
+            setBeansState: (value) => { beans = value; },
             getStarDisplay,
-            openCoffeeTypeCard
+            openAppConfirm,
+            updateCoffeeTypeSelectors,
+            renderPinnedTiles: () => renderPinnedTiles(),
+            renderTable,
+            renderActiveFilters,
+            clearSearch,
+            clearAllFilters,
+            getBrewsPerPage: () => BREWS_PER_PAGE,
+            setDisplayedBrewsCount: (value) => { displayedBrewsCount = value; },
+            setActiveCoffeeTypeFilter: (typeId) => { activeFilters.coffeeType = typeId; },
+            openBeans,
+            renderBeansTable,
+            clearBeansSearch,
+            clearBeansFilters,
+            applyBeansFilterFromQuick,
+            openBeanCard,
+            enterBeanEditMode,
+            autoPinOpenBagsIfEnabled
         });
 
         const createGasItemFromModal = async () => {
