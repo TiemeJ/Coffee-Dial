@@ -1,4 +1,4 @@
-<div id="gasCardOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasCard(event)">
+<div id="gasCardOverlay" data-feature-root="gas" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasCard(event)">
     <div id="gasCardPanel" class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleGasCardOverlayClick(event)">
         <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
             <div class="absolute top-4 right-4 flex items-center gap-4">
@@ -148,7 +148,7 @@
     </div>
 </div>
 
-<div id="gasBulkAddModal" class="hidden fixed inset-0 z-[10020] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasBulkAddModal(event)">
+<div id="gasBulkAddModal" data-feature-root="gas" class="hidden fixed inset-0 z-[10020] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasBulkAddModal(event)">
     <div class="bg-white dark:bg-[#292524] w-full max-w-sm min-h-[56vh] rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col" data-action-click="event.stopPropagation()">
         <div class="p-4 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] flex items-center justify-between">
             <h3 class="text-sm font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-layer-group text-teal-600 mr-2"></i>Bulk add to brews</h3>
@@ -188,7 +188,7 @@
     </div>
 </div>
 
-<div id="gasMergeModal" class="hidden fixed inset-0 z-[10020] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasMergeModal(event)">
+<div id="gasMergeModal" data-feature-root="gas" class="hidden fixed inset-0 z-[10020] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasMergeModal(event)">
     <div class="bg-white dark:bg-[#292524] w-full max-w-sm min-h-[44vh] rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col" data-action-click="event.stopPropagation()">
         <div class="p-4 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] flex items-center justify-between">
             <h3 class="text-sm font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-code-merge text-purple-500 mr-2"></i>Merge gear item</h3>
