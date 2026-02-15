@@ -152,10 +152,10 @@ export const createSocialModule = ({
             });
             select.value = getCurrentView();
         };
-        populateSelect(document.getElementById('viewSelect'), 'Brews');
-        populateSelect(document.getElementById('beansViewSelect'), 'Beans');
-        populateSelect(document.getElementById('coffeeTypesViewSelect'), 'Coffees');
-        populateSelect(document.getElementById('gasViewSelect'), 'GAS');
+        populateSelect(document.getElementById('viewSelect'), 'brews');
+        populateSelect(document.getElementById('beansViewSelect'), 'beans');
+        populateSelect(document.getElementById('coffeeTypesViewSelect'), 'coffees');
+        populateSelect(document.getElementById('gasViewSelect'), 'gear');
     };
 
     const loadFollowingList = async () => {
