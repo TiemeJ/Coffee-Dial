@@ -8,6 +8,7 @@
         import { closeAutoPinToast, showAutoPinToast, showToast } from '../core/notify.js';
         import { closeAppConfirm, openAppConfirm, resolveAppConfirm, installDialogAdapters } from '../core/confirm.js';
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../core/format.js';
+        import { createCoffeeDisplayModule } from '../core/coffee-display.js';
         import { createCoffeesCoordinator } from './coordinators/coffees.coordinator.js';
         import { createGasCoordinator } from './coordinators/gas.coordinator.js';
         import { createBeansCoordinator } from './coordinators/beans.coordinator.js';
@@ -28,7 +29,10 @@
         import { createAiImportModule } from '../features/ai-import.js';
         import { createStatsAiProfileModule } from '../features/stats/stats-ai-profile.js';
         import { createBrewFormLookupModule } from '../features/brews/brew-form-lookup.js';
+        import { createBrewFormUiModule } from '../features/brews/brew-form-ui.js';
+        import { createBrewCsvRecipeModule } from '../features/brews/brew-csv-recipe.js';
         import { createCoffeeTypesExtractModule } from '../features/coffees/coffee-types-extract.js';
+        import { createActionMenuModule } from '../features/ui/action-menu.js';
         import { createUiShellModule } from '../features/ui-shell.js';
         import { createMediaModalsModule } from '../features/media/media-modals.js';
         import { createPinCoordinator } from './coordinators/pin.coordinator.js';
@@ -733,52 +737,24 @@ export const createAppContainerModules = () => {
 
         
 
-        const setNotesMode = (mode) => {
-            const btnMan = document.getElementById('btnNotesManual'), btnSca = document.getElementById('btnNotesSCA'), conMan = document.getElementById('notesManualContainer'), conSca = document.getElementById('notesSCAContainer'), hidden = document.getElementById('notesMode');
-            hidden.value = mode;
-            if (mode === 'manual') {
-                conMan.classList.remove('hidden'); conSca.classList.add('hidden');
-                btnMan.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white"; 
-                btnSca.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#78716c] hover:text-coffee-700";
-            } else {
-                conSca.classList.remove('hidden'); conMan.classList.remove('hidden');
-                btnSca.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white"; 
-                btnMan.className="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#78716c] hover:text-coffee-700";
-                if (scaState.level === 0 && scaState.path.length === 0) renderScaWheel();
-            }
-        };
-
-        const renderScaWheel = () => {
-            const container = document.getElementById('scaButtonsContainer'); const display = document.getElementById('scaSelectionDisplay'); container.innerHTML = '';
-            const pathString = scaState.path.join(' > '); const leafNode = scaState.path.length > 0 ? scaState.path[scaState.path.length - 1] : null;
-            if (leafNode) { display.innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-center gap-2 bg-coffee-100 dark:bg-[#292524] p-2 rounded"><span class="text-xs text-coffee-500 italic">${pathString}</span><div class="flex gap-2"><button data-action-click="resetSca()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 underline">Reset</button><button type="button" data-action-click="addScaToNotes()" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1 rounded shadow-sm transition-colors"><i class="fa-solid fa-plus mr-1"></i> Add "${leafNode}"</button></div></div>`; } 
-            else { display.innerHTML = '<span class="text-coffee-400 font-normal italic text-xs">Tap categories below to build a flavor...</span>'; }
-            if (scaState.level === 0) {
-                Object.keys(scaData).forEach(key => {
-                    const btn = document.createElement('button'); btn.type = 'button'; btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm ${scaData[key].c}`; btn.textContent = key;
-                    btn.onclick = () => { scaState.path = [key]; scaState.level = 1; scaState.currentNode = scaData[key]; renderScaWheel(); }; container.appendChild(btn);
-                });
-            } else if (scaState.level === 1) {
-                const subs = scaState.currentNode.s; const parentColor = scaState.currentNode.c;
-                const backBtn = document.createElement('button'); backBtn.type = 'button'; backBtn.className = "sca-btn px-3 py-2 rounded text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"; backBtn.innerHTML = "<i class='fa-solid fa-arrow-left'></i>"; backBtn.onclick = () => { scaState.level = 0; scaState.path = []; scaState.currentNode = null; renderScaWheel(); }; container.appendChild(backBtn);
-                Object.keys(subs).forEach(key => {
-                    const btn = document.createElement('button'); btn.type = 'button'; btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm opacity-90 hover:opacity-100 ${parentColor}`; btn.textContent = key;
-                    btn.onclick = () => { scaState.path.push(key); scaState.level = 2; renderScaWheel(); }; container.appendChild(btn);
-                });
-            } else if (scaState.level === 2) {
-                const parentKey = scaState.path[0]; const subKey = scaState.path[1]; const notes = scaData[parentKey].s[subKey]; const parentColor = scaData[parentKey].c;
-                const backBtn = document.createElement('button'); backBtn.type = 'button'; backBtn.className = "sca-btn px-3 py-2 rounded text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"; backBtn.innerHTML = "<i class='fa-solid fa-arrow-left'></i>"; backBtn.onclick = () => { scaState.path.pop(); scaState.level = 1; renderScaWheel(); }; container.appendChild(backBtn);
-                if (notes.length === 0) { container.innerHTML += `<div class="flex-1 text-xs text-coffee-500 italic ml-2 flex items-center">Use 'Add' above to confirm selection.</div>`; } else {
-                    notes.forEach(note => {
-                        const btn = document.createElement('button'); btn.type = 'button'; btn.className = `sca-btn px-3 py-2 rounded text-xs font-bold shadow-sm opacity-80 hover:opacity-100 ${parentColor}`; btn.textContent = note;
-                        btn.onclick = () => { if (scaState.path.length === 3) scaState.path.pop(); scaState.path.push(note); renderScaWheel(); }; container.appendChild(btn);
-                    });
-                }
-            }
-        };
-
-        const addScaToNotes = () => { if (scaState.path.length === 0) return; const flavorToAdd = scaState.path[scaState.path.length - 1]; const input = document.getElementById('notes'); let currentText = input.value.trim(); if (currentText.length > 0) { if(currentText.endsWith(',')) currentText = currentText.slice(0, -1); input.value = `${currentText}, ${flavorToAdd}`; } else { input.value = flavorToAdd; } resetSca(); };
-        const resetSca = () => { scaState = { level: 0, path: [], currentNode: null }; renderScaWheel(); };
+        const {
+            setNotesMode,
+            renderScaWheel,
+            addScaToNotes,
+            resetSca,
+            setTempMode,
+            updateCoffeeDetailsTitle,
+            setCoffeeDetailsCollapsed,
+            toggleCoffeeDetails,
+            initCoffeeDetailsUi,
+            toggleForm
+        } = createBrewFormUiModule({
+            getScaData: () => scaData,
+            getScaState: () => scaState,
+            setScaState: (value) => { scaState = value; },
+            getRefreshManualPinningVisibility: () => refreshManualPinningVisibility,
+            getCoffeeScale: () => coffeeScale
+        });
 
         const {
             openFriendsModal,
@@ -952,16 +928,17 @@ export const createAppContainerModules = () => {
             openAppConfirm
         });
 
-        const exportCSV = () => { 
-            const d = getFilteredCoffees(); if(!d.length) return alert("No data"); 
-            const esc = (t) => { if (t === null || t === undefined) return ''; const str = String(t); if (str.includes(',') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; return str; };
-            const h = ["Date","Roaster","Origin","Blend/Farmer","Variety","Process","Roast","Method","Grinder","Grind","In(g)","Out(g)","Time(s)","Temp","Drink","Rating","Notes","Improve"]; 
-            const r = d.map(c => { const type = getCoffeeTypeDisplay(c); return [ c.createdAt || '', esc(type.roaster), esc(type.origin), esc(type.farmer), esc(type.variety), esc(type.processing), esc(type.roastType), esc(c.method), esc(c.grinder), esc(c.grind), esc(c.weight), (c.weight && c.ratio) ? (c.weight * c.ratio).toFixed(1) : '', esc(c.time), esc(c.temp), esc(c.drink), esc(c.rating), esc(c.notes), esc(c.improve) ]; }); 
-            const csvContent = "data:text/csv;charset=utf-8," + h.join(",") + "\n" + r.map(e => e.join(",")).join("\n"); 
-            const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "coffee_log.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); 
-        };
+        const { getCoffeeTypeForBrew, getCoffeeTypeDisplay, getCoffeeTypeForBean, getBeanCoffeeTypeDisplay } =
+            createCoffeeDisplayModule({
+                getBeans: () => beans,
+                getCoffeeTypes: () => coffeeTypes
+            });
 
-        const handleRecipeInput = (s) => { const w=document.getElementById('inputWeight'),r=document.getElementById('inputRatio'),y=document.getElementById('inputYield'); const wv=parseFloat(w.value)||0,yv=parseFloat(y.value)||0; if(!wv)return; if(s==='weight'){ if(yv>0)r.value=(yv/wv).toFixed(2); } else if(s==='yield'){ if(wv>0)r.value=(yv/wv).toFixed(2); } };
+        const { exportCSV, handleRecipeInput } = createBrewCsvRecipeModule({
+            getFilteredCoffees,
+            getCoffeeTypeDisplay
+        });
+
         const handleQuickEditRecipeInput = (source) => {
             const weightInput = document.getElementById('quickEditWeight');
             const yieldInput = document.getElementById('quickEditYield');
@@ -981,106 +958,7 @@ export const createAppContainerModules = () => {
                 }
             }
         };
-        const setTempMode = (m) => { 
-            document.getElementById('tempMode').value = m; const btnNum = document.getElementById('btnTempNumeric'); const btnProf = document.getElementById('btnTempProfile'); const conNum = document.getElementById('tempNumericContainer'); const conProf = document.getElementById('tempProfileContainer');
-            const activeClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white"; const inactiveClass = "px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700";
-            if (m === 'numeric') { conNum.classList.remove('hidden'); conProf.classList.add('hidden'); btnNum.className = activeClass; btnProf.className = inactiveClass; } else { conProf.classList.remove('hidden'); conNum.classList.add('hidden'); btnProf.className = activeClass; btnNum.className = inactiveClass; }
-        };
-
-        const updateCoffeeDetailsTitle = () => {
-            const titleEl = document.getElementById('coffeeDetailsTitle');
-            const body = document.getElementById('coffeeDetailsBody');
-            const farmerEl = document.getElementById('farmer');
-            if (!titleEl || !body || !farmerEl) return;
-            const isCollapsed = body.classList.contains('hidden');
-            const farmerValue = (farmerEl.value || '').trim();
-            const roasterEl = document.getElementById('roaster');
-            const roasterValue = (roasterEl?.value || '').trim();
-            if (isCollapsed && (farmerValue || roasterValue)) {
-                titleEl.textContent = farmerValue || roasterValue;
-            } else {
-                titleEl.textContent = 'Coffee Details';
-            }
-        };
-
-        const setCoffeeDetailsCollapsed = (collapsed) => {
-            const body = document.getElementById('coffeeDetailsBody');
-            const icon = document.getElementById('coffeeDetailsToggleIcon');
-            const header = document.getElementById('coffeeDetailsHeader');
-            if (!body || !icon) return;
-            body.classList.toggle('hidden', collapsed);
-            icon.classList.toggle('rotate-180', collapsed);
-            if (header) {
-                header.classList.toggle('mb-4', !collapsed);
-                header.classList.toggle('pb-2', !collapsed);
-                header.classList.toggle('border-b', !collapsed);
-                header.classList.toggle('border-coffee-200', !collapsed);
-                header.classList.toggle('dark:border-[#44403c]', !collapsed);
-                header.classList.toggle('mb-0', collapsed);
-                header.classList.toggle('pb-0', collapsed);
-            }
-            updateCoffeeDetailsTitle();
-        };
-
-        const toggleCoffeeDetails = (e) => {
-            if (e) e.stopPropagation();
-            const body = document.getElementById('coffeeDetailsBody');
-            if (!body) return;
-            const isHidden = body.classList.contains('hidden');
-            setCoffeeDetailsCollapsed(!isHidden);
-        };
-
-        const initCoffeeDetailsUi = () => {
-            setCoffeeDetailsCollapsed(false);
-            ['farmer', 'roaster'].forEach((id) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.addEventListener('input', updateCoffeeDetailsTitle);
-                el.addEventListener('change', updateCoffeeDetailsTitle);
-            });
-        };
         initCoffeeDetailsUi();
-        
-        const toggleForm = (f=null) => { 
-            const c=document.getElementById('formContainer'),o=document.getElementById('formContent'),e=c.getAttribute('aria-expanded')==='true',s=f!==null?f:!e; 
-            c.setAttribute('aria-expanded',s?'true':'false'); if(s){ o.classList.remove('hidden'); refreshManualPinningVisibility?.(); if(document.getElementById('notesMode').value === 'sca') renderScaWheel(); if (coffeeScale?.autoConnect) coffeeScale.autoConnect(); const isEditing = c.classList.contains('editing-mode') || !!document.getElementById('editId').value; if (!isEditing) { setCoffeeDetailsCollapsed(false); if (coffeeScale?.applyGraphTogglePrefsForMethod) coffeeScale.applyGraphTogglePrefsForMethod(); } } else { o.classList.add('hidden'); } 
-        };
-        
-        const getCoffeeTypeForBrew = (brew) => {
-            if (!brew || !brew.beanId) return null;
-            const bean = beans.find(b => b.id === brew.beanId);
-            if (!bean || !bean.coffeeTypeId) return null;
-            return coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) || null;
-        };
-
-        const getCoffeeTypeDisplay = (brew) => {
-            const type = getCoffeeTypeForBrew(brew);
-            return {
-                roaster: type?.roaster || brew?.roaster || '-',
-                farmer: type?.farmer || brew?.farmer || '-',
-                origin: type?.origin || brew?.origin || '-',
-                processing: type?.processing || brew?.processing || '-',
-                variety: type?.variety || brew?.variety || '-',
-                roastType: type?.roast || type?.roastType || brew?.roastType || '-'
-            };
-        };
-
-        const getCoffeeTypeForBean = (bean) => {
-            if (!bean || !bean.coffeeTypeId) return null;
-            return coffeeTypes.find(ct => ct.id === bean.coffeeTypeId) || null;
-        };
-
-        const getBeanCoffeeTypeDisplay = (bean) => {
-            const type = getCoffeeTypeForBean(bean);
-            return {
-                roaster: type?.roaster || bean?.roaster || '-',
-                farmer: type?.farmer || bean?.farmer || '-',
-                origin: type?.origin || bean?.origin || '-',
-                processing: type?.processing || bean?.processing || '-',
-                variety: type?.variety || bean?.variety || '-',
-                roastType: type?.roast || type?.roastType || bean?.roastType || '-'
-            };
-        };
 
         const {
             showBeanForBrew,
@@ -1279,72 +1157,7 @@ export const createAppContainerModules = () => {
             renderTable
         });
 
-        const toggleActionMenu = (menuId, e) => {
-            const eventObj = e;
-            if (eventObj?.stopPropagation) eventObj.stopPropagation();
-            document.querySelectorAll('.action-menu').forEach((el) => {
-                if (el.id !== menuId) el.classList.add('hidden');
-            });
-            const menu = document.getElementById(menuId);
-            if (!menu) return;
-
-            menu.classList.toggle('hidden');
-            if (menu.classList.contains('hidden')) return;
-
-            menu.style.top = '';
-            menu.style.bottom = '';
-            menu.style.left = '';
-            menu.style.right = '';
-            menu.style.marginTop = '';
-            menu.style.marginBottom = '';
-
-            setTimeout(() => {
-                const rect = menu.getBoundingClientRect();
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-                const headerHeight = 70;
-                const isTableMenu = menuId.startsWith('action-menu-');
-
-                if (isTableMenu) {
-                    menu.style.top = '100%';
-                    menu.style.bottom = 'auto';
-                    menu.style.marginTop = '0.25rem';
-                    menu.style.marginBottom = '0';
-                    menu.classList.remove('origin-bottom-right');
-                    menu.classList.add('origin-top-right');
-                } else {
-                    const overflowsBottom = rect.bottom > viewportHeight - 20;
-                    const wouldOverflowTop = rect.top - rect.height < headerHeight;
-                    if (overflowsBottom && !wouldOverflowTop) {
-                        menu.style.top = 'auto';
-                        menu.style.bottom = '100%';
-                        menu.style.marginTop = '0';
-                        menu.style.marginBottom = '0.5rem';
-                        menu.classList.remove('origin-top-right');
-                        menu.classList.add('origin-bottom-right');
-                    } else {
-                        menu.style.top = '100%';
-                        menu.style.bottom = 'auto';
-                        menu.style.marginTop = '0.5rem';
-                        menu.style.marginBottom = '0';
-                        menu.classList.remove('origin-bottom-right');
-                        menu.classList.add('origin-top-right');
-                    }
-                }
-
-                const menuWidth = rect.width;
-                const menuLeft = rect.left;
-                if (menuLeft < 10) {
-                    menu.style.right = 'auto';
-                    menu.style.left = '0';
-                    menu.classList.remove('origin-top-right', 'origin-bottom-right');
-                    menu.classList.add(menu.style.bottom === '100%' ? 'origin-bottom-left' : 'origin-top-left');
-                } else if (menuLeft + menuWidth > viewportWidth - 10) {
-                    menu.style.left = 'auto';
-                    menu.style.right = '0';
-                }
-            }, 0);
-        };
+        const { toggleActionMenu } = createActionMenuModule();
 
         const hideAiProfile = () => {
             document.getElementById('aiProfileContainer')?.classList.add('hidden');
