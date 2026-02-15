@@ -65,9 +65,9 @@ export const createBrewsCardUiModule = ({
         updateCoffeeCardActionMenu(c);
 
         document.getElementById('cardRoaster').textContent = coffeeType.farmer !== '-' ? coffeeType.farmer : (coffeeType.roaster !== '-' ? coffeeType.roaster : 'Unknown Blend');
+        document.getElementById('cardSubtitle').textContent = coffeeType.roaster !== '-' ? coffeeType.roaster : 'Unknown Roaster';
         document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
         document.getElementById('cardOrigin').textContent = coffeeType.origin;
-        document.getElementById('cardFarmer').textContent = coffeeType.roaster;
         document.getElementById('cardProcess').textContent = coffeeType.processing;
         document.getElementById('cardRoastType').textContent = coffeeType.roastType;
         document.getElementById('cardMethod').textContent = c.method || '-';
