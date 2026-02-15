@@ -24,6 +24,7 @@ export const createBrewsPinAutopinModule = ({
 
     const isPinOpenBagsEnabled = () => !!getPinnedBrewsPreferences().pinOpenBags;
     const isPinOpenBagsBestOnlyEnabled = () => !!getPinnedBrewsPreferences().pinOpenBagsBestOnly;
+    const isBestPerMethodDrinkEnabled = () => getPinnedBrewsPreferences().pinBestPerMethodDrink !== false;
 
     const getBrewSortScore = (brew) => {
         const ratingRaw = brew?.rating;
@@ -44,6 +45,8 @@ export const createBrewsPinAutopinModule = ({
         const drink = drinkRaw || 'Unknown';
         return `${method}||${drink}`;
     };
+
+    const getBestSelectionKey = (brew) => (isBestPerMethodDrinkEnabled() ? getBrewMethodDrinkKey(brew) : getBrewMethodKey(brew));
 
     const getOpenBeansForAutoPin = () => {
         return getBeans().filter((bean) => {
@@ -102,7 +105,7 @@ export const createBrewsPinAutopinModule = ({
         const bestByMethod = new Map();
         brewsForBean.forEach((brew) => {
             if (!brew?.id) return;
-            const methodKey = getBrewMethodDrinkKey(brew);
+            const methodKey = getBestSelectionKey(brew);
             const { rating, time } = getBrewSortScore(brew);
             const current = bestByMethod.get(methodKey);
             if (!current || rating > current.rating || (rating === current.rating && time > current.time)) {
@@ -145,7 +148,7 @@ export const createBrewsPinAutopinModule = ({
 
             brewsForBean.forEach((brew) => {
                 if (!brew?.id) return;
-                const methodKey = getBrewMethodDrinkKey(brew);
+                const methodKey = getBestSelectionKey(brew);
                 const { rating, time } = getBrewSortScore(brew);
                 const current = bestByMethod.get(methodKey);
                 if (!current || rating > current.rating || (rating === current.rating && time > current.time)) {
