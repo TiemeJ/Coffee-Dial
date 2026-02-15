@@ -9,8 +9,7 @@
         import { closeAppConfirm, openAppConfirm, resolveAppConfirm, installDialogAdapters } from '../core/confirm.js';
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../core/format.js';
         import { createCoffeesCoordinator } from './coordinators/coffees.coordinator.js';
-        import { createGasTableModule } from '../features/gas/gas-table.js';
-        import { createGasCardModule } from '../features/gas/gas-card.js';
+        import { createGasCoordinator } from './coordinators/gas.coordinator.js';
         import { createBeansCoordinator } from './coordinators/beans.coordinator.js';
         import { createSocialModule } from '../features/social.js';
         import { createGalleryModule } from '../features/gallery.js';
@@ -658,36 +657,8 @@ export const createAppContainerModules = () => {
             autoPinOpenBagsIfEnabled
         });
 
-        const createGasItemFromModal = async () => {
-            if (!currentUser) return alert('Please sign in.');
-            const nowIso = new Date().toISOString();
-            const gasData = {
-                uid: currentUser.uid,
-                name: '',
-                price: null,
-                type: 'Other',
-                methods: [],
-                imageUrl: '',
-                purchasedDate: nowIso,
-                archived: false,
-                createdAt: nowIso,
-                updatedAt: nowIso
-            };
-
-            try {
-                const gasRef = await addDoc(collection(db, 'users', currentUser.uid, 'gear'), gasData);
-                const newGas = { id: gasRef.id, ...gasData };
-                if (!gasItems.find((item) => item.id === newGas.id)) gasItems.push(newGas);
-                refreshBrewGearSelectors();
-                openGasCard(newGas.id);
-                enterGasEditMode();
-            } catch (err) {
-                console.error('Error creating gear item:', err);
-                alert('Failed to create gear item.');
-            }
-        };
-
         const {
+            createGasItemFromModal,
             openGasList,
             closeGasList,
             setGasSearch,
@@ -700,22 +671,7 @@ export const createAppContainerModules = () => {
             setGasSort,
             updateGasSortIcons,
             getFilteredSortedGasItems,
-            renderGasTable
-        } = createGasTableModule({
-            getGasItems: () => gasItems,
-            getCurrentView: () => currentView,
-            getGasSearch: () => gasSearch,
-            setGasSearchState: (value) => { gasSearch = value; },
-            getGasFilters: () => gasFilters,
-            setGasFiltersState: (value) => { gasFilters = value; },
-            getGasSortKey: () => gasSortKey,
-            setGasSortKeyState: (value) => { gasSortKey = value; },
-            getGasSortDir: () => gasSortDir,
-            setGasSortDirState: (value) => { gasSortDir = value; },
-            openGasCard: (...args) => openGasCard(...args)
-        });
-
-        const {
+            renderGasTable,
             updateGasCardNav,
             openGasCard,
             closeGasCard,
@@ -741,16 +697,7 @@ export const createAppContainerModules = () => {
             closeGasBulkAddModal,
             openGasBulkAddFromTable,
             bulkAddGearToBrews
-        } = createGasCardModule({
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCurrentGasId: () => currentGasId,
-            setCurrentGasId: (value) => { currentGasId = value; },
-            getGasItems: () => gasItems,
-            setGasItemsState: (value) => { gasItems = value; },
-            getCoffees: () => coffees,
-            setCoffeesState: (value) => { coffees = value; },
-            getFilteredSortedGasItems: (...args) => getFilteredSortedGasItems(...args),
+        } = createGasCoordinator({
             db,
             storage,
             doc,
@@ -763,8 +710,25 @@ export const createAppContainerModules = () => {
             getDownloadURL,
             deleteObject,
             imageCompression,
+            addDoc,
+            getCurrentUser: () => currentUser,
+            getCurrentView: () => currentView,
+            getCurrentGasId: () => currentGasId,
+            setCurrentGasId: (value) => { currentGasId = value; },
+            getGasItems: () => gasItems,
+            setGasItemsState: (value) => { gasItems = value; },
+            getGasSearch: () => gasSearch,
+            setGasSearchState: (value) => { gasSearch = value; },
+            getGasFilters: () => gasFilters,
+            setGasFiltersState: (value) => { gasFilters = value; },
+            getGasSortKey: () => gasSortKey,
+            setGasSortKeyState: (value) => { gasSortKey = value; },
+            getGasSortDir: () => gasSortDir,
+            setGasSortDirState: (value) => { gasSortDir = value; },
+            getCoffees: () => coffees,
+            setCoffeesState: (value) => { coffees = value; },
             openAppConfirm,
-            renderGasTable: (...args) => renderGasTable(...args)
+            getRefreshBrewGearSelectors: () => refreshBrewGearSelectors
         });
 
         
