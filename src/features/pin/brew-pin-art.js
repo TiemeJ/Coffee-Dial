@@ -109,7 +109,8 @@ export const createBrewPinArtModule = ({
 
         sortedGroups.forEach((group) => {
             const bean = group.bean;
-            const previewBrew = group.brews[0] || null;
+            const sortedBrews = [...group.brews].sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
+            const previewBrew = sortedBrews[0] || null;
             const coffeeType = getCoffeeTypeForBrew?.(previewBrew) || null;
             const roaster = (
                 coffeeType?.roaster ||
@@ -162,6 +163,7 @@ export const createBrewPinArtModule = ({
             const card = document.createElement('button');
             card.className = 'relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-coffee-200 dark:border-[#44403c] shadow-sm hover:shadow-md transition-all text-left group';
             card.type = 'button';
+            card.setAttribute('data-brew-ids', sortedBrews.map((brew) => brew.id).join(','));
             let pressTimer = null;
             let longPressHandled = false;
 
@@ -216,7 +218,6 @@ export const createBrewPinArtModule = ({
                     longPressHandled = false;
                     return;
                 }
-                const sortedBrews = [...group.brews].sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
                 if (sortedBrews.length === 1) {
                     closeChooser();
                     openCoffeeCard(sortedBrews[0].id);
