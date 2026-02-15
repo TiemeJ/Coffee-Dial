@@ -7,15 +7,15 @@ export const createBeansCardFormModule = ({
     setBeansState,
     computeBeansLeft,
     updateCoffeeTypeSelectors,
-    db,
-    doc,
-    collection,
-    setDoc,
-    updateDoc,
+    dataService,
     openBeanCard,
     openCoffeeTypeCard,
     enterCoffeeTypeEditMode
 }) => {
+    const { db, doc, collection, setDoc, updateDoc } = dataService || {};
+    if (!db || !doc || !collection || !setDoc || !updateDoc) {
+        throw new Error('createBeansCardFormModule requires dataService { db, doc, collection, setDoc, updateDoc }');
+    }
     const setBeanEditCoffeeTypeFieldState = (locked) => {
         const fieldIds = [
             'beanEditFarmer',

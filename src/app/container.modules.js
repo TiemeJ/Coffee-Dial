@@ -3,6 +3,7 @@
         import { collection, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
         import { initCoffeeScale } from '../features/scales/scales.js';
+        import { createScaleModalsModule } from '../features/scales/scales-modals.js';
         import { parseBeanconquerorCSV, mapBeanconquerorBrews } from '../features/import-export/importers/beanconqueror.js';
         import { initEmailLinkAuth } from '../integrations/email-link-auth.js';
         import { closeAutoPinToast, showAutoPinToast, showToast } from '../core/notify.js';
@@ -25,6 +26,9 @@
         import { createBrewsCoordinator, createBrewsTableCoordinator } from './coordinators/brews.coordinator.js';
         import { createBrewsPinAutopinModule } from '../features/pin/brews-pin-autopin.js';
         import { createBrewsPreferencesModule } from '../features/preferences.js';
+        import { createDataService } from './services/data.service.js';
+        import { createStorageService } from './services/storage.service.js';
+        import { createAuthService } from './services/auth.service.js';
         import { createSessionAuthViewModule } from '../features/session-auth-view.js';
         import { createAiImportModule } from '../features/ai-import.js';
         import { createStatsAiProfileModule } from '../features/stats/stats-ai-profile.js';
@@ -36,6 +40,7 @@
         import { createUiShellModule } from '../features/ui-shell.js';
         import { createMediaModalsModule } from '../features/media/media-modals.js';
         import { createPinCoordinator } from './coordinators/pin.coordinator.js';
+        import { createActionsRegistry } from './actions.registry.js';
         import { createInitialAppState } from './container.state.js';
         
 export const createAppContainerModules = () => {
@@ -99,6 +104,37 @@ export const createAppContainerModules = () => {
         let openBrewFormModalRef = null;
         const openBrewFormModalBridge = (event = null, options = {}) => openBrewFormModalRef?.(event, options);
         const isLegacyBrewFormEnabled = () => pinnedBrewsPreferences?.useLegacyBrewForm !== false;
+        const dataService = createDataService({
+            db,
+            collection,
+            doc,
+            setDoc,
+            addDoc,
+            updateDoc,
+            deleteDoc,
+            getDoc,
+            getDocs,
+            onSnapshot,
+            query,
+            where,
+            orderBy,
+            limit,
+            startAfter,
+            writeBatch
+        });
+        const storageService = createStorageService({
+            storage,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject
+        });
+        const authService = createAuthService({
+            auth,
+            provider,
+            signInWithPopup,
+            signOut
+        });
         const applyBrewFormInlineVisibility = () => {
             const formMount = document.getElementById('brewsFormMount');
             const formContainer = document.getElementById('formContainer');
@@ -177,9 +213,7 @@ export const createAppContainerModules = () => {
             getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
             setPinnedBrewsPreferences: (value) => { pinnedBrewsPreferences = value; },
             getCurrentUser: () => currentUser,
-            db,
-            doc,
-            updateDoc,
+            dataService,
             applyAnimationClass: (...args) => applyAnimationClass(...args),
             renderTable: (...args) => renderTable(...args),
             renderPinnedTiles: (...args) => renderPinnedTiles(...args),
@@ -212,9 +246,7 @@ export const createAppContainerModules = () => {
             getCoffees: () => coffees,
             getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
             getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
-            db,
-            doc,
-            writeBatch
+            dataService
         });
 
         const coffeeScale = initCoffeeScale({
@@ -244,6 +276,8 @@ export const createAppContainerModules = () => {
             imageCompression,
             getCurrentUser: () => currentUser,
             toggleForm: (...args) => toggleForm(...args),
+            dataService,
+            storageService,
             db,
             doc,
             setDoc,
@@ -278,21 +312,8 @@ export const createAppContainerModules = () => {
             clearViewSubscriptions,
             clearNotificationSubscription
         } = createSessionAuthViewModule({
-            auth,
-            provider,
-            signInWithPopup,
-            signOut,
-            db,
-            doc,
-            setDoc,
-            updateDoc,
-            getDoc,
-            collection,
-            query,
-            where,
-            orderBy,
-            limit,
-            onSnapshot,
+            authService,
+            dataService,
             getCurrentUser: () => currentUser,
             setCurrentView: (value) => { currentView = value; },
             syncFriendViewSelectValues: (...args) => syncFriendViewSelectValues(...args),
@@ -391,10 +412,7 @@ export const createAppContainerModules = () => {
             getBeans: () => beans,
             getCoffeeTypes: () => coffeeTypes,
             setBeansState: (value) => { beans = value; },
-            db,
-            writeBatch,
-            doc,
-            collection
+            dataService
         });
 
 
@@ -520,19 +538,8 @@ export const createAppContainerModules = () => {
             syncLegacyBeans,
             backfillBeanDatesFromBrews
         } = createBeansCoordinator({
-            db,
-            doc,
-            updateDoc,
-            writeBatch,
-            addDoc,
-            collection,
-            deleteDoc,
-            setDoc,
-            storage,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            deleteObject,
+            dataService,
+            storageService,
             imageCompression,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
@@ -613,17 +620,8 @@ export const createAppContainerModules = () => {
             getFilteredSortedCoffeeTypes,
             renderCoffeeTypesTable
         } = createCoffeesCoordinator({
-            db,
-            storage,
-            doc,
-            updateDoc,
-            writeBatch,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            deleteObject,
-            addDoc,
-            collection,
+            dataService,
+            storageService,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             getCurrentCoffeeTypeId: () => currentCoffeeTypeId,
@@ -702,19 +700,9 @@ export const createAppContainerModules = () => {
             openGasBulkAddFromTable,
             bulkAddGearToBrews
         } = createGasCoordinator({
-            db,
-            storage,
-            doc,
-            collection,
-            updateDoc,
-            deleteDoc,
-            writeBatch,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            deleteObject,
+            dataService,
+            storageService,
             imageCompression,
-            addDoc,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             getCurrentGasId: () => currentGasId,
@@ -747,7 +735,8 @@ export const createAppContainerModules = () => {
             setCoffeeDetailsCollapsed,
             toggleCoffeeDetails,
             initCoffeeDetailsUi,
-            toggleForm
+            toggleForm,
+            handleQuickEditRecipeInput
         } = createBrewFormUiModule({
             getScaData: () => scaData,
             getScaState: () => scaState,
@@ -770,6 +759,7 @@ export const createAppContainerModules = () => {
             loadFollowingList,
             loadFollowersList
         } = createSocialCoordinator({
+            dataService,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             setCurrentView: (value) => { currentView = value; },
@@ -778,13 +768,6 @@ export const createAppContainerModules = () => {
             setFollowersState: (value) => { followers = value; },
             getIsPublic: () => isPublic,
             setIsPublicState: (value) => { isPublic = value; },
-            db,
-            doc,
-            updateDoc,
-            getDoc,
-            getDocs,
-            collection,
-            writeBatch,
             openAppConfirm,
             changeView
         });
@@ -813,23 +796,8 @@ export const createAppContainerModules = () => {
             setIsGalleryLoading: (value) => { isGalleryLoading = value; },
             getFollowing: () => following,
             getCoffees: () => coffees,
-            db,
-            storage,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            addDoc,
-            collection,
-            query,
-            where,
-            orderBy,
-            limit,
-            startAfter,
-            getDocs,
-            doc,
-            updateDoc,
-            deleteDoc,
-            deleteObject,
+            dataService,
+            storageService,
             imageCompression,
             getStarDisplay,
             openAppConfirm
@@ -859,9 +827,7 @@ export const createAppContainerModules = () => {
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             getFollowing: () => following,
-            db,
-            collection,
-            getDocs,
+            dataService,
             getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
             getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
             openBeanCard: (...args) => openBeanCard(...args),
@@ -874,23 +840,14 @@ export const createAppContainerModules = () => {
 
         const setRating = (r) => { const c=document.getElementById('starContainer'); document.getElementById('ratingInput').value=r; for(let i=0;i<c.children.length;i++){ if(i<r)c.children[i].classList.add('active'); else c.children[i].classList.remove('active'); } };
 
-        const openCoffeeScaleModal = () => {
-            document.getElementById('coffeeScaleModal').classList.remove('hidden');
-            if (coffeeScale?.autoConnect) coffeeScale.autoConnect();
-        };
-
-        const closeCoffeeScaleModal = () => {
-            document.getElementById('coffeeScaleModal').classList.add('hidden');
-        };
-
-        const openConnectScaleModal = () => {
-            document.getElementById('connectScaleModal').classList.remove('hidden');
-            if (coffeeScale?.autoConnect) coffeeScale.autoConnect();
-        };
-
-        const closeConnectScaleModal = () => {
-            document.getElementById('connectScaleModal').classList.add('hidden');
-        };
+        const {
+            openCoffeeScaleModal,
+            closeCoffeeScaleModal,
+            openConnectScaleModal,
+            closeConnectScaleModal
+        } = createScaleModalsModule({
+            getCoffeeScale: () => coffeeScale
+        });
 
         const {
             resetImportState,
@@ -916,10 +873,7 @@ export const createAppContainerModules = () => {
             setPendingImportBrews: (value) => { pendingImportBrews = value; },
             parseBeanconquerorCSV,
             mapBeanconquerorBrews,
-            db,
-            collection,
-            doc,
-            writeBatch,
+            dataService,
             getFilteredCoffees: () => getFilteredCoffees(),
             getBeans: () => beans,
             getCoffeeTypes: () => coffeeTypes,
@@ -938,26 +892,6 @@ export const createAppContainerModules = () => {
             getFilteredCoffees,
             getCoffeeTypeDisplay
         });
-
-        const handleQuickEditRecipeInput = (source) => {
-            const weightInput = document.getElementById('quickEditWeight');
-            const yieldInput = document.getElementById('quickEditYield');
-            const ratioInput = document.getElementById('quickEditRatio');
-            if (!weightInput || !yieldInput || !ratioInput) return;
-            const weightVal = parseFloat(weightInput.value);
-            const yieldVal = parseFloat(yieldInput.value);
-            if (!Number.isFinite(weightVal) || weightVal <= 0) {
-                ratioInput.value = '';
-                return;
-            }
-            if (source === 'weight' || source === 'yield') {
-                if (Number.isFinite(yieldVal) && yieldVal >= 0) {
-                    ratioInput.value = (yieldVal / weightVal).toFixed(2);
-                } else {
-                    ratioInput.value = '';
-                }
-            }
-        };
         initCoffeeDetailsUi();
 
         const {
@@ -981,9 +915,7 @@ export const createAppContainerModules = () => {
             getBeans: () => beans,
             getGasItems: () => gasItems,
             getCoffeeTypes: () => coffeeTypes,
-            db,
-            doc,
-            updateDoc,
+            dataService,
             parseNum,
             handleQuickEditRecipeInput: (...args) => handleQuickEditRecipeInput(...args),
             openCoffeeCard: (...args) => openCoffeeCard(...args),
@@ -1099,12 +1031,7 @@ export const createAppContainerModules = () => {
                 getCoffeeTypes: () => coffeeTypes,
                 getGasItems: () => gasItems,
                 getBeanCoffeeTypeDisplay,
-                db,
-                doc,
-                updateDoc,
-                addDoc,
-                deleteDoc,
-                collection,
+                dataService,
                 openAppConfirm,
                 parseNum,
                 setTempMode,
@@ -1137,9 +1064,7 @@ export const createAppContainerModules = () => {
         });
 
         const { renderPinnedTiles, togglePinnedTiles } = createPinCoordinator({
-            db,
-            doc,
-            writeBatch,
+            dataService,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             getCurrentSort: () => currentSort,
@@ -1652,70 +1577,271 @@ export const createAppContainerModules = () => {
             window.scrollTo({ top: Math.max(0, top - headerHeight - 8), behavior: 'smooth' });
         };
 
-        const actions = {
-            triggerAIScan, handleAIFile, toggleAiMenu, triggerBeansAIScan, handleBeansAIFile, toggleBeansAiMenu, triggerAIProfile, googleLogin, googleLogout, openFriendsModal, closeModal, switchGalleryTab, switchModalTab, togglePublicProfile, copyShareId, followUser, unfollowUser, changeView, toggleForm, resetFormState, handleFormSubmit, handleRecipeInput, handleQuickEditRecipeInput, setTempMode, setNotesMode, resetSca, addScaToNotes, editCoffee, duplicateCoffee, duplicateFromCard, fastDuplicateFromCard, cloneBrew, deleteCoffee, discardForm, toggleActive, sortBy, openFilterMenu, applyFilter, clearAllFilters, closeMenus, getFilteredCoffees, setRating, exportCSV, openImportExportModal, closeImportExportModal, setImportExportMode, openExportModal, closeExportModal, performExport, openImportModal, closeImportModal, handleImportFileChange, performImport, exportBrewsAsCSV, exportBrewsAsBeanconquerorCSV, exportCoffeesAsCSV, exportCoffeesAsJSON, openGraphModal, closeGraphModal, openImageModal, closeImageModal, openCoffeeCard, closeCoffeeCard, navigateCoffeeCard, openBeanCard, closeBeanCard, navigateBeanCard, openBrewWithBean, enterBeanEditMode, cancelBeanEditMode, saveBeanCardEdits, openCardGraphModal, closeCardGraphModal, navigateCoffeeCardFromGraph, toggleMainMenu, openUploadModal, closeUploadModal, handlePhotoSubmit, openGallery, deletePhoto, openEasterEgg, closeEasterEgg, openPreferences, openBrewsTablePrefs, hideBrewsTablePrefsModal, clearSearch, toggleDrinkOther, toggleMethodOther, openHelp, closeHelp, openAbout, closeAbout, toggleAllFriends, loadMoreGallery, resetZoom, openStats, closeStats, changeStatsView, toggleStatsUniqueTable, toggleActionMenu, shareCoffeeCard, toggleCardMode, triggerCardPhoto, handleCardPhoto, generateShareImage, resetCardPhotoState, updateBeanMeter, refreshTableData, fillBeanDetails, loadMoreBrews, toggleQuickFilter, openQuickFilterValues, applyFilterFromQuick, hideAiProfile, hideGalleryModal, hidePreferencesModal, handleCoffeeCardOverlayClick, handleBeanCardOverlayClick, handleCoffeeTypeCardOverlayClick, handleGasCardOverlayClick, openCoffeeScaleModal, closeCoffeeScaleModal, openConnectScaleModal, closeConnectScaleModal, sendEmailLinkActivation, sendEmailLinkLogin, openCoffeeCardQuickEdit, openExternalUrl,
-            togglePinnedTiles,
-            fastRepeatCoffee,
-            editBrewFromCard,
-            enterBrewQuickEditMode,
-            cancelBrewQuickEditMode,
-            saveBrewQuickEdits,
-            closeCoffeeTypeCardMenu,
-            closeBeanCardMenu,
-            // New Beans Functions
-            openBeans, closeBeans, saveBeanStock, saveBeanOpenedDate, saveBeanFrozenDate, saveBeanRoastDate, toggleBeanArchive, toggleBeanFrozen, openNewBag, deleteBean, syncLegacyBeans, backfillBeanDatesFromBrews, extractCoffeeTypesFromBeans,
-            openCoffeeTypes, closeCoffeeTypes, setCoffeeTypesSearch, setCoffeeTypesSort, openCoffeeTypeCard, closeCoffeeTypeCard, enterCoffeeTypeEditMode, cancelCoffeeTypeEditMode, saveCoffeeTypeEdits, openCoffeeTypeShopUrl, navigateCoffeeTypeCard, triggerCoffeeTypePhoto, handleCoffeeTypePhoto, openCoffeeTypePhoto, removeCoffeeTypePhoto, triggerBeanPhoto, handleBeanPhoto, openBeanPhoto, removeBeanPhoto,
-            openGasList, closeGasList, createGasItemFromModal, setGasSearch, clearGasSearch, toggleGasQuickFilter, openGasQuickFilterValues, applyGasFilterFromQuick, clearGasFilters, setGasSort, openGasCard, closeGasCard, navigateGasCard, enterGasEditMode, cancelGasEditMode, saveGasEdits, toggleGasArchive, deleteGasItem, openGasFromTableEdit, openGasMergeFromTable, openGasBulkAddFromTable, toggleGasArchiveFromTable, deleteGasFromTable, triggerGasPhoto, openGasPhoto, removeGasPhoto, handleGasPhoto, openGasMergeModal, closeGasMergeModal, mergeGasItem, openGasBulkAddModal, closeGasBulkAddModal, bulkAddGearToBrews,
-            closeCoffeeCardMenu,
-            toggleCoffeeDetails,
-            createCoffeeTypeFromModal,
-            deleteCoffeeType,
-            createBeanFromModal,
-            toggleCoffeeTypesAiMenu,
-            triggerCoffeeTypesAIScan,
-            handleCoffeeTypesAIFile,
-            setBeansSearch,
-            clearBeansSearch,
-            clearCoffeeTypesSearch,
-            toggleBeansQuickFilter,
-            openBeansQuickFilterValues,
-            applyBeansFilterFromQuick,
-            clearBeansFilters,
-            toggleCoffeeTypesQuickFilter,
-            openCoffeeTypesQuickFilterValues,
-            applyCoffeeTypesFilterFromQuick,
-            clearCoffeeTypesFilters,
-            showBeansForCoffeeType,
-            openNewBagForCoffeeType,
-            openNewBagForCoffeeTypeFromTable,
-            showBrewsForCoffeeType,
-            showBeansForCoffeeTypeFromTable,
-            showBrewsForCoffeeTypeFromTable,
-            openCoffeeTypeFromTableEdit,
-            deleteCoffeeTypeFromTable,
-            showBrewsForBean,
-            showCoffeeForBean,
-            showBeanForBrew,
-            showCoffeeForBrew,
-            closeAutoArchiveToast,
-            handleAutoArchiveToastAction,
-            closeCoffeeTypeCreatedToast,
-            closeBeanCreatedToast,
-            handleBeanCreatedToastAction,
-            closeAutoPinToast,
-            closeAppConfirm,
-            resolveAppConfirm,
-            openSelectedBeanForEdit,
-            openCoffeeFromBeanEdit,
-            recalculateAllBeanStockLeft,
-            migrateGrinderToGear,
-            fillLegacyGrinderFromGear,
-            showBrewsForGear,
-            openAddBrewFromPinned,
-            closeBrewFormModal,
-            discardBrewFormModal,
-            submitBrewFormModal
-        };
+        const actions = createActionsRegistry({
+            commonActions: {
+                addScaToNotes,
+                applyFilter,
+                applyFilterFromQuick,
+                cancelBeanEditMode,
+                changeStatsView,
+                changeView,
+                clearAllFilters,
+                clearSearch,
+                cloneBrew,
+                closeAbout,
+                closeBeanCard,
+                closeCardGraphModal,
+                closeCoffeeCard,
+                closeCoffeeScaleModal,
+                closeConnectScaleModal,
+                closeEasterEgg,
+                closeExportModal,
+                closeGraphModal,
+                closeHelp,
+                closeImageModal,
+                closeImportExportModal,
+                closeImportModal,
+                closeMenus,
+                closeModal,
+                closeStats,
+                closeUploadModal,
+                copyShareId,
+                deleteCoffee,
+                deletePhoto,
+                discardForm,
+                duplicateCoffee,
+                duplicateFromCard,
+                editCoffee,
+                enterBeanEditMode,
+                exportBrewsAsBeanconquerorCSV,
+                exportBrewsAsCSV,
+                exportCSV,
+                exportCoffeesAsCSV,
+                exportCoffeesAsJSON,
+                fastDuplicateFromCard,
+                fillBeanDetails,
+                followUser,
+                generateShareImage,
+                getFilteredCoffees,
+                googleLogin,
+                googleLogout,
+                handleAIFile,
+                handleBeanCardOverlayClick,
+                handleBeansAIFile,
+                handleCardPhoto,
+                handleCoffeeCardOverlayClick,
+                handleCoffeeTypeCardOverlayClick,
+                handleFormSubmit,
+                handleGasCardOverlayClick,
+                handleImportFileChange,
+                handlePhotoSubmit,
+                handleQuickEditRecipeInput,
+                hideAiProfile,
+                hideBrewsTablePrefsModal,
+                hideGalleryModal,
+                hidePreferencesModal,
+                loadMoreBrews,
+                loadMoreGallery,
+                navigateBeanCard,
+                navigateCoffeeCard,
+                navigateCoffeeCardFromGraph,
+                openAbout,
+                openBeanCard,
+                openBrewWithBean,
+                openBrewsTablePrefs,
+                openCardGraphModal,
+                openCoffeeCard,
+                openCoffeeCardQuickEdit,
+                openCoffeeScaleModal,
+                openConnectScaleModal,
+                openEasterEgg,
+                openExportModal,
+                openExternalUrl,
+                openFilterMenu,
+                openFriendsModal,
+                openGallery,
+                openGraphModal,
+                openHelp,
+                openImageModal,
+                openImportExportModal,
+                openImportModal,
+                openPreferences,
+                openQuickFilterValues,
+                openStats,
+                openUploadModal,
+                performExport,
+                performImport,
+                refreshTableData,
+                resetCardPhotoState,
+                resetFormState,
+                resetSca,
+                resetZoom,
+                saveBeanCardEdits,
+                sendEmailLinkActivation,
+                sendEmailLinkLogin,
+                setImportExportMode,
+                setNotesMode,
+                setRating,
+                setTempMode,
+                shareCoffeeCard,
+                sortBy,
+                switchGalleryTab,
+                switchModalTab,
+                toggleActionMenu,
+                toggleActive,
+                toggleAiMenu,
+                toggleAllFriends,
+                toggleBeansAiMenu,
+                toggleCardMode,
+                toggleDrinkOther,
+                toggleForm,
+                toggleMainMenu,
+                toggleMethodOther,
+                togglePublicProfile,
+                toggleQuickFilter,
+                toggleStatsUniqueTable,
+                triggerAIScan,
+                triggerAIProfile,
+                triggerBeansAIScan,
+                triggerCardPhoto,
+                unfollowUser,
+                updateBeanMeter
+            },
+            brewActions: {
+                cancelBrewQuickEditMode,
+                editBrewFromCard,
+                enterBrewQuickEditMode,
+                fastRepeatCoffee,
+                saveBrewQuickEdits,
+                showBeanForBrew,
+                showCoffeeForBrew,
+                togglePinnedTiles
+            },
+            beanActions: {
+                applyBeansFilterFromQuick,
+                backfillBeanDatesFromBrews,
+                clearBeansFilters,
+                clearBeansSearch,
+                closeBeans,
+                deleteBean,
+                extractCoffeeTypesFromBeans,
+                handleBeanPhoto,
+                openBeanPhoto,
+                openBeans,
+                openBeansQuickFilterValues,
+                openCoffeeFromBeanEdit,
+                openNewBag,
+                openSelectedBeanForEdit,
+                recalculateAllBeanStockLeft,
+                removeBeanPhoto,
+                saveBeanFrozenDate,
+                saveBeanOpenedDate,
+                saveBeanRoastDate,
+                saveBeanStock,
+                setBeansSearch,
+                showBrewsForBean,
+                showCoffeeForBean,
+                syncLegacyBeans,
+                toggleBeanArchive,
+                toggleBeanFrozen,
+                toggleBeansQuickFilter,
+                triggerBeanPhoto
+            },
+            coffeeActions: {
+                applyCoffeeTypesFilterFromQuick,
+                cancelCoffeeTypeEditMode,
+                clearCoffeeTypesFilters,
+                clearCoffeeTypesSearch,
+                closeCoffeeTypeCard,
+                closeCoffeeTypes,
+                createBeanFromModal,
+                createCoffeeTypeFromModal,
+                deleteCoffeeType,
+                deleteCoffeeTypeFromTable,
+                enterCoffeeTypeEditMode,
+                handleCoffeeTypePhoto,
+                handleCoffeeTypesAIFile,
+                navigateCoffeeTypeCard,
+                openCoffeeTypeCard,
+                openCoffeeTypeFromTableEdit,
+                openCoffeeTypePhoto,
+                openCoffeeTypeShopUrl,
+                openCoffeeTypes,
+                openCoffeeTypesQuickFilterValues,
+                openNewBagForCoffeeType,
+                openNewBagForCoffeeTypeFromTable,
+                removeCoffeeTypePhoto,
+                saveCoffeeTypeEdits,
+                setCoffeeTypesSearch,
+                setCoffeeTypesSort,
+                showBeansForCoffeeType,
+                showBeansForCoffeeTypeFromTable,
+                showBrewsForCoffeeType,
+                showBrewsForCoffeeTypeFromTable,
+                toggleCoffeeTypesAiMenu,
+                toggleCoffeeTypesQuickFilter,
+                triggerCoffeeTypePhoto,
+                triggerCoffeeTypesAIScan
+            },
+            gasActions: {
+                applyGasFilterFromQuick,
+                bulkAddGearToBrews,
+                cancelGasEditMode,
+                clearGasFilters,
+                clearGasSearch,
+                closeGasBulkAddModal,
+                closeGasCard,
+                closeGasList,
+                closeGasMergeModal,
+                createGasItemFromModal,
+                deleteGasFromTable,
+                deleteGasItem,
+                enterGasEditMode,
+                fillLegacyGrinderFromGear,
+                handleGasPhoto,
+                mergeGasItem,
+                migrateGrinderToGear,
+                navigateGasCard,
+                openGasBulkAddFromTable,
+                openGasBulkAddModal,
+                openGasCard,
+                openGasFromTableEdit,
+                openGasList,
+                openGasMergeFromTable,
+                openGasMergeModal,
+                openGasPhoto,
+                openGasQuickFilterValues,
+                removeGasPhoto,
+                saveGasEdits,
+                setGasSearch,
+                setGasSort,
+                showBrewsForGear,
+                toggleGasArchive,
+                toggleGasArchiveFromTable,
+                toggleGasQuickFilter,
+                triggerGasPhoto
+            },
+            uiActions: {
+                closeBeanCardMenu,
+                closeCoffeeCardMenu,
+                closeCoffeeTypeCardMenu,
+                toggleCoffeeDetails
+            },
+            systemActions: {
+                closeAppConfirm,
+                closeAutoArchiveToast,
+                closeAutoPinToast,
+                closeBeanCreatedToast,
+                closeBrewFormModal,
+                closeCoffeeTypeCreatedToast,
+                discardBrewFormModal,
+                handleAutoArchiveToastAction,
+                handleBeanCreatedToastAction,
+                openAddBrewFromPinned,
+                resolveAppConfirm,
+                submitBrewFormModal
+            }
+        });
 
         const searchInput = document.getElementById('globalSearch'); 
         if(searchInput) { searchInput.addEventListener('input', (e) => { const clearBtn = document.getElementById('searchClearBtn'); if(e.target.value.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden'); displayedBrewsCount = BREWS_PER_PAGE; renderTable(); }); }

@@ -4,10 +4,7 @@ export const createImportExportModule = ({
     setPendingImportBrews,
     parseBeanconquerorCSV,
     mapBeanconquerorBrews,
-    db,
-    collection,
-    doc,
-    writeBatch,
+    dataService,
     getFilteredCoffees,
     getBeans,
     getCoffeeTypes,
@@ -15,6 +12,10 @@ export const createImportExportModule = ({
     getCoffeeTypeForBrew,
     openAppConfirm
 }) => {
+    const { db, collection, doc, writeBatch } = dataService || {};
+    if (!db || !collection || !doc || !writeBatch) {
+        throw new Error('createImportExportModule requires dataService { db, collection, doc, writeBatch }');
+    }
     const setImportExportMode = (mode = 'export') => {
         const isImport = mode === 'import';
         const exportPanel = document.getElementById('importExportExportPanel');

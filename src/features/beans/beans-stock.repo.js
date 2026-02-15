@@ -1,4 +1,8 @@
-export const createBeansStockRepoModule = ({ db, doc, updateDoc, writeBatch }) => {
+export const createBeansStockRepoModule = ({ dataService }) => {
+    const { db, doc, updateDoc, writeBatch } = dataService || {};
+    if (!db || !doc || !updateDoc || !writeBatch) {
+        throw new Error('createBeansStockRepoModule requires dataService { db, doc, updateDoc, writeBatch }');
+    }
     const updateBeansLeft = async ({ uid, beanId, beansLeft, updatedAt }) => {
         await updateDoc(doc(db, 'users', uid, 'beans', beanId), {
             beansLeft,

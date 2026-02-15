@@ -1,10 +1,7 @@
 import { createBeansStockRepoModule } from './beans-stock.repo.js';
 
 export const createBeansStockControllerModule = ({
-    db,
-    doc,
-    updateDoc,
-    writeBatch,
+    dataService,
     getCurrentUser,
     getBeans,
     setBeansState,
@@ -20,7 +17,7 @@ export const createBeansStockControllerModule = ({
     makeBeanSignature,
     showAutoArchiveToast
 }) => {
-    const repo = createBeansStockRepoModule({ db, doc, updateDoc, writeBatch });
+    const repo = createBeansStockRepoModule({ dataService });
 
     const updateBeansLeftForBean = async (beanId, extraBrews = []) => {
         const currentUser = getCurrentUser();

@@ -2,9 +2,7 @@ export const createStatsModule = ({
     getCurrentUser,
     getCurrentView,
     getFollowing,
-    db,
-    collection,
-    getDocs,
+    dataService,
     getCoffeeTypeDisplay,
     getCoffeeTypeForBrew,
     openBeanCard,
@@ -14,6 +12,10 @@ export const createStatsModule = ({
     getCurrentBeanMeterPeriod,
     Chart
 }) => {
+    const { db, collection, getDocs } = dataService || {};
+    if (!db || !collection || !getDocs) {
+        throw new Error('createStatsModule requires dataService { db, collection, getDocs }');
+    }
     const chartInstances = {};
     let currentStatsUid = 'mine';
     const formatCurrencyEur = (value) => {

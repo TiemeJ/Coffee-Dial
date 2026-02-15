@@ -9,13 +9,7 @@ export const createSocialCoordinator = ({
     setFollowersState,
     getIsPublic,
     setIsPublicState,
-    db,
-    doc,
-    updateDoc,
-    getDoc,
-    getDocs,
-    collection,
-    writeBatch,
+    dataService,
     openAppConfirm,
     changeView
 }) =>
@@ -28,13 +22,7 @@ export const createSocialCoordinator = ({
         setFollowersState,
         getIsPublic,
         setIsPublicState,
-        db,
-        doc,
-        updateDoc,
-        getDoc,
-        getDocs,
-        collection,
-        writeBatch,
+        dataService,
         openAppConfirm,
         changeView
     });

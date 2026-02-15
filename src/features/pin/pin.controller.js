@@ -3,9 +3,7 @@ import { createPinViewModule } from './pin.view.js';
 import { createBrewPinArtModule } from './brew-pin-art.js';
 
 export const createPinControllerModule = ({
-    db,
-    doc,
-    writeBatch,
+    dataService,
     getCurrentUser,
     getCurrentView,
     getCurrentSort,
@@ -22,7 +20,7 @@ export const createPinControllerModule = ({
     openBeanCardWithOrder,
     renderTable
 }) => {
-    const repo = createPinRepoModule({ db, doc, writeBatch });
+    const repo = createPinRepoModule({ dataService });
     const view = createPinViewModule({ getBeanCalculatedStock, getCoffeeTypeDisplay });
     const artView = createBrewPinArtModule({
         resolveLinkedBean: (...args) => view.resolveLinkedBean(...args),

@@ -3,13 +3,13 @@ export const createBeansMaintenanceModule = ({
     getBeans,
     setBeansState,
     getCoffees,
-    db,
-    doc,
-    updateDoc,
-    writeBatch,
-    collection,
+    dataService,
     autoPinOpenBagsIfEnabled
 }) => {
+    const { db, doc, updateDoc, writeBatch, collection } = dataService || {};
+    if (!db || !doc || !updateDoc || !writeBatch || !collection) {
+        throw new Error('createBeansMaintenanceModule requires dataService { db, doc, updateDoc, writeBatch, collection }');
+    }
     const saveBeanRoastDate = async (beanId, dateValue) => {
         const user = getCurrentUser();
         if (!user) return;

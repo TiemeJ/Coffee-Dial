@@ -1,19 +1,6 @@
 export const createSessionAuthViewModule = ({
-    auth,
-    provider,
-    signInWithPopup,
-    signOut,
-    db,
-    doc,
-    setDoc,
-    updateDoc,
-    getDoc,
-    collection,
-    query,
-    where,
-    orderBy,
-    limit,
-    onSnapshot,
+    authService,
+    dataService,
     getCurrentUser,
     setCurrentView,
     syncFriendViewSelectValues,
@@ -61,6 +48,14 @@ export const createSessionAuthViewModule = ({
     setLastGalleryVisit,
     applyBrewFormInlineVisibility
 }) => {
+    const { auth, provider, signInWithPopup, signOut } = authService || {};
+    const { db, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, limit, onSnapshot } = dataService || {};
+    if (!auth || !provider || !signInWithPopup || !signOut) {
+        throw new Error('createSessionAuthViewModule requires authService { auth, provider, signInWithPopup, signOut }');
+    }
+    if (!db || !doc || !setDoc || !updateDoc || !getDoc || !collection || !query || !where || !orderBy || !limit || !onSnapshot) {
+        throw new Error('createSessionAuthViewModule requires dataService { db, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, limit, onSnapshot }');
+    }
     const googleLogin = () => signInWithPopup(auth, provider).catch((e) => alert(e.message));
 
     const googleLogout = () => signOut(auth).then(() => location.reload());

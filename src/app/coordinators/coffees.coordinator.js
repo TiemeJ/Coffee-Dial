@@ -2,17 +2,8 @@ import { createCoffeeTypeCardModule } from '../../features/coffees/coffee-type-c
 import { createCoffeeTypesTableModule } from '../../features/coffees/coffee-types-table.js';
 
 export const createCoffeesCoordinator = ({
-    db,
-    storage,
-    doc,
-    updateDoc,
-    writeBatch,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject,
-    addDoc,
-    collection,
+    dataService,
+    storageService,
     getCurrentUser,
     getCurrentView,
     getCurrentCoffeeTypeId,
@@ -49,6 +40,10 @@ export const createCoffeesCoordinator = ({
     enterBeanEditMode,
     autoPinOpenBagsIfEnabled
 }) => {
+    const { db: resolvedDb, addDoc: resolvedAddDoc, collection: resolvedCollection } = dataService || {};
+    if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) {
+        throw new Error('createCoffeesCoordinator requires dataService { db, addDoc, collection }');
+    }
     let getFilteredSortedCoffeeTypes = () => [];
     let renderCoffeeTypesTable = () => {};
     let openCoffeeTypeCard = () => {};
@@ -67,6 +62,7 @@ export const createCoffeesCoordinator = ({
     const createCoffeeTypeFromModal = async () => {
         const user = getCurrentUser();
         if (!user) return alert('Please sign in.');
+        if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) return alert('Data service unavailable.');
         const nowIso = new Date().toISOString();
         const typeData = {
             uid: user.uid,
@@ -85,7 +81,7 @@ export const createCoffeesCoordinator = ({
         };
 
         try {
-            const typeRef = await addDoc(collection(db, 'users', user.uid, 'coffeeTypes'), typeData);
+            const typeRef = await resolvedAddDoc(resolvedCollection(resolvedDb, 'users', user.uid, 'coffeeTypes'), typeData);
             const newType = { id: typeRef.id, ...typeData };
             if (!getCoffeeTypes().find((ct) => ct.id === newType.id)) setCoffeeTypesState([...getCoffeeTypes(), newType]);
             openCoffeeTypeCard(newType.id);
@@ -108,6 +104,7 @@ export const createCoffeesCoordinator = ({
         const user = getCurrentUser();
         const typeId = getCurrentCoffeeTypeId();
         if (!user || !typeId) return;
+        if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) return alert('Data service unavailable.');
 
         const type = getCoffeeTypes().find((ct) => ct.id === typeId);
         if (!type) return;
@@ -135,7 +132,7 @@ export const createCoffeesCoordinator = ({
         };
 
         try {
-            const newBeanRef = await addDoc(collection(db, 'users', user.uid, 'beans'), newBeanData);
+            const newBeanRef = await resolvedAddDoc(resolvedCollection(resolvedDb, 'users', user.uid, 'beans'), newBeanData);
             const newBean = { id: newBeanRef.id, ...newBeanData };
             setBeansState([...getBeans(), newBean]);
             renderBeansTable();
@@ -196,6 +193,8 @@ export const createCoffeesCoordinator = ({
     };
 
     const coffeeTypeCard = createCoffeeTypeCardModule({
+        dataService,
+        storageService,
         getCurrentUser,
         getCurrentView,
         getCurrentCoffeeTypeId,
@@ -204,15 +203,6 @@ export const createCoffeesCoordinator = ({
         setCoffeeTypesState,
         getBeans,
         setBeansState,
-        db,
-        storage,
-        doc,
-        updateDoc,
-        writeBatch,
-        ref,
-        uploadBytes,
-        getDownloadURL,
-        deleteObject,
         openAppConfirm,
         getStarDisplay,
         renderCoffeeTypesTable: () => renderCoffeeTypesTable(),

@@ -12,27 +12,20 @@ export const createGalleryModule = ({
     setIsGalleryLoading,
     getFollowing,
     getCoffees,
-    db,
-    storage,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    addDoc,
-    collection,
-    query,
-    where,
-    orderBy,
-    limit,
-    startAfter,
-    getDocs,
-    doc,
-    updateDoc,
-    deleteDoc,
-    deleteObject,
+    dataService,
+    storageService,
     imageCompression,
     getStarDisplay,
     openAppConfirm
 }) => {
+    const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDocs, doc, updateDoc, deleteDoc } = dataService || {};
+    const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
+    if (!db || !addDoc || !collection || !query || !where || !orderBy || !limit || !startAfter || !getDocs || !doc || !updateDoc || !deleteDoc) {
+        throw new Error('createGalleryModule requires dataService { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDocs, doc, updateDoc, deleteDoc }');
+    }
+    if (!storage || !ref || !uploadBytes || !getDownloadURL || !deleteObject) {
+        throw new Error('createGalleryModule requires storageService { storage, ref, uploadBytes, getDownloadURL, deleteObject }');
+    }
     const openUploadModal = (coffeeId) => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
         setCurrentUploadCoffeeId(coffeeId);

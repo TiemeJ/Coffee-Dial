@@ -3,22 +3,34 @@ export const createAiImportModule = ({
     imageCompression,
     getCurrentUser,
     toggleForm,
-    db,
-    doc,
-    setDoc,
-    updateDoc,
-    collection,
-    writeBatch,
-    storage,
-    ref,
-    uploadBytes,
-    getDownloadURL,
+    dataService,
+    storageService,
+    db: legacyDb,
+    doc: legacyDoc,
+    setDoc: legacySetDoc,
+    updateDoc: legacyUpdateDoc,
+    collection: legacyCollection,
+    writeBatch: legacyWriteBatch,
+    storage: legacyStorage,
+    ref: legacyRef,
+    uploadBytes: legacyUploadBytes,
+    getDownloadURL: legacyGetDownloadURL,
     autoPinOpenBagsIfEnabled,
     getCoffeeTypes,
     setCoffeeTypes,
     openCoffeeTypeCard,
     enterCoffeeTypeEditMode
 }) => {
+    const db = dataService?.db ?? legacyDb;
+    const doc = dataService?.doc ?? legacyDoc;
+    const setDoc = dataService?.setDoc ?? legacySetDoc;
+    const updateDoc = dataService?.updateDoc ?? legacyUpdateDoc;
+    const collection = dataService?.collection ?? legacyCollection;
+    const writeBatch = dataService?.writeBatch ?? legacyWriteBatch;
+    const storage = storageService?.storage ?? legacyStorage;
+    const ref = storageService?.ref ?? legacyRef;
+    const uploadBytes = storageService?.uploadBytes ?? legacyUploadBytes;
+    const getDownloadURL = storageService?.getDownloadURL ?? legacyGetDownloadURL;
     let pendingAIBeanImageFile = null;
 
     const callBagAi = async (file) => {

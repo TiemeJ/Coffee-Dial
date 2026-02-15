@@ -3,11 +3,12 @@ export const createCoffeeTypesExtractModule = ({
     getBeans,
     getCoffeeTypes,
     setBeansState,
-    db,
-    writeBatch,
-    doc,
-    collection
+    dataService
 }) => {
+    const { db, writeBatch, doc, collection } = dataService || {};
+    if (!db || !writeBatch || !doc || !collection) {
+        throw new Error('createCoffeeTypesExtractModule requires dataService { db, writeBatch, doc, collection }');
+    }
     const extractCoffeeTypesFromBeans = async () => {
         const currentUser = getCurrentUser();
         const beans = getBeans();

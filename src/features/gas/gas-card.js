@@ -8,21 +8,20 @@ export const createGasCardModule = ({
     getCoffees,
     setCoffeesState,
     getFilteredSortedGasItems,
-    db,
-    storage,
-    doc,
-    collection,
-    updateDoc,
-    deleteDoc,
-    writeBatch,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject,
+    dataService,
+    storageService,
     imageCompression,
     openAppConfirm,
     renderGasTable
 }) => {
+    const { db, doc, collection, updateDoc, deleteDoc, writeBatch } = dataService || {};
+    const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
+    if (!db || !doc || !collection || !updateDoc || !deleteDoc || !writeBatch) {
+        throw new Error('createGasCardModule requires dataService { db, doc, collection, updateDoc, deleteDoc, writeBatch }');
+    }
+    if (!storage || !ref || !uploadBytes || !getDownloadURL || !deleteObject) {
+        throw new Error('createGasCardModule requires storageService { storage, ref, uploadBytes, getDownloadURL, deleteObject }');
+    }
     const GAS_METHOD_OPTIONS = [
         'Espresso',
         'V60',

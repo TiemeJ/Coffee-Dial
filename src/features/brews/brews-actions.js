@@ -8,12 +8,7 @@ export const createBrewsActionsModule = ({
     getCoffeeTypes,
     getGasItems,
     getBeanCoffeeTypeDisplay,
-    db,
-    doc,
-    updateDoc,
-    addDoc,
-    deleteDoc,
-    collection,
+    dataService,
     openAppConfirm,
     parseNum,
     setTempMode,
@@ -45,6 +40,10 @@ export const createBrewsActionsModule = ({
     shouldUseLegacyBrewForm,
     openBrewFormModal
 }) => {
+    const { db, doc, updateDoc, addDoc, deleteDoc, collection } = dataService || {};
+    if (!db || !doc || !updateDoc || !addDoc || !deleteDoc || !collection) {
+        throw new Error('createBrewsActionsModule requires dataService { db, doc, updateDoc, addDoc, deleteDoc, collection }');
+    }
     const clean = (value) => (value || '').toString().toLowerCase().trim();
     const scale = () => getCoffeeScale?.();
     const setAiAddVisibility = (visible) => {

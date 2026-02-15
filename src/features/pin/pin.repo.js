@@ -1,4 +1,8 @@
-export const createPinRepoModule = ({ db, doc, writeBatch }) => {
+export const createPinRepoModule = ({ dataService }) => {
+    const { db, doc, writeBatch } = dataService || {};
+    if (!db || !doc || !writeBatch) {
+        throw new Error('createPinRepoModule requires dataService { db, doc, writeBatch }');
+    }
     const saveCustomOrder = async ({ uid, updates }) => {
         if (!uid || !Array.isArray(updates) || updates.length === 0) return;
         const batch = writeBatch(db);

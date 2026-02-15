@@ -7,16 +7,14 @@ export const createSocialModule = ({
     setFollowersState,
     getIsPublic,
     setIsPublicState,
-    db,
-    doc,
-    updateDoc,
-    getDoc,
-    getDocs,
-    collection,
-    writeBatch,
+    dataService,
     openAppConfirm,
     changeView
 }) => {
+    const { db, doc, updateDoc, getDoc, getDocs, collection, writeBatch } = dataService || {};
+    if (!db || !doc || !updateDoc || !getDoc || !getDocs || !collection || !writeBatch) {
+        throw new Error('createSocialModule requires dataService { db, doc, updateDoc, getDoc, getDocs, collection, writeBatch }');
+    }
     const updatePublicToggleUI = () => {
         const btn = document.getElementById('togglePublicBtn');
         if (!btn) return;

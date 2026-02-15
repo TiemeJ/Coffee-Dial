@@ -4,17 +4,19 @@ export const createBeansCardPhotoModule = ({
     getCurrentBeanCardId,
     getBeans,
     setBeansState,
-    db,
-    storage,
-    doc,
-    updateDoc,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject,
+    dataService,
+    storageService,
     imageCompression,
     openBeanCard
 }) => {
+    const { db, doc, updateDoc } = dataService || {};
+    const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
+    if (!db || !doc || !updateDoc) {
+        throw new Error('createBeansCardPhotoModule requires dataService { db, doc, updateDoc }');
+    }
+    if (!storage || !ref || !uploadBytes || !getDownloadURL || !deleteObject) {
+        throw new Error('createBeansCardPhotoModule requires storageService { storage, ref, uploadBytes, getDownloadURL, deleteObject }');
+    }
     const getCurrentBean = () => getBeans().find((bean) => bean.id === getCurrentBeanCardId());
 
     const triggerBeanPhoto = (event) => {

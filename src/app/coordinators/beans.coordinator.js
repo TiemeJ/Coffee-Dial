@@ -10,19 +10,8 @@ import { createBeansCardPhotoModule } from '../../features/beans/beans-card-phot
 import { createBeansCardUiModule } from '../../features/beans/beans-card-ui.js';
 
 export const createBeansCoordinator = ({
-    db,
-    doc,
-    updateDoc,
-    writeBatch,
-    addDoc,
-    collection,
-    deleteDoc,
-    setDoc,
-    storage,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject,
+    dataService,
+    storageService,
     imageCompression,
     getCurrentUser,
     getCurrentView,
@@ -107,10 +96,7 @@ export const createBeansCoordinator = ({
         recalculateAllBeanStockLeft,
         archiveBeanIfStockDepleted
     } = createBeansStockControllerModule({
-        db,
-        doc,
-        updateDoc,
-        writeBatch,
+        dataService,
         getCurrentUser: () => getCurrentUser(),
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
@@ -165,6 +151,7 @@ export const createBeansCoordinator = ({
     });
 
     const beansCardForm = createBeansCardFormModule({
+        dataService,
         getCurrentUser: () => getCurrentUser(),
         getCurrentView: () => getCurrentView(),
         getCurrentBeanCardId: () => getCurrentBeanCardId(),
@@ -173,11 +160,6 @@ export const createBeansCoordinator = ({
         setBeansState: (value) => setBeansState(value),
         computeBeansLeft: (...args) => computeBeansLeft(...args),
         updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args),
-        db,
-        doc,
-        collection,
-        setDoc,
-        updateDoc,
         openBeanCard: (...args) => openBeanCard(...args),
         openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
         enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args)
@@ -208,19 +190,13 @@ export const createBeansCoordinator = ({
     closeBeanCard = beansCardUi.closeBeanCard;
 
     const { triggerBeanPhoto, openBeanPhoto, removeBeanPhoto, handleBeanPhoto } = createBeansCardPhotoModule({
+        dataService,
+        storageService,
         getCurrentUser: () => getCurrentUser(),
         getCurrentView: () => getCurrentView(),
         getCurrentBeanCardId: () => getCurrentBeanCardId(),
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
-        db,
-        storage,
-        doc,
-        updateDoc,
-        ref,
-        uploadBytes,
-        getDownloadURL,
-        deleteObject,
         imageCompression,
         openBeanCard: (...args) => openBeanCard(...args)
     });
@@ -244,17 +220,12 @@ export const createBeansCoordinator = ({
     closeBeans = beansTable.closeBeans;
 
     const beansActions = createBeansActionsModule({
+        dataService,
         getCurrentUser: () => getCurrentUser(),
         getCurrentBeanCardId: () => getCurrentBeanCardId(),
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
         computeBeansLeft: (...args) => computeBeansLeft(...args),
-        db,
-        doc,
-        updateDoc,
-        addDoc,
-        collection,
-        deleteDoc,
         autoUnpinClosedBagsIfEnabled: (...args) => autoUnpinClosedBagsIfEnabled(...args),
         autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
         makeBeanSignature: (...args) => makeBeanSignature(...args),
@@ -269,15 +240,11 @@ export const createBeansCoordinator = ({
     deleteBean = beansActions.deleteBean;
 
     const beansMaintenance = createBeansMaintenanceModule({
+        dataService,
         getCurrentUser: () => getCurrentUser(),
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
         getCoffees: () => getCoffees(),
-        db,
-        doc,
-        updateDoc,
-        writeBatch,
-        collection,
         autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args)
     });
 

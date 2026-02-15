@@ -14,9 +14,7 @@ export const createBrewsPreferencesModule = ({
     getPinnedBrewsPreferences,
     setPinnedBrewsPreferences,
     getCurrentUser,
-    db,
-    doc,
-    updateDoc,
+    dataService,
     applyAnimationClass,
     renderTable,
     renderPinnedTiles,
@@ -25,6 +23,10 @@ export const createBrewsPreferencesModule = ({
     showAutoPinToast,
     onPinnedBrewsPreferencesChanged
 }) => {
+    const { db, doc, updateDoc } = dataService || {};
+    if (!db || !doc || !updateDoc) {
+        throw new Error('createBrewsPreferencesModule requires dataService { db, doc, updateDoc }');
+    }
     const PREF_TOGGLE_IDS = [
         'useLegacyBrewFormToggle',
         'showCoffeeImageInBrewCardToggle',

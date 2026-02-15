@@ -243,6 +243,26 @@ export const createBrewFormUiModule = ({
         }
     };
 
+    const handleQuickEditRecipeInput = (source) => {
+        const weightInput = document.getElementById('quickEditWeight');
+        const yieldInput = document.getElementById('quickEditYield');
+        const ratioInput = document.getElementById('quickEditRatio');
+        if (!weightInput || !yieldInput || !ratioInput) return;
+        const weightVal = parseFloat(weightInput.value);
+        const yieldVal = parseFloat(yieldInput.value);
+        if (!Number.isFinite(weightVal) || weightVal <= 0) {
+            ratioInput.value = '';
+            return;
+        }
+        if (source === 'weight' || source === 'yield') {
+            if (Number.isFinite(yieldVal) && yieldVal >= 0) {
+                ratioInput.value = (yieldVal / weightVal).toFixed(2);
+            } else {
+                ratioInput.value = '';
+            }
+        }
+    };
+
     return {
         setNotesMode,
         renderScaWheel,
@@ -253,6 +273,7 @@ export const createBrewFormUiModule = ({
         setCoffeeDetailsCollapsed,
         toggleCoffeeDetails,
         initCoffeeDetailsUi,
-        toggleForm
+        toggleForm,
+        handleQuickEditRecipeInput
     };
 };

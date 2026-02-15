@@ -4,12 +4,7 @@ export const createBeansActionsModule = ({
     getBeans,
     setBeansState,
     computeBeansLeft,
-    db,
-    doc,
-    updateDoc,
-    addDoc,
-    collection,
-    deleteDoc,
+    dataService,
     autoUnpinClosedBagsIfEnabled,
     autoPinOpenBagsIfEnabled,
     makeBeanSignature,
@@ -17,6 +12,10 @@ export const createBeansActionsModule = ({
     enterBeanEditMode,
     openAppConfirm
 }) => {
+    const { db, doc, updateDoc, addDoc, collection, deleteDoc } = dataService || {};
+    if (!db || !doc || !updateDoc || !addDoc || !collection || !deleteDoc) {
+        throw new Error('createBeansActionsModule requires dataService { db, doc, updateDoc, addDoc, collection, deleteDoc }');
+    }
     const saveBeanStock = async (beanId, amount) => {
         const user = getCurrentUser();
         if (!user) return;

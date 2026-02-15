@@ -7,9 +7,7 @@ export const createBrewsCardActionsModule = ({
     getGasItems,
     getCoffeeTypes,
     getCurrentCoffeeCard,
-    db,
-    doc,
-    updateDoc,
+    dataService,
     parseNum,
     handleQuickEditRecipeInput,
     openCoffeeCard,
@@ -31,6 +29,10 @@ export const createBrewsCardActionsModule = ({
     autoPinOpenBagsIfEnabled,
     getPinnedBrewsPreferences
 }) => {
+    const { db, doc, updateDoc } = dataService || {};
+    if (!db || !doc || !updateDoc) {
+        throw new Error('createBrewsCardActionsModule requires dataService { db, doc, updateDoc }');
+    }
     const QUICK_EDIT_METHODS = ['Espresso', 'V60', 'Hario Switch', 'Clever Dripper', 'Aeropress', 'OXO Rapid Brewer', 'French Press', 'Chemex'];
     const QUICK_EDIT_DRINKS = [
         'Espresso',

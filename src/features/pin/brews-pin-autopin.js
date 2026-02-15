@@ -4,10 +4,12 @@ export const createBrewsPinAutopinModule = ({
     getCoffees,
     getBeanCalculatedStock,
     getPinnedBrewsPreferences,
-    db,
-    doc,
-    writeBatch
+    dataService
 }) => {
+    const { db, doc, writeBatch } = dataService || {};
+    if (!db || !doc || !writeBatch) {
+        throw new Error('createBrewsPinAutopinModule requires dataService { db, doc, writeBatch }');
+    }
     const makeBeanSignature = (data) => {
         const normalize = (value) => (value || '').toString().toLowerCase().trim();
         const parts = [

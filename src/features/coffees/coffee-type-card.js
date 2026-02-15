@@ -7,15 +7,8 @@ export const createCoffeeTypeCardModule = ({
     setCoffeeTypesState,
     getBeans,
     setBeansState,
-    db,
-    storage,
-    doc,
-    updateDoc,
-    writeBatch,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject,
+    dataService,
+    storageService,
     openAppConfirm,
     getStarDisplay,
     renderCoffeeTypesTable,
@@ -28,6 +21,14 @@ export const createCoffeeTypeCardModule = ({
     openNewBagForCoffeeType,
     updateCoffeeTypeCardNav
 }) => {
+    const { db, doc, updateDoc, writeBatch } = dataService || {};
+    const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
+    if (!db || !doc || !updateDoc || !writeBatch) {
+        throw new Error('createCoffeeTypeCardModule requires dataService { db, doc, updateDoc, writeBatch }');
+    }
+    if (!storage || !ref || !uploadBytes || !getDownloadURL || !deleteObject) {
+        throw new Error('createCoffeeTypeCardModule requires storageService { storage, ref, uploadBytes, getDownloadURL, deleteObject }');
+    }
     const getCurrentType = () => getCoffeeTypes().find((ct) => ct.id === getCurrentCoffeeTypeId());
 
     const showBeansForCoffeeTypeFromTable = (typeId) => {

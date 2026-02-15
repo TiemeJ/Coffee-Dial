@@ -2,19 +2,9 @@ import { createGasTableModule } from '../../features/gas/gas-table.js';
 import { createGasCardModule } from '../../features/gas/gas-card.js';
 
 export const createGasCoordinator = ({
-    db,
-    storage,
-    doc,
-    collection,
-    updateDoc,
-    deleteDoc,
-    writeBatch,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject,
+    dataService,
+    storageService,
     imageCompression,
-    addDoc,
     getCurrentUser,
     getCurrentView,
     getCurrentGasId,
@@ -34,6 +24,10 @@ export const createGasCoordinator = ({
     openAppConfirm,
     getRefreshBrewGearSelectors
 }) => {
+    const { db: resolvedDb, addDoc: resolvedAddDoc, collection: resolvedCollection } = dataService || {};
+    if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) {
+        throw new Error('createGasCoordinator requires dataService { db, addDoc, collection }');
+    }
     let openGasCard = () => {};
     let enterGasEditMode = () => {};
     let renderGasTable = () => {};
@@ -42,6 +36,7 @@ export const createGasCoordinator = ({
     const createGasItemFromModal = async () => {
         const user = getCurrentUser();
         if (!user) return alert('Please sign in.');
+        if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) return alert('Data service unavailable.');
         const nowIso = new Date().toISOString();
         const gasData = {
             uid: user.uid,
@@ -57,7 +52,7 @@ export const createGasCoordinator = ({
         };
 
         try {
-            const gasRef = await addDoc(collection(db, 'users', user.uid, 'gear'), gasData);
+            const gasRef = await resolvedAddDoc(resolvedCollection(resolvedDb, 'users', user.uid, 'gear'), gasData);
             const newGas = { id: gasRef.id, ...gasData };
             if (!getGasItems().find((item) => item.id === newGas.id)) {
                 setGasItemsState([...getGasItems(), newGas]);
@@ -88,6 +83,8 @@ export const createGasCoordinator = ({
     getFilteredSortedGasItems = gasTable.getFilteredSortedGasItems;
 
     const gasCard = createGasCardModule({
+        dataService,
+        storageService,
         getCurrentUser,
         getCurrentView,
         getCurrentGasId,
@@ -97,17 +94,6 @@ export const createGasCoordinator = ({
         getCoffees,
         setCoffeesState,
         getFilteredSortedGasItems: (...args) => getFilteredSortedGasItems(...args),
-        db,
-        storage,
-        doc,
-        collection,
-        updateDoc,
-        deleteDoc,
-        writeBatch,
-        ref,
-        uploadBytes,
-        getDownloadURL,
-        deleteObject,
         imageCompression,
         openAppConfirm,
         renderGasTable: (...args) => renderGasTable(...args)
