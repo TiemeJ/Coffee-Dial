@@ -4,6 +4,16 @@ This app is made by two amateur brewers, Tieme & Robert (mostly Tieme :0 ), who 
 
 Feel free to spread our love for coffee and share the link to this app with friends and follow each other's brews.
 
+## Dev guardrails
+
+- Enable view-binding action tracing: `?debugBindings=1` or `localStorage.setItem('coffeeDialDebugBindings', '1')`
+- Run smoke preflight checks: `?smoke=1` or `localStorage.setItem('coffeeDialSmoke', '1')`
+- Run core contract checks: `?debugContracts=1` or `localStorage.setItem('coffeeDialDebugContracts', '1')`
+- Latest reports are exposed on:
+  - `window.__coffeeDialBindingTrace`
+  - `window.__coffeeDialSmokeReport`
+  - `window.__coffeeDialCoreContractsReport`
+
 ## Your Brew, Your Way
 Coffee Dial is flexible. You can use it to log every single shot you make to track consistency, OR you can just save your favourite recipes (Golden Cups) and update them as you dial in a new bean. It's your laboratory!
 
