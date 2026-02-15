@@ -1,9 +1,12 @@
 export const createBrewsCardUiModule = ({
     getCurrentView,
     getCoffees,
+    getBeans,
     getFilteredCoffees,
     getDisplayedBrewsCount,
+    getCoffeeTypeForBrew,
     getCoffeeTypeDisplay,
+    getPinnedBrewsPreferences,
     getStarDisplay,
     formatTime,
     getTempBadge,
@@ -12,6 +15,7 @@ export const createBrewsCardUiModule = ({
     setCurrentCoffeeCardId,
     setCurrentCardGraphData,
     updateCoffeeCardActionMenu,
+    openBeanCard,
     cancelBrewQuickEditMode,
     resetCardPhotoState,
     toggleCardMode
@@ -87,6 +91,63 @@ export const createBrewsCardUiModule = ({
         document.getElementById('cardTime').textContent = formatTime(c.time);
         document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
         document.getElementById('cardDrink').textContent = c.drink || '-';
+
+        const showCoffeeImageInCard = !!getPinnedBrewsPreferences?.()?.showCoffeeImageInBrewCard;
+        const cardOriginField = document.getElementById('cardOriginField');
+        const cardProcessField = document.getElementById('cardProcessField');
+        const cardRoastField = document.getElementById('cardRoastField');
+        const cardDrinkField = document.getElementById('cardDrinkField');
+        const cardMethodField = document.getElementById('cardMethodField');
+        const imageSection = document.getElementById('cardCoffeeImageSection');
+        const imageEl = document.getElementById('cardCoffeeImage');
+        const placeholderEl = document.getElementById('cardCoffeeImagePlaceholder');
+        const linkedBeanId = c.beanId || null;
+        const bean = linkedBeanId ? getBeans().find((b) => b.id === linkedBeanId) : null;
+        const coffeeTypeForBrew = getCoffeeTypeForBrew?.(c) || null;
+        const coffeeImageUrl = coffeeTypeForBrew?.imageUrl || coffeeTypeForBrew?.imageURL || '';
+
+        if (cardOriginField) cardOriginField.classList.toggle('hidden', showCoffeeImageInCard);
+        if (cardProcessField) cardProcessField.classList.toggle('hidden', showCoffeeImageInCard);
+        if (cardRoastField) cardRoastField.classList.toggle('hidden', showCoffeeImageInCard);
+        if (cardDrinkField) cardDrinkField.classList.toggle('col-span-2', showCoffeeImageInCard);
+        if (cardMethodField) cardMethodField.classList.toggle('col-span-2', showCoffeeImageInCard);
+
+        if (imageSection) imageSection.classList.toggle('hidden', !showCoffeeImageInCard);
+
+        if (showCoffeeImageInCard && imageEl && placeholderEl) {
+            if (coffeeImageUrl) {
+                imageEl.src = coffeeImageUrl;
+                imageEl.classList.remove('hidden');
+                placeholderEl.classList.add('hidden');
+            } else {
+                imageEl.src = '';
+                imageEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+            }
+
+            if (bean?.id) {
+                imageEl.classList.add('cursor-pointer');
+                placeholderEl.classList.add('cursor-pointer');
+                imageEl.onclick = (event) => {
+                    event.stopPropagation();
+                    openBeanCard(bean.id);
+                };
+                placeholderEl.onclick = (event) => {
+                    event.stopPropagation();
+                    openBeanCard(bean.id);
+                };
+            } else {
+                imageEl.classList.remove('cursor-pointer');
+                placeholderEl.classList.remove('cursor-pointer');
+                imageEl.onclick = null;
+                placeholderEl.onclick = null;
+            }
+        } else if (imageEl && placeholderEl) {
+            imageEl.onclick = null;
+            placeholderEl.onclick = null;
+            imageEl.classList.remove('cursor-pointer');
+            placeholderEl.classList.remove('cursor-pointer');
+        }
 
         const notesEl = document.getElementById('cardNotes');
         if (notesEl) {

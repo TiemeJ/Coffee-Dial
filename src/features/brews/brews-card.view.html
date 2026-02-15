@@ -41,12 +41,21 @@
                 </div>
                 <div id="coffeeCardView" class="flex-1 flex flex-col min-h-0">
                 <div class="p-5 overflow-y-auto space-y-5">
-                    <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Origin</span><span id="cardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
-                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Process</span><span id="cardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
-                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Roast</span><span id="cardRoastType" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
-                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Drink</span><span id="cardDrink" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
-                        <div><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Method</span><span id="cardMethod" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-1 grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                            <div id="cardOriginField"><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Origin</span><span id="cardOrigin" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div id="cardProcessField"><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Process</span><span id="cardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div id="cardRoastField"><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Roast</span><span id="cardRoastType" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div id="cardDrinkField"><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Drink</span><span id="cardDrink" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                            <div id="cardMethodField"><span class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-0.5">Method</span><span id="cardMethod" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span></div>
+                        </div>
+                        <div id="cardCoffeeImageSection" class="hidden relative shrink-0 w-28 sm:w-32 aspect-[3/4] bg-coffee-50 dark:bg-[#1c1917] rounded-xl overflow-hidden border border-coffee-100 dark:border-[#44403c] group">
+                            <img id="cardCoffeeImage" class="absolute inset-0 w-full h-full object-contain hidden" src="" alt="Coffee image">
+                            <div id="cardCoffeeImagePlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-coffee-400 dark:text-[#57534e]">
+                                <i class="fa-solid fa-image text-3xl mb-2"></i>
+                                <p class="text-xs font-medium">No coffee image</p>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="cardStatsSection" class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-4 border border-coffee-100 dark:border-[#44403c]">

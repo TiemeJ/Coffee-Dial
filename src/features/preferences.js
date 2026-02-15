@@ -1,5 +1,6 @@
 export const DEFAULT_PINNED_BREWS_PREFERENCES = {
     useLegacyBrewForm: true,
+    showCoffeeImageInBrewCard: false,
     animationsEnabled: true,
     organizeByBeans: true,
     coffeeArtEnabled: false,
@@ -25,6 +26,7 @@ export const createBrewsPreferencesModule = ({
 }) => {
     const PREF_TOGGLE_IDS = [
         'useLegacyBrewFormToggle',
+        'showCoffeeImageInBrewCardToggle',
         'animationsToggle',
         'organizeByBeansToggle',
         'coffeeArtToggle',
@@ -94,6 +96,7 @@ export const createBrewsPreferencesModule = ({
         return {
             ...getPinnedBrewsPreferences(),
             useLegacyBrewForm: !!document.getElementById('useLegacyBrewFormToggle')?.checked,
+            showCoffeeImageInBrewCard: !!document.getElementById('showCoffeeImageInBrewCardToggle')?.checked,
             animationsEnabled: !!document.getElementById('animationsToggle')?.checked,
             organizeByBeans: organizeByBeansEnabled,
             coffeeArtEnabled: organizeByBeansEnabled && !!document.getElementById('coffeeArtToggle')?.checked,
@@ -195,6 +198,7 @@ export const createBrewsPreferencesModule = ({
         isHydratingPreferences = true;
         document.getElementById('animationsToggle').checked = !!pinnedPrefs.animationsEnabled;
         document.getElementById('useLegacyBrewFormToggle').checked = pinnedPrefs.useLegacyBrewForm !== false;
+        document.getElementById('showCoffeeImageInBrewCardToggle').checked = !!pinnedPrefs.showCoffeeImageInBrewCard;
         document.getElementById('organizeByBeansToggle').checked = !!pinnedPrefs.organizeByBeans;
         document.getElementById('coffeeArtToggle').checked = !!pinnedPrefs.organizeByBeans && !!pinnedPrefs.coffeeArtEnabled;
         document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;

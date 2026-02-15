@@ -1409,9 +1409,12 @@ export const createAppContainerModules = () => {
         } = createBrewsCardUiModule({
             getCurrentView: () => currentView,
             getCoffees: () => coffees,
+            getBeans: () => beans,
             getFilteredCoffees: () => getFilteredCoffees(),
             getDisplayedBrewsCount: () => displayedBrewsCount,
+            getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
+            getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
             getStarDisplay,
             formatTime,
             getTempBadge: (...args) => getTempBadge(...args),
@@ -1420,6 +1423,7 @@ export const createAppContainerModules = () => {
             setCurrentCoffeeCardId: (value) => { currentCoffeeCardId = value; },
             setCurrentCardGraphData: (value) => { currentCardGraphData = value; },
             updateCoffeeCardActionMenu: (...args) => updateCoffeeCardActionMenu(...args),
+            openBeanCard: (...args) => openBeanCard(...args),
             cancelBrewQuickEditMode: (...args) => cancelBrewQuickEditMode(...args),
             resetCardPhotoState: (...args) => resetCardPhotoState(...args),
             toggleCardMode: (...args) => toggleCardMode(...args)
