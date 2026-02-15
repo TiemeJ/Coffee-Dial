@@ -3,6 +3,8 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/fi
 import { createAppContainer } from './container.js';
 import { registerServiceWorker } from './pwa.js';
 import { initViewBindings } from './view-bindings.js';
+import { runSmokeChecks, shouldRunSmokeChecks } from './smoke-check.js';
+import { runCoreContractChecks, shouldRunCoreContractChecks } from './core-contract-check.js';
 import { mountShellHeader } from '../features/shell/shell.controller.js';
 import { mountSignedOutAuth } from '../features/auth/auth.controller.js';
 import { mountPinnedSection } from '../features/pin/pin.mount.js';
@@ -56,5 +58,11 @@ await mountUiShellView();
 await mountOverlayHostView();
 const app = createAppContainer();
 initViewBindings(app.actions);
+if (shouldRunCoreContractChecks()) {
+    runCoreContractChecks();
+}
+if (shouldRunSmokeChecks()) {
+    runSmokeChecks({ actions: app.actions });
+}
 registerServiceWorker();
 onAuthStateChanged(auth, app.handleAuthStateChanged);

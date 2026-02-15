@@ -9,6 +9,25 @@ const BINDINGS = [
 
 const CALL_PATTERN = /^([A-Za-z_$][\w$]*)\((.*)\)$/;
 const boundElements = new WeakMap();
+const TRACE_LIMIT = 200;
+
+const shouldTraceBindings = (options = {}) => {
+    if (typeof options.traceBindings === 'boolean') return options.traceBindings;
+    const search = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    if (search?.get('debugBindings') === '1') return true;
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('coffeeDialDebugBindings') === '1') return true;
+    return false;
+};
+
+const pushTraceEvent = (enabled, payload) => {
+    if (!enabled || typeof window === 'undefined') return;
+    const trace = (window.__coffeeDialBindingTrace = window.__coffeeDialBindingTrace || []);
+    trace.push({
+        time: new Date().toISOString(),
+        ...payload
+    });
+    if (trace.length > TRACE_LIMIT) trace.splice(0, trace.length - TRACE_LIMIT);
+};
 
 const splitStatements = (code) => {
     const output = [];
@@ -79,7 +98,7 @@ const decodeToken = (token, event, el) => {
     return undefined;
 };
 
-const runStatement = (statement, event, el, actions) => {
+const runStatement = (statement, event, el, actions, traceEnabled = false) => {
     if (!statement) return undefined;
     if (statement === 'event.stopPropagation()') {
         event.stopPropagation();
@@ -101,30 +120,61 @@ const runStatement = (statement, event, el, actions) => {
     const [, actionId, rawArgs] = callMatch;
     const action = actions[actionId];
     if (typeof action !== 'function') {
+        pushTraceEvent(traceEnabled, {
+            level: 'error',
+            type: 'unknown_action',
+            actionId,
+            statement,
+            element: el?.id || el?.tagName || 'unknown'
+        });
         throw new Error(`Unknown action "${actionId}"`);
     }
 
     const args = splitArgs(rawArgs).map((token) => decodeToken(token, event, el));
+    pushTraceEvent(traceEnabled, {
+        level: 'info',
+        type: 'action_invoke',
+        actionId,
+        statement,
+        element: el?.id || el?.tagName || 'unknown'
+    });
     return action(...args);
 };
 
-const executeBinding = (code, event, el, actions) => {
+const executeBinding = (code, event, el, actions, traceEnabled = false) => {
     try {
         const statements = splitStatements(code);
         let result;
         for (const statement of statements) {
-            result = runStatement(statement, event, el, actions);
+            result = runStatement(statement, event, el, actions, traceEnabled);
         }
         if (result === false) {
             event.preventDefault();
             event.stopPropagation();
         }
     } catch (err) {
+        pushTraceEvent(traceEnabled, {
+            level: 'error',
+            type: 'binding_execution_failed',
+            code,
+            error: err?.message || String(err),
+            element: el?.id || el?.tagName || 'unknown'
+        });
         console.error('Failed to execute view binding:', code, err);
     }
 };
 
-export const initViewBindings = (actions = {}) => {
+export const initViewBindings = (actions = {}, options = {}) => {
+    const traceEnabled = shouldTraceBindings(options);
+    if (traceEnabled && typeof window !== 'undefined') {
+        window.__coffeeDialBindingTrace = window.__coffeeDialBindingTrace || [];
+        window.__coffeeDialBindingTraceMeta = {
+            traceEnabled: true,
+            startedAt: new Date().toISOString()
+        };
+        console.info('[Coffee Dial] View-binding trace enabled');
+    }
+
     const bindElement = (el, domEvent, attr) => {
         let events = boundElements.get(el);
         if (!events) {
@@ -139,7 +189,7 @@ export const initViewBindings = (actions = {}) => {
         el.addEventListener(domEvent, (event) => {
             const code = el.getAttribute(attr) ?? (domEvent === 'click' ? el.getAttribute('data-action') : null);
             if (!code) return;
-            executeBinding(code, event, el, actions);
+            executeBinding(code, event, el, actions, traceEnabled);
         });
     };
 
