@@ -1,5 +1,5 @@
     <!-- Coffee Card Overlay -->
-    <div id="coffeeCardOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeCoffeeCard(event)">
+    <div id="coffeeCardOverlay" data-feature-root="brews" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeCoffeeCard(event)">
         <!-- Same as original -->
         <div class="flex flex-col gap-2 w-full max-w-sm">
             <div id="shareControls" class="hidden bg-white dark:bg-[#292524] rounded-lg p-2 shadow-lg border border-coffee-200 dark:border-[#44403c] flex justify-between items-center transition-all animate-in fade-in zoom-in duration-200" data-action-click="event.stopPropagation()">
@@ -21,7 +21,7 @@
                             <i class="fa-solid fa-pen-to-square text-lg"></i>
                         </button>
                         <div class="relative">
-                            <button id="coffeeCardMenuBtn" data-action-click="toggleActionMenu('coffeeCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                            <button id="coffeeCardMenuBtn" data-action-click="brewsToggleActionMenu('coffeeCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
                                 <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                             </button>
                             <div id="coffeeCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()"></div>

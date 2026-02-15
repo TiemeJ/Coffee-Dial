@@ -295,7 +295,7 @@ export const createGasTableModule = ({
                 <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${purchasedDateLabel}</td>
                 <td class="px-4 py-3 text-center">
                     <div class="relative inline-block">
-                        <button data-action-click="toggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
+                        <button data-action-click="gasToggleActionMenu('${menuId}', event)" class="p-1.5 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]">
                             <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                         </button>
                         <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden">

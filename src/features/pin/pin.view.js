@@ -107,7 +107,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some((v) => v !== null);
         const dragIcon = isDraggable ? `<div class="absolute top-1 right-1 ${dragIconClass} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>` : '';
         const menuId = `tile-menu-${brew.id}`;
-        const menuBtn = currentView === 'mine' ? `<button data-action-click="toggleActionMenu('${menuId}', event)" class="absolute bottom-1 right-1 p-2 ${menuBtnClass} transition-colors z-20 duration-200"><i class="fa-solid fa-ellipsis-vertical text-base"></i></button>` : '';
+        const menuBtn = currentView === 'mine' ? `<button data-action-click="pinToggleActionMenu('${menuId}', event)" class="absolute bottom-1 right-1 p-2 ${menuBtnClass} transition-colors z-20 duration-200"><i class="fa-solid fa-ellipsis-vertical text-base"></i></button>` : '';
 
         let menu = '';
         if (currentView === 'mine') {
