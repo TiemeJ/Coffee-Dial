@@ -452,6 +452,7 @@ export const createBrewsTableModule = ({
     };
 
     const generateRow = (brew) => {
+        const showManualPinning = !getPinnedBrewsPreferences?.()?.pinOpenBags;
         const outWeight = brew.weight && brew.ratio ? (brew.weight * brew.ratio).toFixed(1) : '-';
         const typeDisplay = getCoffeeTypeDisplay(brew);
         const displayRoaster = typeDisplay.roaster;
@@ -470,7 +471,6 @@ export const createBrewsTableModule = ({
         if (getCurrentView() === 'mine') {
             const pinLabel = brew.isActive ? 'Unpin' : 'Pin to active';
             const pinIcon = brew.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
-            const showManualPinning = !getPinnedBrewsPreferences?.()?.pinOpenBags;
             const pinAction = showManualPinning
                 ? `<button data-action-click="toggleActive('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button>`
                 : '';
@@ -482,7 +482,8 @@ export const createBrewsTableModule = ({
         const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${brew.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${outWeight === '-' ? '-' : (outWeight.endsWith('.0') ? parseInt(outWeight, 10) : outWeight) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${brew.ratio || '-'})</span></div>`;
 
         const columnPreferences = getColumnPreferences();
-        let rowHtml = `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIconClass}"></i></td>`;
+        let rowHtml = '';
+        if (showManualPinning) rowHtml += `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIconClass}"></i></td>`;
         if (columnPreferences.roaster !== false) rowHtml += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
         if (columnPreferences.origin !== false) rowHtml += `<td class="px-3 py-1 text-sm">${displayOrigin}</td>`;
         if (columnPreferences.farmer !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.farmer}</td>`;
@@ -517,6 +518,9 @@ export const createBrewsTableModule = ({
         if (!tableBody || !empty) return;
 
         updateBrewSortIcons();
+        const showManualPinning = !getPinnedBrewsPreferences?.()?.pinOpenBags;
+        const manualPinHeader = document.getElementById('th-manualPin');
+        if (manualPinHeader) manualPinHeader.classList.toggle('hidden', !showManualPinning);
         getColumnDefs().forEach((col) => {
             const th = document.getElementById(`th-${col.id}`);
             if (!th) return;
