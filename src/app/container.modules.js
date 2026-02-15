@@ -5,22 +5,14 @@
         import { initCoffeeScale } from '../features/scales/scales.js';
         import { parseBeanconquerorCSV, mapBeanconquerorBrews } from '../features/import-export/importers/beanconqueror.js';
         import { initEmailLinkAuth } from '../integrations/email-link-auth.js';
-        import { createNotificationUxModule, closeAutoPinToast, showAutoPinToast, showToast } from '../core/notify.js';
+        import { closeAutoPinToast, showAutoPinToast, showToast } from '../core/notify.js';
         import { closeAppConfirm, openAppConfirm, resolveAppConfirm, installDialogAdapters } from '../core/confirm.js';
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../core/format.js';
         import { createCoffeeTypeCardModule } from '../features/coffees/coffee-type-card.js';
         import { createCoffeeTypesTableModule } from '../features/coffees/coffee-types-table.js';
         import { createGasTableModule } from '../features/gas/gas-table.js';
         import { createGasCardModule } from '../features/gas/gas-card.js';
-        import { createBeansTableModule } from '../features/beans/beans-table.js';
-        import { createBeansActionsModule } from '../features/beans/beans-actions.js';
-        import { createBeansMaintenanceModule } from '../features/beans/beans-maintenance.js';
-        import { createBeansStockServiceModule } from '../features/beans/beans-stock.service.js';
-        import { createBeansStockControllerModule } from '../features/beans/beans-stock.controller.js';
-        import { createBeansCardActionsModule } from '../features/beans/beans-card-actions.js';
-        import { createBeansCardFormModule } from '../features/beans/beans-card-form.js';
-        import { createBeansCardPhotoModule } from '../features/beans/beans-card-photo.js';
-        import { createBeansCardUiModule } from '../features/beans/beans-card-ui.js';
+        import { createBeansCoordinator } from './coordinators/beans.coordinator.js';
         import { createSocialModule } from '../features/social.js';
         import { createGalleryModule } from '../features/gallery.js';
         import { createStatsModule } from '../features/stats/stats.js';
@@ -468,41 +460,15 @@ export const createAppContainerModules = () => {
                 alert('Failed to create bean.');
             }
         };
-        const beansStockService = createBeansStockServiceModule();
-        const computeBeansLeft = (bean, brews = coffees) => beansStockService.computeBeansLeft(bean, brews);
-        const getBeanCalculatedStock = (bean, brews = coffees) => beansStockService.getBeanCalculatedStock(bean, brews);
-        const getRemainingStockAfterBrew = (bean, brew, existingBrewId = null, brews = coffees) =>
-            beansStockService.getRemainingStockAfterBrew(bean, brew, existingBrewId, brews);
-        const getFirstBrewDateForBean = (beanId, brew = null, existingBrewId = null, brews = coffees) =>
-            beansStockService.getFirstBrewDateForBean(beanId, brew, existingBrewId, brews);
-
         const {
+            computeBeansLeft,
+            getBeanCalculatedStock,
+            getRemainingStockAfterBrew,
+            getFirstBrewDateForBean,
             updateBeansLeftForBean,
             maybeMigrateBeansLeft,
             recalculateAllBeanStockLeft,
-            archiveBeanIfStockDepleted
-        } = createBeansStockControllerModule({
-            db,
-            doc,
-            updateDoc,
-            writeBatch,
-            getCurrentUser: () => currentUser,
-            getBeans: () => beans,
-            setBeansState: (value) => { beans = value; },
-            getCoffees: () => coffees,
-            getHasLoadedBeans: () => hasLoadedBeans,
-            getHasLoadedBrews: () => hasLoadedBrews,
-            getCurrentBeanCardId: () => currentBeanCardId,
-            renderBeansTable: (...args) => renderBeansTable(...args),
-            openBeanCard: (...args) => openBeanCard(...args),
-            computeBeansLeft: (...args) => computeBeansLeft(...args),
-            getRemainingStockAfterBrew: (...args) => getRemainingStockAfterBrew(...args),
-            autoUnpinClosedBagsIfEnabled: (...args) => autoUnpinClosedBagsIfEnabled(...args),
-            makeBeanSignature: (...args) => makeBeanSignature(...args),
-            showAutoArchiveToast: (...args) => showAutoArchiveToast(...args)
-        });
-
-        const {
+            archiveBeanIfStockDepleted,
             showAutoArchiveToast,
             closeAutoArchiveToast,
             handleAutoArchiveToastAction,
@@ -510,15 +476,100 @@ export const createAppContainerModules = () => {
             closeCoffeeTypeCreatedToast,
             showBeanCreatedToast,
             closeBeanCreatedToast,
-            handleBeanCreatedToastAction
-        } = createNotificationUxModule({
+            handleBeanCreatedToastAction,
+            showBrewsForBean,
+            showCoffeeForBean,
+            openBrewWithBean,
+            setBeanEditCoffeeTypeFieldState,
+            applyBeanEditCoffeeType,
+            enterBeanEditMode,
+            openCoffeeFromBeanEdit,
+            cancelBeanEditMode,
+            saveBeanCardEdits,
+            updateBeanCardActionButtons,
+            updateBeanCardNav,
+            openBeanCard,
+            openBeanCardWithOrder,
+            navigateBeanCard,
+            closeBeanCard,
+            closeBeanCardMenu,
+            triggerBeanPhoto,
+            openBeanPhoto,
+            removeBeanPhoto,
+            handleBeanPhoto,
+            openBeans,
+            closeBeans,
+            setBeansSearch,
+            clearBeansSearch,
+            toggleBeansQuickFilter,
+            openBeansQuickFilterValues,
+            applyBeansFilterFromQuick,
+            clearBeansFilters,
+            renderBeansActiveFilters,
+            renderBeansTable,
+            saveBeanStock,
+            toggleBeanArchive,
+            toggleBeanFrozen,
+            openNewBag,
+            deleteBean,
+            saveBeanRoastDate,
+            saveBeanOpenedDate,
+            saveBeanFrozenDate,
+            syncLegacyBeans,
+            backfillBeanDatesFromBrews
+        } = createBeansCoordinator({
+            db,
+            doc,
+            updateDoc,
+            writeBatch,
+            addDoc,
+            collection,
+            deleteDoc,
+            setDoc,
+            storage,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject,
+            imageCompression,
+            getCurrentUser: () => currentUser,
+            getCurrentView: () => currentView,
+            getCoffees: () => coffees,
+            getBeans: () => beans,
+            setBeansState: (value) => { beans = value; },
             getCoffeeTypes: () => coffeeTypes,
-            onAutoArchiveUnarchive: async (beanId) => toggleBeanArchive(beanId, true),
-            onAutoArchiveOpen: async (beanId) => openNewBag(beanId, { openCard: true, editAfter: true }),
-            onBeanCreatedEdit: async (beanId) => {
-                openBeanCard(beanId);
-                enterBeanEditMode();
-            }
+            getBeansSearch: () => beansSearch,
+            setBeansSearchState: (value) => { beansSearch = value; },
+            getBeansFilters: () => beansFilters,
+            setBeansFiltersState: (value) => { beansFilters = value; },
+            getHasLoadedBeans: () => hasLoadedBeans,
+            getHasLoadedBrews: () => hasLoadedBrews,
+            getCurrentBeanCardId: () => currentBeanCardId,
+            setCurrentBeanCardId: (value) => { currentBeanCardId = value; },
+            getRoastBadge,
+            getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
+            getCoffeeTypeForBean: (...args) => getCoffeeTypeForBean(...args),
+            updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args),
+            getBrewsPerPage: () => BREWS_PER_PAGE,
+            setDisplayedBrewsCount: (value) => { displayedBrewsCount = value; },
+            setActiveBeanFilter: (beanId) => { activeFilters.bean = beanId; },
+            clearSearch: (...args) => clearSearch(...args),
+            clearAllFilters: (...args) => clearAllFilters(...args),
+            renderTable: (...args) => renderTable(...args),
+            renderActiveFilters: (...args) => renderActiveFilters(...args),
+            openCoffeeTypes: (...args) => openCoffeeTypes(...args),
+            clearCoffeeTypesSearch: (...args) => clearCoffeeTypesSearch(...args),
+            clearCoffeeTypesFilters: (...args) => clearCoffeeTypesFilters(...args),
+            openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
+            enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args),
+            fillBeanDetails: (...args) => fillBeanDetails(...args),
+            toggleForm: (...args) => toggleForm(...args),
+            shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
+            openBrewFormModal: (...args) => openBrewFormModalBridge(...args),
+            autoUnpinClosedBagsIfEnabled: (...args) => autoUnpinClosedBagsIfEnabled(...args),
+            autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
+            makeBeanSignature: (...args) => makeBeanSignature(...args),
+            openAppConfirm
         });
 
         // --- Coffee Management Functions ---
@@ -840,204 +891,7 @@ export const createAppContainerModules = () => {
             renderGasTable: (...args) => renderGasTable(...args)
         });
 
-        const getBeanTableOrder = () => {
-            const beansWithStock = beans.map((bean) => {
-                const remaining = getBeanCalculatedStock(bean);
-                return { ...bean, calculatedStock: remaining };
-            });
-
-            const inStockBeans = beansWithStock
-                .filter((b) => !b.archived && !b.frozen && b.calculatedStock !== null && b.calculatedStock > 0)
-                .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-            const frozenBeans = beansWithStock
-                .filter((b) => !b.archived && b.frozen)
-                .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-            const otherBeans = beansWithStock
-                .filter((b) => b.archived || (!b.frozen && (b.calculatedStock === null || b.calculatedStock <= 0)))
-                .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-            return [...inStockBeans, ...frozenBeans, ...otherBeans].map((b) => b.id);
-        };
-
-
-        const {
-            showBrewsForBean,
-            showCoffeeForBean,
-            openBrewWithBean
-        } = createBeansCardActionsModule({
-            getCurrentView: () => currentView,
-            getCurrentBeanCardId: () => currentBeanCardId,
-            getBeans: () => beans,
-            closeBeanCard: (...args) => closeBeanCard(...args),
-            closeBeans: (...args) => closeBeans(...args),
-            clearSearch: (...args) => clearSearch(...args),
-            clearAllFilters: (...args) => clearAllFilters(...args),
-            setActiveBeanFilter: (beanId) => { activeFilters.bean = beanId; },
-            getBrewsPerPage: () => BREWS_PER_PAGE,
-            setDisplayedBrewsCount: (value) => { displayedBrewsCount = value; },
-            renderTable: (...args) => renderTable(...args),
-            renderActiveFilters: (...args) => renderActiveFilters(...args),
-            openCoffeeTypes: (...args) => openCoffeeTypes(...args),
-            clearCoffeeTypesSearch: (...args) => clearCoffeeTypesSearch(...args),
-            clearCoffeeTypesFilters: (...args) => clearCoffeeTypesFilters(...args),
-            openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
-            fillBeanDetails: (...args) => fillBeanDetails(...args),
-            toggleForm: (...args) => toggleForm(...args),
-            shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
-            openBrewFormModal: (...args) => openBrewFormModalBridge(...args)
-        });
-
-        const {
-            setBeanEditCoffeeTypeFieldState,
-            applyBeanEditCoffeeType,
-            enterBeanEditMode,
-            openCoffeeFromBeanEdit,
-            cancelBeanEditMode,
-            saveBeanCardEdits
-        } = createBeansCardFormModule({
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCurrentBeanCardId: () => currentBeanCardId,
-            getBeans: () => beans,
-            getCoffeeTypes: () => coffeeTypes,
-            setBeansState: (value) => { beans = value; },
-            computeBeansLeft: (...args) => computeBeansLeft(...args),
-            updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args),
-            db,
-            doc,
-            collection,
-            setDoc,
-            updateDoc,
-            openBeanCard: (...args) => openBeanCard(...args),
-            openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
-            enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args)
-        });
-
-        const {
-            updateBeanCardActionButtons,
-            updateBeanCardNav,
-            openBeanCard,
-            openBeanCardWithOrder,
-            navigateBeanCard,
-            closeBeanCard,
-            closeBeanCardMenu
-        } = createBeansCardUiModule({
-            getBeans: () => beans,
-            getCoffeeTypeForBean: (...args) => getCoffeeTypeForBean(...args),
-            getCurrentView: () => currentView,
-            getCurrentBeanCardId: () => currentBeanCardId,
-            setCurrentBeanCardId: (value) => { currentBeanCardId = value; },
-            getBeanCalculatedStock,
-            getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
-            getBeanTableOrder: (...args) => getBeanTableOrder(...args),
-            openBrewWithBean: (...args) => openBrewWithBean(...args),
-            deleteBean: (...args) => deleteBean(...args),
-            showBrewsForBean: (...args) => showBrewsForBean(...args),
-            showCoffeeForBean: (...args) => showCoffeeForBean(...args),
-            openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
-            enterBeanEditMode: (...args) => enterBeanEditMode(...args),
-            cancelBeanEditMode: (...args) => cancelBeanEditMode(...args),
-            toggleBeanFrozen: (...args) => toggleBeanFrozen(...args),
-            toggleBeanArchive: (...args) => toggleBeanArchive(...args)
-        });
-
-        const {
-            triggerBeanPhoto,
-            openBeanPhoto,
-            removeBeanPhoto,
-            handleBeanPhoto
-        } = createBeansCardPhotoModule({
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCurrentBeanCardId: () => currentBeanCardId,
-            getBeans: () => beans,
-            setBeansState: (value) => { beans = value; },
-            db,
-            storage,
-            doc,
-            updateDoc,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            deleteObject,
-            imageCompression,
-            openBeanCard: (...args) => openBeanCard(...args)
-        });
-
-        const {
-            openBeans,
-            closeBeans,
-            setBeansSearch,
-            clearBeansSearch,
-            toggleBeansQuickFilter,
-            openBeansQuickFilterValues,
-            applyBeansFilterFromQuick,
-            clearBeansFilters,
-            renderBeansActiveFilters,
-            renderBeansTable
-        } = createBeansTableModule({
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getBeans: () => beans,
-            getCoffeeTypes: () => coffeeTypes,
-            getBeansSearch: () => beansSearch,
-            setBeansSearchState: (value) => { beansSearch = value; },
-            getBeansFilters: () => beansFilters,
-            setBeansFiltersState: (value) => { beansFilters = value; },
-            getBeanCalculatedStock,
-            getBeanCoffeeTypeDisplay: (bean) => getBeanCoffeeTypeDisplay(bean),
-            getRoastBadge,
-            openBeanCard: (...args) => openBeanCard(...args),
-            updateCoffeeTypeSelectors
-        });
-
-        const {
-            saveBeanStock,
-            toggleBeanArchive,
-            toggleBeanFrozen,
-            openNewBag,
-            deleteBean
-        } = createBeansActionsModule({
-            getCurrentUser: () => currentUser,
-            getCurrentBeanCardId: () => currentBeanCardId,
-            getBeans: () => beans,
-            setBeansState: (value) => { beans = value; },
-            computeBeansLeft,
-            db,
-            doc,
-            updateDoc,
-            addDoc,
-            collection,
-            deleteDoc,
-            autoUnpinClosedBagsIfEnabled: (...args) => autoUnpinClosedBagsIfEnabled(...args),
-            autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
-            makeBeanSignature: (...args) => makeBeanSignature(...args),
-            updateBeanCardActionButtons: (bean) => updateBeanCardActionButtons(bean),
-            openBeanCard: (...args) => openBeanCard(...args),
-            enterBeanEditMode: () => enterBeanEditMode(),
-            openAppConfirm
-        });
-
-        const {
-            saveBeanRoastDate,
-            saveBeanOpenedDate,
-            saveBeanFrozenDate,
-            syncLegacyBeans,
-            backfillBeanDatesFromBrews
-        } = createBeansMaintenanceModule({
-            getCurrentUser: () => currentUser,
-            getBeans: () => beans,
-            setBeansState: (value) => { beans = value; },
-            getCoffees: () => coffees,
-            db,
-            doc,
-            updateDoc,
-            writeBatch,
-            collection,
-            autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args)
-        });
+        
 
         const setNotesMode = (mode) => {
             const btnMan = document.getElementById('btnNotesManual'), btnSca = document.getElementById('btnNotesSCA'), conMan = document.getElementById('notesManualContainer'), conSca = document.getElementById('notesSCAContainer'), hidden = document.getElementById('notesMode');
@@ -1510,12 +1364,12 @@ export const createAppContainerModules = () => {
             refreshManualPinningVisibility
         } = createBrewsCoordinator({
             formDeps: {
-                setTempMode: (...args) => setTempMode(...args),
-                setRating: (...args) => setRating(...args),
-                setNotesMode: (...args) => setNotesMode(...args),
+                setTempMode,
+                setRating,
+                setNotesMode,
                 getCoffeeScale: () => coffeeScale,
                 getGasItems: () => gasItems,
-                fillBeanDetails: (...args) => fillBeanDetails(...args)
+                fillBeanDetails
             },
             actionsDeps: {
                 getCurrentUser: () => currentUser,
@@ -1526,7 +1380,7 @@ export const createAppContainerModules = () => {
                 getBeans: () => beans,
                 getCoffeeTypes: () => coffeeTypes,
                 getGasItems: () => gasItems,
-                getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
+                getBeanCoffeeTypeDisplay,
                 db,
                 doc,
                 updateDoc,
@@ -1535,32 +1389,32 @@ export const createAppContainerModules = () => {
                 collection,
                 openAppConfirm,
                 parseNum,
-                setTempMode: (...args) => setTempMode(...args),
-                setNotesMode: (...args) => setNotesMode(...args),
-                resetSca: (...args) => resetSca(...args),
-                setRating: (...args) => setRating(...args),
-                toggleForm: (...args) => toggleForm(...args),
-                updateBeanDropdown: (...args) => updateBeanDropdown(...args),
-                setCoffeeDetailsCollapsed: (...args) => setCoffeeDetailsCollapsed(...args),
-                changeView: (...args) => changeView(...args),
-                closeCoffeeCard: (...args) => closeCoffeeCard(...args),
-                openCoffeeCard: (...args) => openCoffeeCard(...args),
-                closeCoffeeCardMenu: (...args) => closeCoffeeCardMenu(...args),
-                handleQuickEditRecipeInput: (...args) => handleQuickEditRecipeInput(...args),
-                archiveBeanIfStockDepleted: (...args) => archiveBeanIfStockDepleted(...args),
-                updateBeansLeftForBean: (...args) => updateBeansLeftForBean(...args),
-                autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
+                setTempMode,
+                setNotesMode,
+                resetSca,
+                setRating,
+                toggleForm,
+                updateBeanDropdown,
+                setCoffeeDetailsCollapsed,
+                changeView,
+                closeCoffeeCard,
+                openCoffeeCard,
+                closeCoffeeCardMenu,
+                handleQuickEditRecipeInput,
+                archiveBeanIfStockDepleted,
+                updateBeansLeftForBean,
+                autoPinOpenBagsIfEnabled,
                 getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
-                getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
-                showCoffeeTypeCreatedToast: (...args) => showCoffeeTypeCreatedToast(...args),
-                showBeanCreatedToast: (...args) => showBeanCreatedToast(...args),
-                uploadPendingCoffeeTypeImage: (...args) => uploadPendingCoffeeTypeImage(...args),
-                clearPendingAIBeanImageFile: (...args) => clearPendingAIBeanImageFile(...args),
+                getFirstBrewDateForBean,
+                showCoffeeTypeCreatedToast,
+                showBeanCreatedToast,
+                uploadPendingCoffeeTypeImage,
+                clearPendingAIBeanImageFile,
                 getCoffeeScale: () => coffeeScale,
                 shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
-                openBrewFormModal: (...args) => openBrewFormModalBridge(...args)
+                openBrewFormModal: openBrewFormModalBridge
             },
-            refreshQuickEditGearFieldVisibility: (...args) => refreshQuickEditGearFieldVisibility(...args),
+            refreshQuickEditGearFieldVisibility,
             setRefreshBrewGearSelectors: (fn) => { refreshBrewGearSelectors = fn; }
         });
 
@@ -1576,13 +1430,13 @@ export const createAppContainerModules = () => {
             setCoffees: (value) => { coffees = value; },
             getBeans: () => beans,
             getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
-            getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
-            getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
-            getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
-            openCoffeeCard: (...args) => openCoffeeCard(...args),
-            openCoffeeCardWithOrder: (...args) => openCoffeeCardWithOrder(...args),
-            openBeanCardWithOrder: (...args) => openBeanCardWithOrder(...args),
-            renderTable: (...args) => renderTable(...args)
+            getBeanCalculatedStock,
+            getCoffeeTypeForBrew,
+            getCoffeeTypeDisplay,
+            openCoffeeCard,
+            openCoffeeCardWithOrder,
+            openBeanCardWithOrder,
+            renderTable
         });
 
         const toggleActionMenu = (menuId, e) => {
@@ -2121,12 +1975,12 @@ export const createAppContainerModules = () => {
 
         const { openBrewFormModal, closeBrewFormModal, discardBrewFormModal, submitBrewFormModal } = createBrewsFormModalModule({
             getCurrentView: () => currentView,
-            changeView: (...args) => changeView(...args),
-            resetFormState: (...args) => resetFormState(...args),
-            toggleForm: (...args) => toggleForm(...args),
-            openAppConfirm: (...args) => openAppConfirm(...args)
+            changeView,
+            resetFormState,
+            toggleForm,
+            openAppConfirm
         });
-        openBrewFormModalRef = (...args) => openBrewFormModal(...args);
+        openBrewFormModalRef = openBrewFormModal;
         applyBrewFormInlineVisibility();
 
         const openAddBrewFromPinned = (event = null) => {
