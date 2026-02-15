@@ -11,7 +11,7 @@
         import { createCoffeesCoordinator } from './coordinators/coffees.coordinator.js';
         import { createGasCoordinator } from './coordinators/gas.coordinator.js';
         import { createBeansCoordinator } from './coordinators/beans.coordinator.js';
-        import { createSocialModule } from '../features/social.js';
+        import { createSocialCoordinator } from './coordinators/social.coordinator.js';
         import { createGalleryModule } from '../features/gallery.js';
         import { createStatsModule } from '../features/stats/stats.js';
         import { createImportExportModule } from '../features/import-export/import-export.js';
@@ -793,7 +793,7 @@ export const createAppContainerModules = () => {
             updateFriendViewSelectors,
             loadFollowingList,
             loadFollowersList
-        } = createSocialModule({
+        } = createSocialCoordinator({
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             setCurrentView: (value) => { currentView = value; },
@@ -810,7 +810,7 @@ export const createAppContainerModules = () => {
             collection,
             writeBatch,
             openAppConfirm,
-            changeView: (...args) => changeView(...args)
+            changeView
         });
 
         const {
