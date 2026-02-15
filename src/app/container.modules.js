@@ -1957,6 +1957,9 @@ export const createAppContainerModules = () => {
                 toggleGasQuickFilter,
                 triggerGasPhoto
             },
+            pin: {
+                togglePinnedTiles
+            },
             social: {
                 closeModal,
                 copyShareId,
