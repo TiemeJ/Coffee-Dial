@@ -1843,9 +1843,22 @@ export const createAppContainerModules = () => {
             }
         });
 
+        const featureActions = {
+            social: {
+                closeModal,
+                copyShareId,
+                followUser,
+                googleLogout,
+                openFriendsModal,
+                switchModalTab,
+                togglePublicProfile,
+                unfollowUser
+            }
+        };
+
         const searchInput = document.getElementById('globalSearch'); 
         if(searchInput) { searchInput.addEventListener('input', (e) => { const clearBtn = document.getElementById('searchClearBtn'); if(e.target.value.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden'); displayedBrewsCount = BREWS_PER_PAGE; renderTable(); }); }
 
 
-        return { handleAuthStateChanged, actions };
+        return { handleAuthStateChanged, actions, featureActions };
 };

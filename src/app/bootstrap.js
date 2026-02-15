@@ -57,7 +57,9 @@ await mountScalesView();
 await mountUiShellView();
 await mountOverlayHostView();
 const app = createAppContainer();
-initViewBindings(app.actions);
+initViewBindings(app.actions, {
+    featureActions: app.featureActions
+});
 if (shouldRunCoreContractChecks()) {
     runCoreContractChecks();
 }

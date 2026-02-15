@@ -10,6 +10,7 @@ const BINDINGS = [
 const CALL_PATTERN = /^([A-Za-z_$][\w$]*)\((.*)\)$/;
 const boundElements = new WeakMap();
 const TRACE_LIMIT = 200;
+const FEATURE_ROOT_ATTR = 'data-feature-root';
 
 const shouldTraceBindings = (options = {}) => {
     if (typeof options.traceBindings === 'boolean') return options.traceBindings;
@@ -98,7 +99,74 @@ const decodeToken = (token, event, el) => {
     return undefined;
 };
 
-const runStatement = (statement, event, el, actions, traceEnabled = false) => {
+const resolveFeatureIdForElement = (el) => {
+    const root = el?.closest?.(`[${FEATURE_ROOT_ATTR}]`);
+    const featureId = root?.getAttribute?.(FEATURE_ROOT_ATTR)?.trim?.();
+    return featureId || null;
+};
+
+const createFeatureActionResolver = ({ globalActions = {}, traceEnabled = false, strictFeatureActionCollisions = true } = {}) => {
+    const featureActionsById = new Map();
+    const actionOwnerByName = new Map();
+
+    const registerFeatureActions = (featureId, actions = {}) => {
+        const normalizedFeatureId = (featureId || '').toString().trim();
+        if (!normalizedFeatureId) {
+            throw new Error('registerFeatureActions requires a non-empty featureId');
+        }
+        if (featureActionsById.has(normalizedFeatureId)) {
+            throw new Error(`Feature actions for "${normalizedFeatureId}" are already registered`);
+        }
+
+        const normalizedActions = {};
+        Object.entries(actions || {}).forEach(([actionId, action]) => {
+            if (typeof action !== 'function') return;
+            if (strictFeatureActionCollisions) {
+                const existingOwner = actionOwnerByName.get(actionId);
+                if (existingOwner && existingOwner !== normalizedFeatureId) {
+                    throw new Error(
+                        `Feature action collision for "${actionId}" between "${existingOwner}" and "${normalizedFeatureId}"`
+                    );
+                }
+            }
+            actionOwnerByName.set(actionId, normalizedFeatureId);
+            normalizedActions[actionId] = action;
+        });
+
+        featureActionsById.set(normalizedFeatureId, normalizedActions);
+        pushTraceEvent(traceEnabled, {
+            level: 'info',
+            type: 'feature_actions_registered',
+            featureId: normalizedFeatureId,
+            count: Object.keys(normalizedActions).length
+        });
+    };
+
+    const resolveAction = (actionId, el) => {
+        const featureId = resolveFeatureIdForElement(el);
+        if (featureId) {
+            const featureActions = featureActionsById.get(featureId);
+            const featureAction = featureActions?.[actionId];
+            if (typeof featureAction === 'function') {
+                return { action: featureAction, source: `feature:${featureId}` };
+            }
+        }
+
+        const globalAction = globalActions?.[actionId];
+        if (typeof globalAction === 'function') {
+            return { action: globalAction, source: 'global' };
+        }
+
+        return { action: null, source: 'missing' };
+    };
+
+    return {
+        registerFeatureActions,
+        resolveAction
+    };
+};
+
+const runStatement = (statement, event, el, actionResolver, traceEnabled = false) => {
     if (!statement) return undefined;
     if (statement === 'event.stopPropagation()') {
         event.stopPropagation();
@@ -118,13 +186,14 @@ const runStatement = (statement, event, el, actions, traceEnabled = false) => {
     }
 
     const [, actionId, rawArgs] = callMatch;
-    const action = actions[actionId];
+    const { action, source } = actionResolver(actionId, el);
     if (typeof action !== 'function') {
         pushTraceEvent(traceEnabled, {
             level: 'error',
             type: 'unknown_action',
             actionId,
             statement,
+            source,
             element: el?.id || el?.tagName || 'unknown'
         });
         throw new Error(`Unknown action "${actionId}"`);
@@ -135,18 +204,19 @@ const runStatement = (statement, event, el, actions, traceEnabled = false) => {
         level: 'info',
         type: 'action_invoke',
         actionId,
+        source,
         statement,
         element: el?.id || el?.tagName || 'unknown'
     });
     return action(...args);
 };
 
-const executeBinding = (code, event, el, actions, traceEnabled = false) => {
+const executeBinding = (code, event, el, actionResolver, traceEnabled = false) => {
     try {
         const statements = splitStatements(code);
         let result;
         for (const statement of statements) {
-            result = runStatement(statement, event, el, actions, traceEnabled);
+            result = runStatement(statement, event, el, actionResolver, traceEnabled);
         }
         if (result === false) {
             event.preventDefault();
@@ -166,6 +236,11 @@ const executeBinding = (code, event, el, actions, traceEnabled = false) => {
 
 export const initViewBindings = (actions = {}, options = {}) => {
     const traceEnabled = shouldTraceBindings(options);
+    const resolver = createFeatureActionResolver({
+        globalActions: actions,
+        traceEnabled,
+        strictFeatureActionCollisions: options.strictFeatureActionCollisions !== false
+    });
     if (traceEnabled && typeof window !== 'undefined') {
         window.__coffeeDialBindingTrace = window.__coffeeDialBindingTrace || [];
         window.__coffeeDialBindingTraceMeta = {
@@ -189,7 +264,7 @@ export const initViewBindings = (actions = {}, options = {}) => {
         el.addEventListener(domEvent, (event) => {
             const code = el.getAttribute(attr) ?? (domEvent === 'click' ? el.getAttribute('data-action') : null);
             if (!code) return;
-            executeBinding(code, event, el, actions, traceEnabled);
+            executeBinding(code, event, el, resolver.resolveAction, traceEnabled);
         });
     };
 
@@ -214,4 +289,15 @@ export const initViewBindings = (actions = {}, options = {}) => {
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+
+    const initialFeatureActions = options.featureActions;
+    if (initialFeatureActions && typeof initialFeatureActions === 'object') {
+        Object.entries(initialFeatureActions).forEach(([featureId, featureActions]) => {
+            resolver.registerFeatureActions(featureId, featureActions);
+        });
+    }
+
+    return {
+        registerFeatureActions: resolver.registerFeatureActions
+    };
 };
