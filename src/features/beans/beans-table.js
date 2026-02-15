@@ -277,17 +277,17 @@ export const createBeansTableModule = ({
                              ${isMine ? `<button data-action-click="openBrewWithBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                  <i class="fa-solid fa-mug-saucer text-coffee-600 w-4"></i> Brew
                              </button>` : ''}
-                             <button data-action-click="showBrewsForBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                                 <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
-                             </button>
-                             ${goToCoffeeBtn}
                              ${isMine ? `<button data-action-click="toggleBeanFrozen('${bean.id}', ${bean.frozen ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                  <i class="fa-solid ${freezeIcon} w-4"></i> ${freezeLabel}
                              </button>
                              <button data-action-click="toggleBeanArchive('${bean.id}', ${bean.archived ? 'true' : 'false'});" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                  <i class="fa-solid ${archiveIcon} w-4"></i> ${archiveLabel}
+                             </button>` : ''}
+                             <button data-action-click="showBrewsForBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                 <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
                              </button>
-                             <hr class="border-coffee-100 dark:border-[#44403c]">
+                             ${goToCoffeeBtn}
+                             ${isMine ? `<hr class="border-coffee-100 dark:border-[#44403c]">
                              <button data-action-click="deleteBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
                                  <i class="fa-solid fa-trash w-4"></i> Delete
                              </button>` : ''}

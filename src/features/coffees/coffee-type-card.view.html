@@ -6,32 +6,32 @@
                     <button id="coffeeTypeCardEditBtn" data-action-click="enterCoffeeTypeEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
                         <i class="fa-solid fa-pen-to-square text-lg"></i>
                     </button>
+                    <div class="relative">
+                        <button id="coffeeTypeCardMenuBtn" data-action-click="toggleActionMenu('coffeeTypeCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                            <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                        </button>
+                        <div id="coffeeTypeCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
+                            <button id="coffeeTypeCardActionBuy" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
+                            </button>
+                            <button data-action-click="openNewBagForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-bag-shopping text-sky-600 w-4"></i> Open bag
+                            </button>
+                            <button data-action-click="showBeansForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to beans
+                            </button>
+                            <button data-action-click="showBrewsForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
+                            </button>
+                            <hr class="border-coffee-100 dark:border-[#44403c]">
+                            <button data-action-click="deleteCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                                <i class="fa-solid fa-trash w-4"></i> Delete
+                            </button>
+                        </div>
+                    </div>
                     <button data-action-click="closeCoffeeTypeCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
-                </div>
-                <div class="absolute right-4 top-full mt-2 flex flex-col items-center z-[10001]">
-                    <button id="coffeeTypeCardMenuBtn" data-action-click="toggleActionMenu('coffeeTypeCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
-                        <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
-                    </button>
-                    <div id="coffeeTypeCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
-                        <button id="coffeeTypeCardActionBuy" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-cart-shopping text-emerald-600 w-4"></i> Buy
-                        </button>
-                        <button data-action-click="openNewBagForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-bag-shopping text-sky-600 w-4"></i> Open bag
-                        </button>
-                        <button data-action-click="showBeansForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to beans
-                        </button>
-                        <button data-action-click="showBrewsForCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
-                        </button>
-                        <hr class="border-coffee-100 dark:border-[#44403c]">
-                        <button data-action-click="deleteCoffeeType()" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
-                            <i class="fa-solid fa-trash w-4"></i> Delete
-                        </button>
-                    </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-layer-group text-coffee-600"></i>

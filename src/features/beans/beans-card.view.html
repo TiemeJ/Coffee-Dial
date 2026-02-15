@@ -6,34 +6,31 @@
                     <button id="beanCardEditBtn" data-action-click="enterBeanEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
                         <i class="fa-solid fa-pen-to-square text-lg"></i>
                     </button>
+                    <div class="relative">
+                        <button id="beanCardMenuBtn" data-action-click="toggleActionMenu('beanCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                            <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                        </button>
+                        <div id="beanCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
+                            <button id="beanCardActionBrew" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-mug-saucer text-coffee-700 w-4"></i> Brew
+                            </button>
+                            <button id="beanCardActionFreeze" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"></button>
+                            <button id="beanCardActionArchive" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"></button>
+                            <button id="beanCardActionBrews" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
+                            </button>
+                            <button id="beanCardActionCoffee" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                                <i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee
+                            </button>
+                            <hr class="border-coffee-100 dark:border-[#44403c]">
+                            <button id="beanCardActionDelete" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                                <i class="fa-solid fa-trash w-4"></i> Delete
+                            </button>
+                        </div>
+                    </div>
                     <button data-action-click="closeBeanCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
-                </div>
-                <div class="absolute right-4 top-full mt-2 flex flex-col items-center z-[10001]">
-                    <button id="beanCardMenuBtn" data-action-click="toggleActionMenu('beanCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
-                        <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
-                    </button>
-                    <div id="beanCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
-                        <button id="beanCardActionEdit" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
-                        </button>
-                        <button id="beanCardActionBrew" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-mug-saucer text-coffee-700 w-4"></i> Brew
-                        </button>
-                        <button id="beanCardActionBrews" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
-                        </button>
-                        <button id="beanCardActionCoffee" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                            <i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee
-                        </button>
-                        <button id="beanCardActionFreeze" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"></button>
-                        <button id="beanCardActionArchive" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"></button>
-                        <hr class="border-coffee-100 dark:border-[#44403c]">
-                        <button id="beanCardActionDelete" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
-                            <i class="fa-solid fa-trash w-4"></i> Delete
-                        </button>
-                    </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-seedling text-green-600"></i>

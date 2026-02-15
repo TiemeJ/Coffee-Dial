@@ -5,35 +5,32 @@
                 <button id="gasCardEditBtn" data-action-click="enterGasEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
                     <i class="fa-solid fa-pen-to-square text-lg"></i>
                 </button>
+                <div class="relative">
+                    <button id="gasCardMenuBtn" data-action-click="toggleActionMenu('gasCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                        <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+                    </button>
+                    <div id="gasCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
+                        <button data-action-click="showBrewsForGear()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
+                        </button>
+                        <button data-action-click="openGasBulkAddModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-layer-group text-teal-600 w-4"></i> Bulk add to
+                        </button>
+                        <button data-action-click="openGasMergeModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-code-merge text-purple-500 w-4"></i> Merge
+                        </button>
+                        <button id="gasCardActionArchiveBtn" data-action-click="toggleGasArchive()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                            <i class="fa-solid fa-box-archive text-amber-600 w-4"></i> Archive
+                        </button>
+                        <hr class="border-coffee-100 dark:border-[#44403c]">
+                        <button data-action-click="deleteGasItem()" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
+                            <i class="fa-solid fa-trash w-4"></i> Delete
+                        </button>
+                    </div>
+                </div>
                 <button data-action-click="closeGasCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
-            </div>
-            <div class="absolute right-4 top-full mt-2 flex flex-col items-center z-[10001]">
-                <button id="gasCardMenuBtn" data-action-click="toggleActionMenu('gasCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
-                    <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
-                </button>
-                <div id="gasCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
-                    <button data-action-click="enterGasEditMode()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                        <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
-                    </button>
-                    <button data-action-click="showBrewsForGear()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                        <i class="fa-solid fa-mug-saucer text-indigo-600 w-4"></i> Go to brews
-                    </button>
-                    <button data-action-click="openGasBulkAddModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                        <i class="fa-solid fa-layer-group text-teal-600 w-4"></i> Bulk add to
-                    </button>
-                    <button data-action-click="openGasMergeModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                        <i class="fa-solid fa-code-merge text-purple-500 w-4"></i> Merge
-                    </button>
-                    <button id="gasCardActionArchiveBtn" data-action-click="toggleGasArchive()" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
-                        <i class="fa-solid fa-box-archive text-amber-600 w-4"></i> Archive
-                    </button>
-                    <hr class="border-coffee-100 dark:border-[#44403c]">
-                    <button data-action-click="deleteGasItem()" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
-                        <i class="fa-solid fa-trash w-4"></i> Delete
-                    </button>
-                </div>
             </div>
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-screwdriver-wrench text-coffee-600 dark:text-[#d6ccc2]"></i>
