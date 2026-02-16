@@ -57,20 +57,42 @@ export const createBrewsPinAutopinModule = ({
         });
     };
 
+    const getActiveOrderCeilingByBean = (coffees = []) => {
+        const nextOrderByBean = new Map();
+        coffees.forEach((brew) => {
+            const beanId = brew?.beanId;
+            if (!beanId || !brew?.isActive) return;
+            const order = Number.isFinite(Number(brew.customOrder)) ? Number(brew.customOrder) : 0;
+            const current = nextOrderByBean.get(beanId);
+            if (current === undefined || order > current) nextOrderByBean.set(beanId, order);
+        });
+        return nextOrderByBean;
+    };
+
     const pinBrewsFromOpenBags = async () => {
         const user = getCurrentUser();
         if (!user) return;
 
+        const coffees = getCoffees();
         const openBeans = getOpenBeansForAutoPin();
         if (!openBeans.length) return;
 
         const openBeanIds = new Set(openBeans.map((bean) => bean.id));
-        const brewsToPin = getCoffees().filter((brew) => !brew.isActive && !!(brew.beanId && openBeanIds.has(brew.beanId)));
+        const brewsToPin = coffees.filter((brew) => !brew.isActive && !!(brew.beanId && openBeanIds.has(brew.beanId)));
         if (!brewsToPin.length) return;
 
+        const nextOrderByBean = getActiveOrderCeilingByBean(coffees);
         const batch = writeBatch(db);
         brewsToPin.forEach((brew) => {
-            batch.update(doc(db, 'users', user.uid, 'coffees', brew.id), { isActive: true });
+            const updates = { isActive: true };
+            const beanId = brew.beanId;
+            const hasBeanAnchor = !!beanId && nextOrderByBean.has(beanId);
+            if (hasBeanAnchor) {
+                const nextOrder = (nextOrderByBean.get(beanId) || 0) + 1;
+                nextOrderByBean.set(beanId, nextOrder);
+                updates.customOrder = nextOrder;
+            }
+            batch.update(doc(db, 'users', user.uid, 'coffees', brew.id), updates);
         });
 
         try {
@@ -116,6 +138,7 @@ export const createBrewsPinAutopinModule = ({
         });
 
         const bestIds = new Set(Array.from(bestByMethod.values()).map((entry) => entry.brew.id));
+        const nextOrderByBean = getActiveOrderCeilingByBean(getCoffees());
         const batch = writeBatch(db);
         let updates = 0;
 
@@ -123,7 +146,13 @@ export const createBrewsPinAutopinModule = ({
             if (!brew?.id) return;
             const shouldBeActive = bestIds.has(brew.id);
             if (!!brew.isActive !== shouldBeActive) {
-                batch.update(doc(db, 'users', user.uid, 'coffees', brew.id), { isActive: shouldBeActive });
+                const updateData = { isActive: shouldBeActive };
+                if (shouldBeActive && !brew.isActive && nextOrderByBean.has(beanId)) {
+                    const nextOrder = (nextOrderByBean.get(beanId) || 0) + 1;
+                    nextOrderByBean.set(beanId, nextOrder);
+                    updateData.customOrder = nextOrder;
+                }
+                batch.update(doc(db, 'users', user.uid, 'coffees', brew.id), updateData);
                 updates++;
             }
         });
@@ -140,11 +169,12 @@ export const createBrewsPinAutopinModule = ({
         const user = getCurrentUser();
         if (!user) return;
 
+        const coffees = getCoffees();
         const openBeans = getOpenBeansForAutoPin();
         const bestIds = new Set();
 
         openBeans.forEach((bean) => {
-            const brewsForBean = getCoffees().filter((brew) => brew.beanId === bean.id);
+            const brewsForBean = coffees.filter((brew) => brew.beanId === bean.id);
             if (!brewsForBean.length) return;
             const bestByMethod = new Map();
 
@@ -161,14 +191,22 @@ export const createBrewsPinAutopinModule = ({
             bestByMethod.forEach((entry) => bestIds.add(entry.brew.id));
         });
 
+        const nextOrderByBean = getActiveOrderCeilingByBean(coffees);
         const batch = writeBatch(db);
         let updates = 0;
 
-        getCoffees().forEach((brew) => {
+        coffees.forEach((brew) => {
             if (!brew?.id) return;
             const shouldBeActive = bestIds.has(brew.id);
             if (!!brew.isActive !== shouldBeActive) {
-                batch.update(doc(db, 'users', user.uid, 'coffees', brew.id), { isActive: shouldBeActive });
+                const updateData = { isActive: shouldBeActive };
+                const beanId = brew.beanId;
+                if (shouldBeActive && !brew.isActive && beanId && nextOrderByBean.has(beanId)) {
+                    const nextOrder = (nextOrderByBean.get(beanId) || 0) + 1;
+                    nextOrderByBean.set(beanId, nextOrder);
+                    updateData.customOrder = nextOrder;
+                }
+                batch.update(doc(db, 'users', user.uid, 'coffees', brew.id), updateData);
                 updates++;
             }
         });
