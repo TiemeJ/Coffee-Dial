@@ -1,3 +1,3 @@
-import { createAppContainerModules } from './container.modules.js';
+import { createAppComposition } from './composition/app-composition.js';
 
-export const createAppContainer = (deps = {}) => createAppContainerModules(deps);
+export const createAppContainer = (deps = {}) => createAppComposition(deps);

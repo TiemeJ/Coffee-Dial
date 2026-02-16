@@ -87,8 +87,8 @@ The repository is structured as:
 └─ src/
    ├─ app/
    │  ├─ bootstrap.js
+   │  ├─ composition/
    │  ├─ container.js
-   │  ├─ container.modules.js
    │  ├─ container.state.js
    │  ├─ head.js
    │  ├─ pwa.js
@@ -131,7 +131,7 @@ The repository is structured as:
 **Module Boundaries**
 
 - `src/app/bootstrap.js`: mounts feature views and initializes app runtime.
-- `src/app/container.js` + `src/app/container.modules.js`: composition root for actions, state mutation, and cross-feature orchestration.
+- `src/app/container.js` + `src/app/composition/app-composition.js`: composition root for actions, state mutation, and cross-feature orchestration.
 - `src/features/*/*.mount.js`: inject HTML view fragments into mount points.
 - `src/features/**/*.{js,html}`: feature-local behavior and templates (brews, beans, coffees, social, stats, etc.).
 - `src/core/*.js`: shared UX primitives and formatting helpers.
@@ -140,7 +140,7 @@ The repository is structured as:
 
 ---
 
-**Stage 4 architecture guidelines (stronger boundaries)**
+**Architecture guardrails**
 
 - Cross-feature interactions must go through typed app commands/events, not direct feature-to-feature callbacks.
 - Command ownership is feature-local:
@@ -150,8 +150,33 @@ The repository is structured as:
 - `gas.*` commands are registered in gas controller modules.
 - `pin.*` commands are registered in pin controller modules.
 - `src/features/*` may depend on `src/core/*`, shared app services, and feature-local modules; importing other feature internals is not allowed.
-- `src/app/container.modules.js` is the composition/wiring root only; local runtime behaviors should live in dedicated `src/app/runtime/*` modules.
+- `src/app/composition/app-composition.js` is the composition/wiring root only; local runtime behaviors should live in dedicated `src/app/runtime/*` modules.
 - Transitional shim helpers (`registerCompatCommand`, `dispatchCompatCommand`, `dispatchWithFallback`) are not allowed in app/feature code.
+
+**Debug toggles and diagnostics**
+
+- Enable view-binding action tracing:
+- `?debugBindings=1`
+- `localStorage.setItem('coffeeDialDebugBindings', '1')`
+- Enable app-command validation/tracing:
+- `?debugCommands=1`
+- `localStorage.setItem('coffeeDialDebugCommands', '1')`
+- Enable app-event validation/tracing:
+- `?debugEvents=1`
+- `localStorage.setItem('coffeeDialDebugEvents', '1')`
+- Run smoke preflight checks:
+- `?smoke=1`
+- `localStorage.setItem('coffeeDialSmoke', '1')`
+- Run core contract checks:
+- `?debugContracts=1`
+- `localStorage.setItem('coffeeDialDebugContracts', '1')`
+- In-browser reports are exposed on:
+- `window.__coffeeDialBindingTrace`
+- `window.__coffeeDialCommandTrace`
+- `window.__coffeeDialEventTrace`
+- `window.__coffeeDialSmokeReport`
+- `window.__coffeeDialCommandFlowSmokeReport`
+- `window.__coffeeDialCoreContractsReport`
 
 ---
 

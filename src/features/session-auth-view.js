@@ -38,7 +38,6 @@ export const createSessionAuthViewModule = ({
     saveColumnPreferencesToStorage,
     getPinnedBrewsPreferences,
     setPinnedBrewsPreferences,
-    loadLegacyPinnedBrewsPreferences,
     applyAnimationPreference,
     setIsPublic,
     updatePublicToggleUI,
@@ -105,15 +104,8 @@ export const createSessionAuthViewModule = ({
             if (data.pinnedBrews) {
                 setPinnedBrewsPreferences({ ...getPinnedBrewsPreferences(), ...data.pinnedBrews });
             } else {
-                const legacyPinned = loadLegacyPinnedBrewsPreferences();
-                if (legacyPinned) {
-                    setPinnedBrewsPreferences({ ...getPinnedBrewsPreferences(), ...legacyPinned });
-                }
                 try {
                     await updateDoc(userDocRef, { pinnedBrews: getPinnedBrewsPreferences() });
-                    localStorage.removeItem('animationsEnabled');
-                    localStorage.removeItem('organizeByBeans');
-                    localStorage.removeItem('pinOpenBags');
                 } catch (err) {
                     console.error('Error saving pinned preferences', err);
                 }

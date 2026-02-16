@@ -42,19 +42,6 @@ export const createBrewsPreferencesModule = ({
     let autoSaveTimer = null;
     let saveQueue = Promise.resolve();
 
-    const loadLegacyPinnedBrewsPreferences = () => {
-        const animationsRaw = localStorage.getItem('animationsEnabled');
-        const organizeRaw = localStorage.getItem('organizeByBeans');
-        const pinOpenRaw = localStorage.getItem('pinOpenBags');
-        const hasLegacy = animationsRaw !== null || organizeRaw !== null || pinOpenRaw !== null;
-        if (!hasLegacy) return null;
-        return {
-            animationsEnabled: animationsRaw !== 'false',
-            organizeByBeans: organizeRaw !== 'false',
-            pinOpenBags: pinOpenRaw === 'true'
-        };
-    };
-
     const applyAnimationPreference = () => {
         applyAnimationClass(!!getPinnedBrewsPreferences().animationsEnabled);
     };
@@ -176,11 +163,6 @@ export const createBrewsPreferencesModule = ({
                 console.error('Error saving pinned prefs', e);
             }
         }
-
-        localStorage.removeItem('animationsEnabled');
-        localStorage.removeItem('organizeByBeans');
-        localStorage.removeItem('pinOpenBags');
-
         renderTable();
         renderPinnedTiles();
         onPinnedBrewsPreferencesChanged?.(nextPinnedPrefs);
@@ -248,7 +230,6 @@ export const createBrewsPreferencesModule = ({
     };
 
     return {
-        loadLegacyPinnedBrewsPreferences,
         applyAnimationPreference,
         updateBestOnlyToggleState,
         updateBestPerMethodDrinkToggleState,

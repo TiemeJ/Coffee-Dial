@@ -5,6 +5,7 @@ export const createBeansActionsModule = ({
     getCurrentBeanCardId,
     getBeans,
     setBeansState,
+    renderBeansTable,
     computeBeansLeft,
     dataService,
     dispatchCommand,
@@ -172,7 +173,48 @@ export const createBeansActionsModule = ({
         }
     };
 
+    const createBeanFromModal = async () => {
+        const user = getCurrentUser();
+        if (!user) {
+            alert('Please sign in.');
+            return;
+        }
+        const nowIso = new Date().toISOString();
+        const beanData = {
+            roaster: '',
+            farmer: '',
+            origin: '',
+            processing: '',
+            variety: '',
+            roastType: '',
+            shopUrl: '',
+            archived: false,
+            frozen: false,
+            stock: 250,
+            beansLeft: 250,
+            openedDate: null,
+            frozenDate: null,
+            archivedDate: null,
+            roastDate: null,
+            createdAt: nowIso,
+            updatedAt: nowIso
+        };
+
+        try {
+            const refObj = await repo.createBean({ uid: user.uid, data: beanData });
+            const newBean = { id: refObj.id, ...beanData };
+            setBeansState([...getBeans(), newBean]);
+            renderBeansTable?.();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
+            dispatchCommand?.('beans.openCardForEdit', { beanId: refObj.id, event: null });
+        } catch (err) {
+            console.error('Error creating bean:', err);
+            alert('Failed to create bean.');
+        }
+    };
+
     return {
+        createBeanFromModal,
         saveBeanStock,
         toggleBeanArchive,
         toggleBeanFrozen,

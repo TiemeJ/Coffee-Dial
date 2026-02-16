@@ -4,35 +4,6 @@ This app is made by two amateur brewers, Tieme & Robert (mostly Tieme :0 ), who 
 
 Feel free to spread our love for coffee and share the link to this app with friends and follow each other's brews.
 
-## Architecture
-
-- Stage 4 contract: [STAGE4_CONTRACT.md](STAGE4_CONTRACT.md)
-- Stage 4 exit verification: [Stage 4 exit verification (post-scan).md](Stage%204%20exit%20verification%20%28post-scan%29.md)
-
-## Dev guardrails
-
-- Enable view-binding action tracing: `?debugBindings=1` or `localStorage.setItem('coffeeDialDebugBindings', '1')`
-- Enable app-command validation/tracing: `?debugCommands=1` or `localStorage.setItem('coffeeDialDebugCommands', '1')`
-- Enable app-event validation/tracing: `?debugEvents=1` or `localStorage.setItem('coffeeDialDebugEvents', '1')`
-- Run smoke preflight checks: `?smoke=1` or `localStorage.setItem('coffeeDialSmoke', '1')`
-- Run core contract checks: `?debugContracts=1` or `localStorage.setItem('coffeeDialDebugContracts', '1')`
-- Run routine Stage 4 checks locally:
-  - `node scripts/check-feature-boundaries.mjs`
-  - `node scripts/check-command-ownership.mjs`
-  - `node scripts/check-command-dispatch-coverage.mjs`
-- Architecture boundary rules:
-  - Cross-feature behavior must use `appCommands` / `appEvents` (no direct feature-to-feature callbacks).
-  - Each `beans.*|brews.*|coffees.*|gas.*|pin.*` command must have exactly one owning feature controller registration.
-  - `src/features/*` cannot import other feature internals.
-  - Avoid transitional compat helpers (`registerCompatCommand`, `dispatchCompatCommand`, `dispatchWithFallback`).
-- Latest reports are exposed on:
-  - `window.__coffeeDialBindingTrace`
-  - `window.__coffeeDialCommandTrace`
-  - `window.__coffeeDialEventTrace`
-  - `window.__coffeeDialSmokeReport`
-  - `window.__coffeeDialCommandFlowSmokeReport`
-  - `window.__coffeeDialCoreContractsReport`
-
 ## Your Brew, Your Way
 Coffee Dial is flexible. You can use it to log every single shot you make to track consistency, OR you can just save your favourite recipes (Golden Cups) and update them as you dial in a new bean. It's your laboratory!
 

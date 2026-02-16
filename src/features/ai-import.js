@@ -5,32 +5,20 @@ export const createAiImportModule = ({
     toggleForm,
     dataService,
     storageService,
-    db: legacyDb,
-    doc: legacyDoc,
-    setDoc: legacySetDoc,
-    updateDoc: legacyUpdateDoc,
-    collection: legacyCollection,
-    writeBatch: legacyWriteBatch,
-    storage: legacyStorage,
-    ref: legacyRef,
-    uploadBytes: legacyUploadBytes,
-    getDownloadURL: legacyGetDownloadURL,
     dispatchCommand,
     getCoffeeTypes,
     setCoffeeTypes,
     openCoffeeTypeCard,
     enterCoffeeTypeEditMode
 }) => {
-    const db = dataService?.db ?? legacyDb;
-    const doc = dataService?.doc ?? legacyDoc;
-    const setDoc = dataService?.setDoc ?? legacySetDoc;
-    const updateDoc = dataService?.updateDoc ?? legacyUpdateDoc;
-    const collection = dataService?.collection ?? legacyCollection;
-    const writeBatch = dataService?.writeBatch ?? legacyWriteBatch;
-    const storage = storageService?.storage ?? legacyStorage;
-    const ref = storageService?.ref ?? legacyRef;
-    const uploadBytes = storageService?.uploadBytes ?? legacyUploadBytes;
-    const getDownloadURL = storageService?.getDownloadURL ?? legacyGetDownloadURL;
+    const { db, doc, setDoc, updateDoc, collection, writeBatch } = dataService || {};
+    const { storage, ref, uploadBytes, getDownloadURL } = storageService || {};
+    if (!db || !doc || !setDoc || !updateDoc || !collection || !writeBatch) {
+        throw new Error('createAiImportModule requires dataService { db, doc, setDoc, updateDoc, collection, writeBatch }');
+    }
+    if (!storage || !ref || !uploadBytes || !getDownloadURL) {
+        throw new Error('createAiImportModule requires storageService { storage, ref, uploadBytes, getDownloadURL }');
+    }
     let pendingAIBeanImageFile = null;
 
     const callBagAi = async (file) => {
