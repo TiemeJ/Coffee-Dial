@@ -108,6 +108,7 @@ export const createBeansCoordinator = ({
         getCurrentBeanCardId: () => getCurrentBeanCardId(),
         getBeans: () => getBeans(),
         closeBeanCard: (...args) => closeBeanCard(...args),
+        closeBeanCardMenu: (...args) => beansCardUi.closeBeanCardMenu(...args),
         closeBeans: (...args) => closeBeans(...args),
         dispatchCommand,
         publishEvent

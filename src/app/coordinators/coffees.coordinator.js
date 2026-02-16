@@ -157,15 +157,40 @@ export const createCoffeesCoordinator = ({
         publishEvent('coffees.beansRequested', { coffeeTypeId: typeId });
     };
 
+    const showBeansForCoffeeTypeFromTable = (typeId) => {
+        if (!typeId) return;
+        coffeeTypeCard.closeCoffeeTypeCardMenu();
+        document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
+        closeCoffeeTypeCard(null);
+        closeCoffeeTypes();
+        dispatchOnly(
+            'beans.showForCoffeeType',
+            { coffeeTypeId: typeId, source: 'coffees.table' }
+        );
+        publishEvent('coffees.beansRequested', { coffeeTypeId: typeId });
+    };
+
     const showBrewsForCoffeeType = () => {
         const typeId = getCurrentCoffeeTypeId();
         if (!typeId) return;
+        coffeeTypeCard.closeCoffeeTypeCardMenu();
+        document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
         closeCoffeeTypeCard(null);
         closeCoffeeTypes();
         dispatchOnly(
             'brews.showForCoffeeType',
             { coffeeTypeId: typeId, source: 'coffees' }
         );
+        publishEvent('coffees.brewsRequested', { coffeeTypeId: typeId });
+    };
+
+    const showBrewsForCoffeeTypeFromTable = (typeId) => {
+        if (!typeId) return;
+        coffeeTypeCard.closeCoffeeTypeCardMenu();
+        document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
+        closeCoffeeTypeCard(null);
+        closeCoffeeTypes();
+        dispatchOnly('brews.showForCoffeeType', { coffeeTypeId: typeId, source: 'coffees.table' });
         publishEvent('coffees.brewsRequested', { coffeeTypeId: typeId });
     };
 
@@ -243,8 +268,8 @@ export const createCoffeesCoordinator = ({
         showBrewsForCoffeeType,
         updateCoffeeTypeCardNav,
         navigateCoffeeTypeCard,
-        showBeansForCoffeeTypeFromTable: coffeeTypeCard.showBeansForCoffeeTypeFromTable,
-        showBrewsForCoffeeTypeFromTable: coffeeTypeCard.showBrewsForCoffeeTypeFromTable,
+        showBeansForCoffeeTypeFromTable,
+        showBrewsForCoffeeTypeFromTable,
         openNewBagForCoffeeTypeFromTable: coffeeTypeCard.openNewBagForCoffeeTypeFromTable,
         openCoffeeTypeFromTableEdit: coffeeTypeCard.openCoffeeTypeFromTableEdit,
         deleteCoffeeTypeFromTable: coffeeTypeCard.deleteCoffeeTypeFromTable,

@@ -1344,6 +1344,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 setDisplayedBrewsCountState(BREWS_PER_PAGE);
                 renderTable();
                 renderActiveFilters();
+                document.getElementById('brewsTableMount')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             },
             showForBean: (beanId) => {
                 if (!beanId) return;
@@ -1354,6 +1355,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 setDisplayedBrewsCountState(BREWS_PER_PAGE);
                 renderTable();
                 renderActiveFilters();
+                document.getElementById('brewsTableMount')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             },
             openFormForBean: (beanId, event = null) => {
                 if (!beanId) return;

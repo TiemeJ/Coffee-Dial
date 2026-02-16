@@ -3,6 +3,7 @@ export const createBeansCardActionsModule = ({
     getCurrentBeanCardId,
     getBeans,
     closeBeanCard,
+    closeBeanCardMenu,
     closeBeans,
     dispatchCommand,
     publishEvent
@@ -10,6 +11,10 @@ export const createBeansCardActionsModule = ({
     const showBrewsForBean = (beanId = null) => {
         const targetId = beanId || getCurrentBeanCardId();
         if (!targetId) return;
+        closeBeanCardMenu?.();
+        document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
+        closeBeanCard?.(null);
+        closeBeans?.();
         dispatchCommand?.('brews.showForBean', { beanId: targetId });
         publishEvent?.('beans.brewsRequested', { beanId: targetId });
     };
