@@ -1,3 +1,5 @@
+import { createBeansVmModule } from './beans.vm.js';
+
 export const createBeansCardUiModule = ({
     getBeans,
     getCoffeeTypeForBean,
@@ -11,23 +13,17 @@ export const createBeansCardUiModule = ({
     deleteBean,
     showBrewsForBean,
     showCoffeeForBean,
-    openCoffeeTypeCard,
     enterBeanEditMode,
     cancelBeanEditMode,
     toggleBeanFrozen,
-    toggleBeanArchive
+    toggleBeanArchive,
+    dispatchCommand,
+    publishEvent
 }) => {
     let navigationOrderOverride = null;
+    const beansVm = createBeansVmModule();
 
-    const formatCardDate = (value) => {
-        if (!value) return '-';
-        const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
-        if (isNaN(dateObj)) return '-';
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const yy = String(dateObj.getFullYear()).slice(-2);
-        return `${dd}/${mm}/${yy}`;
-    };
+    const formatCardDate = (value) => beansVm.formatCardDate(value);
 
     const updateBeanCardActionButtons = (bean) => {
         const freezeBtn = document.getElementById('beanCardFreezeBtn');
@@ -84,7 +80,7 @@ export const createBeansCardUiModule = ({
         nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
     };
 
-    const openBeanCard = (beanId, ev, keepNavigationOrder = false) => {
+    const openBeanCardInternal = (beanId, ev, keepNavigationOrder = false) => {
         if (ev) ev.stopPropagation();
         if (!keepNavigationOrder && navigationOrderOverride?.length && !navigationOrderOverride.includes(beanId)) {
             navigationOrderOverride = null;
@@ -97,28 +93,25 @@ export const createBeansCardUiModule = ({
         setCurrentBeanCardId(bean.id);
 
         const isMine = getCurrentView() === 'mine';
-        const statusParts = [];
-        if (bean.archived) statusParts.push('Archived');
-        if (bean.frozen) statusParts.push('Frozen');
-        if (!statusParts.length) statusParts.push('Active');
+        const cardVm = beansVm.buildBeanCardViewModel({
+            bean,
+            coffeeDisplay,
+            stockLeft: getBeanCalculatedStock(bean)
+        });
 
-        const stockLeft = getBeanCalculatedStock(bean);
-        const stockLeftDisplay = stockLeft === null || isNaN(stockLeft) ? '-' : `${stockLeft.toFixed(1)}g`;
-        const stockDisplay = bean.stock === undefined || bean.stock === null || bean.stock === '' ? '-' : `${bean.stock}g`;
-
-        document.getElementById('beanCardTitle').textContent = coffeeDisplay.farmer;
-        document.getElementById('beanCardSubtitle').textContent = coffeeDisplay.roaster !== '-' ? coffeeDisplay.roaster : 'Unknown Roaster';
-        document.getElementById('beanCardOrigin').textContent = coffeeDisplay.origin;
-        document.getElementById('beanCardProcess').textContent = coffeeDisplay.processing;
-        document.getElementById('beanCardVariety').textContent = coffeeDisplay.variety;
-        document.getElementById('beanCardRoast').textContent = coffeeDisplay.roastType;
-        document.getElementById('beanCardStock').textContent = stockDisplay;
-        document.getElementById('beanCardStockLeft').textContent = stockLeftDisplay;
-        document.getElementById('beanCardStatus').textContent = statusParts.join(' • ');
-        document.getElementById('beanCardOpened').textContent = formatCardDate(bean.openedDate);
-        document.getElementById('beanCardFrozen').textContent = formatCardDate(bean.frozenDate);
-        document.getElementById('beanCardRoastDate').textContent = formatCardDate(bean.roastDate);
-        document.getElementById('beanCardArchivedDate').textContent = formatCardDate(bean.archivedDate);
+        document.getElementById('beanCardTitle').textContent = cardVm.farmer;
+        document.getElementById('beanCardSubtitle').textContent = cardVm.roaster;
+        document.getElementById('beanCardOrigin').textContent = cardVm.origin;
+        document.getElementById('beanCardProcess').textContent = cardVm.process;
+        document.getElementById('beanCardVariety').textContent = cardVm.variety;
+        document.getElementById('beanCardRoast').textContent = cardVm.roastType;
+        document.getElementById('beanCardStock').textContent = cardVm.stock;
+        document.getElementById('beanCardStockLeft').textContent = cardVm.stockLeft;
+        document.getElementById('beanCardStatus').textContent = cardVm.status;
+        document.getElementById('beanCardOpened').textContent = cardVm.openedDate;
+        document.getElementById('beanCardFrozen').textContent = cardVm.frozenDate;
+        document.getElementById('beanCardRoastDate').textContent = cardVm.roastDate;
+        document.getElementById('beanCardArchivedDate').textContent = cardVm.archivedDate;
 
         const coffeeType = getCoffeeTypeForBean(bean);
         const coffeeImageUrl = coffeeType?.imageUrl || coffeeType?.imageURL || '';
@@ -142,7 +135,10 @@ export const createBeansCardUiModule = ({
                 imgEl.classList.add('cursor-pointer');
                 imgEl.onclick = (event) => {
                     event.stopPropagation();
-                    openCoffeeTypeCard(bean.coffeeTypeId);
+                    dispatchCommand?.(
+                        'coffees.openCard',
+                        { id: bean.coffeeTypeId, source: 'beans.image' }
+                    );
                 };
             } else {
                 imgEl.classList.remove('cursor-pointer');
@@ -154,7 +150,10 @@ export const createBeansCardUiModule = ({
                 placeholderEl.classList.add('cursor-pointer');
                 placeholderEl.onclick = (event) => {
                     event.stopPropagation();
-                    openCoffeeTypeCard(bean.coffeeTypeId);
+                    dispatchCommand?.(
+                        'coffees.openCard',
+                        { id: bean.coffeeTypeId, source: 'beans.image' }
+                    );
                 };
             } else {
                 placeholderEl.classList.remove('cursor-pointer');
@@ -263,12 +262,13 @@ export const createBeansCardUiModule = ({
 
         document.getElementById('beanCardOverlay').classList.remove('hidden');
         cancelBeanEditMode();
+        publishEvent?.('beans.cardOpened', { beanId: bean.id });
     };
 
-    const openBeanCardWithOrder = (beanId, order = [], ev = null) => {
+    const openCardWithOrder = (beanId, order = [], ev = null) => {
         const cleanedOrder = Array.from(new Set((order || []).filter(Boolean)));
         navigationOrderOverride = cleanedOrder.length ? cleanedOrder : null;
-        openBeanCard(beanId, ev, true);
+        openBeanCardInternal(beanId, ev, true);
     };
 
     const navigateBeanCard = (direction) => {
@@ -276,13 +276,14 @@ export const createBeansCardUiModule = ({
         const idx = order.indexOf(getCurrentBeanCardId());
         const nextIdx = idx + direction;
         if (nextIdx < 0 || nextIdx >= order.length) return;
-        openBeanCard(order[nextIdx], null, true);
+        openBeanCardInternal(order[nextIdx], null, true);
     };
 
     const closeBeanCard = (e) => {
         if (!e || e.target.id === 'beanCardOverlay') {
             navigationOrderOverride = null;
             document.getElementById('beanCardOverlay').classList.add('hidden');
+            publishEvent?.('beans.cardClosed', { beanId: getCurrentBeanCardId() });
         }
     };
 
@@ -294,8 +295,8 @@ export const createBeansCardUiModule = ({
     return {
         updateBeanCardActionButtons,
         updateBeanCardNav,
-        openBeanCard,
-        openBeanCardWithOrder,
+        openCard: openBeanCardInternal,
+        openCardWithOrder,
         navigateBeanCard,
         closeBeanCard,
         closeBeanCardMenu

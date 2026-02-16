@@ -1,3 +1,5 @@
+import { createBrewsVmModule } from './brews.vm.js';
+
 export const createBrewsCardUiModule = ({
     getCurrentView,
     getCoffees,
@@ -15,11 +17,12 @@ export const createBrewsCardUiModule = ({
     setCurrentCoffeeCardId,
     setCurrentCardGraphData,
     updateCoffeeCardActionMenu,
-    openBeanCard,
+    dispatchCommand,
     cancelBrewQuickEditMode,
     resetCardPhotoState,
     toggleCardMode
 }) => {
+    const brewsVm = createBrewsVmModule();
     let navigationOrderOverride = null;
     let pinnedNavigationAccent = false;
 
@@ -43,54 +46,37 @@ export const createBrewsCardUiModule = ({
     const populateCardData = (c) => {
         setCurrentCardCoffee(c);
 
-        const hasGraph = !!(
-            (c.scaleCapture && c.scaleCapture.samples && c.scaleCapture.samples.length) ||
-            (c.scaleFlowCapture && c.scaleFlowCapture.samples && c.scaleFlowCapture.samples.length) ||
-            (c.scaleRawCapture && c.scaleRawCapture.samples && c.scaleRawCapture.samples.length)
-        );
+        const graphVm = brewsVm.buildCardGraphData(c);
+        const hasGraph = graphVm.hasGraph;
 
         const graphBtn = document.getElementById('cardGraphBtn');
         if (graphBtn) graphBtn.classList.toggle('hidden', !hasGraph);
 
-        setCurrentCardGraphData(
-            hasGraph
-                ? {
-                      capture: c.scaleCapture || { startAt: null, samples: [] },
-                      flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
-                      rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
-                      firstDrip: Number.isFinite(Number(c.firstDrip)) ? Number(c.firstDrip) : null,
-                      elapsedSeconds: Number.isFinite(Number(c.time)) ? Number(c.time) : null,
-                      recipeSteps: Array.isArray(c.recipeSteps) ? c.recipeSteps : []
-                  }
-                : null
-        );
+        setCurrentCardGraphData(graphVm.graphData);
 
         const coffeeType = getCoffeeTypeDisplay(c);
+        const cardVm = brewsVm.buildCardDisplayViewModel({ brew: c, coffeeType });
         updateCoffeeCardActionMenu(c);
 
-        document.getElementById('cardRoaster').textContent = coffeeType.farmer !== '-' ? coffeeType.farmer : (coffeeType.roaster !== '-' ? coffeeType.roaster : 'Unknown Blend');
-        document.getElementById('cardSubtitle').textContent = coffeeType.roaster !== '-' ? coffeeType.roaster : 'Unknown Roaster';
+        document.getElementById('cardRoaster').textContent = cardVm.titlePrimary;
+        document.getElementById('cardSubtitle').textContent = cardVm.titleSecondary;
         document.getElementById('cardRating').innerHTML = getStarDisplay(c.rating || 0);
-        document.getElementById('cardOrigin').textContent = coffeeType.origin;
-        document.getElementById('cardProcess').textContent = coffeeType.processing;
-        document.getElementById('cardRoastType').textContent = coffeeType.roastType;
-        document.getElementById('cardMethod').textContent = c.method || '-';
-        document.getElementById('cardWeight').textContent = c.weight ? `${c.weight}g` : '-';
-        document.getElementById('cardRatio').textContent = c.ratio ? `1:${c.ratio}` : '-';
+        document.getElementById('cardOrigin').textContent = cardVm.origin;
+        document.getElementById('cardProcess').textContent = cardVm.processing;
+        document.getElementById('cardRoastType').textContent = cardVm.roastType;
+        document.getElementById('cardMethod').textContent = cardVm.method;
+        document.getElementById('cardWeight').textContent = cardVm.weightText;
+        document.getElementById('cardRatio').textContent = cardVm.ratioText;
+        document.getElementById('cardOut').textContent = cardVm.outText;
 
-        const outWeight = c.weight && c.ratio ? (c.weight * c.ratio).toFixed(1) : '-';
-        document.getElementById('cardOut').textContent = outWeight !== '-' ? `${outWeight.endsWith('.0') ? parseInt(outWeight, 10) : outWeight}g` : '-';
-
-        const grinderVal = c.grinder || '';
-        const grindVal = c.grind || '-';
         const titleEl = document.getElementById('cardGrindTitle');
         const valEl = document.getElementById('cardGrindValue');
-        if (titleEl) titleEl.textContent = grinderVal || 'Grind';
-        if (valEl) valEl.textContent = grindVal;
+        if (titleEl) titleEl.textContent = cardVm.grinderTitle;
+        if (valEl) valEl.textContent = cardVm.grinderValue;
 
         document.getElementById('cardTime').textContent = formatTime(c.time);
         document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
-        document.getElementById('cardDrink').textContent = c.drink || '-';
+        document.getElementById('cardDrink').textContent = cardVm.drink;
 
         const showCoffeeImageInCard = !!getPinnedBrewsPreferences?.()?.showCoffeeImageInBrewCard;
         const cardOriginField = document.getElementById('cardOriginField');
@@ -130,11 +116,11 @@ export const createBrewsCardUiModule = ({
                 placeholderEl.classList.add('cursor-pointer');
                 imageEl.onclick = (event) => {
                     event.stopPropagation();
-                    openBeanCard(bean.id);
+                    dispatchCommand?.('beans.openCard', { beanId: bean.id, event: null, keepNavigationOrder: false });
                 };
                 placeholderEl.onclick = (event) => {
                     event.stopPropagation();
-                    openBeanCard(bean.id);
+                    dispatchCommand?.('beans.openCard', { beanId: bean.id, event: null, keepNavigationOrder: false });
                 };
             } else {
                 imageEl.classList.remove('cursor-pointer');
@@ -151,8 +137,8 @@ export const createBrewsCardUiModule = ({
 
         const notesEl = document.getElementById('cardNotes');
         if (notesEl) {
-            if (c.notes) {
-                notesEl.textContent = `"${c.notes}"`;
+            if (cardVm.hasNotes) {
+                notesEl.textContent = cardVm.notesText;
                 notesEl.classList.remove('hidden');
             } else {
                 notesEl.classList.add('hidden');
@@ -162,8 +148,8 @@ export const createBrewsCardUiModule = ({
         const improveEl = document.getElementById('cardImprove');
         const improveCon = document.getElementById('cardImproveContainer');
         if (improveEl && improveCon) {
-            if (c.improve) {
-                improveEl.textContent = `"${c.improve}"`;
+            if (cardVm.hasImprove) {
+                improveEl.textContent = cardVm.improveText;
                 improveCon.classList.remove('hidden');
             } else {
                 improveCon.classList.add('hidden');
@@ -172,14 +158,7 @@ export const createBrewsCardUiModule = ({
 
         const cardDateEl = document.getElementById('cardDate');
         if (cardDateEl) {
-            if (c.createdAt) {
-                const cardDate = new Date(c.createdAt);
-                const cardTimeText = cardDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-                const cardDateText = cardDate.toLocaleDateString();
-                cardDateEl.innerHTML = `<span class="block text-[11px]">${cardTimeText}</span><span class="block">${cardDateText}</span>`;
-            } else {
-                cardDateEl.textContent = '-';
-            }
+            cardDateEl.innerHTML = cardVm.dateHtml;
         }
     };
 
@@ -204,7 +183,7 @@ export const createBrewsCardUiModule = ({
         nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
     };
 
-    const openCoffeeCard = (id, e, options = {}) => {
+    const openBrewCard = (id, e, options = {}) => {
         const keepNavigationOrder = !!options.keepNavigationOrder;
         if (window.getSelection().toString().length > 0) return;
         if (e) e.stopPropagation();
@@ -225,11 +204,11 @@ export const createBrewsCardUiModule = ({
         updateCoffeeCardNav();
     };
 
-    const openCoffeeCardWithOrder = (id, order = [], e = null, options = {}) => {
+    const openBrewCardWithOrder = (id, order = [], e = null, options = {}) => {
         const cleanedOrder = Array.from(new Set((order || []).filter(Boolean)));
         navigationOrderOverride = cleanedOrder.length ? cleanedOrder : null;
         pinnedNavigationAccent = !!options.pinnedNavigationAccent;
-        openCoffeeCard(id, e, { keepNavigationOrder: true });
+        openBrewCard(id, e, { keepNavigationOrder: true });
     };
 
     const navigateCoffeeCard = (direction) => {
@@ -237,7 +216,7 @@ export const createBrewsCardUiModule = ({
         const idx = order.indexOf(getCurrentCoffeeCardId());
         const nextIdx = idx + direction;
         if (nextIdx < 0 || nextIdx >= order.length) return;
-        openCoffeeCard(order[nextIdx], null, { keepNavigationOrder: true });
+        openBrewCard(order[nextIdx], null, { keepNavigationOrder: true });
     };
 
     const closeCoffeeCard = (e) => {
@@ -254,8 +233,8 @@ export const createBrewsCardUiModule = ({
     return {
         populateCardData,
         getBrewTableOrder,
-        openCoffeeCard,
-        openCoffeeCardWithOrder,
+        openCard: openBrewCard,
+        openCardWithOrder: openBrewCardWithOrder,
         updateCoffeeCardNav,
         navigateCoffeeCard,
         closeCoffeeCard

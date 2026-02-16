@@ -7,7 +7,7 @@ export const createBeansCardPhotoModule = ({
     dataService,
     storageService,
     imageCompression,
-    openBeanCard
+    dispatchCommand
 }) => {
     const { db, doc, updateDoc } = dataService || {};
     const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
@@ -55,7 +55,7 @@ export const createBeansCardPhotoModule = ({
                     entry.id === beanId ? { ...entry, imageURL: null, imageUrl: null } : entry
                 )
             );
-            openBeanCard(beanId);
+            dispatchCommand?.('beans.openCard', { beanId, event: null, keepNavigationOrder: false });
         } catch (err) {
             console.error('Remove bean image failed:', err);
             alert('Failed to remove image.');
@@ -94,7 +94,7 @@ export const createBeansCardPhotoModule = ({
                     entry.id === beanId ? { ...entry, imageURL: downloadURL, imageUrl: downloadURL } : entry
                 )
             );
-            openBeanCard(beanId);
+            dispatchCommand?.('beans.openCard', { beanId, event: null, keepNavigationOrder: false });
         } catch (err) {
             console.error('Bean image upload failed:', err);
             alert('Failed to upload image.');

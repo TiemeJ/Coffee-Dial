@@ -4,7 +4,7 @@ export const createBeansMaintenanceModule = ({
     setBeansState,
     getCoffees,
     dataService,
-    autoPinOpenBagsIfEnabled
+    dispatchCommand
 }) => {
     const { db, doc, updateDoc, writeBatch, collection } = dataService || {};
     if (!db || !doc || !updateDoc || !writeBatch || !collection) {
@@ -34,7 +34,7 @@ export const createBeansMaintenanceModule = ({
                 openedDate: openedDateVal,
                 updatedAt: new Date().toISOString()
             });
-            await autoPinOpenBagsIfEnabled();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
         } catch (err) {
             console.error('Error saving opened date:', err);
             alert('Failed to save opened date.');
@@ -225,7 +225,7 @@ export const createBeansMaintenanceModule = ({
                 })
             );
 
-            await autoPinOpenBagsIfEnabled();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
             alert(`Backfilled dates for ${updatesByBeanId.size} bean${updatesByBeanId.size === 1 ? '' : 's'}.`);
         } catch (err) {
             console.error('Error backfilling bean dates:', err);

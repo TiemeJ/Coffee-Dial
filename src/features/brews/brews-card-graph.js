@@ -4,7 +4,7 @@ export const createBrewsCardGraphModule = ({
     getCurrentCoffeeCardId,
     getBrewTableOrder,
     getCoffeeTypeDisplay,
-    openCoffeeCard,
+    dispatchCommand,
     getCoffeeScale
 }) => {
     const updateCoffeeGraphNav = () => {
@@ -100,7 +100,7 @@ export const createBrewsCardGraphModule = ({
         const idx = order.indexOf(getCurrentCoffeeCardId());
         const nextIdx = idx + direction;
         if (nextIdx < 0 || nextIdx >= order.length) return;
-        openCoffeeCard(order[nextIdx]);
+        dispatchCommand?.('brews.openCard', { id: order[nextIdx], event: null, options: { keepNavigationOrder: true } });
         openCardGraphModal(null, true);
     };
 

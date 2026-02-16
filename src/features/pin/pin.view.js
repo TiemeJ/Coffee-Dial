@@ -84,11 +84,11 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         return { stockOverlay, dragIconClass, menuBtnClass, decafIconSrc };
     };
 
-    const renderBrewTile = ({ brew, container, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openCoffeeCard }) => {
+    const renderBrewTile = ({ brew, container, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard }) => {
         const tile = document.createElement('div');
         tile.className = 'w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all';
         tile.setAttribute('data-id', brew.id);
-        tile.ondblclick = (ev) => openCoffeeCard(brew.id, ev);
+        tile.ondblclick = (ev) => openPinnedBrewCard(brew.id, ev);
 
         const linkedBean = resolveLinkedBean({ brew, beans });
         const { stockOverlay, dragIconClass, menuBtnClass, decafIconSrc } = getStockOverlay({ bean: linkedBean });
@@ -132,7 +132,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         activeFilters,
         expandedBeans,
         onToggleBeanExpansion,
-        openCoffeeCard
+        openPinnedBrewCard
     }) => {
         const pinnedSection = document.getElementById('pinnedSection');
         const pinnedGrid = document.getElementById('pinnedGrid');
@@ -151,7 +151,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         if (!organizeByBeans) {
             allActiveBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
             allActiveBrews.forEach((brew) =>
-                renderBrewTile({ brew, container: pinnedGrid, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openCoffeeCard })
+                renderBrewTile({ brew, container: pinnedGrid, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard })
             );
             pinnedSection.classList.remove('hidden');
             return { hasTiles: true, beanKeys: [] };
@@ -212,7 +212,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
                         const bg = document.createElement('div');
                         bg.className = 'absolute inset-0 bg-coffee-100/30 dark:bg-[#1c1917]/40 rounded-lg -z-10';
                         wrapper.appendChild(bg);
-                        renderBrewTile({ brew, container: wrapper, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openCoffeeCard });
+                        renderBrewTile({ brew, container: wrapper, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard });
                         if (idx === brews.length - 1) {
                             const collapseBtn = document.createElement('div');
                             collapseBtn.className = 'absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30';
@@ -259,7 +259,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
                     const bg = document.createElement('div');
                     bg.className = 'absolute inset-0 bg-coffee-100/30 dark:bg-[#1c1917]/40 rounded-lg -z-10';
                     wrapper.appendChild(bg);
-                    renderBrewTile({ brew, container: wrapper, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openCoffeeCard });
+                    renderBrewTile({ brew, container: wrapper, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard });
                     const collapseBtn = document.createElement('div');
                     collapseBtn.className = 'absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30';
                     collapseBtn.onclick = (e) => {

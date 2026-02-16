@@ -15,7 +15,7 @@ export const createAiImportModule = ({
     ref: legacyRef,
     uploadBytes: legacyUploadBytes,
     getDownloadURL: legacyGetDownloadURL,
-    autoPinOpenBagsIfEnabled,
+    dispatchCommand,
     getCoffeeTypes,
     setCoffeeTypes,
     openCoffeeTypeCard,
@@ -211,7 +211,7 @@ export const createAiImportModule = ({
             batch.set(typeRef, typeData);
             batch.set(beanRef, beanData);
             await batch.commit();
-            await autoPinOpenBagsIfEnabled();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
 
             const current = getCoffeeTypes();
             if (!current.find((ct) => ct.id === typeRef.id)) {

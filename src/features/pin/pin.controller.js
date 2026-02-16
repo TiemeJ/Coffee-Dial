@@ -4,6 +4,10 @@ import { createBrewPinArtModule } from './brew-pin-art.js';
 
 export const createPinControllerModule = ({
     dataService,
+    appCommands,
+    appEvents,
+    autoPinOpenBagsIfEnabled,
+    autoUnpinClosedBagsIfEnabled,
     getCurrentUser,
     getCurrentView,
     getCurrentSort,
@@ -15,19 +19,36 @@ export const createPinControllerModule = ({
     getBeanCalculatedStock,
     getCoffeeTypeForBrew,
     getCoffeeTypeDisplay,
-    openCoffeeCard,
-    openCoffeeCardWithOrder,
-    openBeanCardWithOrder,
-    renderTable
 }) => {
+    if (!appCommands?.dispatch || !appCommands?.registerCommand) {
+        throw new Error('createPinControllerModule requires appCommands.dispatch and appCommands.registerCommand');
+    }
+    if (!appEvents?.publish) {
+        throw new Error('createPinControllerModule requires appEvents.publish');
+    }
+    if (typeof autoPinOpenBagsIfEnabled !== 'function') {
+        throw new Error('createPinControllerModule requires autoPinOpenBagsIfEnabled');
+    }
+    if (typeof autoUnpinClosedBagsIfEnabled !== 'function') {
+        throw new Error('createPinControllerModule requires autoUnpinClosedBagsIfEnabled');
+    }
     const repo = createPinRepoModule({ dataService });
+    const dispatchCommand = (commandName, payload) => {
+        return appCommands.dispatch(commandName, payload, { source: 'pin.controller' });
+    };
+    const publishEvent = (eventName, payload) => {
+        appEvents.publish(eventName, payload, { source: 'pin.controller' });
+    };
     const view = createPinViewModule({ getBeanCalculatedStock, getCoffeeTypeDisplay });
     const artView = createBrewPinArtModule({
         resolveLinkedBean: (...args) => view.resolveLinkedBean(...args),
         getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
         getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
-        openCoffeeCard: (...args) => openPinnedCoffeeCard(...args),
-        openBeanCardWithOrder: (...args) => openBeanCardWithOrder(...args)
+        openPinnedBrewCard: (...args) => openPinnedBrewCard(...args),
+        openPinnedBeanCardWithOrder: (beanId, order = [], event = null) => {
+            dispatchCommand('beans.openCardWithOrder', { beanId, order, event });
+            publishEvent('pin.beanCardOpened', { beanId, order });
+        }
     });
 
     let expandedBeans = new Set();
@@ -107,14 +128,16 @@ export const createPinControllerModule = ({
         return ids;
     };
 
-    const openPinnedCoffeeCard = (brewId, event = null) => {
+    const openPinnedBrewCard = (brewId, event = null) => {
         const visibleOrder = getVisiblePinnedBrewOrderIds();
         const order = visibleOrder.includes(brewId) ? visibleOrder : getPinnedBrewOrderIds();
-        if (typeof openCoffeeCardWithOrder === 'function') {
-            openCoffeeCardWithOrder(brewId, order, event, { pinnedNavigationAccent: true });
-            return;
-        }
-        openCoffeeCard?.(brewId, event);
+        dispatchCommand('brews.openCardWithOrder', {
+            id: brewId,
+            order,
+            event,
+            options: { pinnedNavigationAccent: true }
+        });
+        publishEvent('pin.brewCardOpened', { brewId, order });
     };
 
     const destroySortable = () => {
@@ -208,7 +231,7 @@ export const createPinControllerModule = ({
                 } catch (err) {
                     console.error('Reorder failed', err);
                     alert('Failed to save new order.');
-                    renderTable();
+                    dispatchCommand('brews.refreshTable', {});
                 }
             }
         });
@@ -251,7 +274,7 @@ export const createPinControllerModule = ({
             onToggleBeanExpansion: (beanKey) => {
                 toggleBeanExpansion(beanKey);
             },
-            openCoffeeCard: (...args) => openPinnedCoffeeCard(...args)
+            openPinnedBrewCard: (...args) => openPinnedBrewCard(...args)
         });
 
         updatePinnedHeaderToggleIcon(result.beanKeys, !!pinnedPrefs.organizeByBeans, false);
@@ -271,6 +294,31 @@ export const createPinControllerModule = ({
         else expandedBeans = new Set(lastPinnedBeanKeys);
         renderPinnedTiles();
     };
+
+    appCommands.registerCommand(
+        'pin.autoPinOpenBagsIfEnabled',
+        ({ beanId = null, brewId = null, brewData = null } = {}) =>
+            autoPinOpenBagsIfEnabled({ beanId, brewId, brewData }),
+        {
+            owner: 'pin',
+            schema: {
+                beanId: 'string|null?',
+                brewId: 'string|null?',
+                brewData: 'object|null?'
+            }
+        }
+    );
+
+    appCommands.registerCommand(
+        'pin.autoUnpinClosedBagsIfEnabled',
+        ({ beanIds = [] } = {}) => autoUnpinClosedBagsIfEnabled({ beanIds }),
+        {
+            owner: 'pin',
+            schema: {
+                beanIds: 'array?'
+            }
+        }
+    );
 
     return {
         renderPinnedTiles,

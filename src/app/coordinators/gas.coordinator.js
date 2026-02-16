@@ -5,6 +5,8 @@ export const createGasCoordinator = ({
     dataService,
     storageService,
     imageCompression,
+    appCommands,
+    appEvents,
     getCurrentUser,
     getCurrentView,
     getCurrentGasId,
@@ -24,6 +26,18 @@ export const createGasCoordinator = ({
     openAppConfirm,
     getRefreshBrewGearSelectors
 }) => {
+    if (!appCommands?.dispatch) {
+        throw new Error('createGasCoordinator requires appCommands.dispatch');
+    }
+    if (!appEvents?.publish) {
+        throw new Error('createGasCoordinator requires appEvents.publish');
+    }
+    const dispatchCommand = (commandName, payload) => {
+        return appCommands.dispatch(commandName, payload, { source: 'gas.coordinator' });
+    };
+    const publishEvent = (eventName, payload) => {
+        appEvents.publish(eventName, payload, { source: 'gas.coordinator' });
+    };
     const { db: resolvedDb, addDoc: resolvedAddDoc, collection: resolvedCollection } = dataService || {};
     if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) {
         throw new Error('createGasCoordinator requires dataService { db, addDoc, collection }');
@@ -32,6 +46,8 @@ export const createGasCoordinator = ({
     let enterGasEditMode = () => {};
     let renderGasTable = () => {};
     let getFilteredSortedGasItems = () => [];
+    let closeGasCard = () => {};
+    let closeGasList = () => {};
 
     const createGasItemFromModal = async () => {
         const user = getCurrentUser();
@@ -60,6 +76,7 @@ export const createGasCoordinator = ({
             getRefreshBrewGearSelectors()?.();
             openGasCard(newGas.id);
             enterGasEditMode();
+            publishEvent('gas.created', { gasId: newGas.id });
         } catch (err) {
             console.error('Error creating gear item:', err);
             alert('Failed to create gear item.');
@@ -77,10 +94,11 @@ export const createGasCoordinator = ({
         setGasSortKeyState,
         getGasSortDir,
         setGasSortDirState,
-        openGasCard: (...args) => openGasCard(...args)
+        dispatchCommand
     });
     renderGasTable = gasTable.renderGasTable;
     getFilteredSortedGasItems = gasTable.getFilteredSortedGasItems;
+    closeGasList = gasTable.closeGasList;
 
     const gasCard = createGasCardModule({
         dataService,
@@ -93,13 +111,24 @@ export const createGasCoordinator = ({
         setGasItemsState,
         getCoffees,
         setCoffeesState,
-        getFilteredSortedGasItems: (...args) => getFilteredSortedGasItems(...args),
+        getFilteredSortedGasItems: gasTable.getFilteredSortedGasItems,
         imageCompression,
         openAppConfirm,
-        renderGasTable: (...args) => renderGasTable(...args)
+        renderGasTable: gasTable.renderGasTable
     });
     openGasCard = gasCard.openGasCard;
     enterGasEditMode = gasCard.enterGasEditMode;
+    closeGasCard = gasCard.closeGasCard;
+
+    const showBrewsForGear = (gearId = null) => {
+        const targetId = gearId || getCurrentGasId();
+        if (!targetId) return;
+        gasCard.closeGasCardMenu();
+        closeGasCard(null);
+        closeGasList();
+        dispatchCommand('brews.showForGear', { gearId: targetId });
+        publishEvent('gas.brewsRequested', { gearId: targetId });
+    };
 
     return {
         createGasItemFromModal,
@@ -140,6 +169,7 @@ export const createGasCoordinator = ({
         openGasBulkAddModal: gasCard.openGasBulkAddModal,
         closeGasBulkAddModal: gasCard.closeGasBulkAddModal,
         openGasBulkAddFromTable: gasCard.openGasBulkAddFromTable,
-        bulkAddGearToBrews: gasCard.bulkAddGearToBrews
+        bulkAddGearToBrews: gasCard.bulkAddGearToBrews,
+        showBrewsForGear
     };
 };

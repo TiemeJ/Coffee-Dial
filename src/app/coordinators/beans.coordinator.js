@@ -31,27 +31,18 @@ export const createBeansCoordinator = ({
     getBeanCoffeeTypeDisplay,
     getCoffeeTypeForBean,
     updateCoffeeTypeSelectors,
-    getBrewsPerPage,
-    setDisplayedBrewsCount,
-    setActiveBeanFilter,
-    clearSearch,
-    clearAllFilters,
-    renderTable,
-    renderActiveFilters,
-    openCoffeeTypes,
-    clearCoffeeTypesSearch,
-    clearCoffeeTypesFilters,
-    openCoffeeTypeCard,
-    enterCoffeeTypeEditMode,
-    fillBeanDetails,
-    toggleForm,
-    shouldUseLegacyBrewForm,
-    openBrewFormModal,
-    autoUnpinClosedBagsIfEnabled,
-    autoPinOpenBagsIfEnabled,
-    makeBeanSignature,
-    openAppConfirm
+    openAppConfirm,
+    appCommands = null,
+    appEvents = null
 }) => {
+    const dispatchCommand = (commandName, payload) => {
+        if (!appCommands?.dispatch) return undefined;
+        return appCommands.dispatch(commandName, payload, { source: 'beans.coordinator' });
+    };
+    const publishEvent = (eventName, payload) => {
+        if (!appEvents?.publish) return;
+        appEvents.publish(eventName, payload, { source: 'beans.coordinator' });
+    };
     const beansStockService = createBeansStockServiceModule();
     const computeBeansLeft = (bean, brews = getCoffees()) => beansStockService.computeBeansLeft(bean, brews);
     const getBeanCalculatedStock = (bean, brews = getCoffees()) => beansStockService.getBeanCalculatedStock(bean, brews);
@@ -61,7 +52,7 @@ export const createBeansCoordinator = ({
         beansStockService.getFirstBrewDateForBean(beanId, brew, existingBrewId, brews);
 
     let renderBeansTable = () => {};
-    let openBeanCard = () => {};
+    let openCard = () => {};
     let closeBeans = () => {};
     let closeBeanCard = () => {};
     let enterBeanEditMode = () => {};
@@ -85,7 +76,7 @@ export const createBeansCoordinator = ({
         onAutoArchiveUnarchive: async (beanId) => toggleBeanArchive(beanId, true),
         onAutoArchiveOpen: async (beanId) => openNewBag(beanId, { openCard: true, editAfter: true }),
         onBeanCreatedEdit: async (beanId) => {
-            openBeanCard(beanId);
+            openCard(beanId);
             enterBeanEditMode();
         }
     });
@@ -105,11 +96,9 @@ export const createBeansCoordinator = ({
         getHasLoadedBrews: () => getHasLoadedBrews(),
         getCurrentBeanCardId: () => getCurrentBeanCardId(),
         renderBeansTable: (...args) => renderBeansTable(...args),
-        openBeanCard: (...args) => openBeanCard(...args),
+        dispatchCommand,
         computeBeansLeft: (...args) => computeBeansLeft(...args),
         getRemainingStockAfterBrew: (...args) => getRemainingStockAfterBrew(...args),
-        autoUnpinClosedBagsIfEnabled: (...args) => autoUnpinClosedBagsIfEnabled(...args),
-        makeBeanSignature: (...args) => makeBeanSignature(...args),
         showAutoArchiveToast: (...args) => showAutoArchiveToast(...args)
     });
 
@@ -133,21 +122,8 @@ export const createBeansCoordinator = ({
         getBeans: () => getBeans(),
         closeBeanCard: (...args) => closeBeanCard(...args),
         closeBeans: (...args) => closeBeans(...args),
-        clearSearch: (...args) => clearSearch(...args),
-        clearAllFilters: (...args) => clearAllFilters(...args),
-        setActiveBeanFilter: (beanId) => setActiveBeanFilter(beanId),
-        getBrewsPerPage: () => getBrewsPerPage(),
-        setDisplayedBrewsCount: (value) => setDisplayedBrewsCount(value),
-        renderTable: (...args) => renderTable(...args),
-        renderActiveFilters: (...args) => renderActiveFilters(...args),
-        openCoffeeTypes: (...args) => openCoffeeTypes(...args),
-        clearCoffeeTypesSearch: (...args) => clearCoffeeTypesSearch(...args),
-        clearCoffeeTypesFilters: (...args) => clearCoffeeTypesFilters(...args),
-        openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
-        fillBeanDetails: (...args) => fillBeanDetails(...args),
-        toggleForm: (...args) => toggleForm(...args),
-        shouldUseLegacyBrewForm: () => shouldUseLegacyBrewForm?.() !== false,
-        openBrewFormModal: (...args) => openBrewFormModal?.(...args)
+        dispatchCommand,
+        publishEvent
     });
 
     const beansCardForm = createBeansCardFormModule({
@@ -160,9 +136,7 @@ export const createBeansCoordinator = ({
         setBeansState: (value) => setBeansState(value),
         computeBeansLeft: (...args) => computeBeansLeft(...args),
         updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args),
-        openBeanCard: (...args) => openBeanCard(...args),
-        openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
-        enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args)
+        dispatchCommand
     });
     enterBeanEditMode = beansCardForm.enterBeanEditMode;
     cancelBeanEditMode = beansCardForm.cancelBeanEditMode;
@@ -180,13 +154,14 @@ export const createBeansCoordinator = ({
         deleteBean: (...args) => deleteBean(...args),
         showBrewsForBean: (...args) => showBrewsForBean(...args),
         showCoffeeForBean: (...args) => showCoffeeForBean(...args),
-        openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
         enterBeanEditMode: (...args) => enterBeanEditMode(...args),
         cancelBeanEditMode: (...args) => cancelBeanEditMode(...args),
         toggleBeanFrozen: (...args) => toggleBeanFrozen(...args),
-        toggleBeanArchive: (...args) => toggleBeanArchive(...args)
+        toggleBeanArchive: (...args) => toggleBeanArchive(...args),
+        dispatchCommand,
+        publishEvent
     });
-    openBeanCard = beansCardUi.openBeanCard;
+    openCard = beansCardUi.openCard;
     closeBeanCard = beansCardUi.closeBeanCard;
 
     const { triggerBeanPhoto, openBeanPhoto, removeBeanPhoto, handleBeanPhoto } = createBeansCardPhotoModule({
@@ -198,7 +173,7 @@ export const createBeansCoordinator = ({
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
         imageCompression,
-        openBeanCard: (...args) => openBeanCard(...args)
+        dispatchCommand
     });
 
     const beansTable = createBeansTableModule({
@@ -213,7 +188,7 @@ export const createBeansCoordinator = ({
         getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
         getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
         getRoastBadge,
-        openBeanCard: (...args) => openBeanCard(...args),
+        dispatchCommand,
         updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args)
     });
     renderBeansTable = beansTable.renderBeansTable;
@@ -226,12 +201,8 @@ export const createBeansCoordinator = ({
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
         computeBeansLeft: (...args) => computeBeansLeft(...args),
-        autoUnpinClosedBagsIfEnabled: (...args) => autoUnpinClosedBagsIfEnabled(...args),
-        autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
-        makeBeanSignature: (...args) => makeBeanSignature(...args),
         updateBeanCardActionButtons: (...args) => beansCardUi.updateBeanCardActionButtons(...args),
-        openBeanCard: (...args) => openBeanCard(...args),
-        enterBeanEditMode: (...args) => enterBeanEditMode(...args),
+        dispatchCommand,
         openAppConfirm
     });
     toggleBeanArchive = beansActions.toggleBeanArchive;
@@ -245,7 +216,7 @@ export const createBeansCoordinator = ({
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
         getCoffees: () => getCoffees(),
-        autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args)
+        dispatchCommand
     });
 
     return {
@@ -276,8 +247,8 @@ export const createBeansCoordinator = ({
         saveBeanCardEdits: beansCardForm.saveBeanCardEdits,
         updateBeanCardActionButtons: beansCardUi.updateBeanCardActionButtons,
         updateBeanCardNav: beansCardUi.updateBeanCardNav,
-        openBeanCard: beansCardUi.openBeanCard,
-        openBeanCardWithOrder: beansCardUi.openBeanCardWithOrder,
+        openCard: beansCardUi.openCard,
+        openCardWithOrder: beansCardUi.openCardWithOrder,
         navigateBeanCard: beansCardUi.navigateBeanCard,
         closeBeanCard: beansCardUi.closeBeanCard,
         closeBeanCardMenu: beansCardUi.closeBeanCardMenu,

@@ -40,8 +40,11 @@ export const createGasTableModule = ({
     setGasSortKeyState,
     getGasSortDir,
     setGasSortDirState,
-    openGasCard
+    dispatchCommand
 }) => {
+    if (typeof dispatchCommand !== 'function') {
+        throw new Error('createGasTableModule requires dispatchCommand');
+    }
     const openGasList = () => {
         document.getElementById('gasModal')?.classList.remove('hidden');
         renderGasTable();
@@ -287,7 +290,7 @@ export const createGasTableModule = ({
 
             const row = document.createElement('tr');
             row.className = 'bg-white dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0';
-            row.ondblclick = (event) => openGasCard(item.id, event);
+            row.ondblclick = (event) => dispatchCommand('gas.openCard', { id: item.id, event });
             row.innerHTML = `
                 <td class="px-4 py-3 font-semibold">${item.name || '-'}</td>
                 <td class="px-4 py-3">${normalizeType(item.type)}</td>

@@ -1,5 +1,6 @@
 import { createCoffeeTypeCardModule } from '../../features/coffees/coffee-type-card.js';
 import { createCoffeeTypesTableModule } from '../../features/coffees/coffee-types-table.js';
+import { createCoffeesRepoModule } from '../../features/coffees/coffees.repo.js';
 
 export const createCoffeesCoordinator = ({
     dataService,
@@ -24,26 +25,26 @@ export const createCoffeesCoordinator = ({
     openAppConfirm,
     updateCoffeeTypeSelectors,
     renderPinnedTiles,
-    renderTable,
-    renderActiveFilters,
-    clearSearch,
-    clearAllFilters,
-    getBrewsPerPage,
-    setDisplayedBrewsCount,
-    setActiveCoffeeTypeFilter,
-    openBeans,
-    renderBeansTable,
-    clearBeansSearch,
-    clearBeansFilters,
-    applyBeansFilterFromQuick,
-    openBeanCard,
-    enterBeanEditMode,
-    autoPinOpenBagsIfEnabled
+    appCommands = null,
+    appEvents = null
 }) => {
-    const { db: resolvedDb, addDoc: resolvedAddDoc, collection: resolvedCollection } = dataService || {};
-    if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) {
-        throw new Error('createCoffeesCoordinator requires dataService { db, addDoc, collection }');
-    }
+    const repo = createCoffeesRepoModule({ dataService });
+    const dispatchCommand = (commandName, payload) => {
+        if (!appCommands?.dispatch) return undefined;
+        return appCommands.dispatch(commandName, payload, { source: 'coffees.coordinator' });
+    };
+    const publishEvent = (eventName, payload) => {
+        if (!appEvents?.publish) return;
+        appEvents.publish(eventName, payload, { source: 'coffees.coordinator' });
+    };
+    const dispatchOnly = (commandName, payload) => {
+        try {
+            return dispatchCommand(commandName, payload);
+        } catch (error) {
+            console.warn(`[Coffees] Command "${commandName}" failed`, error);
+            return undefined;
+        }
+    };
     let getFilteredSortedCoffeeTypes = () => [];
     let renderCoffeeTypesTable = () => {};
     let openCoffeeTypeCard = () => {};
@@ -62,7 +63,6 @@ export const createCoffeesCoordinator = ({
     const createCoffeeTypeFromModal = async () => {
         const user = getCurrentUser();
         if (!user) return alert('Please sign in.');
-        if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) return alert('Data service unavailable.');
         const nowIso = new Date().toISOString();
         const typeData = {
             uid: user.uid,
@@ -81,11 +81,12 @@ export const createCoffeesCoordinator = ({
         };
 
         try {
-            const typeRef = await resolvedAddDoc(resolvedCollection(resolvedDb, 'users', user.uid, 'coffeeTypes'), typeData);
+            const typeRef = await repo.createCoffeeType({ uid: user.uid, data: typeData });
             const newType = { id: typeRef.id, ...typeData };
             if (!getCoffeeTypes().find((ct) => ct.id === newType.id)) setCoffeeTypesState([...getCoffeeTypes(), newType]);
-            openCoffeeTypeCard(newType.id);
+            dispatchOnly('coffees.openCard', { id: newType.id, event: null });
             enterCoffeeTypeEditMode();
+            publishEvent('coffees.created', { coffeeTypeId: newType.id });
         } catch (err) {
             console.error('Error creating coffee:', err);
             alert('Failed to create coffee.');
@@ -104,7 +105,6 @@ export const createCoffeesCoordinator = ({
         const user = getCurrentUser();
         const typeId = getCurrentCoffeeTypeId();
         if (!user || !typeId) return;
-        if (!resolvedDb || !resolvedAddDoc || !resolvedCollection) return alert('Data service unavailable.');
 
         const type = getCoffeeTypes().find((ct) => ct.id === typeId);
         if (!type) return;
@@ -132,14 +132,13 @@ export const createCoffeesCoordinator = ({
         };
 
         try {
-            const newBeanRef = await resolvedAddDoc(resolvedCollection(resolvedDb, 'users', user.uid, 'beans'), newBeanData);
+            const newBeanRef = await repo.createBean({ uid: user.uid, data: newBeanData });
             const newBean = { id: newBeanRef.id, ...newBeanData };
             setBeansState([...getBeans(), newBean]);
-            renderBeansTable();
-            await autoPinOpenBagsIfEnabled();
-            openBeanCard(newBeanRef.id);
-            enterBeanEditMode();
+            await dispatchOnly('pin.autoPinOpenBagsIfEnabled', {});
+            dispatchOnly('beans.openCardForEdit', { beanId: newBeanRef.id, event: null });
             closeCoffeeTypeCard(null);
+            publishEvent('coffees.beanOpened', { beanId: newBeanRef.id, coffeeTypeId: typeId });
         } catch (err) {
             console.error('Error creating bean from coffee type:', err);
             alert('Failed to create bean.');
@@ -151,10 +150,11 @@ export const createCoffeesCoordinator = ({
         if (!typeId) return;
         closeCoffeeTypeCard(null);
         closeCoffeeTypes();
-        openBeans();
-        clearBeansSearch();
-        clearBeansFilters();
-        applyBeansFilterFromQuick('coffeeType', typeId);
+        dispatchOnly(
+            'beans.showForCoffeeType',
+            { coffeeTypeId: typeId, source: 'coffees' }
+        );
+        publishEvent('coffees.beansRequested', { coffeeTypeId: typeId });
     };
 
     const showBrewsForCoffeeType = () => {
@@ -162,12 +162,11 @@ export const createCoffeesCoordinator = ({
         if (!typeId) return;
         closeCoffeeTypeCard(null);
         closeCoffeeTypes();
-        clearSearch();
-        clearAllFilters();
-        setActiveCoffeeTypeFilter(typeId);
-        setDisplayedBrewsCount(getBrewsPerPage());
-        renderTable();
-        renderActiveFilters();
+        dispatchOnly(
+            'brews.showForCoffeeType',
+            { coffeeTypeId: typeId, source: 'coffees' }
+        );
+        publishEvent('coffees.brewsRequested', { coffeeTypeId: typeId });
     };
 
     const updateCoffeeTypeCardNav = () => {
@@ -208,10 +207,8 @@ export const createCoffeesCoordinator = ({
         renderCoffeeTypesTable: () => renderCoffeeTypesTable(),
         updateCoffeeTypeSelectors,
         renderPinnedTiles,
-        renderTable,
+        dispatchCommand,
         openCoffeeTypeShopUrl,
-        showBeansForCoffeeType,
-        showBrewsForCoffeeType,
         openNewBagForCoffeeType,
         updateCoffeeTypeCardNav
     });

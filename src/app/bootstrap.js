@@ -3,6 +3,8 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/fi
 import { createAppContainer } from './container.js';
 import { registerServiceWorker } from './pwa.js';
 import { initViewBindings } from './view-bindings.js';
+import { createAppCommands } from './app-commands.js';
+import { createAppEvents } from './app-events.js';
 import { runSmokeChecks, shouldRunSmokeChecks } from './smoke-check.js';
 import { runCoreContractChecks, shouldRunCoreContractChecks } from './core-contract-check.js';
 import { mountShellHeader } from '../features/shell/shell.controller.js';
@@ -56,7 +58,9 @@ await mountGalleryView();
 await mountScalesView();
 await mountUiShellView();
 await mountOverlayHostView();
-const app = createAppContainer();
+const appCommands = createAppCommands();
+const appEvents = createAppEvents();
+const app = createAppContainer({ appCommands, appEvents });
 initViewBindings(app.actions, {
     featureActions: app.featureActions
 });
@@ -64,7 +68,7 @@ if (shouldRunCoreContractChecks()) {
     runCoreContractChecks();
 }
 if (shouldRunSmokeChecks()) {
-    runSmokeChecks({ actions: app.actions });
+    runSmokeChecks({ actions: app.actions, appCommands });
 }
 registerServiceWorker();
 onAuthStateChanged(auth, app.handleAuthStateChanged);

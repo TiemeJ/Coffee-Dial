@@ -1,0 +1,28 @@
+name: Stage 4 guardrails
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check feature boundaries
+        run: node scripts/check-feature-boundaries.mjs
+
+      - name: Check command ownership
+        run: node scripts/check-command-ownership.mjs
+
+      - name: Check command dispatch coverage
+        run: node scripts/check-command-dispatch-coverage.mjs

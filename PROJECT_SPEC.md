@@ -140,6 +140,30 @@ The repository is structured as:
 
 ---
 
+**Stage 4 architecture guidelines (stronger boundaries)**
+
+- Cross-feature interactions must go through typed app commands/events, not direct feature-to-feature callbacks.
+- Command ownership is feature-local:
+- `beans.*` commands are registered in beans controller modules.
+- `brews.*` commands are registered in brews controller modules.
+- `coffees.*` commands are registered in coffees controller modules.
+- `gas.*` commands are registered in gas controller modules.
+- `pin.*` commands are registered in pin controller modules.
+- `src/features/*` may depend on `src/core/*`, shared app services, and feature-local modules; importing other feature internals is not allowed.
+- `src/app/container.modules.js` is the composition/wiring root only; local runtime behaviors should live in dedicated `src/app/runtime/*` modules.
+- Transitional shim helpers (`registerCompatCommand`, `dispatchCompatCommand`, `dispatchWithFallback`) are not allowed in app/feature code.
+
+---
+
+**Guardrail checks (must pass)**
+
+- `node scripts/check-feature-boundaries.mjs`
+- `node scripts/check-command-ownership.mjs`
+- `node scripts/check-command-dispatch-coverage.mjs`
+- CI workflow `.github/workflows/stage4-guardrails.yml` runs the same checks on push/PR.
+
+---
+
 **Naming Conventions**
 
 - Files use `kebab-case`.

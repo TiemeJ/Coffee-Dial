@@ -1,3 +1,5 @@
+import { createCoffeesVmModule } from './coffees.vm.js';
+
 const DEFAULT_COFFEE_TYPES_FILTERS = {
     roaster: null,
     farmer: null,
@@ -23,6 +25,7 @@ export const createCoffeeTypesTableModule = ({
     getStarDisplay,
     openCoffeeTypeCard
 }) => {
+    const coffeesVm = createCoffeesVmModule();
     const setCoffeeTypesSearch = (value) => {
         setCoffeeTypesSearchState(value || '');
         const clearBtn = document.getElementById('coffeeTypesSearchClearBtn');
@@ -268,14 +271,15 @@ export const createCoffeeTypesTableModule = ({
         empty.classList.add('hidden');
 
         sortedTypes.forEach((type) => {
-            const roaster = type.roaster || 'Unknown';
-            const farmer = type.farmer || '-';
-            const origin = type.origin || '-';
-            const processing = type.processing || '-';
-            const variety = type.variety || '-';
-            const roast = type.roast || type.roastType || '-';
-            const rating = parseInt(type.rating, 10) || 0;
-            const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
+            const rowVm = coffeesVm.toTableRow(type);
+            const roaster = rowVm.roaster;
+            const farmer = rowVm.farmer;
+            const origin = rowVm.origin;
+            const processing = rowVm.processing;
+            const variety = rowVm.variety;
+            const roast = rowVm.roast;
+            const rating = rowVm.rating;
+            const createdAt = rowVm.createdAt;
             const menuId = `coffee-types-action-menu-${type.id}`;
             const buyBtn = (type.webshopUrl || type.shopUrl)
                 ? `<button data-action-click="openCoffeeTypeShopUrl('${type.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">

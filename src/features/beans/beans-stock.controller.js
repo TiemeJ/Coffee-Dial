@@ -10,11 +10,9 @@ export const createBeansStockControllerModule = ({
     getHasLoadedBrews,
     getCurrentBeanCardId,
     renderBeansTable,
-    openBeanCard,
+    dispatchCommand,
     computeBeansLeft,
     getRemainingStockAfterBrew,
-    autoUnpinClosedBagsIfEnabled,
-    makeBeanSignature,
     showAutoArchiveToast
 }) => {
     const repo = createBeansStockRepoModule({ dataService });
@@ -101,7 +99,9 @@ export const createBeansStockControllerModule = ({
             localStorage.setItem(key, 'true');
             renderBeansTable();
             const currentBeanCardId = getCurrentBeanCardId();
-            if (currentBeanCardId) openBeanCard(currentBeanCardId);
+            if (currentBeanCardId) {
+                dispatchCommand?.('beans.openCard', { beanId: currentBeanCardId, event: null, keepNavigationOrder: false });
+            }
         } catch (err) {
             console.error('Beans left migration failed', err);
         }
@@ -132,7 +132,9 @@ export const createBeansStockControllerModule = ({
             );
             renderBeansTable();
             const currentBeanCardId = getCurrentBeanCardId();
-            if (currentBeanCardId) openBeanCard(currentBeanCardId);
+            if (currentBeanCardId) {
+                dispatchCommand?.('beans.openCard', { beanId: currentBeanCardId, event: null, keepNavigationOrder: false });
+            }
         } catch (err) {
             console.error('Recalculate beans left failed', err);
         }
@@ -161,10 +163,7 @@ export const createBeansStockControllerModule = ({
             setBeansState(
                 beans.map((b) => (b.id === beanId ? { ...b, archived: true, archivedDate: nowIso, updatedAt: nowIso } : b))
             );
-            await autoUnpinClosedBagsIfEnabled({
-                beanIds: [beanId],
-                beanSignatures: [makeBeanSignature(bean)]
-            });
+            await dispatchCommand?.('pin.autoUnpinClosedBagsIfEnabled', { beanIds: [beanId] });
             showAutoArchiveToast(beanId);
         } catch (err) {
             console.error('Auto-archive failed:', err);

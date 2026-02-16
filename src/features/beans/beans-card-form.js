@@ -8,9 +8,7 @@ export const createBeansCardFormModule = ({
     computeBeansLeft,
     updateCoffeeTypeSelectors,
     dataService,
-    openBeanCard,
-    openCoffeeTypeCard,
-    enterCoffeeTypeEditMode
+    dispatchCommand
 }) => {
     const { db, doc, collection, setDoc, updateDoc } = dataService || {};
     if (!db || !doc || !collection || !setDoc || !updateDoc) {
@@ -112,8 +110,7 @@ export const createBeansCardFormModule = ({
     const openCoffeeFromBeanEdit = () => {
         const typeId = document.getElementById('beanEditCoffeeType')?.value;
         if (!typeId || typeId === '__new__') return;
-        openCoffeeTypeCard(typeId);
-        enterCoffeeTypeEditMode();
+        dispatchCommand?.('coffees.openCardForEdit', { id: typeId, event: null });
     };
 
     const cancelBeanEditMode = () => {
@@ -192,7 +189,7 @@ export const createBeansCardFormModule = ({
             await updateDoc(doc(db, 'users', user.uid, 'beans', beanCardId), updates);
             setBeansState(getBeans().map((b) => (b.id === beanCardId ? { ...b, ...updates } : b)));
             cancelBeanEditMode();
-            openBeanCard(beanCardId);
+            dispatchCommand?.('beans.openCard', { beanId: beanCardId, event: null, keepNavigationOrder: false });
         } catch (err) {
             console.error('Error saving bean edits:', err);
             alert('Failed to save changes.');

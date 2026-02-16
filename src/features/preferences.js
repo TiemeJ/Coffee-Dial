@@ -18,8 +18,7 @@ export const createBrewsPreferencesModule = ({
     applyAnimationClass,
     renderTable,
     renderPinnedTiles,
-    pinBrewsFromOpenBags,
-    pinBestBrewsForAllOpenBags,
+    dispatchCommand,
     showAutoPinToast,
     onPinnedBrewsPreferencesChanged
 }) => {
@@ -148,24 +147,24 @@ export const createBrewsPreferencesModule = ({
 
         if (pinOpenBagsEnabled && !pinOpenBagsWasEnabled) {
             if (pinOpenBagsBestOnlyEnabled) {
-                await pinBestBrewsForAllOpenBags();
+                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
                 showAutoPinToast('Autopin set to best brews only.');
             } else {
-                await pinBrewsFromOpenBags();
+                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
                 showAutoPinToast('Autopin enabled. All brews of all open bags pinned.');
             }
         } else if (pinOpenBagsEnabled && pinOpenBagsBestOnlyEnabled && !pinOpenBagsBestOnlyWasEnabled) {
-            await pinBestBrewsForAllOpenBags();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
             showAutoPinToast('Autopin set to best brews only.');
         } else if (
             pinOpenBagsEnabled &&
             pinOpenBagsBestOnlyEnabled &&
             pinBestPerMethodDrinkEnabled !== pinBestPerMethodDrinkWasEnabled
         ) {
-            await pinBestBrewsForAllOpenBags();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
             showAutoPinToast('Autopin best-brew grouping updated.');
         } else if (pinOpenBagsEnabled && !pinOpenBagsBestOnlyEnabled && pinOpenBagsBestOnlyWasEnabled) {
-            await pinBrewsFromOpenBags();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
             showAutoPinToast('Autopin enabled. All brews of all open bags pinned.');
         }
 

@@ -1,3 +1,5 @@
+import { createBrewsVmModule } from './brews.vm.js';
+
 export const createBrewsCardActionsModule = ({
     getCurrentUser,
     getCurrentView,
@@ -7,31 +9,19 @@ export const createBrewsCardActionsModule = ({
     getGasItems,
     getCoffeeTypes,
     getCurrentCoffeeCard,
-    dataService,
+    brewsRepo,
     parseNum,
     handleQuickEditRecipeInput,
-    openCoffeeCard,
+    dispatchCommand,
     closeCoffeeCard,
-    closeBeans,
-    closeCoffeeTypes,
-    openBeans,
-    openCoffeeTypes,
-    clearBeansSearch,
-    clearBeansFilters,
-    clearCoffeeTypesSearch,
-    clearCoffeeTypesFilters,
-    openBeanCard,
-    openCoffeeTypeCard,
     getBeanCoffeeTypeDisplay,
     getFirstBrewDateForBean,
-    archiveBeanIfStockDepleted,
-    updateBeansLeftForBean,
-    autoPinOpenBagsIfEnabled,
     getPinnedBrewsPreferences
 }) => {
-    const { db, doc, updateDoc } = dataService || {};
-    if (!db || !doc || !updateDoc) {
-        throw new Error('createBrewsCardActionsModule requires dataService { db, doc, updateDoc }');
+    const brewsVm = createBrewsVmModule();
+    const { updateBean, updateCoffee } = brewsRepo || {};
+    if (!updateBean || !updateCoffee) {
+        throw new Error('createBrewsCardActionsModule requires brewsRepo');
     }
     const QUICK_EDIT_METHODS = ['Espresso', 'V60', 'Hario Switch', 'Clever Dripper', 'Aeropress', 'OXO Rapid Brewer', 'French Press', 'Chemex'];
     const QUICK_EDIT_DRINKS = [
@@ -212,12 +202,7 @@ export const createBrewsCardActionsModule = ({
         if (!brew || !brew.beanId) return;
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
         closeCoffeeCard(null);
-        closeBeans();
-        closeCoffeeTypes();
-        openBeans();
-        clearBeansSearch();
-        clearBeansFilters();
-        openBeanCard(brew.beanId);
+        dispatchCommand?.('beans.openCard', { beanId: brew.beanId, event: null, keepNavigationOrder: false });
     };
 
     const showCoffeeForBrew = (brewId = null) => {
@@ -229,12 +214,7 @@ export const createBrewsCardActionsModule = ({
         if (!bean || !bean.coffeeTypeId) return;
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
         closeCoffeeCard(null);
-        closeBeans();
-        closeCoffeeTypes();
-        openCoffeeTypes();
-        clearCoffeeTypesSearch();
-        clearCoffeeTypesFilters();
-        openCoffeeTypeCard(bean.coffeeTypeId);
+        dispatchCommand?.('coffees.openCard', { id: bean.coffeeTypeId, event: null });
     };
 
     const closeCoffeeCardMenu = () => {
@@ -243,22 +223,8 @@ export const createBrewsCardActionsModule = ({
     };
 
     const getBeanLabelForBrew = (bean) => {
-        if (!bean) return 'Unknown bean';
-        const formatOpenedDate = (value) => {
-            if (!value) return '';
-            const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
-            if (isNaN(dateObj)) return '';
-            const dd = String(dateObj.getDate()).padStart(2, '0');
-            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const yy = String(dateObj.getFullYear()).slice(-2);
-            return `${dd}-${mm}-${yy}`;
-        };
         const display = getBeanCoffeeTypeDisplay(bean);
-        const farmer = display?.farmer && display.farmer !== '-' ? display.farmer : '';
-        const roaster = display?.roaster && display.roaster !== '-' ? display.roaster : '';
-        const baseLabel = farmer && roaster ? `${farmer} - ${roaster}` : farmer || roaster || 'Unknown bean';
-        const openedDate = formatOpenedDate(bean.openedDate);
-        return openedDate ? `${baseLabel} (${openedDate})` : baseLabel;
+        return brewsVm.buildBeanLabel(bean, display);
     };
 
     const populateBrewQuickEditBeanOptions = (selectedBeanId = '') => {
@@ -427,7 +393,7 @@ export const createBrewsCardActionsModule = ({
         if (grinderNameFromGear) updates.grinder = grinderNameFromGear;
 
         try {
-            await updateDoc(doc(db, 'users', user.uid, 'coffees', cardId), updates);
+            await updateCoffee(cardId, updates);
 
             if (selectedBeanId) {
                 const selectedBean = getBeans().find((b) => b.id === selectedBeanId);
@@ -438,25 +404,25 @@ export const createBrewsCardActionsModule = ({
                         cardId
                     );
                     if (firstBrewDate) {
-                        await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), { openedDate: firstBrewDate, updatedAt: nowIso });
+                        await updateBean(selectedBeanId, { openedDate: firstBrewDate, updatedAt: nowIso });
                         const beanIdx = getBeans().findIndex((b) => b.id === selectedBeanId);
                         if (beanIdx !== -1) getBeans()[beanIdx] = { ...getBeans()[beanIdx], openedDate: firstBrewDate, updatedAt: nowIso };
                     }
                 }
 
-                await archiveBeanIfStockDepleted({ beanId: selectedBeanId, brew: updates, existingBrewId: cardId });
-                await updateBeansLeftForBean(selectedBeanId, [{ ...brew, ...updates, id: cardId, beanId: selectedBeanId }]);
-                await autoPinOpenBagsIfEnabled({ beanId: selectedBeanId, brewId: cardId, brewData: { ...brew, ...updates, id: cardId, beanId: selectedBeanId } });
+                await dispatchCommand?.('beans.archiveIfStockDepleted', { beanId: selectedBeanId, brew: updates, existingBrewId: cardId });
+                await dispatchCommand?.('beans.updateStockForBean', { beanId: selectedBeanId, extraBrews: [{ ...brew, ...updates, id: cardId, beanId: selectedBeanId }] });
+                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', { beanId: selectedBeanId, brewId: cardId, brewData: { ...brew, ...updates, id: cardId, beanId: selectedBeanId } });
             }
 
             if (brew.beanId && brew.beanId !== selectedBeanId) {
-                await updateBeansLeftForBean(brew.beanId);
+                await dispatchCommand?.('beans.updateStockForBean', { beanId: brew.beanId });
             }
 
             const idx = getCoffees().findIndex((c) => c.id === cardId);
             if (idx !== -1) getCoffees()[idx] = { ...getCoffees()[idx], ...updates };
             closeQuickEditGearDropdown();
-            openCoffeeCard(cardId);
+            dispatchCommand?.('brews.openCard', { id: cardId, event: null, options: {} });
         } catch (err) {
             console.error('Error saving quick edits:', err);
             alert('Failed to save quick edits.');

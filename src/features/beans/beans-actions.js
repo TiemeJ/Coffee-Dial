@@ -1,3 +1,5 @@
+import { createBeansRepoModule } from './beans.repo.js';
+
 export const createBeansActionsModule = ({
     getCurrentUser,
     getCurrentBeanCardId,
@@ -5,17 +7,10 @@ export const createBeansActionsModule = ({
     setBeansState,
     computeBeansLeft,
     dataService,
-    autoUnpinClosedBagsIfEnabled,
-    autoPinOpenBagsIfEnabled,
-    makeBeanSignature,
-    openBeanCard,
-    enterBeanEditMode,
+    dispatchCommand,
     openAppConfirm
 }) => {
-    const { db, doc, updateDoc, addDoc, collection, deleteDoc } = dataService || {};
-    if (!db || !doc || !updateDoc || !addDoc || !collection || !deleteDoc) {
-        throw new Error('createBeansActionsModule requires dataService { db, doc, updateDoc, addDoc, collection, deleteDoc }');
-    }
+    const repo = createBeansRepoModule({ dataService });
     const saveBeanStock = async (beanId, amount) => {
         const user = getCurrentUser();
         if (!user) return;
@@ -23,18 +18,15 @@ export const createBeansActionsModule = ({
             const stockVal = amount === '' ? null : parseFloat(amount);
             const bean = getBeans().find((b) => b.id === beanId);
             const beansLeft = stockVal === null ? null : computeBeansLeft({ ...bean, stock: stockVal });
-            await updateDoc(doc(db, 'users', user.uid, 'beans', beanId), {
+            await repo.updateBean({ uid: user.uid, beanId, patch: {
                 stock: stockVal,
                 beansLeft,
                 updatedAt: new Date().toISOString()
-            });
+            } });
             if (stockVal !== null && stockVal <= 0) {
-                await autoUnpinClosedBagsIfEnabled({
-                    beanIds: [beanId],
-                    beanSignatures: [makeBeanSignature(bean)]
-                });
+                await dispatchCommand?.('pin.autoUnpinClosedBagsIfEnabled', { beanIds: [beanId] });
             }
-            await autoPinOpenBagsIfEnabled();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
         } catch (err) {
             console.error('Error saving stock:', err);
             alert('Failed to save stock.');
@@ -49,11 +41,11 @@ export const createBeansActionsModule = ({
             const nowIso = new Date().toISOString();
             const nextArchived = !isArchived;
             const nextArchivedDate = nextArchived ? nowIso : (targetBean?.archivedDate || null);
-            await updateDoc(doc(db, 'users', user.uid, 'beans', beanId), {
+            await repo.updateBean({ uid: user.uid, beanId, patch: {
                 archived: nextArchived,
                 archivedDate: nextArchivedDate,
                 updatedAt: nowIso
-            });
+            } });
             let updatedBean = null;
             setBeansState(
                 getBeans().map((bean) => {
@@ -62,15 +54,14 @@ export const createBeansActionsModule = ({
                     return updatedBean;
                 })
             );
-            if (updatedBean && getCurrentBeanCardId() === beanId) openBeanCard(beanId);
+            if (updatedBean && getCurrentBeanCardId() === beanId) {
+                dispatchCommand?.('beans.openCard', { beanId, event: null, keepNavigationOrder: false });
+            }
             if (!isArchived) {
-                await autoUnpinClosedBagsIfEnabled({
-                    beanIds: [beanId],
-                    beanSignatures: [makeBeanSignature(targetBean)]
-                });
+                await dispatchCommand?.('pin.autoUnpinClosedBagsIfEnabled', { beanIds: [beanId] });
             }
             if (isArchived) {
-                await autoPinOpenBagsIfEnabled();
+                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
             }
         } catch (err) {
             console.error('Error updating archive state:', err);
@@ -86,11 +77,11 @@ export const createBeansActionsModule = ({
             const nowIso = new Date().toISOString();
             const nextFrozen = !isFrozen;
             const nextFrozenDate = nextFrozen ? nowIso : (targetBean?.frozenDate || null);
-            await updateDoc(doc(db, 'users', user.uid, 'beans', beanId), {
+            await repo.updateBean({ uid: user.uid, beanId, patch: {
                 frozen: nextFrozen,
                 frozenDate: nextFrozenDate,
                 updatedAt: nowIso
-            });
+            } });
             let updatedBean = null;
             setBeansState(
                 getBeans().map((bean) => {
@@ -99,15 +90,14 @@ export const createBeansActionsModule = ({
                     return updatedBean;
                 })
             );
-            if (updatedBean && getCurrentBeanCardId() === beanId) openBeanCard(beanId);
+            if (updatedBean && getCurrentBeanCardId() === beanId) {
+                dispatchCommand?.('beans.openCard', { beanId, event: null, keepNavigationOrder: false });
+            }
             if (!isFrozen) {
-                await autoUnpinClosedBagsIfEnabled({
-                    beanIds: [beanId],
-                    beanSignatures: [makeBeanSignature(targetBean)]
-                });
+                await dispatchCommand?.('pin.autoUnpinClosedBagsIfEnabled', { beanIds: [beanId] });
             }
             if (isFrozen) {
-                await autoPinOpenBagsIfEnabled();
+                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
             }
         } catch (err) {
             console.error('Error updating frozen state:', err);
@@ -146,13 +136,13 @@ export const createBeansActionsModule = ({
         newBeanData.updatedAt = newBeanData.createdAt;
 
         try {
-            const refObj = await addDoc(collection(db, 'users', user.uid, 'beans'), newBeanData);
+            const refObj = await repo.createBean({ uid: user.uid, data: newBeanData });
             const newBean = { id: refObj.id, ...newBeanData };
             setBeansState([...getBeans(), newBean]);
-            await autoPinOpenBagsIfEnabled();
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
             if (openCard) {
-                openBeanCard(refObj.id);
-                if (editAfter) enterBeanEditMode();
+                if (editAfter) dispatchCommand?.('beans.openCardForEdit', { beanId: refObj.id, event: null });
+                else dispatchCommand?.('beans.openCard', { beanId: refObj.id, event: null, keepNavigationOrder: false });
             }
             return refObj.id;
         } catch (err) {
@@ -174,13 +164,9 @@ export const createBeansActionsModule = ({
         });
         if (!shouldDelete) return;
 
-        const targetBean = getBeans().find((b) => b.id === beanId);
         try {
-            await autoUnpinClosedBagsIfEnabled({
-                beanIds: [beanId],
-                beanSignatures: [makeBeanSignature(targetBean)]
-            });
-            await deleteDoc(doc(db, 'users', user.uid, 'beans', beanId));
+            await dispatchCommand?.('pin.autoUnpinClosedBagsIfEnabled', { beanIds: [beanId] });
+            await repo.removeBean({ uid: user.uid, beanId });
         } catch (e) {
             alert(e.message);
         }

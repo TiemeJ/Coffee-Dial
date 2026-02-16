@@ -1,3 +1,5 @@
+import { createBrewsVmModule } from './brews.vm.js';
+
 const DEFAULT_ACTIVE_FILTERS = {
     bean: null,
     coffeeType: null,
@@ -37,9 +39,14 @@ export const createBrewsTableModule = ({
     getStarDisplay,
     formatBeanOpenedDate,
     formatTime,
-    openCoffeeCard,
+    dispatchCommand,
     changeView
 }) => {
+    const brewsVm = createBrewsVmModule();
+    const openBrewCard = (id, event = null) => {
+        if (!id) return;
+        dispatchCommand?.('brews.openCard', { id, event, options: {} });
+    };
     const getFilterLabel = (key) => {
         const labelMap = {
             bean: 'Bean',
@@ -453,17 +460,12 @@ export const createBrewsTableModule = ({
 
     const generateRow = (brew) => {
         const showManualPinning = !getPinnedBrewsPreferences?.()?.pinOpenBags;
-        const outWeight = brew.weight && brew.ratio ? (brew.weight * brew.ratio).toFixed(1) : '-';
         const typeDisplay = getCoffeeTypeDisplay(brew);
-        const displayRoaster = typeDisplay.roaster;
-        const displayOrigin = typeDisplay.origin;
-        const displayDate = brew.createdAt ? new Date(brew.createdAt).toLocaleDateString() : '-';
-        const displayTime = brew.createdAt
-            ? new Date(brew.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-            : '-';
-        const gripIconClass = brew.isActive
-            ? 'fa-thumbtack text-green-600'
-            : 'fa-thumbtack text-stone-300 dark:text-stone-600 opacity-40';
+        const rowDisplay = brewsVm.buildTableRowDisplayModel({
+            brew,
+            typeDisplay,
+            showManualPinning
+        });
 
         const menuId = `action-menu-${brew.id}`;
         let actions = '';
@@ -474,38 +476,26 @@ export const createBrewsTableModule = ({
             const pinAction = showManualPinning
                 ? `<button data-action-click="toggleActive('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button>`
                 : '';
-            actions = `<div class="relative"><button data-action-click="brewsToggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button data-action-click="openCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button data-action-click="editCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button data-action-click="fastRepeatCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button data-action-click="duplicateCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button>${pinAction}<button data-action-click="openUploadModal('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload photo</button><button data-action-click="showBeanForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button data-action-click="showCoffeeForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button data-action-click="shareCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button data-action-click="deleteCoffee('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
+            actions = `<div class="relative"><button data-action-click="brewsToggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button data-action-click="brewsOpenCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button data-action-click="editCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button data-action-click="fastRepeatCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button data-action-click="duplicateCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button>${pinAction}<button data-action-click="openUploadModal('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Upload photo</button><button data-action-click="showBeanForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button data-action-click="showCoffeeForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button data-action-click="shareCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button data-action-click="deleteCoffee('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div></div>`;
         } else {
-            actions = `<div class="relative"><button data-action-click="brewsToggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button data-action-click="openCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button data-action-click="shareCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share card</button><button data-action-click="showBeanForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button data-action-click="showCoffeeForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button data-action-click="cloneBrew('${brew.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to my brews</button></div></div>`;
+            actions = `<div class="relative"><button data-action-click="brewsToggleActionMenu('${menuId}', event)" class="p-0 text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white transition-colors rounded-full hover:bg-coffee-50 dark:hover:bg-[#34302e]"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden"><button data-action-click="brewsOpenCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card</button><button data-action-click="shareCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share card</button><button data-action-click="showBeanForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button data-action-click="showCoffeeForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button data-action-click="cloneBrew('${brew.id}'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-file-import text-green-500 w-4"></i> Clone to my brews</button></div></div>`;
         }
 
-        const recipeCol = `<div class="whitespace-nowrap text-xs"><span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${brew.weight || '-'}g</span><span class="text-coffee-300 dark:text-[#57534e] mx-0.5">•</span><span class="font-bold text-coffee-900 dark:text-white">${outWeight === '-' ? '-' : (outWeight.endsWith('.0') ? parseInt(outWeight, 10) : outWeight) + 'g'}</span><span class="text-coffee-400 dark:text-[#78716c] ml-0.5">(1:${brew.ratio || '-'})</span></div>`;
-
         const columnPreferences = getColumnPreferences();
-        let rowHtml = '';
-        if (showManualPinning) rowHtml += `<td class="px-3 py-1 text-center"><i class="fa-solid ${gripIconClass}"></i></td>`;
-        if (columnPreferences.roaster !== false) rowHtml += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${displayRoaster}</td>`;
-        if (columnPreferences.origin !== false) rowHtml += `<td class="px-3 py-1 text-sm">${displayOrigin}</td>`;
-        if (columnPreferences.farmer !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.farmer}</td>`;
-        if (columnPreferences.variety !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.variety}</td>`;
-        if (columnPreferences.processing !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.processing}</td>`;
-        if (columnPreferences.roastType !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.roastType}</td>`;
-        if (columnPreferences.method !== false) rowHtml += `<td class="px-3 py-1 text-sm">${brew.method || '-'}</td>`;
-        if (columnPreferences.grinder !== false) rowHtml += `<td class="px-3 py-1 text-sm">${brew.grinder || '-'}</td>`;
-        if (columnPreferences.grind !== false) rowHtml += `<td class="px-3 py-1 font-mono text-coffee-700 dark:text-[#d6ccc2]">${brew.grind || '-'}</td>`;
-        if (columnPreferences.recipe !== false) rowHtml += `<td class="px-3 py-1">${recipeCol}</td>`;
-        if (columnPreferences.time !== false) rowHtml += `<td class="px-3 py-1 text-right">${formatTime(brew.time)}</td>`;
-        if (columnPreferences.temp !== false) rowHtml += `<td class="px-3 py-1 text-center">${getTempBadge(brew.temp)}</td>`;
-        if (columnPreferences.drink !== false) rowHtml += `<td class="px-3 py-1 text-sm font-medium">${brew.drink || '-'}</td>`;
-        if (columnPreferences.notes !== false) rowHtml += `<td class="px-3 py-1 text-sm max-w-xs truncate" title="${brew.notes}">${brew.notes || '-'}</td>`;
-        if (columnPreferences.improve !== false) rowHtml += `<td class="px-3 py-1 text-sm italic text-red-400 dark:text-red-400/80 max-w-xs truncate" title="${brew.improve || ''}">${brew.improve || '-'}</td>`;
-        if (columnPreferences.rating !== false) rowHtml += `<td class="px-3 py-1 whitespace-nowrap">${getStarDisplay(brew.rating)}</td>`;
-        if (columnPreferences.date !== false) rowHtml += `<td class="px-3 py-1 text-xs font-mono text-coffee-500"><div class="leading-tight"><div class="text-[11px]">${displayTime}</div><div>${displayDate}</div></div></td>`;
-        rowHtml += `<td class="px-3 py-1 text-center" data-action-click="event.stopPropagation()">${actions}</td>`;
+        const rowHtml = brewsVm.buildTableRowHtml({
+            brew,
+            typeDisplay,
+            rowDisplay,
+            columnPreferences,
+            timeText: formatTime(brew.time),
+            tempBadgeHtml: getTempBadge(brew.temp),
+            ratingHtml: getStarDisplay(brew.rating),
+            actionsHtml: actions
+        });
 
         const row = document.createElement('tr');
         row.className = 'bg-white dark:bg-[#292524] hover:bg-coffee-50 dark:hover:bg-[#1c1917] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0 cursor-pointer';
-        row.ondblclick = (e) => openCoffeeCard(brew.id, e);
+        row.ondblclick = (e) => openBrewCard(brew.id, e);
         row.setAttribute('data-id', brew.id);
         row.innerHTML = rowHtml;
         return row;

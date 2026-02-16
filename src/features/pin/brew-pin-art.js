@@ -2,8 +2,8 @@ export const createBrewPinArtModule = ({
     resolveLinkedBean,
     getCoffeeTypeForBrew,
     getBeanCalculatedStock,
-    openCoffeeCard,
-    openBeanCardWithOrder
+    openPinnedBrewCard,
+    openPinnedBeanCardWithOrder
 }) => {
     let chooserOpenFor = null;
     const LONG_PRESS_MS = 420;
@@ -39,7 +39,7 @@ export const createBrewPinArtModule = ({
             btn.textContent = buildBrewLabel(brew, includeDrinkInLabel);
             btn.addEventListener('click', () => {
                 closeChooser();
-                openCoffeeCard(brew.id);
+                openPinnedBrewCard(brew.id);
             });
             list.appendChild(btn);
         });
@@ -204,7 +204,7 @@ export const createBrewPinArtModule = ({
                     if (!bean?.id) return;
                     longPressHandled = true;
                     closeChooser();
-                    openBeanCardWithOrder?.(bean.id, beanOrder);
+                    openPinnedBeanCardWithOrder?.(bean.id, beanOrder);
                 }, LONG_PRESS_MS);
             });
 
@@ -221,7 +221,7 @@ export const createBrewPinArtModule = ({
                 }
                 if (sortedBrews.length === 1) {
                     closeChooser();
-                    openCoffeeCard(sortedBrews[0].id);
+                    openPinnedBrewCard(sortedBrews[0].id);
                     return;
                 }
                 openChooser({

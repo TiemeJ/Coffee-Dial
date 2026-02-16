@@ -15,3 +15,12 @@ The workflow:
 4. Deploys to GitHub Pages
 
 This replaces the dynamic Pages workflow that was causing runner acquisition errors.
+
+## stage4-guardrails.yml
+
+This workflow enforces Stage 4 module boundaries on push/PR to `main`.
+
+It runs:
+1. `node scripts/check-feature-boundaries.mjs`
+2. `node scripts/check-command-ownership.mjs`
+3. `node scripts/check-command-dispatch-coverage.mjs`

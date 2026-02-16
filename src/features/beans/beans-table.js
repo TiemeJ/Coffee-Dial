@@ -14,9 +14,13 @@ export const createBeansTableModule = ({
     getBeanCalculatedStock,
     getBeanCoffeeTypeDisplay,
     getRoastBadge,
-    openBeanCard,
+    dispatchCommand,
     updateCoffeeTypeSelectors
 }) => {
+    const openBeanCardViaCommand = (beanId, event = null, keepNavigationOrder = false) => {
+        if (!beanId) return;
+        dispatchCommand?.('beans.openCard', { beanId, event, keepNavigationOrder });
+    };
     const openBeans = () => {
         if (!getCurrentUser()) return alert('Please sign in.');
         document.getElementById('beansModal')?.classList.remove('hidden');
@@ -204,7 +208,7 @@ export const createBeansTableModule = ({
         const createRow = (bean) => {
             const tr = document.createElement('tr');
             tr.className = 'bg-white dark:bg-[#292524] border-b border-coffee-50 dark:border-[#34302e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors';
-            tr.ondblclick = (e) => openBeanCard(bean.id, e);
+            tr.ondblclick = (e) => openBeanCardViaCommand(bean.id, e);
             const coffeeDisplay = getBeanCoffeeTypeDisplay(bean);
 
             let stockLeftDisplay = '-';
@@ -268,10 +272,10 @@ export const createBeansTableModule = ({
                              <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                          </button>
                          <div id="${menuId}" class="action-menu hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[70] overflow-hidden">
-                             <button data-action-click="openBeanCard('${bean.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                             <button data-action-click="beansOpenCard('${bean.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                  <i class="fa-solid fa-id-card text-indigo-500 w-4"></i> View card
                              </button>
-                             ${isMine ? `<button data-action-click="openBeanCard('${bean.id}', event); enterBeanEditMode();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
+                             ${isMine ? `<button data-action-click="beansOpenCardForEdit('${bean.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
                                  <i class="fa-solid fa-pen-to-square text-blue-500 w-4"></i> Edit
                              </button>` : ''}
                              ${isMine ? `<button data-action-click="openBrewWithBean('${bean.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">

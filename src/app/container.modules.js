@@ -10,9 +10,9 @@
         import { closeAppConfirm, openAppConfirm, resolveAppConfirm, installDialogAdapters } from '../core/confirm.js';
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../core/format.js';
         import { createCoffeeDisplayModule } from '../core/coffee-display.js';
-        import { createCoffeesCoordinator } from './coordinators/coffees.coordinator.js';
-        import { createGasCoordinator } from './coordinators/gas.coordinator.js';
-        import { createBeansCoordinator } from './coordinators/beans.coordinator.js';
+        import { createCoffeesController } from '../features/coffees/coffees.controller.js';
+        import { createGasController } from '../features/gas/gas.controller.js';
+        import { createBeansController } from '../features/beans/beans.controller.js';
         import { createSocialCoordinator } from './coordinators/social.coordinator.js';
         import { createGalleryModule } from '../features/gallery.js';
         import { createStatsModule } from '../features/stats/stats.js';
@@ -24,6 +24,9 @@
         import { createBrewsCardPhotoModule } from '../features/brews/brews-card-photo.js';
         import { createBrewsFormModalModule } from '../features/brews/brews-form-modal.js';
         import { createBrewsCoordinator, createBrewsTableCoordinator } from './coordinators/brews.coordinator.js';
+        import { createBrewsController } from '../features/brews/brews.controller.js';
+        import { createBrewsRepo } from '../features/brews/brews.repo.js';
+        import { registerBrewsFilterCommands } from '../features/brews/brews-filter-commands.js';
         import { createBrewsPinAutopinModule } from '../features/pin/brews-pin-autopin.js';
         import { createBrewsPreferencesModule } from '../features/preferences.js';
         import { createDataService } from './services/data.service.js';
@@ -42,8 +45,12 @@
         import { createPinCoordinator } from './coordinators/pin.coordinator.js';
         import { createActionsRegistry } from './actions.registry.js';
         import { createInitialAppState } from './container.state.js';
+        import { createAuthStateChangedHandler } from './runtime/auth-state.js';
+        import { createGearMigrationModule } from './runtime/gear-migration.js';
+        import { createOpenAddBrewFromPinned } from './runtime/open-add-brew.js';
+        import { installCardNavigationHandlers } from './runtime/card-navigation.js';
         
-export const createAppContainerModules = () => {
+export const createAppContainerModules = ({ appCommands = null, appEvents = null } = {}) => {
 
         const emailLinkAuth = initEmailLinkAuth({ auth }) || {};
         installDialogAdapters(showToast);
@@ -101,8 +108,12 @@ export const createAppContainerModules = () => {
             activeFilters
         } = initialState;
         const BREWS_PER_PAGE = initialState.BREWS_PER_PAGE;
-        let openBrewFormModalRef = null;
-        const openBrewFormModalBridge = (event = null, options = {}) => openBrewFormModalRef?.(event, options);
+        const dispatchBrewOpenForm = (event = null, options = {}) =>
+            appCommands?.dispatch?.(
+                'brews.openForm',
+                { event, options },
+                { source: 'container.brewsOpenForm' }
+            );
         const isLegacyBrewFormEnabled = () => pinnedBrewsPreferences?.useLegacyBrewForm !== false;
         const dataService = createDataService({
             db,
@@ -128,6 +139,10 @@ export const createAppContainerModules = () => {
             uploadBytes,
             getDownloadURL,
             deleteObject
+        });
+        const brewsRepo = createBrewsRepo({
+            dataService,
+            getCurrentUser: () => currentUser
         });
         const authService = createAuthService({
             auth,
@@ -194,7 +209,12 @@ export const createAppContainerModules = () => {
                 getStarDisplay,
                 formatBeanOpenedDate,
                 formatTime,
-                openCoffeeCard: (...args) => openCoffeeCard(...args),
+                dispatchCommand: (commandName, payload) =>
+                    appCommands?.dispatch?.(
+                        commandName,
+                        payload,
+                        { source: 'brews.table' }
+                    ),
                 changeView: (...args) => changeView(...args)
             },
             tablePrefDeps: {
@@ -217,8 +237,8 @@ export const createAppContainerModules = () => {
             applyAnimationClass: (...args) => applyAnimationClass(...args),
             renderTable: (...args) => renderTable(...args),
             renderPinnedTiles: (...args) => renderPinnedTiles(...args),
-            pinBrewsFromOpenBags: (...args) => pinBrewsFromOpenBags(...args),
-            pinBestBrewsForAllOpenBags: (...args) => pinBestBrewsForAllOpenBags(...args),
+            dispatchCommand: (commandName, payload) =>
+                appCommands?.dispatch?.(commandName, payload, { source: 'preferences' }),
             showAutoPinToast,
             onPinnedBrewsPreferencesChanged: () => {
                 applyBrewFormInlineVisibility?.();
@@ -233,12 +253,7 @@ export const createAppContainerModules = () => {
         };
 
         const {
-            makeBeanSignature,
-            pinBrewsFromOpenBags,
-            pinBestBrewsForBean,
-            pinBestBrewsForAllOpenBags,
             autoPinOpenBagsIfEnabled,
-            unpinBrewsForBeans,
             autoUnpinClosedBagsIfEnabled
         } = createBrewsPinAutopinModule({
             getCurrentUser: () => currentUser,
@@ -288,7 +303,8 @@ export const createAppContainerModules = () => {
             ref,
             uploadBytes,
             getDownloadURL,
-            autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
+            dispatchCommand: (commandName, payload) =>
+                appCommands?.dispatch?.(commandName, payload, { source: 'ai-import' }),
             getCoffeeTypes: () => coffeeTypes,
             setCoffeeTypes: (value) => { coffeeTypes = value; },
             openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
@@ -420,8 +436,11 @@ export const createAppContainerModules = () => {
             const select = document.getElementById('savedBeanSelect');
             const beanId = select?.value;
             if (!beanId) return;
-            openBeanCard(beanId);
-            enterBeanEditMode();
+            appCommands?.dispatch?.(
+                'beans.openCardForEdit',
+                { beanId, event: null },
+                { source: 'container.openSelectedBeanForEdit' }
+            );
         };
 
         const parseNum = (v) => (v === '' || v === null || isNaN(v)) ? null : parseFloat(v);
@@ -472,9 +491,16 @@ export const createAppContainerModules = () => {
                 const newBean = { id: ref.id, ...beanData };
                 beans.push(newBean);
                 renderBeansTable();
-                await autoPinOpenBagsIfEnabled();
-                openBeanCard(ref.id);
-                enterBeanEditMode();
+                await appCommands?.dispatch?.(
+                    'pin.autoPinOpenBagsIfEnabled',
+                    {},
+                    { source: 'container.createBeanFromModal' }
+                );
+                appCommands?.dispatch?.(
+                    'beans.openCardForEdit',
+                    { beanId: ref.id, event: null },
+                    { source: 'container.createBeanFromModal' }
+                );
             } catch (err) {
                 console.error('Error creating bean:', err);
                 alert('Failed to create bean.');
@@ -508,8 +534,8 @@ export const createAppContainerModules = () => {
             saveBeanCardEdits,
             updateBeanCardActionButtons,
             updateBeanCardNav,
-            openBeanCard,
-            openBeanCardWithOrder,
+            openCard: openBeanCardImpl,
+            openCardWithOrder: openBeanCardWithOrderImpl,
             navigateBeanCard,
             closeBeanCard,
             closeBeanCardMenu,
@@ -537,10 +563,12 @@ export const createAppContainerModules = () => {
             saveBeanFrozenDate,
             syncLegacyBeans,
             backfillBeanDatesFromBrews
-        } = createBeansCoordinator({
+        } = createBeansController({
             dataService,
             storageService,
             imageCompression,
+            appCommands,
+            appEvents,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             getCoffees: () => coffees,
@@ -559,28 +587,8 @@ export const createAppContainerModules = () => {
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             getCoffeeTypeForBean: (...args) => getCoffeeTypeForBean(...args),
             updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args),
-            getBrewsPerPage: () => BREWS_PER_PAGE,
-            setDisplayedBrewsCount: (value) => { displayedBrewsCount = value; },
-            setActiveBeanFilter: (beanId) => { activeFilters.bean = beanId; },
-            clearSearch: (...args) => clearSearch(...args),
-            clearAllFilters: (...args) => clearAllFilters(...args),
-            renderTable: (...args) => renderTable(...args),
-            renderActiveFilters: (...args) => renderActiveFilters(...args),
-            openCoffeeTypes: (...args) => openCoffeeTypes(...args),
-            clearCoffeeTypesSearch: (...args) => clearCoffeeTypesSearch(...args),
-            clearCoffeeTypesFilters: (...args) => clearCoffeeTypesFilters(...args),
-            openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
-            enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args),
-            fillBeanDetails: (...args) => fillBeanDetails(...args),
-            toggleForm: (...args) => toggleForm(...args),
-            shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
-            openBrewFormModal: (...args) => openBrewFormModalBridge(...args),
-            autoUnpinClosedBagsIfEnabled: (...args) => autoUnpinClosedBagsIfEnabled(...args),
-            autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
-            makeBeanSignature: (...args) => makeBeanSignature(...args),
             openAppConfirm
         });
-
         // --- Coffee Management Functions ---
         const {
             openCoffeeTypes,
@@ -619,9 +627,11 @@ export const createAppContainerModules = () => {
             updateCoffeeTypesSortIcons,
             getFilteredSortedCoffeeTypes,
             renderCoffeeTypesTable
-        } = createCoffeesCoordinator({
+        } = createCoffeesController({
             dataService,
             storageService,
+            appCommands,
+            appEvents,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             getCurrentCoffeeTypeId: () => currentCoffeeTypeId,
@@ -641,22 +651,7 @@ export const createAppContainerModules = () => {
             getStarDisplay,
             openAppConfirm,
             updateCoffeeTypeSelectors,
-            renderPinnedTiles: () => renderPinnedTiles(),
-            renderTable,
-            renderActiveFilters,
-            clearSearch,
-            clearAllFilters,
-            getBrewsPerPage: () => BREWS_PER_PAGE,
-            setDisplayedBrewsCount: (value) => { displayedBrewsCount = value; },
-            setActiveCoffeeTypeFilter: (typeId) => { activeFilters.coffeeType = typeId; },
-            openBeans,
-            renderBeansTable,
-            clearBeansSearch,
-            clearBeansFilters,
-            applyBeansFilterFromQuick,
-            openBeanCard,
-            enterBeanEditMode,
-            autoPinOpenBagsIfEnabled
+            renderPinnedTiles: () => renderPinnedTiles()
         });
 
         const {
@@ -698,11 +693,14 @@ export const createAppContainerModules = () => {
             openGasBulkAddModal,
             closeGasBulkAddModal,
             openGasBulkAddFromTable,
-            bulkAddGearToBrews
-        } = createGasCoordinator({
+            bulkAddGearToBrews,
+            showBrewsForGear
+        } = createGasController({
             dataService,
             storageService,
             imageCompression,
+            appCommands,
+            appEvents,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             getCurrentGasId: () => currentGasId,
@@ -830,7 +828,8 @@ export const createAppContainerModules = () => {
             dataService,
             getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
             getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
-            openBeanCard: (...args) => openBeanCard(...args),
+            dispatchCommand: (commandName, payload) =>
+                appCommands?.dispatch?.(commandName, payload, { source: 'stats' }),
             setCurrentStatsData: (value) => { currentStatsData = value; },
             getCurrentStatsData: () => currentStatsData,
             setCurrentBeanMeterPeriod: (value) => { currentBeanMeterPeriod = value; },
@@ -915,26 +914,14 @@ export const createAppContainerModules = () => {
             getBeans: () => beans,
             getGasItems: () => gasItems,
             getCoffeeTypes: () => coffeeTypes,
-            dataService,
+            brewsRepo,
             parseNum,
             handleQuickEditRecipeInput: (...args) => handleQuickEditRecipeInput(...args),
-            openCoffeeCard: (...args) => openCoffeeCard(...args),
+            dispatchCommand: (commandName, payload) =>
+                appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-actions' }),
             closeCoffeeCard: (...args) => closeCoffeeCard(...args),
-            closeBeans: (...args) => closeBeans(...args),
-            closeCoffeeTypes: (...args) => closeCoffeeTypes(...args),
-            openBeans: (...args) => openBeans(...args),
-            openCoffeeTypes: (...args) => openCoffeeTypes(...args),
-            clearBeansSearch: (...args) => clearBeansSearch(...args),
-            clearBeansFilters: (...args) => clearBeansFilters(...args),
-            clearCoffeeTypesSearch: (...args) => clearCoffeeTypesSearch(...args),
-            clearCoffeeTypesFilters: (...args) => clearCoffeeTypesFilters(...args),
-            openBeanCard: (...args) => openBeanCard(...args),
-            openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
-            archiveBeanIfStockDepleted: (...args) => archiveBeanIfStockDepleted(...args),
-            updateBeansLeftForBean: (...args) => updateBeansLeftForBean(...args),
-            autoPinOpenBagsIfEnabled: (...args) => autoPinOpenBagsIfEnabled(...args),
             getPinnedBrewsPreferences: () => pinnedBrewsPreferences
         });
 
@@ -943,8 +930,8 @@ export const createAppContainerModules = () => {
         const {
             populateCardData,
             getBrewTableOrder,
-            openCoffeeCard,
-            openCoffeeCardWithOrder,
+            openCard: openBrewCardImpl,
+            openCardWithOrder: openBrewCardWithOrderImpl,
             updateCoffeeCardNav,
             navigateCoffeeCard,
             closeCoffeeCard
@@ -965,12 +952,12 @@ export const createAppContainerModules = () => {
             setCurrentCoffeeCardId: (value) => { currentCoffeeCardId = value; },
             setCurrentCardGraphData: (value) => { currentCardGraphData = value; },
             updateCoffeeCardActionMenu: (...args) => updateCoffeeCardActionMenu(...args),
-            openBeanCard: (...args) => openBeanCard(...args),
+            dispatchCommand: (commandName, payload) =>
+                appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-ui' }),
             cancelBrewQuickEditMode: (...args) => cancelBrewQuickEditMode(...args),
             resetCardPhotoState: (...args) => resetCardPhotoState(...args),
             toggleCardMode: (...args) => toggleCardMode(...args)
         });
-
         const { toggleCardMode, shareCoffeeCard, generateShareImage } = createBrewsCardShareModule({
             getCoffees: () => coffees,
             setCurrentCoffeeCardId: (value) => { currentCoffeeCardId = value; },
@@ -990,7 +977,8 @@ export const createAppContainerModules = () => {
             getCurrentCoffeeCardId: () => currentCoffeeCardId,
             getBrewTableOrder: (...args) => getBrewTableOrder(...args),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
-            openCoffeeCard: (...args) => openCoffeeCard(...args),
+            dispatchCommand: (commandName, payload) =>
+                appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-graph' }),
             getCoffeeScale: () => coffeeScale
         });
 
@@ -1031,7 +1019,7 @@ export const createAppContainerModules = () => {
                 getCoffeeTypes: () => coffeeTypes,
                 getGasItems: () => gasItems,
                 getBeanCoffeeTypeDisplay,
-                dataService,
+                brewsRepo,
                 openAppConfirm,
                 parseNum,
                 setTempMode,
@@ -1042,21 +1030,17 @@ export const createAppContainerModules = () => {
                 updateBeanDropdown,
                 setCoffeeDetailsCollapsed,
                 closeCoffeeCard,
-                openCoffeeCard,
                 closeCoffeeCardMenu,
                 handleQuickEditRecipeInput,
-                archiveBeanIfStockDepleted,
-                updateBeansLeftForBean,
-                autoPinOpenBagsIfEnabled,
+                dispatchCommand: (commandName, payload) =>
+                    appCommands?.dispatch?.(commandName, payload, { source: 'brews.actions' }),
                 getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
                 getFirstBrewDateForBean,
-                showCoffeeTypeCreatedToast,
-                showBeanCreatedToast,
                 uploadPendingCoffeeTypeImage,
                 clearPendingAIBeanImageFile,
                 getCoffeeScale: () => coffeeScale,
                 shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
-                openBrewFormModal: openBrewFormModalBridge
+                openBrewFormModal: dispatchBrewOpenForm
             },
             refreshQuickEditGearFieldVisibility,
             setRefreshBrewGearSelectors: (fn) => { refreshBrewGearSelectors = fn; }
@@ -1064,6 +1048,10 @@ export const createAppContainerModules = () => {
 
         const { renderPinnedTiles, togglePinnedTiles } = createPinCoordinator({
             dataService,
+            appCommands,
+            appEvents,
+            autoPinOpenBagsIfEnabled,
+            autoUnpinClosedBagsIfEnabled,
             getCurrentUser: () => currentUser,
             getCurrentView: () => currentView,
             getCurrentSort: () => currentSort,
@@ -1074,11 +1062,7 @@ export const createAppContainerModules = () => {
             getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
             getBeanCalculatedStock,
             getCoffeeTypeForBrew,
-            getCoffeeTypeDisplay,
-            openCoffeeCard,
-            openCoffeeCardWithOrder,
-            openBeanCardWithOrder,
-            renderTable
+            getCoffeeTypeDisplay
         });
 
         const { toggleActionMenu } = createActionMenuModule();
@@ -1128,196 +1112,28 @@ export const createAppContainerModules = () => {
         };
         initAnimationPreference();
 
-        const isVisible = (id) => {
-            const el = document.getElementById(id);
-            return el && !el.classList.contains('hidden');
-        };
-
-        const isTextInputTarget = (target) => {
-            return target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
-        };
-
-        const tryNavigate = (btnId, action) => {
-            const btn = document.getElementById(btnId);
-            if (!btn || btn.disabled || btn.classList.contains('hidden')) return false;
-            action();
-            return true;
-        };
-
-        const handleCardKeyNav = (event) => {
-            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-            const target = event.target;
-            if (isTextInputTarget(target)) return;
-
-            const dir = event.key === 'ArrowLeft' ? -1 : 1;
-
-            if (isVisible('cardGraphModal')) {
-                if (tryNavigate(dir < 0 ? 'cardGraphPrevBtn' : 'cardGraphNextBtn', () => navigateCoffeeCardFromGraph(dir))) {
-                    event.preventDefault();
-                }
-                return;
-            }
-
-            if (isVisible('coffeeCardOverlay')) {
-                if (tryNavigate(dir < 0 ? 'coffeeCardPrevBtn' : 'coffeeCardNextBtn', () => navigateCoffeeCard(dir))) {
-                    event.preventDefault();
-                }
-                return;
-            }
-
-            if (isVisible('beanCardOverlay')) {
-                if (tryNavigate(dir < 0 ? 'beanCardPrevBtn' : 'beanCardNextBtn', () => navigateBeanCard(dir))) {
-                    event.preventDefault();
-                }
-                return;
-            }
-
-            if (isVisible('coffeeTypeCardOverlay')) {
-                if (tryNavigate(dir < 0 ? 'coffeeTypeCardPrevBtn' : 'coffeeTypeCardNextBtn', () => navigateCoffeeTypeCard(dir))) {
-                    event.preventDefault();
-                }
-                return;
-            }
-
-            if (isVisible('gasCardOverlay')) {
-                if (tryNavigate(dir < 0 ? 'gasCardPrevBtn' : 'gasCardNextBtn', () => navigateGasCard(dir))) {
-                    event.preventDefault();
-                }
-            }
-        };
-        document.addEventListener('keydown', handleCardKeyNav);
-
-        const bindSwipeNavigation = ({ overlayId, panelId, prevBtnId, nextBtnId, onNavigate }) => {
-            const overlay = document.getElementById(overlayId);
-            if (!overlay) return;
-            const panel = panelId ? document.getElementById(panelId) : overlay.firstElementChild;
-            if (!panel || panel.dataset.swipeNavBound === 'true') return;
-
-            const state = {
-                startX: 0,
-                startY: 0,
-                active: false,
-                blocked: false
-            };
-            const SWIPE_MIN_DISTANCE = 40;
-
-            const isSwipeBlockedTarget = (target) => {
-                if (!(target instanceof Element)) return false;
-                if (isTextInputTarget(target)) return true;
-                return !!target.closest('button, a, label, .action-menu, .action-menu-toggle, [data-no-swipe]');
-            };
-
-            panel.addEventListener('touchstart', (event) => {
-                if (!isVisible(overlayId)) {
-                    state.active = false;
-                    return;
-                }
-                if (!event.touches || event.touches.length !== 1) {
-                    state.active = false;
-                    return;
-                }
-
-                const touch = event.touches[0];
-                state.startX = touch.clientX;
-                state.startY = touch.clientY;
-                state.blocked = isSwipeBlockedTarget(event.target);
-                state.active = !state.blocked;
-            }, { passive: true });
-
-            panel.addEventListener('touchend', (event) => {
-                if (!state.active || state.blocked || !isVisible(overlayId)) return;
-                if (!event.changedTouches || event.changedTouches.length !== 1) return;
-
-                const touch = event.changedTouches[0];
-                const deltaX = touch.clientX - state.startX;
-                const deltaY = touch.clientY - state.startY;
-                if (Math.abs(deltaX) < SWIPE_MIN_DISTANCE) return;
-                if (Math.abs(deltaX) <= Math.abs(deltaY)) return;
-
-                const direction = deltaX < 0 ? 1 : -1;
-                const btnId = direction < 0 ? prevBtnId : nextBtnId;
-                tryNavigate(btnId, () => onNavigate(direction));
-            }, { passive: true });
-
-            panel.dataset.swipeNavBound = 'true';
-        };
-
-        bindSwipeNavigation({
-            overlayId: 'coffeeCardOverlay',
-            panelId: 'coffeeCardContent',
-            prevBtnId: 'coffeeCardPrevBtn',
-            nextBtnId: 'coffeeCardNextBtn',
-            onNavigate: navigateCoffeeCard
-        });
-        bindSwipeNavigation({
-            overlayId: 'beanCardOverlay',
-            prevBtnId: 'beanCardPrevBtn',
-            nextBtnId: 'beanCardNextBtn',
-            onNavigate: navigateBeanCard
-        });
-        bindSwipeNavigation({
-            overlayId: 'coffeeTypeCardOverlay',
-            prevBtnId: 'coffeeTypeCardPrevBtn',
-            nextBtnId: 'coffeeTypeCardNextBtn',
-            onNavigate: navigateCoffeeTypeCard
-        });
-        bindSwipeNavigation({
-            overlayId: 'gasCardOverlay',
-            panelId: 'gasCardPanel',
-            prevBtnId: 'gasCardPrevBtn',
-            nextBtnId: 'gasCardNextBtn',
-            onNavigate: navigateGasCard
-        });
-        bindSwipeNavigation({
-            overlayId: 'cardGraphModal',
-            prevBtnId: 'cardGraphPrevBtn',
-            nextBtnId: 'cardGraphNextBtn',
-            onNavigate: navigateCoffeeCardFromGraph
+        installCardNavigationHandlers({
+            navigateBeanCard,
+            navigateCoffeeCard,
+            navigateCoffeeCardFromGraph,
+            navigateCoffeeTypeCard,
+            navigateGasCard,
+            handleEscapeKey
         });
 
-        document.addEventListener('keydown', handleEscapeKey);
+        const authStateChangedHandler = createAuthStateChangedHandler({
+            initUserData,
+            loadFollowingList,
+            changeView,
+            initNotificationListener,
+            openHelp,
+            initZoomListeners,
+            clearNotificationSubscription,
+            clearViewSubscriptions
+        });
         const handleAuthStateChanged = async (user) => {
             currentUser = user;
-            const setMenuVisibility = (loggedIn) => {
-                const ids = [
-                    'menuAddBrewBtn',
-                    'menuStatsBtn',
-                    'menuBeansBtn',
-                    'menuCoffeesBtn',
-                    'menuGasBtn',
-                    'menuGalleryBtn',
-                    'menuImportExportBtn',
-                    'menuPreferencesBtn',
-                    'menuHelpDivider'
-                ];
-                ids.forEach((id) => {
-                    const el = document.getElementById(id);
-                    if (el) el.classList.toggle('hidden', !loggedIn);
-                });
-                const divider = document.getElementById('menuHelpDivider');
-                if (divider) divider.classList.toggle('hidden', !loggedIn);
-            };
-            if (user) {
-                document.getElementById('authContainer').innerHTML = `<div class="flex items-center gap-3"><button data-action-click="openFriendsModal()" class="relative flex-shrink-0 hover:opacity-80 transition-opacity"><img src="${user.photoURL}" class="w-8 h-8 flex-shrink-0 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}"><div id="avatarBadge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-[#292524] shadow-md"></div></button></div>`;
-                document.getElementById('viewSelectorContainer').classList.remove('hidden'); 
-                document.getElementById('signedOutAuthBody').classList.add('hidden');
-                document.getElementById('signedInContent').classList.remove('hidden');
-                setMenuVisibility(true);
-                const { shouldShowOnboarding } = await initUserData(user);
-                loadFollowingList(); changeView('mine'); initNotificationListener(user.uid);
-                if (shouldShowOnboarding) openHelp();
-                initZoomListeners(); 
-            } else {
-                document.getElementById('authContainer').innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2"><button data-action-click="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign in</button></div>`;
-                document.getElementById('viewSelectorContainer').classList.add('hidden');
-                document.getElementById('coffeeTableBody').innerHTML = '';
-                document.getElementById('emptyState').classList.add('hidden');
-                document.getElementById('signedInContent').classList.add('hidden');
-                document.getElementById('signedOutAuthBody').classList.remove('hidden');
-                setMenuVisibility(false);
-                clearNotificationSubscription();
-                clearViewSubscriptions();
-            }
+            await authStateChangedHandler(user);
         };
 
         const sendEmailLinkActivation = () => {
@@ -1333,8 +1149,33 @@ export const createAppContainerModules = () => {
         };
 
         const openCoffeeCardQuickEdit = (brewId, event) => {
-            openCoffeeCard(brewId, event || null);
+            appCommands?.dispatch?.(
+                'brews.openCard',
+                { id: brewId, event: event || null, options: {} },
+                { source: 'container.openCoffeeCardQuickEdit' }
+            );
             setTimeout(() => enterBrewQuickEditMode(), 0);
+        };
+        const brewsOpenCard = (brewId, event = null) => {
+            appCommands?.dispatch?.(
+                'brews.openCard',
+                { id: brewId, event, options: {} },
+                { source: 'container.brewsOpenCard' }
+            );
+        };
+        const beansOpenCard = (beanId, event = null) => {
+            appCommands?.dispatch?.(
+                'beans.openCard',
+                { beanId, event, keepNavigationOrder: false },
+                { source: 'container.beansOpenCard' }
+            );
+        };
+        const beansOpenCardForEdit = (beanId, event = null) => {
+            appCommands?.dispatch?.(
+                'beans.openCardForEdit',
+                { beanId, event },
+                { source: 'container.beansOpenCardForEdit' }
+            );
         };
 
         const openExternalUrl = (url) => {
@@ -1342,213 +1183,14 @@ export const createAppContainerModules = () => {
             window.open(url, '_blank', 'noopener,noreferrer');
         };
 
-        const migrateGrinderToGear = async () => {
-            if (!currentUser) return alert('Please sign in.');
-
-            const btn = document.getElementById('migrateGrinderToGearBtn');
-            const originalHtml = btn?.innerHTML;
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Migrating...';
-            }
-
-            const normalizeName = (value) =>
-                (value || '')
-                    .toString()
-                    .trim()
-                    .replace(/\s+/g, ' ')
-                    .toLowerCase();
-
-            const denormalizeName = (value) => (value || '').toString().trim().replace(/\s+/g, ' ');
-
-            try {
-                const grinderIdByName = new Map();
-                const discoveredGrinderNameByNorm = new Map();
-
-                gasItems.forEach((item) => {
-                    if (!item) return;
-                    if ((item.type || '').toString().toLowerCase() !== 'grinder') return;
-                    const norm = normalizeName(item.name);
-                    if (!norm || grinderIdByName.has(norm)) return;
-                    grinderIdByName.set(norm, item.id);
-                });
-
-                coffees.forEach((brew) => {
-                    const norm = normalizeName(brew?.grinder);
-                    if (!norm || discoveredGrinderNameByNorm.has(norm)) return;
-                    discoveredGrinderNameByNorm.set(norm, denormalizeName(brew.grinder));
-                });
-
-                const missingNorms = [...discoveredGrinderNameByNorm.keys()].filter((norm) => !grinderIdByName.has(norm));
-                const nowIso = new Date().toISOString();
-                const newGearItems = [];
-
-                for (const norm of missingNorms) {
-                    const name = discoveredGrinderNameByNorm.get(norm);
-                    if (!name) continue;
-                    const newRef = doc(collection(db, 'users', currentUser.uid, 'gear'));
-                    const gearData = {
-                        uid: currentUser.uid,
-                        name,
-                        price: null,
-                        type: 'Grinder',
-                        methods: [],
-                        imageUrl: '',
-                        purchasedDate: nowIso,
-                        archived: false,
-                        createdAt: nowIso,
-                        updatedAt: nowIso
-                    };
-                    newGearItems.push({ id: newRef.id, ...gearData });
-                    grinderIdByName.set(norm, newRef.id);
-                    await setDoc(newRef, gearData);
-                }
-
-                const batchLimit = 400;
-                let currentBatch = writeBatch(db);
-                let opCount = 0;
-                let updatedBrewsCount = 0;
-                const commitJobs = [];
-
-                coffees.forEach((brew) => {
-                    const norm = normalizeName(brew?.grinder);
-                    const grinderGearId = norm ? grinderIdByName.get(norm) : null;
-                    if (!grinderGearId) return;
-
-                    const currentGearIds = Array.isArray(brew.gearIds) ? brew.gearIds.filter(Boolean) : [];
-                    if (currentGearIds.includes(grinderGearId)) return;
-
-                    const nextGearIds = [...new Set([...currentGearIds, grinderGearId])];
-                    const brewRef = doc(db, 'users', currentUser.uid, 'coffees', brew.id);
-                    currentBatch.update(brewRef, {
-                        gearIds: nextGearIds,
-                        updatedAt: new Date().toISOString()
-                    });
-                    opCount++;
-                    updatedBrewsCount++;
-                    const idx = coffees.findIndex((c) => c.id === brew.id);
-                    if (idx !== -1) coffees[idx] = { ...coffees[idx], gearIds: nextGearIds };
-
-                    if (opCount >= batchLimit) {
-                        commitJobs.push(currentBatch.commit());
-                        currentBatch = writeBatch(db);
-                        opCount = 0;
-                    }
-                });
-
-                if (opCount > 0) {
-                    commitJobs.push(currentBatch.commit());
-                }
-                if (commitJobs.length) await Promise.all(commitJobs);
-
-                if (newGearItems.length > 0) {
-                    refreshBrewGearSelectors();
-                }
-
-                alert(`Migration complete. Added ${newGearItems.length} grinder gear item(s) and linked ${updatedBrewsCount} brew(s).`);
-            } catch (err) {
-                console.error('Migrate grinder to gear failed:', err);
-                alert(`Migration failed: ${err.message}`);
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
-                }
-            }
-        };
-
-        const fillLegacyGrinderFromGear = async () => {
-            if (!currentUser) return alert('Please sign in.');
-
-            const btn = document.getElementById('fillLegacyGrinderFromGearBtn');
-            const originalHtml = btn?.innerHTML;
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Filling...';
-            }
-
-            try {
-                const grinderNameByGearId = new Map(
-                    gasItems
-                        .filter((item) => (item?.type || '').toString().toLowerCase() === 'grinder')
-                        .map((item) => [item.id, (item.name || '').toString().trim()])
-                );
-
-                const updates = [];
-                coffees.forEach((brew) => {
-                    const gearIds = Array.isArray(brew?.gearIds) ? brew.gearIds : [];
-                    const firstAssociatedGrinderName = gearIds
-                        .map((gearId) => grinderNameByGearId.get(gearId))
-                        .find((name) => !!name);
-                    if (!firstAssociatedGrinderName) return;
-                    if ((brew.grinder || '') === firstAssociatedGrinderName) return;
-                    updates.push({
-                        brewId: brew.id,
-                        grinder: firstAssociatedGrinderName,
-                        updatedAt: new Date().toISOString()
-                    });
-                });
-
-                if (!updates.length) {
-                    alert('No brews needed legacy grinder updates.');
-                    return;
-                }
-
-                const batchLimit = 400;
-                let currentBatch = writeBatch(db);
-                let opCount = 0;
-                const commitJobs = [];
-
-                for (const update of updates) {
-                    const brewRef = doc(db, 'users', currentUser.uid, 'coffees', update.brewId);
-                    currentBatch.update(brewRef, {
-                        grinder: update.grinder,
-                        updatedAt: update.updatedAt
-                    });
-                    opCount += 1;
-                    if (opCount >= batchLimit) {
-                        commitJobs.push(currentBatch.commit());
-                        currentBatch = writeBatch(db);
-                        opCount = 0;
-                    }
-                }
-
-                if (opCount > 0) commitJobs.push(currentBatch.commit());
-                if (commitJobs.length) await Promise.all(commitJobs);
-
-                const updateByBrewId = new Map(updates.map((entry) => [entry.brewId, entry]));
-                coffees = coffees.map((brew) => {
-                    const patch = updateByBrewId.get(brew.id);
-                    return patch ? { ...brew, grinder: patch.grinder, updatedAt: patch.updatedAt } : brew;
-                });
-
-                alert(`Legacy grinder field updated for ${updates.length} brew(s).`);
-            } catch (err) {
-                console.error('Fill legacy grinder from gear failed:', err);
-                alert(`Legacy grinder fill failed: ${err.message}`);
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
-                }
-            }
-        };
-
-        const showBrewsForGear = (gearId = null) => {
-            const targetId = gearId || currentGasId;
-            if (!targetId) return;
-
-            closeGasCardMenu?.();
-            closeGasCard?.(null);
-            closeGasList?.();
-            clearSearch();
-            clearAllFilters();
-            applyFilter('gear', targetId);
-            displayedBrewsCount = BREWS_PER_PAGE;
-            renderTable();
-            renderActiveFilters();
-            document.getElementById('brewsTableMount')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        };
+        const { fillLegacyGrinderFromGear, migrateGrinderToGear } = createGearMigrationModule({
+            dataService,
+            getCurrentUser: () => currentUser,
+            getGasItems: () => gasItems,
+            getCoffees: () => coffees,
+            setCoffees: (value) => { coffees = value; },
+            refreshBrewGearSelectors: () => refreshBrewGearSelectors()
+        });
 
         const { openBrewFormModal, closeBrewFormModal, discardBrewFormModal, submitBrewFormModal } = createBrewsFormModalModule({
             getCurrentView: () => currentView,
@@ -1557,24 +1199,78 @@ export const createAppContainerModules = () => {
             toggleForm,
             openAppConfirm
         });
-        openBrewFormModalRef = openBrewFormModal;
         applyBrewFormInlineVisibility();
 
-        const openAddBrewFromPinned = (event = null) => {
-            if (!isLegacyBrewFormEnabled()) {
-                openBrewFormModal(event, { reset: true, title: 'Add new brew' });
-                return;
+        const openAddBrewFromPinned = createOpenAddBrewFromPinned({
+            isLegacyBrewFormEnabled,
+            openBrewFormModal,
+            changeView,
+            resetFormState,
+            toggleForm,
+            getCurrentView: () => currentView
+        });
+
+        registerBrewsFilterCommands({
+            appCommands,
+            clearSearch,
+            clearAllFilters,
+            applyFilter,
+            renderTable,
+            renderActiveFilters,
+            getBrewsPerPage: () => BREWS_PER_PAGE,
+            setDisplayedBrewsCount: (value) => { displayedBrewsCount = value; }
+        });
+        createBrewsController({
+            appCommands,
+            openCard: (id, event = null, options = {}) => openBrewCardImpl(id, event, options),
+            openCardWithOrder: (id, order = [], event = null, options = {}) =>
+                openBrewCardWithOrderImpl(id, order, event, options),
+            openForm: (event = null, options = {}) => openBrewFormModal(event, options),
+            showForCoffeeType: (coffeeTypeId) => {
+                if (!coffeeTypeId) return;
+                clearSearch();
+                clearAllFilters();
+                activeFilters.coffeeType = coffeeTypeId;
+                displayedBrewsCount = BREWS_PER_PAGE;
+                renderTable();
+                renderActiveFilters();
+            },
+            showForBean: (beanId) => {
+                if (!beanId) return;
+                clearSearch();
+                clearAllFilters();
+                activeFilters.bean = beanId;
+                displayedBrewsCount = BREWS_PER_PAGE;
+                renderTable();
+                renderActiveFilters();
+            },
+            openFormForBean: (beanId, event = null) => {
+                if (!beanId) return;
+                if (currentView !== 'mine') changeView('mine');
+                const select = document.getElementById('savedBeanSelect');
+                if (select) select.value = beanId;
+                fillBeanDetails(beanId);
+                toggleForm(true);
+                if (!isLegacyBrewFormEnabled()) {
+                    openBrewFormModal(event, { reset: false, syncTitleFromForm: true });
+                    return;
+                }
+                const formWrapper = document.getElementById('formWrapper');
+                if (!formWrapper) return;
+                const scrollToFormTop = (behavior = 'smooth') => {
+                    const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
+                    const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
+                    window.scrollTo({ top: Math.max(0, top - headerHeight - 8), behavior });
+                };
+                scrollToFormTop('smooth');
+                requestAnimationFrame(() => scrollToFormTop('auto'));
+                setTimeout(() => scrollToFormTop('auto'), 140);
+            },
+            refreshTable: () => {
+                renderTable();
+                renderActiveFilters();
             }
-            if (event?.stopPropagation) event.stopPropagation();
-            if (currentView !== 'mine') changeView('mine');
-            resetFormState(null);
-            toggleForm(true);
-            const formWrapper = document.getElementById('formWrapper');
-            if (!formWrapper) return;
-            const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
-            const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
-            window.scrollTo({ top: Math.max(0, top - headerHeight - 8), behavior: 'smooth' });
-        };
+        });
 
         const actions = createActionsRegistry({
             commonActions: {
@@ -1645,11 +1341,10 @@ export const createAppContainerModules = () => {
                 navigateCoffeeCard,
                 navigateCoffeeCardFromGraph,
                 openAbout,
-                openBeanCard,
                 openBrewWithBean,
                 openBrewsTablePrefs,
+                brewsOpenCard,
                 openCardGraphModal,
-                openCoffeeCard,
                 openCoffeeCardQuickEdit,
                 openCoffeeScaleModal,
                 openConnectScaleModal,
@@ -1846,6 +1541,8 @@ export const createAppContainerModules = () => {
                 applyBeansFilterFromQuick,
                 backfillBeanDatesFromBrews,
                 beansChangeView: changeView,
+                beansOpenCard,
+                beansOpenCardForEdit,
                 beansToggleActionMenu: toggleActionMenu,
                 cancelBeanEditMode,
                 clearBeansFilters,
@@ -1859,7 +1556,6 @@ export const createAppContainerModules = () => {
                 handleBeanPhoto,
                 handleBeansAIFile,
                 navigateBeanCard,
-                openBeanCard,
                 openBeansQuickFilterValues,
                 openBrewWithBean,
                 openCoffeeFromBeanEdit,
@@ -1957,8 +1653,8 @@ export const createAppContainerModules = () => {
                 navigateCoffeeCard,
                 navigateCoffeeCardFromGraph,
                 openBrewsTablePrefs,
+                brewsOpenCard,
                 openCardGraphModal,
-                openCoffeeCard,
                 openCoffeeCardQuickEdit,
                 openCoffeeScaleModal,
                 openConnectScaleModal,
@@ -2049,5 +1745,5 @@ export const createAppContainerModules = () => {
         if(searchInput) { searchInput.addEventListener('input', (e) => { const clearBtn = document.getElementById('searchClearBtn'); if(e.target.value.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden'); displayedBrewsCount = BREWS_PER_PAGE; renderTable(); }); }
 
 
-        return { handleAuthStateChanged, actions, featureActions };
+        return { handleAuthStateChanged, actions, featureActions, appCommands, appEvents };
 };

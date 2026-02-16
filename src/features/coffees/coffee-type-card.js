@@ -1,3 +1,5 @@
+import { createCoffeesVmModule } from './coffees.vm.js';
+
 export const createCoffeeTypeCardModule = ({
     getCurrentUser,
     getCurrentView,
@@ -14,10 +16,8 @@ export const createCoffeeTypeCardModule = ({
     renderCoffeeTypesTable,
     updateCoffeeTypeSelectors,
     renderPinnedTiles,
-    renderTable,
+    dispatchCommand,
     openCoffeeTypeShopUrl,
-    showBeansForCoffeeType,
-    showBrewsForCoffeeType,
     openNewBagForCoffeeType,
     updateCoffeeTypeCardNav
 }) => {
@@ -29,16 +29,24 @@ export const createCoffeeTypeCardModule = ({
     if (!storage || !ref || !uploadBytes || !getDownloadURL || !deleteObject) {
         throw new Error('createCoffeeTypeCardModule requires storageService { storage, ref, uploadBytes, getDownloadURL, deleteObject }');
     }
+    const coffeesVm = createCoffeesVmModule();
     const getCurrentType = () => getCoffeeTypes().find((ct) => ct.id === getCurrentCoffeeTypeId());
+    const dispatchOnly = (commandName, payload) => {
+        if (typeof dispatchCommand !== 'function') return undefined;
+        try {
+            return dispatchCommand(commandName, payload);
+        } catch (error) {
+            console.warn(`[Coffees] Command "${commandName}" failed`, error);
+            return undefined;
+        }
+    };
 
     const showBeansForCoffeeTypeFromTable = (typeId) => {
-        setCurrentCoffeeTypeId(typeId);
-        showBeansForCoffeeType();
+        dispatchOnly('beans.showForCoffeeType', { coffeeTypeId: typeId, source: 'coffees.table' });
     };
 
     const showBrewsForCoffeeTypeFromTable = (typeId) => {
-        setCurrentCoffeeTypeId(typeId);
-        showBrewsForCoffeeType();
+        dispatchOnly('brews.showForCoffeeType', { coffeeTypeId: typeId, source: 'coffees.table' });
     };
 
     const openNewBagForCoffeeTypeFromTable = (typeId) => {
@@ -92,7 +100,7 @@ export const createCoffeeTypeCardModule = ({
             renderCoffeeTypesTable();
             closeCoffeeTypeCard(null);
             renderPinnedTiles();
-            renderTable();
+            dispatchOnly('brews.refreshTable', { source: 'coffees.deleteCoffeeType' });
         } catch (err) {
             console.error('Error deleting coffee:', err);
             alert('Failed to delete coffee.');
@@ -183,28 +191,19 @@ export const createCoffeeTypeCardModule = ({
 
         setCurrentCoffeeTypeId(type.id);
         const isMine = getCurrentView() === 'mine';
+        const cardVm = coffeesVm.toCardView(type);
 
-        const farmer = type.farmer || 'Unknown';
-        const roaster = type.roaster || '';
-        const origin = type.origin || '-';
-        const roast = type.roast || type.roastType || '-';
-        const processing = type.processing || '-';
-        const variety = type.variety || '-';
-        const rating = parseInt(type.rating, 10) || 0;
-        const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
-        const tasteNotes = (type.tasteNotes || '').trim();
+        document.getElementById('coffeeTypeCardTitle').textContent = cardVm.farmer;
+        document.getElementById('coffeeTypeCardSubtitle').textContent = cardVm.roaster;
+        document.getElementById('coffeeTypeCardRating').innerHTML = getStarDisplay(cardVm.rating);
+        document.getElementById('coffeeTypeCardOrigin').textContent = cardVm.origin;
+        document.getElementById('coffeeTypeCardRoast').textContent = cardVm.roast;
+        document.getElementById('coffeeTypeCardProcess').textContent = cardVm.processing;
+        document.getElementById('coffeeTypeCardVariety').textContent = cardVm.variety;
+        document.getElementById('coffeeTypeCardCreated').textContent = cardVm.createdAt;
+        document.getElementById('coffeeTypeCardTasteNotes').textContent = cardVm.tasteNotes || '-';
 
-        document.getElementById('coffeeTypeCardTitle').textContent = farmer;
-        document.getElementById('coffeeTypeCardSubtitle').textContent = roaster;
-        document.getElementById('coffeeTypeCardRating').innerHTML = getStarDisplay(rating);
-        document.getElementById('coffeeTypeCardOrigin').textContent = origin;
-        document.getElementById('coffeeTypeCardRoast').textContent = roast;
-        document.getElementById('coffeeTypeCardProcess').textContent = processing;
-        document.getElementById('coffeeTypeCardVariety').textContent = variety;
-        document.getElementById('coffeeTypeCardCreated').textContent = createdAt;
-        document.getElementById('coffeeTypeCardTasteNotes').textContent = tasteNotes || '-';
-
-        const imageUrl = type.imageUrl || type.imageURL;
+        const imageUrl = cardVm.imageUrl;
         const imgEl = document.getElementById('coffeeTypeCardImage');
         const placeholderEl = document.getElementById('coffeeTypeCardImagePlaceholder');
         if (imageUrl) {
@@ -221,7 +220,7 @@ export const createCoffeeTypeCardModule = ({
         const buyActionBtn = document.getElementById('coffeeTypeCardActionBuy');
         const newBagBtn = document.getElementById('coffeeTypeCardNewBagBtn');
         const newBagActionBtn = document.querySelector('#coffeeTypeCardActionMenu button[onclick*="openNewBagForCoffeeType"]');
-        const shopUrl = type.webshopUrl || type.shopUrl || '';
+        const shopUrl = cardVm.shopUrl;
 
         if (buyBtn) {
             if (shopUrl) {

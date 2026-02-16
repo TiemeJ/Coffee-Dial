@@ -1,3 +1,5 @@
+import { createBrewsVmModule } from './brews.vm.js';
+
 export const createBrewsActionsModule = ({
     getCurrentUser,
     getCurrentView,
@@ -8,7 +10,7 @@ export const createBrewsActionsModule = ({
     getCoffeeTypes,
     getGasItems,
     getBeanCoffeeTypeDisplay,
-    dataService,
+    brewsRepo,
     openAppConfirm,
     parseNum,
     setTempMode,
@@ -22,16 +24,11 @@ export const createBrewsActionsModule = ({
     setCoffeeDetailsCollapsed,
     changeView,
     closeCoffeeCard,
-    openCoffeeCard,
     closeCoffeeCardMenu,
     handleQuickEditRecipeInput,
-    archiveBeanIfStockDepleted,
-    updateBeansLeftForBean,
-    autoPinOpenBagsIfEnabled,
+    dispatchCommand,
     getPinnedBrewsPreferences,
     getFirstBrewDateForBean,
-    showCoffeeTypeCreatedToast,
-    showBeanCreatedToast,
     uploadPendingCoffeeTypeImage,
     clearPendingAIBeanImageFile,
     getCoffeeScale,
@@ -40,9 +37,17 @@ export const createBrewsActionsModule = ({
     shouldUseLegacyBrewForm,
     openBrewFormModal
 }) => {
-    const { db, doc, updateDoc, addDoc, deleteDoc, collection } = dataService || {};
-    if (!db || !doc || !updateDoc || !addDoc || !deleteDoc || !collection) {
-        throw new Error('createBrewsActionsModule requires dataService { db, doc, updateDoc, addDoc, deleteDoc, collection }');
+    const brewsVm = createBrewsVmModule();
+    const {
+        addBean,
+        addCoffee,
+        addCoffeeType,
+        deleteCoffee: deleteCoffeeInRepo,
+        updateBean,
+        updateCoffee
+    } = brewsRepo || {};
+    if (!addBean || !addCoffee || !addCoffeeType || !deleteCoffeeInRepo || !updateBean || !updateCoffee) {
+        throw new Error('createBrewsActionsModule requires brewsRepo');
     }
     const clean = (value) => (value || '').toString().toLowerCase().trim();
     const scale = () => getCoffeeScale?.();
@@ -183,17 +188,19 @@ export const createBrewsActionsModule = ({
 
         const d = buildDuplicateBrewData(sourceBrew);
         try {
-            const col = collection(db, 'users', user.uid, 'coffees');
-            const newRef = await addDoc(col, d);
+            const newId = await addCoffee(d);
             if (d.beanId) {
-                await archiveBeanIfStockDepleted({
+                await dispatchCommand?.('beans.archiveIfStockDepleted', {
                     beanId: d.beanId,
                     brew: d
                 });
-                await updateBeansLeftForBean(d.beanId, [{ ...d, id: newRef.id, beanId: d.beanId }]);
+                await dispatchCommand?.('beans.updateStockForBean', {
+                    beanId: d.beanId,
+                    extraBrews: [{ ...d, id: newId, beanId: d.beanId }]
+                });
             }
-            const brewForPin = { ...d, id: newRef.id };
-            await autoPinOpenBagsIfEnabled({ beanId: d.beanId, brewId: newRef.id, brewData: brewForPin });
+            const brewForPin = { ...d, id: newId };
+            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', { beanId: d.beanId, brewId: newId, brewData: brewForPin });
             if (closeCardAfter) closeCoffeeCard(null);
             alert(successMessage);
         } catch (err) {
@@ -402,11 +409,11 @@ export const createBrewsActionsModule = ({
                     createdAt: nowIso,
                     updatedAt: nowIso
                 };
-                const typeRef = await addDoc(collection(db, 'users', user.uid, 'coffeeTypes'), typeData);
-                if (!coffeeTypes.find((ct) => ct.id === typeRef.id)) {
-                    coffeeTypes.push({ id: typeRef.id, ...typeData });
+                const typeId = await addCoffeeType(typeData);
+                if (!coffeeTypes.find((ct) => ct.id === typeId)) {
+                    coffeeTypes.push({ id: typeId, ...typeData });
                 }
-                return { id: typeRef.id, created: true };
+                return { id: typeId, created: true };
             };
 
             if (!selectedBeanId) {
@@ -426,16 +433,16 @@ export const createBrewsActionsModule = ({
                     if (!coffeeTypeId) {
                         const coffeeTypeInfo = await ensureCoffeeTypeId();
                         coffeeTypeId = coffeeTypeInfo?.id || null;
-                        if (coffeeTypeInfo?.created) showCoffeeTypeCreatedToast(coffeeTypeId);
+                        if (coffeeTypeInfo?.created) dispatchCommand?.('beans.showCoffeeTypeCreatedToast', { coffeeTypeId });
                     }
                     const updates = { updatedAt: beanData.updatedAt };
                     if (!existingBean.coffeeTypeId && coffeeTypeId) updates.coffeeTypeId = coffeeTypeId;
-                    await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), updates);
+                    await updateBean(selectedBeanId, updates);
                     await uploadPendingCoffeeTypeImage(coffeeTypeId);
                 } else {
                     const coffeeTypeInfo = await ensureCoffeeTypeId();
                     const coffeeTypeId = coffeeTypeInfo?.id || null;
-                    if (coffeeTypeInfo?.created) showCoffeeTypeCreatedToast(coffeeTypeId);
+                    if (coffeeTypeInfo?.created) dispatchCommand?.('beans.showCoffeeTypeCreatedToast', { coffeeTypeId });
                     if (beanData.roaster || beanData.origin) {
                         const nowIso = new Date().toISOString();
                         beanData.createdAt = nowIso;
@@ -447,9 +454,8 @@ export const createBrewsActionsModule = ({
                         beanData.openedDate = nowIso;
                         beanData.archivedDate = null;
                         if (coffeeTypeId) beanData.coffeeTypeId = coffeeTypeId;
-                        const newBeanRef = await addDoc(collection(db, 'users', user.uid, 'beans'), beanData);
-                        selectedBeanId = newBeanRef.id;
-                        showBeanCreatedToast?.({
+                        selectedBeanId = await addBean(beanData);
+                        dispatchCommand?.('beans.showBeanCreatedToast', {
                             beanId: selectedBeanId,
                             roaster: beanData.roaster,
                             farmer: beanData.farmer
@@ -463,11 +469,11 @@ export const createBrewsActionsModule = ({
                 if (!coffeeTypeId) {
                     const coffeeTypeInfo = await ensureCoffeeTypeId();
                     coffeeTypeId = coffeeTypeInfo?.id || null;
-                    if (coffeeTypeInfo?.created) showCoffeeTypeCreatedToast(coffeeTypeId);
+                    if (coffeeTypeInfo?.created) dispatchCommand?.('beans.showCoffeeTypeCreatedToast', { coffeeTypeId });
                 }
                 const updates = { updatedAt: beanData.updatedAt };
                 if (!selectedBean?.coffeeTypeId && coffeeTypeId) updates.coffeeTypeId = coffeeTypeId;
-                await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), updates);
+                await updateBean(selectedBeanId, updates);
                 await uploadPendingCoffeeTypeImage(coffeeTypeId);
             }
 
@@ -486,18 +492,16 @@ export const createBrewsActionsModule = ({
                 d.rating > 0 ||
                 (Array.isArray(d.gearIds) && d.gearIds.length > 0);
 
-            const col = collection(db, 'users', user.uid, 'coffees');
             let didSaveBrew = false;
             let savedBrewId = null;
             if (eid) {
-                await updateDoc(doc(col, eid), d);
+                await updateCoffee(eid, d);
                 didSaveBrew = true;
                 savedBrewId = eid;
             } else if (hasBrewData) {
                 d.customOrder = newOrder;
                 d.createdAt = new Date().toISOString();
-                const newBrewRef = await addDoc(col, d);
-                savedBrewId = newBrewRef.id;
+                savedBrewId = await addCoffee(d);
                 didSaveBrew = true;
             }
 
@@ -511,7 +515,7 @@ export const createBrewsActionsModule = ({
                     );
                     if (firstBrewDate) {
                         const nowIso = new Date().toISOString();
-                        await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), {
+                        await updateBean(selectedBeanId, {
                             openedDate: firstBrewDate,
                             updatedAt: nowIso
                         });
@@ -522,19 +526,22 @@ export const createBrewsActionsModule = ({
                     }
                 }
 
-                await archiveBeanIfStockDepleted({
+                await dispatchCommand?.('beans.archiveIfStockDepleted', {
                     beanId: selectedBeanId,
                     brew: d,
                     existingBrewId: savedBrewId
                 });
-                await updateBeansLeftForBean(selectedBeanId, [{ ...d, id: savedBrewId, beanId: selectedBeanId }]);
+                await dispatchCommand?.('beans.updateStockForBean', {
+                    beanId: selectedBeanId,
+                    extraBrews: [{ ...d, id: savedBrewId, beanId: selectedBeanId }]
+                });
                 const previousBeanId = existingBrewForUpdate?.beanId;
                 if (previousBeanId && previousBeanId !== selectedBeanId) {
-                    await updateBeansLeftForBean(previousBeanId);
+                    await dispatchCommand?.('beans.updateStockForBean', { beanId: previousBeanId });
                 }
                 const existingBrew = savedBrewId ? coffees.find((c) => c.id === savedBrewId) : null;
                 const brewForPin = { ...existingBrew, ...d, id: savedBrewId, beanId: selectedBeanId };
-                await autoPinOpenBagsIfEnabled({ beanId: selectedBeanId, brewId: savedBrewId, brewData: brewForPin });
+                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', { beanId: selectedBeanId, brewId: savedBrewId, brewData: brewForPin });
             }
 
             resetFormState();
@@ -571,29 +578,15 @@ export const createBrewsActionsModule = ({
         const c = getCoffees().find((x) => x.id === id);
         if (!c) return;
         try {
-            await updateDoc(doc(db, 'users', user.uid, 'coffees', id), { isActive: !c.isActive });
+            await updateCoffee(id, { isActive: !c.isActive });
         } catch (e) {
             console.error(e);
         }
     };
 
     const getBeanLabelForBrew = (bean) => {
-        if (!bean) return 'Unknown bean';
-        const formatOpenedDate = (value) => {
-            if (!value) return '';
-            const dateObj = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
-            if (isNaN(dateObj)) return '';
-            const dd = String(dateObj.getDate()).padStart(2, '0');
-            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const yy = String(dateObj.getFullYear()).slice(-2);
-            return `${dd}-${mm}-${yy}`;
-        };
         const display = getBeanCoffeeTypeDisplay ? getBeanCoffeeTypeDisplay(bean) : bean;
-        const farmer = display?.farmer && display.farmer !== '-' ? display.farmer : '';
-        const roaster = display?.roaster && display.roaster !== '-' ? display.roaster : '';
-        const baseLabel = farmer && roaster ? `${farmer} - ${roaster}` : farmer || roaster || 'Unknown bean';
-        const openedDate = formatOpenedDate(bean.openedDate);
-        return openedDate ? `${baseLabel} (${openedDate})` : baseLabel;
+        return brewsVm.buildBeanLabel(bean, display);
     };
 
     const populateBrewQuickEditBeanOptions = (selectedBeanId = '') => {
@@ -704,7 +697,7 @@ export const createBrewsActionsModule = ({
         };
 
         try {
-            await updateDoc(doc(db, 'users', user.uid, 'coffees', currentCardId), updates);
+            await updateCoffee(currentCardId, updates);
 
             if (selectedBeanId) {
                 const selectedBean = beans.find((b) => b.id === selectedBeanId);
@@ -715,7 +708,7 @@ export const createBrewsActionsModule = ({
                         currentCardId
                     );
                     if (firstBrewDate) {
-                        await updateDoc(doc(db, 'users', user.uid, 'beans', selectedBeanId), {
+                        await updateBean(selectedBeanId, {
                             openedDate: firstBrewDate,
                             updatedAt: nowIso
                         });
@@ -725,13 +718,16 @@ export const createBrewsActionsModule = ({
                         }
                     }
                 }
-                await archiveBeanIfStockDepleted({
+                await dispatchCommand?.('beans.archiveIfStockDepleted', {
                     beanId: selectedBeanId,
                     brew: updates,
                     existingBrewId: currentCardId
                 });
-                await updateBeansLeftForBean(selectedBeanId, [{ ...brew, ...updates, id: currentCardId, beanId: selectedBeanId }]);
-                await autoPinOpenBagsIfEnabled({
+                await dispatchCommand?.('beans.updateStockForBean', {
+                    beanId: selectedBeanId,
+                    extraBrews: [{ ...brew, ...updates, id: currentCardId, beanId: selectedBeanId }]
+                });
+                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {
                     beanId: selectedBeanId,
                     brewId: currentCardId,
                     brewData: { ...brew, ...updates, id: currentCardId, beanId: selectedBeanId }
@@ -739,12 +735,12 @@ export const createBrewsActionsModule = ({
             }
 
             if (brew.beanId && brew.beanId !== selectedBeanId) {
-                await updateBeansLeftForBean(brew.beanId);
+                await dispatchCommand?.('beans.updateStockForBean', { beanId: brew.beanId });
             }
 
             const idx = coffees.findIndex((c) => c.id === currentCardId);
             if (idx !== -1) coffees[idx] = { ...coffees[idx], ...updates };
-            openCoffeeCard(currentCardId);
+            dispatchCommand?.('brews.openCard', { id: currentCardId, event: null, options: {} });
         } catch (err) {
             console.error('Error saving quick edits:', err);
             alert('Failed to save quick edits.');
@@ -891,14 +887,14 @@ export const createBrewsActionsModule = ({
         if (!shouldDelete) return;
 
         try {
-            await deleteDoc(doc(db, 'users', user.uid, 'coffees', id));
+            await deleteCoffeeInRepo(id);
 
             const idx = coffees.findIndex((c) => c.id === id);
             if (idx !== -1) coffees.splice(idx, 1);
 
             if (beanId) {
-                await updateBeansLeftForBean(beanId);
-                await autoPinOpenBagsIfEnabled({ beanId });
+                await dispatchCommand?.('beans.updateStockForBean', { beanId });
+                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', { beanId });
             }
 
             if (getCurrentCoffeeCardId() === id) closeCoffeeCard(null);

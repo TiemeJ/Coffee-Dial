@@ -5,7 +5,7 @@ export const createStatsModule = ({
     dataService,
     getCoffeeTypeDisplay,
     getCoffeeTypeForBrew,
-    openBeanCard,
+    dispatchCommand,
     setCurrentStatsData,
     getCurrentStatsData,
     setCurrentBeanMeterPeriod,
@@ -197,7 +197,7 @@ export const createStatsModule = ({
                 return;
             }
             el.onclick = () => {
-                openBeanCard?.(beanId);
+                dispatchCommand?.('beans.openCard', { beanId, event: null, keepNavigationOrder: false });
             };
         };
 
