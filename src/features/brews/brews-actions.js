@@ -106,6 +106,15 @@ export const createBrewsActionsModule = ({
             const el = document.getElementById(id);
             if (el) el.value = value || '';
         };
+        const unlockCoffeeTypeFields = () => {
+            ['roaster', 'farmer', 'origin', 'variety', 'processing', 'roastType'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.disabled = false;
+                el.classList.remove('cursor-not-allowed', 'opacity-70');
+            });
+        };
+        unlockCoffeeTypeFields();
         setValue('roaster', resolved.roaster);
         setValue('farmer', resolved.farmer);
         setValue('origin', resolved.origin);
@@ -214,6 +223,20 @@ export const createBrewsActionsModule = ({
         updateBeanDropdown();
         setBrewGearScope({ includeAll: false });
         const d = stripBrewGraphFields(brew);
+        const sourceForCoffeeFields = { ...d };
+        const shouldUseNewBeanForRepeat = () => {
+            if (title !== 'Repeat brew') return false;
+            const sourceBeanId = d?.beanId;
+            if (!sourceBeanId) return false;
+            const sourceBean = getBeans().find((item) => item.id === sourceBeanId);
+            if (!sourceBean) return true;
+            if (sourceBean.archived || sourceBean.frozen) return true;
+            const select = document.getElementById('savedBeanSelect');
+            if (!select) return false;
+            return !Array.from(select.options || []).some((option) => option.value === sourceBeanId);
+        };
+        const forceCreateNewBeanMode = shouldUseNewBeanForRepeat();
+        if (forceCreateNewBeanMode) delete d.beanId;
         const clearRepeatOnlyFields = () => {
             if (title !== 'Repeat brew') return;
             const setValue = (id, value = '') => {
@@ -239,6 +262,7 @@ export const createBrewsActionsModule = ({
         document.getElementById('editId').value = '';
         populateForm(d);
         clearRepeatOnlyFields();
+        if (forceCreateNewBeanMode) fillCoffeeDetailsForNewBeanFromBrew(sourceForCoffeeFields);
         toggleForm(true);
         setCoffeeDetailsCollapsed(true);
         document.getElementById('formContainer').classList.remove('editing-mode');
