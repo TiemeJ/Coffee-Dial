@@ -103,6 +103,7 @@ export const createBeansCardUiModule = ({
         document.getElementById('beanCardProcess').textContent = cardVm.process;
         document.getElementById('beanCardVariety').textContent = cardVm.variety;
         document.getElementById('beanCardRoast').textContent = cardVm.roastType;
+        document.getElementById('beanCardDecafIcon')?.classList.toggle('hidden', !coffeeDisplay.decaf);
         document.getElementById('beanCardPrice').textContent = cardVm.price;
         document.getElementById('beanCardStock').textContent = cardVm.stock;
         document.getElementById('beanCardStockLeft').textContent = cardVm.stockLeft;

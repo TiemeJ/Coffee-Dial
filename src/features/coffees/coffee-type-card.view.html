@@ -57,7 +57,10 @@
                             </div>
                             <div>
                                 <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Process</span>
-                                <span id="coffeeTypeCardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                                <span class="inline-flex items-center gap-1">
+                                    <span id="coffeeTypeCardProcess" class="font-medium text-coffee-800 dark:text-[#d6ccc2]"></span>
+                                    <i id="coffeeTypeCardDecafIcon" class="hidden fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e]" title="Decaf"></i>
+                                </span>
                             </div>
                             <div>
                                 <span class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Variety</span>
@@ -148,6 +151,10 @@
                             <option value="4">4</option>
                             <option value="5">5</option>
                         </select>
+                    </div>
+                    <div class="flex items-center gap-2 mt-5">
+                        <input id="coffeeTypeEditDecaf" type="checkbox" class="toggle-checkbox w-5 h-5">
+                        <label for="coffeeTypeEditDecaf" class="text-sm text-coffee-700 dark:text-[#d6ccc2]">Decaf</label>
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Web Shop URL</label>

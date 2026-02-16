@@ -8,6 +8,7 @@ export const createColumnDefs = () => ([
     { id: 'farmer', label: 'Blend/Farmer' },
     { id: 'variety', label: 'Variety' },
     { id: 'processing', label: 'Process' },
+    { id: 'decaf', label: 'Decaf' },
     { id: 'roastType', label: 'Roast' },
     { id: 'method', label: 'Method' },
     { id: 'grinder', label: 'Grinder' },
@@ -64,7 +65,7 @@ export const createInitialAppState = () => {
         coffeeTypesSortKey: 'createdAt',
         coffeeTypesSortDir: 'desc',
         coffeeTypesSearch: '',
-        coffeeTypesFilters: { roaster: null, farmer: null, origin: null, processing: null, variety: null, roast: null },
+        coffeeTypesFilters: { roaster: null, farmer: null, origin: null, processing: null, decaf: null, variety: null, roast: null },
         gasSortKey: 'purchasedDate',
         gasSortDir: 'desc',
         gasSearch: '',
@@ -84,8 +85,8 @@ export const createInitialAppState = () => {
         scaState: { level: 0, path: [], currentNode: null },
         currentBeanCardId: null,
         beansSearch: '',
-        beansFilters: { coffeeType: null },
+        beansFilters: { coffeeType: null, decaf: null },
         currentSort: { key: null, direction: 'asc' },
-        activeFilters: { bean: null, coffeeType: null, gear: null, hasGraph: null, method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null }
+        activeFilters: { bean: null, coffeeType: null, gear: null, hasGraph: null, method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, decaf: null, drink: null, grinder: null }
     };
 };

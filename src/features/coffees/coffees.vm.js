@@ -8,7 +8,8 @@ export const createCoffeesVmModule = () => {
         const roast = type.roast || type.roastType || '-';
         const rating = parseInt(type.rating, 10) || 0;
         const createdAt = type.createdAt ? new Date(type.createdAt).toLocaleDateString() : '-';
-        return { createdAt, farmer, origin, processing, rating, roast, roaster, variety };
+        const decaf = !!type.decaf;
+        return { createdAt, decaf, farmer, origin, processing, rating, roast, roaster, variety };
     };
 
     const toCardView = (type = {}) => {
@@ -21,6 +22,7 @@ export const createCoffeesVmModule = () => {
             rating: parseInt(type.rating, 10) || 0,
             roast: type.roast || type.roastType || '-',
             roaster: type.roaster || '',
+            decaf: !!type.decaf,
             shopUrl: type.webshopUrl || type.shopUrl || '',
             tasteNotes: (type.tasteNotes || '').trim(),
             variety: type.variety || '-'
@@ -32,4 +34,3 @@ export const createCoffeesVmModule = () => {
         toTableRow
     };
 };
-

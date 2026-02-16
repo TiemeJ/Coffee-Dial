@@ -49,6 +49,7 @@ export const createBrewsTableModule = ({
             farmer: 'Blend/Farmer',
             variety: 'Variety',
             processing: 'Process',
+            decaf: 'Decaf',
             drink: 'Drink',
             grinder: 'Grinder'
         };
@@ -62,6 +63,7 @@ export const createBrewsTableModule = ({
             'farmer',
             'variety',
             'processing',
+            'decaf',
             'roastType',
             'method',
             'grinder',
@@ -207,6 +209,7 @@ export const createBrewsTableModule = ({
                 { key: 'farmer', label: 'Blend/Farmer' },
                 { key: 'variety', label: 'Variety' },
                 { key: 'processing', label: 'Process' },
+                { key: 'decaf', label: 'Decaf' },
                 { key: 'roastType', label: 'Roast type' },
                 { key: 'grinder', label: 'Grinder' },
                 { key: 'temp', label: 'Temperature' }
@@ -330,6 +333,7 @@ export const createBrewsTableModule = ({
             farmer: null,
             variety: null,
             processing: null,
+            decaf: null,
             drink: null,
             grinder: null
         });

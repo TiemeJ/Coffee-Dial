@@ -14,7 +14,8 @@ export const createCoffeeDisplayModule = ({ getBeans, getCoffeeTypes }) => {
             origin: type?.origin || brew?.origin || '-',
             processing: type?.processing || brew?.processing || '-',
             variety: type?.variety || brew?.variety || '-',
-            roastType: type?.roast || type?.roastType || brew?.roastType || '-'
+            roastType: type?.roast || type?.roastType || brew?.roastType || '-',
+            decaf: !!(type?.decaf || brew?.decaf)
         };
     };
 
@@ -31,7 +32,8 @@ export const createCoffeeDisplayModule = ({ getBeans, getCoffeeTypes }) => {
             origin: type?.origin || bean?.origin || '-',
             processing: type?.processing || bean?.processing || '-',
             variety: type?.variety || bean?.variety || '-',
-            roastType: type?.roast || type?.roastType || bean?.roastType || '-'
+            roastType: type?.roast || type?.roastType || bean?.roastType || '-',
+            decaf: !!(type?.decaf || bean?.decaf)
         };
     };
 

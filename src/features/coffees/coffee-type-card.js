@@ -202,6 +202,7 @@ export const createCoffeeTypeCardModule = ({
         document.getElementById('coffeeTypeCardVariety').textContent = cardVm.variety;
         document.getElementById('coffeeTypeCardCreated').textContent = cardVm.createdAt;
         document.getElementById('coffeeTypeCardTasteNotes').textContent = cardVm.tasteNotes || '-';
+        document.getElementById('coffeeTypeCardDecafIcon')?.classList.toggle('hidden', !cardVm.decaf);
 
         const imageUrl = cardVm.imageUrl;
         const imgEl = document.getElementById('coffeeTypeCardImage');
@@ -277,6 +278,7 @@ export const createCoffeeTypeCardModule = ({
         document.getElementById('coffeeTypeEditVariety').value = type.variety || '';
         document.getElementById('coffeeTypeEditRoast').value = type.roast || type.roastType || '';
         document.getElementById('coffeeTypeEditRating').value = parseInt(type.rating, 10) || '';
+        document.getElementById('coffeeTypeEditDecaf').checked = !!type.decaf;
         document.getElementById('coffeeTypeEditShopUrl').value = type.webshopUrl || type.shopUrl || '';
         document.getElementById('coffeeTypeEditTasteNotes').value = type.tasteNotes || '';
 
@@ -308,6 +310,7 @@ export const createCoffeeTypeCardModule = ({
             variety: document.getElementById('coffeeTypeEditVariety').value || '',
             roast: document.getElementById('coffeeTypeEditRoast').value || '',
             rating: parseInt(document.getElementById('coffeeTypeEditRating').value, 10) || 0,
+            decaf: !!document.getElementById('coffeeTypeEditDecaf').checked,
             webshopUrl: document.getElementById('coffeeTypeEditShopUrl').value || '',
             tasteNotes: document.getElementById('coffeeTypeEditTasteNotes').value || '',
             updatedAt: nowIso

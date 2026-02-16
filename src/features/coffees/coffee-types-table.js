@@ -48,6 +48,7 @@ export const createCoffeeTypesTableModule = ({
                 { key: 'roaster', label: 'Roaster' },
                 { key: 'origin', label: 'Origin' },
                 { key: 'processing', label: 'Process' },
+                { key: 'decaf', label: 'Decaf' },
                 { key: 'variety', label: 'Variety' },
                 { key: 'roast', label: 'Roast' }
             ];
@@ -133,6 +134,7 @@ export const createCoffeeTypesTableModule = ({
             roaster: 'Roaster',
             origin: 'Origin',
             processing: 'Process',
+            decaf: 'Decaf',
             variety: 'Variety',
             roast: 'Roast'
         };
@@ -156,7 +158,7 @@ export const createCoffeeTypesTableModule = ({
     };
 
     const updateCoffeeTypesSortIcons = () => {
-        const keys = ['farmer', 'roaster', 'origin', 'processing', 'variety', 'roast', 'rating', 'createdAt'];
+        const keys = ['farmer', 'roaster', 'origin', 'processing', 'decaf', 'variety', 'roast', 'rating', 'createdAt'];
         const sortKey = getCoffeeTypesSortKey();
         const sortDir = getCoffeeTypesSortDir();
         keys.forEach((key) => {
@@ -213,6 +215,10 @@ export const createCoffeeTypesTableModule = ({
             const roast = rowVm.roast;
             const rating = rowVm.rating;
             const createdAt = rowVm.createdAt;
+            const decaf = rowVm.decaf;
+            const decafIcon = decaf
+                ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e]" title="Decaf"></i>'
+                : '';
             const menuId = `coffee-types-action-menu-${type.id}`;
             const buyBtn = (type.webshopUrl || type.shopUrl)
                 ? `<button data-action-click="openCoffeeTypeShopUrl('${type.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3">
@@ -229,6 +235,7 @@ export const createCoffeeTypesTableModule = ({
                 <td class="px-4 py-3 font-semibold">${roaster}</td>
                 <td class="px-4 py-3 text-sm">${origin}</td>
                 <td class="px-4 py-3 text-sm">${processing}</td>
+                <td class="px-4 py-3 text-center">${decafIcon}</td>
                 <td class="px-4 py-3 text-sm">${variety}</td>
                 <td class="px-4 py-3 text-center text-sm">${roast}</td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">${getStarDisplay(rating)}</td>

@@ -11,6 +11,7 @@ export const DEFAULT_ACTIVE_FILTERS = {
     farmer: null,
     variety: null,
     processing: null,
+    decaf: null,
     drink: null,
     grinder: null
 };
@@ -19,9 +20,13 @@ export const createDefaultActiveFilters = () => ({ ...DEFAULT_ACTIVE_FILTERS });
 
 const normalizeText = (value) => (value || '').toString().toLowerCase();
 
-const getSortValue = (brew, key) => {
+const getSortValue = (brew, key, getCoffeeTypeDisplay) => {
     if (key === 'roaster') return brew.roaster || brew.name;
     if (key === 'origin') return brew.origin || brew.beanType;
+    if (key === 'decaf') {
+        const typeDisplay = typeof getCoffeeTypeDisplay === 'function' ? getCoffeeTypeDisplay(brew) : null;
+        return typeDisplay?.decaf || brew?.decaf ? 1 : 0;
+    }
     return brew[key];
 };
 
@@ -33,6 +38,20 @@ export const selectBrewsUniqueValuesForKey = ({ coffees = [], key }) => {
 };
 
 export const selectBrewsQuickFilterValues = ({ key, coffees = [], beans = [], coffeeTypes = [], gasItems = [], formatBeanOpenedDate }) => {
+    if (key === 'decaf') {
+        const beanById = new Map(beans.map((bean) => [bean.id, bean]));
+        const typeById = new Map(coffeeTypes.map((type) => [type.id, type]));
+        let hasDecaf = false;
+        let hasRegular = false;
+        coffees.forEach((brew) => {
+            const bean = beanById.get(brew.beanId);
+            const type = bean?.coffeeTypeId ? typeById.get(bean.coffeeTypeId) : null;
+            const isDecaf = !!(type?.decaf || brew?.decaf);
+            if (isDecaf) hasDecaf = true;
+            else hasRegular = true;
+        });
+        return [hasDecaf ? 'Decaf' : null, hasRegular ? 'Regular' : null].filter(Boolean);
+    }
     if (key === 'hasGraph') {
         return ['Has graph'];
     }
@@ -116,7 +135,8 @@ export const selectFilteredSortedBrews = ({
     filtered = filtered.filter((brew) => {
         const cRoaster = brew.roaster || brew.name;
         const cOrigin = brew.origin || brew.beanType;
-        const typeId = getCoffeeTypeForBrew(brew)?.id || null;
+        const coffeeType = getCoffeeTypeForBrew(brew);
+        const typeId = coffeeType?.id || null;
 
         const m = !activeFilters.method || brew.method === activeFilters.method;
         const t = !activeFilters.temp || String(brew.temp) === String(activeFilters.temp);
@@ -128,18 +148,20 @@ export const selectFilteredSortedBrews = ({
         const proc = !activeFilters.processing || brew.processing === activeFilters.processing;
         const dr = !activeFilters.drink || brew.drink === activeFilters.drink;
         const gri = !activeFilters.grinder || brew.grinder === activeFilters.grinder;
+        const decafStatus = typeId ? (coffeeType?.decaf ? 'Decaf' : 'Regular') : (brew?.decaf ? 'Decaf' : 'Regular');
+        const decafMatch = !activeFilters.decaf || normalizeText(decafStatus) === normalizeText(activeFilters.decaf);
         const gearMatch = !activeFilters.gear || (Array.isArray(brew.gearIds) && brew.gearIds.includes(activeFilters.gear));
         const graphMatch = !activeFilters.hasGraph || hasBrewGraphData(brew);
         const beanMatch = !activeFilters.bean || brew.beanId === activeFilters.bean;
         const typeMatch = !activeFilters.coffeeType || typeId === activeFilters.coffeeType;
 
-        return m && t && r && rost && orig && farm && varr && proc && dr && gri && gearMatch && graphMatch && beanMatch && typeMatch;
+        return m && t && r && rost && orig && farm && varr && proc && decafMatch && dr && gri && gearMatch && graphMatch && beanMatch && typeMatch;
     });
 
     if (currentSort?.key) {
         filtered.sort((a, b) => {
-            let va = getSortValue(a, currentSort.key);
-            let vb = getSortValue(b, currentSort.key);
+            let va = getSortValue(a, currentSort.key, getCoffeeTypeDisplay);
+            let vb = getSortValue(b, currentSort.key, getCoffeeTypeDisplay);
             if (currentSort.key === 'temp') {
                 const na = parseFloat(va);
                 const nb = parseFloat(vb);

@@ -72,6 +72,7 @@ export const createCoffeesCoordinator = ({
             processing: '',
             variety: '',
             roast: '',
+            decaf: false,
             rating: 0,
             tasteNotes: '',
             webshopUrl: '',

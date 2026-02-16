@@ -135,6 +135,12 @@ export const createBrewsVmModule = () => {
         if (columnPreferences.farmer !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.farmer}</td>`;
         if (columnPreferences.variety !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.variety}</td>`;
         if (columnPreferences.processing !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.processing}</td>`;
+        if (columnPreferences.decaf !== false) {
+            const decafIcon = typeDisplay.decaf
+                ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e]" title="Decaf"></i>'
+                : '';
+            rowHtml += `<td class="px-3 py-1 text-center">${decafIcon}</td>`;
+        }
         if (columnPreferences.roastType !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.roastType}</td>`;
         if (columnPreferences.method !== false) rowHtml += `<td class="px-3 py-1 text-sm">${brew.method || '-'}</td>`;
         if (columnPreferences.grinder !== false) rowHtml += `<td class="px-3 py-1 text-sm">${brew.grinder || '-'}</td>`;

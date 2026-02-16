@@ -3,6 +3,7 @@ export const DEFAULT_COFFEE_TYPES_FILTERS = {
     farmer: null,
     origin: null,
     processing: null,
+    decaf: null,
     variety: null,
     roast: null
 };
@@ -12,6 +13,11 @@ export const createDefaultCoffeeTypeFilters = () => ({ ...DEFAULT_COFFEE_TYPES_F
 const normalizeText = (value) => (value || '').toString().toLowerCase().trim();
 
 export const selectCoffeeTypesQuickFilterValues = ({ key, coffeeTypes = [] }) => {
+    if (key === 'decaf') {
+        const hasDecaf = coffeeTypes.some((type) => !!type.decaf);
+        const hasRegular = coffeeTypes.some((type) => !type.decaf);
+        return [hasDecaf ? 'Decaf' : null, hasRegular ? 'Regular' : null].filter(Boolean);
+    }
     const valueSource = coffeeTypes
         .map((type) => (key === 'roast' ? (type.roast || type.roastType) : type[key]))
         .filter(Boolean);
@@ -32,6 +38,10 @@ export const selectFilteredSortedCoffeeTypes = ({
     const matchesQuickFilters = (type) => {
         return Object.entries(filters).every(([key, value]) => {
             if (!value) return true;
+            if (key === 'decaf') {
+                const status = type.decaf ? 'Decaf' : 'Regular';
+                return normalizeText(status) === normalizeText(value);
+            }
             const targetValue = key === 'roast' ? (type.roast || type.roastType || '') : (type[key] || '');
             return normalizeText(targetValue) === normalizeText(value);
         });
@@ -51,6 +61,7 @@ export const selectFilteredSortedCoffeeTypes = ({
     });
 
     const getSortValue = (type, key) => {
+        if (key === 'decaf') return type.decaf ? 1 : 0;
         if (key === 'roast') return type.roast || type.roastType || '';
         if (key === 'rating') return parseInt(type.rating, 10) || 0;
         if (key === 'createdAt') return type.createdAt || '';

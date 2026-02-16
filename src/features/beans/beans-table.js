@@ -57,7 +57,10 @@ export const createBeansTableModule = ({
 
         valuesDropdown.classList.add('hidden');
         if (dropdown.classList.contains('hidden')) {
-            const filterCategories = [{ key: 'coffeeType', label: 'Coffee' }];
+            const filterCategories = [
+                { key: 'coffeeType', label: 'Coffee' },
+                { key: 'decaf', label: 'Decaf' }
+            ];
             const filters = getBeansFilters();
             let html = '<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>';
             filterCategories.forEach((cat) => {
@@ -84,6 +87,10 @@ export const createBeansTableModule = ({
         let uniqueVals = [];
         if (key === 'coffeeType') {
             uniqueVals = selectBeansCoffeeTypeValues(getCoffeeTypes());
+        } else if (key === 'decaf') {
+            const hasDecaf = getBeans().some((bean) => !!getBeanCoffeeTypeDisplay(bean).decaf);
+            const hasRegular = getBeans().some((bean) => !getBeanCoffeeTypeDisplay(bean).decaf);
+            uniqueVals = [hasDecaf ? 'Decaf' : null, hasRegular ? 'Regular' : null].filter(Boolean);
         }
 
         if (!uniqueVals.length) {
@@ -97,14 +104,25 @@ export const createBeansTableModule = ({
                 </button>
             </div>`;
             html += `<button data-action-click="applyBeansFilterFromQuick('${key}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] font-bold text-coffee-700 dark:text-[#d6ccc2]">All</button>`;
-            uniqueVals.forEach((val) => {
-                const isActive = filters[key] === val.id;
-                const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
-                const escapedId = String(val.id).replace(/'/g, "\\'");
-                html += `<button data-action-click="applyBeansFilterFromQuick('${key}', '${escapedId}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
-                    ${val.display}
-                </button>`;
-            });
+            if (key === 'coffeeType') {
+                uniqueVals.forEach((val) => {
+                    const isActive = filters[key] === val.id;
+                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
+                    const escapedId = String(val.id).replace(/'/g, "\\'");
+                    html += `<button data-action-click="applyBeansFilterFromQuick('${key}', '${escapedId}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
+                        ${val.display}
+                    </button>`;
+                });
+            } else {
+                uniqueVals.forEach((val) => {
+                    const isActive = filters[key] === val;
+                    const activeClass = isActive ? 'bg-coffee-100 dark:bg-[#34302e]' : '';
+                    const escapedVal = String(val).replace(/'/g, "\\'");
+                    html += `<button data-action-click="applyBeansFilterFromQuick('${key}', '${escapedVal}')" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-600 dark:text-[#a8a29e] ${activeClass}">
+                        ${val}
+                    </button>`;
+                });
+            }
             valuesDropdown.innerHTML = html;
         }
 
@@ -140,6 +158,10 @@ export const createBeansTableModule = ({
             const label = type ? `${type.roaster || 'Unknown'}${type.farmer ? ' - ' + type.farmer : ''}` : filters.coffeeType;
             list.innerHTML += `<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>Coffee:</span><b>${label}</b><button data-action-click="applyBeansFilterFromQuick('coffeeType', null)" class="ml-1 hover:text-red-200">x</button></div>`;
         }
+        if (filters.decaf) {
+            hasFilters = true;
+            list.innerHTML += `<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>Decaf:</span><b>${filters.decaf}</b><button data-action-click="applyBeansFilterFromQuick('decaf', null)" class="ml-1 hover:text-red-200">x</button></div>`;
+        }
         container.classList.toggle('hidden', !hasFilters);
     };
 
@@ -155,6 +177,7 @@ export const createBeansTableModule = ({
             beans: getBeans(),
             searchTerm: getBeansSearch(),
             coffeeTypeFilter: getBeansFilters().coffeeType,
+            decafFilter: getBeansFilters().decaf,
             getBeanCoffeeTypeDisplay
         });
 
@@ -196,6 +219,9 @@ export const createBeansTableModule = ({
             const origin = coffeeDisplay.origin;
             const process = coffeeDisplay.processing;
             const variety = coffeeDisplay.variety !== '-' ? `<br><span class="text-xs text-coffee-500">${coffeeDisplay.variety}</span>` : '';
+            const decafIcon = coffeeDisplay.decaf
+                ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e]" title="Decaf"></i>'
+                : '';
             const openedDateInputValue = formatBeanDateForInput(bean.openedDate);
             const frozenDateInputValue = formatBeanDateForInput(bean.frozenDate);
             const roastDateInputValue = formatBeanDateForInput(bean.roastDate);
@@ -215,6 +241,7 @@ export const createBeansTableModule = ({
                 <td class="px-4 py-3 font-medium text-coffee-900 dark:text-white">${farmer}<br><span class="text-xs text-coffee-500">${roaster}</span></td>
                 <td class="px-4 py-3">${origin}</td>
                 <td class="px-4 py-3">${process}${variety}</td>
+                <td class="px-4 py-3 text-center">${decafIcon}</td>
                 <td class="px-4 py-3 text-center">${getRoastBadge(coffeeDisplay.roastType)}</td>
                 <td class="px-4 py-3 text-center">
                     <input type="number" step="0.01" min="0" value="${bean.price ?? ''}"
@@ -285,7 +312,7 @@ export const createBeansTableModule = ({
         if (inStockBeans.length > 0) {
             const headerRow = document.createElement('tr');
             headerRow.className = 'bg-green-50 dark:bg-green-900/20';
-            headerRow.innerHTML = '<td colspan="12" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
+            headerRow.innerHTML = '<td colspan="13" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
             tbody.appendChild(headerRow);
             inStockBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
         }
@@ -294,7 +321,7 @@ export const createBeansTableModule = ({
             if (inStockBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'bg-blue-50 dark:bg-blue-900/20';
-                headerRow.innerHTML = '<td colspan="12" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
+                headerRow.innerHTML = '<td colspan="13" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
                 tbody.appendChild(headerRow);
             }
             frozenBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
@@ -304,7 +331,7 @@ export const createBeansTableModule = ({
             if (inStockBeans.length > 0 || frozenBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'bg-gray-50 dark:bg-[#34302e]';
-                headerRow.innerHTML = '<td colspan="12" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
+                headerRow.innerHTML = '<td colspan="13" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
                 tbody.appendChild(headerRow);
             }
             otherBeans.forEach((bean) => tbody.appendChild(createRow(bean)));

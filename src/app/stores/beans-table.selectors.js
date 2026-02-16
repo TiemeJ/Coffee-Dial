@@ -1,4 +1,4 @@
-export const DEFAULT_BEANS_FILTERS = { coffeeType: null };
+export const DEFAULT_BEANS_FILTERS = { coffeeType: null, decaf: null };
 
 export const createDefaultBeansFilters = () => ({ ...DEFAULT_BEANS_FILTERS });
 
@@ -11,7 +11,13 @@ export const selectBeansCoffeeTypeValues = (coffeeTypes = []) => {
     }));
 };
 
-export const selectFilteredBeans = ({ beans = [], searchTerm = '', coffeeTypeFilter = null, getBeanCoffeeTypeDisplay }) => {
+export const selectFilteredBeans = ({
+    beans = [],
+    searchTerm = '',
+    coffeeTypeFilter = null,
+    decafFilter = null,
+    getBeanCoffeeTypeDisplay
+}) => {
     const normalizedSearch = normalizeText(searchTerm);
     const bySearch = !normalizedSearch
         ? [...beans]
@@ -31,8 +37,13 @@ export const selectFilteredBeans = ({ beans = [], searchTerm = '', coffeeTypeFil
             return haystack.includes(normalizedSearch);
         });
 
-    if (!coffeeTypeFilter) return bySearch;
-    return bySearch.filter((bean) => bean.coffeeTypeId === coffeeTypeFilter);
+    const byCoffeeType = !coffeeTypeFilter ? bySearch : bySearch.filter((bean) => bean.coffeeTypeId === coffeeTypeFilter);
+    if (!decafFilter) return byCoffeeType;
+    return byCoffeeType.filter((bean) => {
+        const coffeeDisplay = getBeanCoffeeTypeDisplay(bean);
+        const status = coffeeDisplay.decaf ? 'Decaf' : 'Regular';
+        return normalizeText(status) === normalizeText(decafFilter);
+    });
 };
 
 export const selectBeansByStockGroups = ({ beans = [], getBeanCalculatedStock }) => {
