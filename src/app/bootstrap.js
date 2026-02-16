@@ -78,6 +78,9 @@ await mountOverlayHostView();
 const appCommands = createAppCommands();
 const appEvents = createAppEvents();
 const app = createAppContainer({ appCommands, appEvents });
+if (typeof window !== 'undefined') {
+    window.__coffeeDialApp = app;
+}
 const e2eSeedData = await loadE2ESeedData();
 if (e2eSeedData && typeof app.applyE2ESeedData === 'function') {
     await app.applyE2ESeedData(e2eSeedData);

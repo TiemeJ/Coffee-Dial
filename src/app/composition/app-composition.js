@@ -61,6 +61,9 @@
         import { installCardNavigationHandlers } from '../runtime/card-navigation.js';
         
 export const createAppComposition = ({ appCommands = null, appEvents = null } = {}) => {
+        const isE2ESeedMode =
+            typeof window !== 'undefined' &&
+            new URLSearchParams(window.location.search).get('e2eSeed') === '1';
 
         const emailLinkAuth = initEmailLinkAuth({ auth }) || {};
         installDialogAdapters(showToast);
@@ -271,10 +274,54 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getDownloadURL,
             deleteObject
         });
-        const brewsRepo = createBrewsRepo({
-            dataService,
-            getCurrentUser: () => getCurrentUserState()
-        });
+        const createE2EBrewsRepo = () => {
+            let e2eIdCounter = 1;
+            const nextId = (prefix) => `${prefix}-${Date.now()}-${e2eIdCounter++}`;
+            const requireUid = () => {
+                const uid = getCurrentUserState()?.uid;
+                if (!uid) throw new Error('User not signed in');
+                return uid;
+            };
+            return {
+                addBean: async (payload) => {
+                    requireUid();
+                    const id = nextId('bean');
+                    setBeansState([...getBeansState(), { id, ...payload }]);
+                    return id;
+                },
+                addCoffee: async (payload) => {
+                    requireUid();
+                    const id = nextId('brew');
+                    setCoffeesState([...getCoffeesState(), { id, ...payload }]);
+                    return id;
+                },
+                addCoffeeType: async (payload) => {
+                    requireUid();
+                    const id = nextId('coffee-type');
+                    setCoffeeTypesState([...getCoffeeTypesState(), { id, ...payload }]);
+                    return id;
+                },
+                deleteCoffee: async (id) => {
+                    requireUid();
+                    setCoffeesState(getCoffeesState().filter((item) => item.id !== id));
+                },
+                updateBean: async (id, patch) => {
+                    requireUid();
+                    setBeansState(getBeansState().map((item) => (item.id === id ? { ...item, ...patch } : item)));
+                },
+                updateCoffee: async (id, patch) => {
+                    requireUid();
+                    setCoffeesState(getCoffeesState().map((item) => (item.id === id ? { ...item, ...patch } : item)));
+                }
+            };
+        };
+
+        const brewsRepo = isE2ESeedMode
+            ? createE2EBrewsRepo()
+            : createBrewsRepo({
+                  dataService,
+                  getCurrentUser: () => getCurrentUserState()
+              });
         const authService = createAuthService({
             auth,
             provider,
@@ -1651,5 +1698,14 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             renderTable?.();
         };
 
-        return { handleAuthStateChanged, actions, featureActions, appCommands, appEvents, applyE2ESeedData };
+        const getE2EStateSnapshot = () => ({
+            isE2ESeedMode,
+            counts: {
+                beans: getBeansState().length,
+                brews: getCoffeesState().length,
+                coffeeTypes: getCoffeeTypesState().length
+            }
+        });
+
+        return { handleAuthStateChanged, actions, featureActions, appCommands, appEvents, applyE2ESeedData, getE2EStateSnapshot };
 };
