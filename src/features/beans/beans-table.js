@@ -1,6 +1,9 @@
-const DEFAULT_BEANS_FILTERS = { coffeeType: null };
-
-const createDefaultFilters = () => ({ ...DEFAULT_BEANS_FILTERS });
+import {
+    createDefaultBeansFilters,
+    selectBeansByStockGroups,
+    selectBeansCoffeeTypeValues,
+    selectFilteredBeans
+} from '../../app/stores/beans-table.selectors.js';
 
 export const createBeansTableModule = ({
     getCurrentUser,
@@ -80,10 +83,7 @@ export const createBeansTableModule = ({
 
         let uniqueVals = [];
         if (key === 'coffeeType') {
-            uniqueVals = getCoffeeTypes().map((type) => ({
-                id: type.id,
-                display: `${type.roaster || 'Unknown'}${type.farmer ? ' - ' + type.farmer : ''}`
-            }));
+            uniqueVals = selectBeansCoffeeTypeValues(getCoffeeTypes());
         }
 
         if (!uniqueVals.length) {
@@ -121,7 +121,7 @@ export const createBeansTableModule = ({
     };
 
     const clearBeansFilters = () => {
-        setBeansFiltersState(createDefaultFilters());
+        setBeansFiltersState(createDefaultBeansFilters());
         renderBeansActiveFilters();
         renderBeansTable();
     };
@@ -151,29 +151,12 @@ export const createBeansTableModule = ({
         tbody.innerHTML = '';
         renderBeansActiveFilters();
         const isMine = getCurrentView() === 'mine';
-        const searchTerm = getBeansSearch().trim().toLowerCase();
-
-        const filteredBeans = getBeans().filter((bean) => {
-            if (!searchTerm) return true;
-            const coffeeDisplay = getBeanCoffeeTypeDisplay(bean);
-            const haystack = [
-                coffeeDisplay.roaster,
-                coffeeDisplay.farmer,
-                coffeeDisplay.origin,
-                coffeeDisplay.processing,
-                coffeeDisplay.variety,
-                coffeeDisplay.roastType
-            ]
-                .filter(Boolean)
-                .join(' ')
-                .toLowerCase();
-            return haystack.includes(searchTerm);
+        const finalBeans = selectFilteredBeans({
+            beans: getBeans(),
+            searchTerm: getBeansSearch(),
+            coffeeTypeFilter: getBeansFilters().coffeeType,
+            getBeanCoffeeTypeDisplay
         });
-
-        const coffeeTypeFilter = getBeansFilters().coffeeType;
-        const finalBeans = coffeeTypeFilter
-            ? filteredBeans.filter((bean) => bean.coffeeTypeId === coffeeTypeFilter)
-            : filteredBeans;
 
         if (finalBeans.length === 0) {
             empty.classList.remove('hidden');
@@ -181,19 +164,10 @@ export const createBeansTableModule = ({
         }
         empty.classList.add('hidden');
 
-        const beansWithStock = finalBeans.map((bean) => ({ ...bean, calculatedStock: getBeanCalculatedStock(bean) }));
-
-        const inStockBeans = beansWithStock
-            .filter((b) => !b.archived && !b.frozen && b.calculatedStock !== null && b.calculatedStock > 0)
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-        const frozenBeans = beansWithStock
-            .filter((b) => !b.archived && b.frozen)
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-        const otherBeans = beansWithStock
-            .filter((b) => b.archived || (!b.frozen && (b.calculatedStock === null || b.calculatedStock <= 0)))
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        const { inStockBeans, frozenBeans, otherBeans } = selectBeansByStockGroups({
+            beans: finalBeans,
+            getBeanCalculatedStock
+        });
 
         const formatBeanDateForInput = (value) => {
             if (!value) return '';
@@ -342,6 +316,6 @@ export const createBeansTableModule = ({
         clearBeansFilters,
         renderBeansActiveFilters,
         renderBeansTable,
-        createDefaultBeansFilters: createDefaultFilters
+        createDefaultBeansFilters
     };
 };

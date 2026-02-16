@@ -19,6 +19,8 @@ export const createPinControllerModule = ({
     getBeanCalculatedStock,
     getCoffeeTypeForBrew,
     getCoffeeTypeDisplay,
+    selectPinnedBrewOrderIds = (coffees = []) => coffees.filter((brew) => brew?.isActive).map((brew) => brew.id),
+    selectVisiblePinnedBrewOrderIds = ({ coffees = [] } = {}) => coffees.filter((brew) => brew?.isActive).map((brew) => brew.id)
 }) => {
     if (!appCommands?.dispatch || !appCommands?.registerCommand) {
         throw new Error('createPinControllerModule requires appCommands.dispatch and appCommands.registerCommand');
@@ -55,81 +57,15 @@ export const createPinControllerModule = ({
     let lastPinnedBeanKeys = [];
     let sortableInstances = [];
 
-    const getPinnedBrewOrderIds = () =>
-        getCoffees()
-            .filter((c) => c.isActive)
-            .sort((a, b) => {
-                const orderDelta = (a.customOrder || 0) - (b.customOrder || 0);
-                if (orderDelta !== 0) return orderDelta;
-                return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-            })
-            .map((brew) => brew.id);
-
-    const getVisiblePinnedBrewOrderIds = () => {
-        const activeBrewsSorted = getCoffees()
-            .filter((c) => c.isActive)
-            .sort((a, b) => {
-                const orderDelta = (a.customOrder || 0) - (b.customOrder || 0);
-                if (orderDelta !== 0) return orderDelta;
-                return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-            });
-        const resolveBeanKeyForBrew = (brew) => {
-            const linkedBean = view.resolveLinkedBean({ brew, beans: getBeans() });
-            return linkedBean ? linkedBean.id : `no-bean-${brew.id}`;
-        };
-        const brewIdsByBeanKey = new Map();
-        activeBrewsSorted.forEach((brew) => {
-            const beanKey = resolveBeanKeyForBrew(brew);
-            if (!brewIdsByBeanKey.has(beanKey)) brewIdsByBeanKey.set(beanKey, []);
-            brewIdsByBeanKey.get(beanKey).push(brew.id);
-        });
-
-        const artRoot = document.getElementById('brewPinArtRoot');
-        const artGrid = document.getElementById('brewPinArtGrid');
-        if (artRoot && artGrid && !artRoot.classList.contains('hidden')) {
-            const seen = new Set();
-            const ids = [];
-            Array.from(artGrid.children).forEach((card) => {
-                const raw = card.getAttribute('data-brew-ids') || '';
-                raw
-                    .split(',')
-                    .map((id) => id.trim())
-                    .filter(Boolean)
-                    .forEach((id) => {
-                        if (seen.has(id)) return;
-                        seen.add(id);
-                        ids.push(id);
-                    });
-            });
-            return ids;
-        }
-
-        const pinnedGrid = document.getElementById('pinnedGrid');
-        if (!pinnedGrid || pinnedGrid.classList.contains('hidden')) return [];
-        const seen = new Set();
-        const ids = [];
-        Array.from(pinnedGrid.children).forEach((child) => {
-            const brewId = child.getAttribute('data-id');
-            if (brewId) {
-                if (seen.has(brewId)) return;
-                seen.add(brewId);
-                ids.push(brewId);
-                return;
-            }
-            const beanKey = child.getAttribute('data-bean-key');
-            if (!beanKey) return;
-            const groupIds = brewIdsByBeanKey.get(beanKey) || [];
-            groupIds.forEach((id) => {
-                if (seen.has(id)) return;
-                seen.add(id);
-                ids.push(id);
-            });
-        });
-        return ids;
-    };
+    const getPinnedBrewOrderIds = () => selectPinnedBrewOrderIds(getCoffees());
 
     const openPinnedBrewCard = (brewId, event = null) => {
-        const visibleOrder = getVisiblePinnedBrewOrderIds();
+        const prefs = getPinnedBrewsPreferences() || {};
+        const visibleOrder = selectVisiblePinnedBrewOrderIds({
+            coffees: getCoffees(),
+            beans: getBeans(),
+            organizeByBeans: !!prefs.organizeByBeans
+        });
         const order = visibleOrder.includes(brewId) ? visibleOrder : getPinnedBrewOrderIds();
         dispatchCommand('brews.openCardWithOrder', {
             id: brewId,

@@ -1,22 +1,10 @@
 import { createBrewsVmModule } from './brews.vm.js';
-
-const DEFAULT_ACTIVE_FILTERS = {
-    bean: null,
-    coffeeType: null,
-    gear: null,
-    method: null,
-    temp: null,
-    roastType: null,
-    roaster: null,
-    origin: null,
-    farmer: null,
-    variety: null,
-    processing: null,
-    drink: null,
-    grinder: null
-};
-
-const createDefaultActiveFilters = () => ({ ...DEFAULT_ACTIVE_FILTERS });
+import {
+    createDefaultActiveFilters,
+    selectBrewsQuickFilterValues,
+    selectBrewsUniqueValuesForKey,
+    selectFilteredSortedBrews
+} from '../../app/stores/brews-table.selectors.js';
 
 export const createBrewsTableModule = ({
     getCoffees,
@@ -120,11 +108,10 @@ export const createBrewsTableModule = ({
         e.stopPropagation();
         const menu = document.getElementById('filterDropdown');
         if (!menu) return;
-        const coffees = getCoffees();
-        const values = coffees.map((c) =>
-            key === 'roaster' ? (c.roaster || c.name) : key === 'origin' ? (c.origin || c.beanType) : c[key]
-        );
-        const uniqueValues = [...new Set(values)].sort();
+        const uniqueValues = selectBrewsUniqueValuesForKey({
+            coffees: getCoffees(),
+            key
+        });
         if (!uniqueValues.length) return;
 
         const label = getFilterLabel(key);
@@ -246,42 +233,14 @@ export const createBrewsTableModule = ({
         const mainDropdown = document.getElementById('quickFilterDropdown');
         if (!valuesDropdown || !mainDropdown) return;
 
-        let uniqueValues;
-        if (key === 'bean') {
-            uniqueValues = getBeans().map((bean) => {
-                const opened = formatBeanOpenedDate(bean.openedDate);
-                const suffix = opened ? ` (${opened})` : '';
-                return {
-                    id: bean.id,
-                    display: `${bean.roaster || 'Unknown'}${bean.farmer ? ` - ${bean.farmer}` : ''}${suffix}`
-                };
-            });
-        } else if (key === 'coffeeType') {
-            uniqueValues = getCoffeeTypes().map((type) => ({
-                id: type.id,
-                display: `${type.roaster || 'Unknown'}${type.farmer ? ` - ${type.farmer}` : ''}`
-            }));
-        } else if (key === 'gear') {
-            const usedGearIds = new Set();
-            getCoffees().forEach((brew) => {
-                const gearIds = Array.isArray(brew.gearIds) ? brew.gearIds : [];
-                gearIds.forEach((gearId) => {
-                    if (gearId) usedGearIds.add(gearId);
-                });
-            });
-            uniqueValues = getGasItems()
-                .filter((item) => usedGearIds.has(item.id))
-                .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
-                .map((item) => ({
-                    id: item.id,
-                    display: item.name || 'Unnamed gear'
-                }));
-        } else {
-            const vals = getCoffees().map((c) =>
-                key === 'roaster' ? (c.roaster || c.name) : key === 'origin' ? (c.origin || c.beanType) : c[key]
-            );
-            uniqueValues = [...new Set(vals)].filter(Boolean).sort();
-        }
+        const uniqueValues = selectBrewsQuickFilterValues({
+            key,
+            coffees: getCoffees(),
+            beans: getBeans(),
+            coffeeTypes: getCoffeeTypes(),
+            gasItems: getGasItems(),
+            formatBeanOpenedDate
+        });
 
         if (!uniqueValues.length) {
             valuesDropdown.innerHTML = '<div class="px-4 py-3 text-sm text-coffee-400 dark:text-[#78716c] italic">No values available</div>';
@@ -317,89 +276,15 @@ export const createBrewsTableModule = ({
     };
 
     const getFilteredCoffees = () => {
-        let filtered = getCoffees();
         const searchInput = document.getElementById('globalSearch');
-        if (searchInput && searchInput.value) {
-            const term = searchInput.value.toLowerCase();
-            filtered = filtered.filter((c) => {
-                const typeDisplay = getCoffeeTypeDisplay(c);
-                const searchable = [
-                    c.roaster || c.name || '',
-                    c.origin || c.beanType || '',
-                    c.farmer || '',
-                    c.variety || '',
-                    c.processing || '',
-                    c.method || '',
-                    c.drink || '',
-                    c.notes || '',
-                    c.improve || '',
-                    c.grinder || '',
-                    typeDisplay.roaster || '',
-                    typeDisplay.farmer || '',
-                    typeDisplay.origin || '',
-                    typeDisplay.variety || '',
-                    typeDisplay.processing || '',
-                    typeDisplay.roastType || ''
-                ]
-                    .join(' ')
-                    .toLowerCase();
-                return searchable.includes(term);
-            });
-        }
-
-        const activeFilters = getActiveFilters();
-        filtered = filtered.filter((c) => {
-            const cRoaster = c.roaster || c.name;
-            const cOrigin = c.origin || c.beanType;
-            const typeId = getCoffeeTypeForBrew(c)?.id || null;
-
-            const m = !activeFilters.method || c.method === activeFilters.method;
-            const t = !activeFilters.temp || String(c.temp) === String(activeFilters.temp);
-            const r = !activeFilters.roastType || c.roastType === activeFilters.roastType;
-            const rost = !activeFilters.roaster || cRoaster === activeFilters.roaster;
-            const orig = !activeFilters.origin || cOrigin === activeFilters.origin;
-            const farm = !activeFilters.farmer || c.farmer === activeFilters.farmer;
-            const varr = !activeFilters.variety || c.variety === activeFilters.variety;
-            const proc = !activeFilters.processing || c.processing === activeFilters.processing;
-            const dr = !activeFilters.drink || c.drink === activeFilters.drink;
-            const gri = !activeFilters.grinder || c.grinder === activeFilters.grinder;
-            const gearMatch = !activeFilters.gear || (Array.isArray(c.gearIds) && c.gearIds.includes(activeFilters.gear));
-            const beanMatch = !activeFilters.bean || c.beanId === activeFilters.bean;
-            const typeMatch = !activeFilters.coffeeType || typeId === activeFilters.coffeeType;
-
-            return m && t && r && rost && orig && farm && varr && proc && dr && gri && gearMatch && beanMatch && typeMatch;
+        return selectFilteredSortedBrews({
+            coffees: getCoffees(),
+            searchTerm: searchInput?.value || '',
+            activeFilters: getActiveFilters(),
+            currentSort: getCurrentSort(),
+            getCoffeeTypeDisplay,
+            getCoffeeTypeForBrew
         });
-
-        const currentSort = getCurrentSort();
-        if (currentSort.key) {
-            filtered.sort((a, b) => {
-                let va = a[currentSort.key];
-                let vb = b[currentSort.key];
-                if (currentSort.key === 'roaster') {
-                    va = a.roaster || a.name;
-                    vb = b.roaster || b.name;
-                }
-                if (currentSort.key === 'origin') {
-                    va = a.origin || a.beanType;
-                    vb = b.origin || b.beanType;
-                }
-                if (currentSort.key === 'temp') {
-                    const na = parseFloat(va);
-                    const nb = parseFloat(vb);
-                    if (!isNaN(na) && !isNaN(nb)) {
-                        va = na;
-                        vb = nb;
-                    }
-                }
-                if (typeof va === 'string') va = va.toLowerCase();
-                if (typeof vb === 'string') vb = vb.toLowerCase();
-                if (va < vb) return currentSort.direction === 'asc' ? -1 : 1;
-                if (va > vb) return currentSort.direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
-
-        return filtered;
     };
 
     const getTempBadge = (temp) => {

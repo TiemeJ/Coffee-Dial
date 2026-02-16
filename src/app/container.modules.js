@@ -45,7 +45,16 @@
         import { createPinCoordinator } from './coordinators/pin.coordinator.js';
         import { createActionsRegistry } from './actions.registry.js';
         import { createInitialAppState } from './container.state.js';
+        import { createSessionStore } from './stores/session.store.js';
+        import { createBrewsStore } from './stores/brews.store.js';
+        import { createBeansStore } from './stores/beans.store.js';
+        import { createCoffeeTypesStore } from './stores/coffee-types.store.js';
+        import { createGasStore } from './stores/gas.store.js';
+        import { createUiStore } from './stores/ui.store.js';
+        import { createRuntimeStore } from './stores/runtime.store.js';
+        import { selectVisibleBrewOrderIds } from './stores/brews-table.selectors.js';
         import { createAuthStateChangedHandler } from './runtime/auth-state.js';
+        import { createAppLifecycleModule } from './runtime/app-lifecycle.js';
         import { createGearMigrationModule } from './runtime/gear-migration.js';
         import { createOpenAddBrewFromPinned } from './runtime/open-add-brew.js';
         import { installCardNavigationHandlers } from './runtime/card-navigation.js';
@@ -56,65 +65,186 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
         installDialogAdapters(showToast);
         
         const initialState = createInitialAppState();
-        let {
-            currentUser,
-            currentView,
-            coffees,
-            beans,
-            hasLoadedBrews,
-            hasLoadedBeans,
-            coffeeTypes,
-            gasItems,
-            following,
-            followers,
-            unsubscribeData,
-            unsubscribeBeans,
-            unsubscribeCoffeeTypes,
-            unsubscribeGas,
-            unsubscribeNotifications,
-            isPublic,
-            currentUploadCoffeeId,
-            currentShareMode,
-            currentCardCoffee,
-            currentCoffeeCardId,
-            currentCardGraphData,
-            pendingImportBrews,
-            currentCoffeeTypeId,
-            currentGasId,
-            coffeeTypesSortKey,
-            coffeeTypesSortDir,
-            coffeeTypesSearch,
-            coffeeTypesFilters,
-            gasSortKey,
-            gasSortDir,
-            gasSearch,
-            gasFilters,
-            currentStatsData,
-            currentBeanMeterPeriod,
-            lastGalleryDoc,
-            lastGalleryVisit,
-            currentGalleryMode,
-            isGalleryLoading,
-            displayedBrewsCount,
-            columnDefs,
-            columnPreferences,
-            pinnedBrewsPreferences,
-            scaData,
-            scaState,
-            currentBeanCardId,
-            beansSearch,
-            beansFilters,
-            currentSort,
-            activeFilters
-        } = initialState;
+        const columnDefs = initialState.columnDefs;
+        const scaData = initialState.scaData;
         const BREWS_PER_PAGE = initialState.BREWS_PER_PAGE;
+        const sessionStore = createSessionStore({
+            currentUser: initialState.currentUser,
+            currentView: initialState.currentView
+        });
+        const brewsStore = createBrewsStore({ items: initialState.coffees });
+        const beansStore = createBeansStore({ items: initialState.beans });
+        const coffeeTypesStore = createCoffeeTypesStore({ items: initialState.coffeeTypes });
+        const gasStore = createGasStore({ items: initialState.gasItems });
+        const uiStore = createUiStore({
+            pinnedBrewsPreferences: initialState.pinnedBrewsPreferences,
+            currentSort: initialState.currentSort,
+            activeFilters: initialState.activeFilters,
+            displayedBrewsCount: initialState.displayedBrewsCount
+        });
+        const runtimeStore = createRuntimeStore({
+            unsubscribeData: initialState.unsubscribeData,
+            unsubscribeBeans: initialState.unsubscribeBeans,
+            unsubscribeCoffeeTypes: initialState.unsubscribeCoffeeTypes,
+            unsubscribeGas: initialState.unsubscribeGas,
+            unsubscribeNotifications: initialState.unsubscribeNotifications,
+            hasLoadedBrews: initialState.hasLoadedBrews,
+            hasLoadedBeans: initialState.hasLoadedBeans,
+            isPublic: initialState.isPublic,
+            lastGalleryVisit: initialState.lastGalleryVisit,
+            beansSearch: initialState.beansSearch,
+            beansFilters: initialState.beansFilters,
+            currentBeanCardId: initialState.currentBeanCardId,
+            currentCoffeeTypeId: initialState.currentCoffeeTypeId,
+            coffeeTypesSearch: initialState.coffeeTypesSearch,
+            coffeeTypesFilters: initialState.coffeeTypesFilters,
+            coffeeTypesSortKey: initialState.coffeeTypesSortKey,
+            coffeeTypesSortDir: initialState.coffeeTypesSortDir,
+            currentGasId: initialState.currentGasId,
+            gasSearch: initialState.gasSearch,
+            gasFilters: initialState.gasFilters,
+            gasSortKey: initialState.gasSortKey,
+            gasSortDir: initialState.gasSortDir,
+            scaState: initialState.scaState,
+            following: initialState.following,
+            followers: initialState.followers,
+            currentUploadCoffeeId: initialState.currentUploadCoffeeId,
+            currentGalleryMode: initialState.currentGalleryMode,
+            lastGalleryDoc: initialState.lastGalleryDoc,
+            isGalleryLoading: initialState.isGalleryLoading,
+            currentStatsData: initialState.currentStatsData,
+            currentBeanMeterPeriod: initialState.currentBeanMeterPeriod,
+            pendingImportBrews: initialState.pendingImportBrews,
+            currentCardCoffee: initialState.currentCardCoffee,
+            currentCoffeeCardId: initialState.currentCoffeeCardId,
+            currentCardGraphData: initialState.currentCardGraphData,
+            currentShareMode: initialState.currentShareMode,
+            columnPreferences: initialState.columnPreferences
+        });
+
+        // Session store
+        const getCurrentUserState = () => sessionStore.getCurrentUser();
+        const setCurrentUserState = (value) => sessionStore.setCurrentUser(value);
+        const getCurrentViewState = () => sessionStore.getCurrentView();
+        const setCurrentViewState = (value) => sessionStore.setCurrentView(value);
+
+        // Domain entity stores
+        const getCoffeesState = () => brewsStore.getItems();
+        const setCoffeesState = (value) => brewsStore.setItems(value);
+        const getBeansState = () => beansStore.getItems();
+        const setBeansState = (value) => beansStore.setItems(value);
+        const getCoffeeTypesState = () => coffeeTypesStore.getItems();
+        const setCoffeeTypesState = (value) => coffeeTypesStore.setItems(value);
+        const getGasItemsState = () => gasStore.getItems();
+        const setGasItemsState = (value) => gasStore.setItems(value);
+
+        // UI store
+        const getPinnedBrewsPreferencesState = () => uiStore.getPinnedBrewsPreferences();
+        const setPinnedBrewsPreferencesState = (value) => uiStore.setPinnedBrewsPreferences(value);
+        const getCurrentSortState = () => uiStore.getCurrentSort();
+        const setCurrentSortState = (value) => uiStore.setCurrentSort(value);
+        const getActiveFiltersState = () => uiStore.getActiveFilters();
+        const setActiveFiltersState = (value) => uiStore.setActiveFilters(value);
+        const getDisplayedBrewsCountState = () => uiStore.getDisplayedBrewsCount();
+        const setDisplayedBrewsCountState = (value) => uiStore.setDisplayedBrewsCount(value);
+
+        // Runtime store
+        const getRuntime = (key) => runtimeStore.get(key);
+        const setRuntime = (key, value) => runtimeStore.set(key, value);
+
+        // Runtime: subscriptions and load flags
+        const setUnsubscribeDataState = (value) => setRuntime('unsubscribeData', value);
+        const getUnsubscribeDataState = () => getRuntime('unsubscribeData');
+        const setUnsubscribeBeansState = (value) => setRuntime('unsubscribeBeans', value);
+        const getUnsubscribeBeansState = () => getRuntime('unsubscribeBeans');
+        const setUnsubscribeCoffeeTypesState = (value) => setRuntime('unsubscribeCoffeeTypes', value);
+        const getUnsubscribeCoffeeTypesState = () => getRuntime('unsubscribeCoffeeTypes');
+        const setUnsubscribeGasState = (value) => setRuntime('unsubscribeGas', value);
+        const getUnsubscribeGasState = () => getRuntime('unsubscribeGas');
+        const setUnsubscribeNotificationsState = (value) => setRuntime('unsubscribeNotifications', value);
+        const getUnsubscribeNotificationsState = () => getRuntime('unsubscribeNotifications');
+        const getHasLoadedBrewsState = () => getRuntime('hasLoadedBrews');
+        const setHasLoadedBrewsState = (value) => setRuntime('hasLoadedBrews', value);
+        const getHasLoadedBeansState = () => getRuntime('hasLoadedBeans');
+        const setHasLoadedBeansState = (value) => setRuntime('hasLoadedBeans', value);
+
+        // Runtime: profile/gallery visibility
+        const getIsPublicState = () => getRuntime('isPublic');
+        const setIsPublicState = (value) => setRuntime('isPublic', value);
+        const getLastGalleryVisitState = () => getRuntime('lastGalleryVisit');
+        const setLastGalleryVisitState = (value) => setRuntime('lastGalleryVisit', value);
+
+        // Runtime: beans/coffees/gas table UI
+        const getBeansSearchState = () => getRuntime('beansSearch');
+        const setBeansSearchRuntimeState = (value) => setRuntime('beansSearch', value);
+        const getBeansFiltersState = () => getRuntime('beansFilters');
+        const setBeansFiltersRuntimeState = (value) => setRuntime('beansFilters', value);
+        const getCurrentBeanCardIdState = () => getRuntime('currentBeanCardId');
+        const setCurrentBeanCardIdState = (value) => setRuntime('currentBeanCardId', value);
+        const getCurrentCoffeeTypeIdState = () => getRuntime('currentCoffeeTypeId');
+        const setCurrentCoffeeTypeIdState = (value) => setRuntime('currentCoffeeTypeId', value);
+        const getCoffeeTypesSearchState = () => getRuntime('coffeeTypesSearch');
+        const setCoffeeTypesSearchRuntimeState = (value) => setRuntime('coffeeTypesSearch', value);
+        const getCoffeeTypesFiltersState = () => getRuntime('coffeeTypesFilters');
+        const setCoffeeTypesFiltersRuntimeState = (value) => setRuntime('coffeeTypesFilters', value);
+        const getCoffeeTypesSortKeyState = () => getRuntime('coffeeTypesSortKey');
+        const setCoffeeTypesSortKeyRuntimeState = (value) => setRuntime('coffeeTypesSortKey', value);
+        const getCoffeeTypesSortDirState = () => getRuntime('coffeeTypesSortDir');
+        const setCoffeeTypesSortDirRuntimeState = (value) => setRuntime('coffeeTypesSortDir', value);
+        const getCurrentGasIdState = () => getRuntime('currentGasId');
+        const setCurrentGasIdState = (value) => setRuntime('currentGasId', value);
+        const getGasSearchState = () => getRuntime('gasSearch');
+        const setGasSearchRuntimeState = (value) => setRuntime('gasSearch', value);
+        const getGasFiltersState = () => getRuntime('gasFilters');
+        const setGasFiltersRuntimeState = (value) => setRuntime('gasFilters', value);
+        const getGasSortKeyState = () => getRuntime('gasSortKey');
+        const setGasSortKeyRuntimeState = (value) => setRuntime('gasSortKey', value);
+        const getGasSortDirState = () => getRuntime('gasSortDir');
+        const setGasSortDirRuntimeState = (value) => setRuntime('gasSortDir', value);
+
+        // Runtime: form and social state
+        const getScaStateRuntime = () => getRuntime('scaState');
+        const setScaStateRuntime = (value) => setRuntime('scaState', value);
+        const getFollowingState = () => getRuntime('following');
+        const setFollowingRuntimeState = (value) => setRuntime('following', value);
+        const setFollowersRuntimeState = (value) => setRuntime('followers', value);
+
+        // Runtime: gallery and stats state
+        const getCurrentUploadCoffeeIdState = () => getRuntime('currentUploadCoffeeId');
+        const setCurrentUploadCoffeeIdState = (value) => setRuntime('currentUploadCoffeeId', value);
+        const getCurrentGalleryModeState = () => getRuntime('currentGalleryMode');
+        const setCurrentGalleryModeState = (value) => setRuntime('currentGalleryMode', value);
+        const getLastGalleryDocState = () => getRuntime('lastGalleryDoc');
+        const setLastGalleryDocState = (value) => setRuntime('lastGalleryDoc', value);
+        const getIsGalleryLoadingState = () => getRuntime('isGalleryLoading');
+        const setIsGalleryLoadingState = (value) => setRuntime('isGalleryLoading', value);
+        const getCurrentStatsDataState = () => getRuntime('currentStatsData');
+        const setCurrentStatsDataState = (value) => setRuntime('currentStatsData', value);
+        const getCurrentBeanMeterPeriodState = () => getRuntime('currentBeanMeterPeriod');
+        const setCurrentBeanMeterPeriodState = (value) => setRuntime('currentBeanMeterPeriod', value);
+        const getPendingImportBrewsState = () => getRuntime('pendingImportBrews');
+        const setPendingImportBrewsState = (value) => setRuntime('pendingImportBrews', value);
+
+        // Runtime: card/modal context
+        const getCurrentCardCoffeeState = () => getRuntime('currentCardCoffee');
+        const setCurrentCardCoffeeState = (value) => setRuntime('currentCardCoffee', value);
+        const getCurrentCoffeeCardIdState = () => getRuntime('currentCoffeeCardId');
+        const setCurrentCoffeeCardIdState = (value) => setRuntime('currentCoffeeCardId', value);
+        const getCurrentCardGraphDataState = () => getRuntime('currentCardGraphData');
+        const setCurrentCardGraphDataState = (value) => setRuntime('currentCardGraphData', value);
+        const getCurrentShareModeState = () => getRuntime('currentShareMode');
+        const setCurrentShareModeState = (value) => setRuntime('currentShareMode', value);
+
+        // Runtime: table preferences
+        const getColumnPreferencesState = () => getRuntime('columnPreferences');
+        const setColumnPreferencesState = (value) => setRuntime('columnPreferences', value);
         const dispatchBrewOpenForm = (event = null, options = {}) =>
             appCommands?.dispatch?.(
                 'brews.openForm',
                 { event, options },
                 { source: 'container.brewsOpenForm' }
             );
-        const isLegacyBrewFormEnabled = () => pinnedBrewsPreferences?.useLegacyBrewForm !== false;
+        const isLegacyBrewFormEnabled = () => getPinnedBrewsPreferencesState()?.useLegacyBrewForm !== false;
         const dataService = createDataService({
             db,
             collection,
@@ -142,7 +272,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
         });
         const brewsRepo = createBrewsRepo({
             dataService,
-            getCurrentUser: () => currentUser
+            getCurrentUser: () => getCurrentUserState()
         });
         const authService = createAuthService({
             auth,
@@ -154,7 +284,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             const formMount = document.getElementById('brewsFormMount');
             const formContainer = document.getElementById('formContainer');
             if (!formMount) return;
-            const shouldShowInline = currentView === 'mine' && isLegacyBrewFormEnabled();
+            const shouldShowInline = getCurrentViewState() === 'mine' && isLegacyBrewFormEnabled();
             const modal = document.getElementById('brewFormModal');
             const modalOpen = !!modal && !modal.classList.contains('hidden');
             formMount.classList.toggle('hidden', !shouldShowInline);
@@ -189,21 +319,21 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             hideBrewsTablePrefsModal
         } = createBrewsTableCoordinator({
             tableDeps: {
-                getCoffees: () => coffees,
-                getBeans: () => beans,
-                getCoffeeTypes: () => coffeeTypes,
-                getGasItems: () => gasItems,
-                getCurrentView: () => currentView,
-                getCurrentSort: () => currentSort,
-                setCurrentSort: (value) => { currentSort = value; },
-                getActiveFilters: () => activeFilters,
-                setActiveFilters: (value) => { activeFilters = value; },
-                getDisplayedBrewsCount: () => displayedBrewsCount,
-                setDisplayedBrewsCount: (value) => { displayedBrewsCount = value; },
+                getCoffees: () => getCoffeesState(),
+                getBeans: () => getBeansState(),
+                getCoffeeTypes: () => getCoffeeTypesState(),
+                getGasItems: () => getGasItemsState(),
+                getCurrentView: () => getCurrentViewState(),
+                getCurrentSort: () => getCurrentSortState(),
+                setCurrentSort: (value) => setCurrentSortState(value),
+                getActiveFilters: () => getActiveFiltersState(),
+                setActiveFilters: (value) => setActiveFiltersState(value),
+                getDisplayedBrewsCount: () => getDisplayedBrewsCountState(),
+                setDisplayedBrewsCount: (value) => setDisplayedBrewsCountState(value),
                 getBrewsPerPage: () => BREWS_PER_PAGE,
                 getColumnDefs: () => columnDefs,
-                getColumnPreferences: () => columnPreferences,
-                getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
+                getColumnPreferences: () => getColumnPreferencesState(),
+                getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
                 getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
                 getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
                 getStarDisplay,
@@ -219,8 +349,8 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             },
             tablePrefDeps: {
                 columnDefs,
-                getColumnPreferences: () => columnPreferences,
-                setColumnPreferences: (value) => { columnPreferences = value; }
+                getColumnPreferences: () => getColumnPreferencesState(),
+                setColumnPreferences: (value) => setColumnPreferencesState(value)
             }
         });
 
@@ -230,9 +360,9 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             updateBestOnlyToggleState,
             openPreferences
         } = createBrewsPreferencesModule({
-            getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
-            setPinnedBrewsPreferences: (value) => { pinnedBrewsPreferences = value; },
-            getCurrentUser: () => currentUser,
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
+            setPinnedBrewsPreferences: (value) => setPinnedBrewsPreferencesState(value),
+            getCurrentUser: () => getCurrentUserState(),
             dataService,
             applyAnimationClass: (...args) => applyAnimationClass(...args),
             renderTable: (...args) => renderTable(...args),
@@ -243,7 +373,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             onPinnedBrewsPreferencesChanged: () => {
                 applyBrewFormInlineVisibility?.();
                 refreshManualPinningVisibility?.();
-                const currentCard = currentCardCoffee;
+                const currentCard = getCurrentCardCoffeeState();
                 if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
             }
         });
@@ -256,11 +386,11 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             autoPinOpenBagsIfEnabled,
             autoUnpinClosedBagsIfEnabled
         } = createBrewsPinAutopinModule({
-            getCurrentUser: () => currentUser,
-            getBeans: () => beans,
-            getCoffees: () => coffees,
+            getCurrentUser: () => getCurrentUserState(),
+            getBeans: () => getBeansState(),
+            getCoffees: () => getCoffeesState(),
             getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
-            getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
             dataService
         });
 
@@ -289,7 +419,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
         } = createAiImportModule({
             BAG_AI_URL,
             imageCompression,
-            getCurrentUser: () => currentUser,
+            getCurrentUser: () => getCurrentUserState(),
             toggleForm: (...args) => toggleForm(...args),
             dataService,
             storageService,
@@ -305,16 +435,16 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             getDownloadURL,
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'ai-import' }),
-            getCoffeeTypes: () => coffeeTypes,
-            setCoffeeTypes: (value) => { coffeeTypes = value; },
+            getCoffeeTypes: () => getCoffeeTypesState(),
+            setCoffeeTypes: (value) => setCoffeeTypesState(value),
             openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
             enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args)
         });
 
         const { triggerAIProfile } = createStatsAiProfileModule({
             STATS_AI_URL,
-            getCurrentStatsData: () => currentStatsData,
-            getCurrentUser: () => currentUser
+            getCurrentStatsData: () => getCurrentStatsDataState(),
+            getCurrentUser: () => getCurrentUserState()
         });
         let refreshBrewGearSelectors = () => {};
 
@@ -330,28 +460,28 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
         } = createSessionAuthViewModule({
             authService,
             dataService,
-            getCurrentUser: () => currentUser,
-            setCurrentView: (value) => { currentView = value; },
+            getCurrentUser: () => getCurrentUserState(),
+            setCurrentView: (value) => setCurrentViewState(value),
             syncFriendViewSelectValues: (...args) => syncFriendViewSelectValues(...args),
-            getUnsubscribeData: () => unsubscribeData,
-            setUnsubscribeData: (value) => { unsubscribeData = value; },
-            getUnsubscribeBeans: () => unsubscribeBeans,
-            setUnsubscribeBeans: (value) => { unsubscribeBeans = value; },
-            getUnsubscribeCoffeeTypes: () => unsubscribeCoffeeTypes,
-            setUnsubscribeCoffeeTypes: (value) => { unsubscribeCoffeeTypes = value; },
-            getUnsubscribeGas: () => unsubscribeGas,
-            setUnsubscribeGas: (value) => { unsubscribeGas = value; },
-            getUnsubscribeNotifications: () => unsubscribeNotifications,
-            setUnsubscribeNotifications: (value) => { unsubscribeNotifications = value; },
-            setHasLoadedBrews: (value) => { hasLoadedBrews = value; },
-            setHasLoadedBeans: (value) => { hasLoadedBeans = value; },
+            getUnsubscribeData: () => getUnsubscribeDataState(),
+            setUnsubscribeData: (value) => setUnsubscribeDataState(value),
+            getUnsubscribeBeans: () => getUnsubscribeBeansState(),
+            setUnsubscribeBeans: (value) => setUnsubscribeBeansState(value),
+            getUnsubscribeCoffeeTypes: () => getUnsubscribeCoffeeTypesState(),
+            setUnsubscribeCoffeeTypes: (value) => setUnsubscribeCoffeeTypesState(value),
+            getUnsubscribeGas: () => getUnsubscribeGasState(),
+            setUnsubscribeGas: (value) => setUnsubscribeGasState(value),
+            getUnsubscribeNotifications: () => getUnsubscribeNotificationsState(),
+            setUnsubscribeNotifications: (value) => setUnsubscribeNotificationsState(value),
+            setHasLoadedBrews: (value) => setHasLoadedBrewsState(value),
+            setHasLoadedBeans: (value) => setHasLoadedBeansState(value),
             toggleForm: (...args) => toggleForm(...args),
-            getCurrentSort: () => currentSort,
-            setCoffees: (value) => { coffees = value; },
-            getCoffees: () => coffees,
-            setBeans: (value) => { beans = value; },
-            setCoffeeTypes: (value) => { coffeeTypes = value; },
-            setGasItems: (value) => { gasItems = value; },
+            getCurrentSort: () => getCurrentSortState(),
+            setCoffees: (value) => setCoffeesState(value),
+            getCoffees: () => getCoffeesState(),
+            setBeans: (value) => setBeansState(value),
+            setCoffeeTypes: (value) => setCoffeeTypesState(value),
+            setGasItems: (value) => setGasItemsState(value),
             renderPinnedTiles: (...args) => renderPinnedTiles(...args),
             renderTable: (...args) => renderTable(...args),
             updateAutocompleteLists: (...args) => updateAutocompleteLists(...args),
@@ -362,19 +492,19 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             renderCoffeeTypesTable: (...args) => renderCoffeeTypesTable(...args),
             renderGasTable: (...args) => renderGasTable(...args),
             getColumnPreferencesKey: () => columnPreferencesKey,
-            getColumnPreferences: () => columnPreferences,
+            getColumnPreferences: () => getColumnPreferencesState(),
             loadColumnPreferencesFromStorage: (...args) => loadColumnPreferencesFromStorage(...args),
             saveColumnPreferencesToStorage: (...args) => saveColumnPreferencesToStorage(...args),
-            getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
-            setPinnedBrewsPreferences: (value) => { pinnedBrewsPreferences = value; },
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
+            setPinnedBrewsPreferences: (value) => setPinnedBrewsPreferencesState(value),
             loadLegacyPinnedBrewsPreferences: (...args) => loadLegacyPinnedBrewsPreferences(...args),
             applyAnimationPreference: (...args) => applyAnimationPreference(...args),
-            setIsPublic: (value) => { isPublic = value; },
+            setIsPublic: (value) => setIsPublicState(value),
             updatePublicToggleUI: (...args) => updatePublicToggleUI(...args),
             getCoffeeScale: () => coffeeScale,
             refreshBrewGearSelectors: () => refreshBrewGearSelectors(),
-            getLastGalleryVisit: () => lastGalleryVisit,
-            setLastGalleryVisit: (value) => { lastGalleryVisit = value; },
+            getLastGalleryVisit: () => getLastGalleryVisitState(),
+            setLastGalleryVisit: (value) => setLastGalleryVisitState(value),
             applyBrewFormInlineVisibility: (...args) => applyBrewFormInlineVisibility(...args)
         });
 
@@ -416,18 +546,18 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             fillBeanDetails,
             updateAutocompleteLists
         } = createBrewFormLookupModule({
-            getBeans: () => beans,
-            getCoffeeTypes: () => coffeeTypes,
-            getCoffees: () => coffees,
+            getBeans: () => getBeansState(),
+            getCoffeeTypes: () => getCoffeeTypesState(),
+            getCoffees: () => getCoffeesState(),
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             updateCoffeeDetailsTitle: (...args) => updateCoffeeDetailsTitle(...args)
         });
 
         const { extractCoffeeTypesFromBeans } = createCoffeeTypesExtractModule({
-            getCurrentUser: () => currentUser,
-            getBeans: () => beans,
-            getCoffeeTypes: () => coffeeTypes,
-            setBeansState: (value) => { beans = value; },
+            getCurrentUser: () => getCurrentUserState(),
+            getBeans: () => getBeansState(),
+            getCoffeeTypes: () => getCoffeeTypesState(),
+            setBeansState: (value) => setBeansState(value),
             dataService
         });
 
@@ -464,7 +594,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
         }
         // --- Beans Management Functions ---
         const createBeanFromModal = async () => {
-            if (!currentUser) return alert("Please sign in.");
+            if (!getCurrentUserState()) return alert("Please sign in.");
             const nowIso = new Date().toISOString();
             const beanData = {
                 roaster: '',
@@ -487,9 +617,9 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             };
 
             try {
-                const ref = await addDoc(collection(db, 'users', currentUser.uid, 'beans'), beanData);
+                const ref = await addDoc(collection(db, 'users', getCurrentUserState().uid, 'beans'), beanData);
                 const newBean = { id: ref.id, ...beanData };
-                beans.push(newBean);
+                setBeansState([...getBeansState(), newBean]);
                 renderBeansTable();
                 await appCommands?.dispatch?.(
                     'pin.autoPinOpenBagsIfEnabled',
@@ -569,20 +699,20 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             imageCompression,
             appCommands,
             appEvents,
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCoffees: () => coffees,
-            getBeans: () => beans,
-            setBeansState: (value) => { beans = value; },
-            getCoffeeTypes: () => coffeeTypes,
-            getBeansSearch: () => beansSearch,
-            setBeansSearchState: (value) => { beansSearch = value; },
-            getBeansFilters: () => beansFilters,
-            setBeansFiltersState: (value) => { beansFilters = value; },
-            getHasLoadedBeans: () => hasLoadedBeans,
-            getHasLoadedBrews: () => hasLoadedBrews,
-            getCurrentBeanCardId: () => currentBeanCardId,
-            setCurrentBeanCardId: (value) => { currentBeanCardId = value; },
+            getCurrentUser: () => getCurrentUserState(),
+            getCurrentView: () => getCurrentViewState(),
+            getCoffees: () => getCoffeesState(),
+            getBeans: () => getBeansState(),
+            setBeansState: (value) => setBeansState(value),
+            getCoffeeTypes: () => getCoffeeTypesState(),
+            getBeansSearch: () => getBeansSearchState(),
+            setBeansSearchState: (value) => setBeansSearchRuntimeState(value),
+            getBeansFilters: () => getBeansFiltersState(),
+            setBeansFiltersState: (value) => setBeansFiltersRuntimeState(value),
+            getHasLoadedBeans: () => getHasLoadedBeansState(),
+            getHasLoadedBrews: () => getHasLoadedBrewsState(),
+            getCurrentBeanCardId: () => getCurrentBeanCardIdState(),
+            setCurrentBeanCardId: (value) => setCurrentBeanCardIdState(value),
             getRoastBadge,
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             getCoffeeTypeForBean: (...args) => getCoffeeTypeForBean(...args),
@@ -632,22 +762,22 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             storageService,
             appCommands,
             appEvents,
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCurrentCoffeeTypeId: () => currentCoffeeTypeId,
-            setCurrentCoffeeTypeId: (value) => { currentCoffeeTypeId = value; },
-            getCoffeeTypes: () => coffeeTypes,
-            setCoffeeTypesState: (value) => { coffeeTypes = value; },
-            getCoffeeTypesSearch: () => coffeeTypesSearch,
-            setCoffeeTypesSearchState: (value) => { coffeeTypesSearch = value; },
-            getCoffeeTypesFilters: () => coffeeTypesFilters,
-            setCoffeeTypesFiltersState: (value) => { coffeeTypesFilters = value; },
-            getCoffeeTypesSortKey: () => coffeeTypesSortKey,
-            setCoffeeTypesSortKeyState: (value) => { coffeeTypesSortKey = value; },
-            getCoffeeTypesSortDir: () => coffeeTypesSortDir,
-            setCoffeeTypesSortDirState: (value) => { coffeeTypesSortDir = value; },
-            getBeans: () => beans,
-            setBeansState: (value) => { beans = value; },
+            getCurrentUser: () => getCurrentUserState(),
+            getCurrentView: () => getCurrentViewState(),
+            getCurrentCoffeeTypeId: () => getCurrentCoffeeTypeIdState(),
+            setCurrentCoffeeTypeId: (value) => setCurrentCoffeeTypeIdState(value),
+            getCoffeeTypes: () => getCoffeeTypesState(),
+            setCoffeeTypesState: (value) => setCoffeeTypesState(value),
+            getCoffeeTypesSearch: () => getCoffeeTypesSearchState(),
+            setCoffeeTypesSearchState: (value) => setCoffeeTypesSearchRuntimeState(value),
+            getCoffeeTypesFilters: () => getCoffeeTypesFiltersState(),
+            setCoffeeTypesFiltersState: (value) => setCoffeeTypesFiltersRuntimeState(value),
+            getCoffeeTypesSortKey: () => getCoffeeTypesSortKeyState(),
+            setCoffeeTypesSortKeyState: (value) => setCoffeeTypesSortKeyRuntimeState(value),
+            getCoffeeTypesSortDir: () => getCoffeeTypesSortDirState(),
+            setCoffeeTypesSortDirState: (value) => setCoffeeTypesSortDirRuntimeState(value),
+            getBeans: () => getBeansState(),
+            setBeansState: (value) => setBeansState(value),
             getStarDisplay,
             openAppConfirm,
             updateCoffeeTypeSelectors,
@@ -701,22 +831,22 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             imageCompression,
             appCommands,
             appEvents,
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCurrentGasId: () => currentGasId,
-            setCurrentGasId: (value) => { currentGasId = value; },
-            getGasItems: () => gasItems,
-            setGasItemsState: (value) => { gasItems = value; },
-            getGasSearch: () => gasSearch,
-            setGasSearchState: (value) => { gasSearch = value; },
-            getGasFilters: () => gasFilters,
-            setGasFiltersState: (value) => { gasFilters = value; },
-            getGasSortKey: () => gasSortKey,
-            setGasSortKeyState: (value) => { gasSortKey = value; },
-            getGasSortDir: () => gasSortDir,
-            setGasSortDirState: (value) => { gasSortDir = value; },
-            getCoffees: () => coffees,
-            setCoffeesState: (value) => { coffees = value; },
+            getCurrentUser: () => getCurrentUserState(),
+            getCurrentView: () => getCurrentViewState(),
+            getCurrentGasId: () => getCurrentGasIdState(),
+            setCurrentGasId: (value) => setCurrentGasIdState(value),
+            getGasItems: () => getGasItemsState(),
+            setGasItemsState: (value) => setGasItemsState(value),
+            getGasSearch: () => getGasSearchState(),
+            setGasSearchState: (value) => setGasSearchRuntimeState(value),
+            getGasFilters: () => getGasFiltersState(),
+            setGasFiltersState: (value) => setGasFiltersRuntimeState(value),
+            getGasSortKey: () => getGasSortKeyState(),
+            setGasSortKeyState: (value) => setGasSortKeyRuntimeState(value),
+            getGasSortDir: () => getGasSortDirState(),
+            setGasSortDirState: (value) => setGasSortDirRuntimeState(value),
+            getCoffees: () => getCoffeesState(),
+            setCoffeesState: (value) => setCoffeesState(value),
             openAppConfirm,
             getRefreshBrewGearSelectors: () => refreshBrewGearSelectors
         });
@@ -737,8 +867,8 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             handleQuickEditRecipeInput
         } = createBrewFormUiModule({
             getScaData: () => scaData,
-            getScaState: () => scaState,
-            setScaState: (value) => { scaState = value; },
+            getScaState: () => getScaStateRuntime(),
+            setScaState: (value) => setScaStateRuntime(value),
             getRefreshManualPinningVisibility: () => refreshManualPinningVisibility,
             getCoffeeScale: () => coffeeScale
         });
@@ -758,14 +888,14 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             loadFollowersList
         } = createSocialCoordinator({
             dataService,
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            setCurrentView: (value) => { currentView = value; },
-            getFollowing: () => following,
-            setFollowingState: (value) => { following = value; },
-            setFollowersState: (value) => { followers = value; },
-            getIsPublic: () => isPublic,
-            setIsPublicState: (value) => { isPublic = value; },
+            getCurrentUser: () => getCurrentUserState(),
+            getCurrentView: () => getCurrentViewState(),
+            setCurrentView: (value) => setCurrentViewState(value),
+            getFollowing: () => getFollowingState(),
+            setFollowingState: (value) => setFollowingRuntimeState(value),
+            setFollowersState: (value) => setFollowersRuntimeState(value),
+            getIsPublic: () => getIsPublicState(),
+            setIsPublicState: (value) => setIsPublicState(value),
             openAppConfirm,
             changeView
         });
@@ -781,19 +911,19 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             renderGalleryGrid,
             deletePhoto
         } = createGalleryModule({
-            getCurrentUser: () => currentUser,
-            getCurrentUploadCoffeeId: () => currentUploadCoffeeId,
-            setCurrentUploadCoffeeId: (value) => { currentUploadCoffeeId = value; },
-            getLastGalleryVisit: () => lastGalleryVisit,
-            setLastGalleryVisit: (value) => { lastGalleryVisit = value; },
-            getCurrentGalleryMode: () => currentGalleryMode,
-            setCurrentGalleryMode: (value) => { currentGalleryMode = value; },
-            getLastGalleryDoc: () => lastGalleryDoc,
-            setLastGalleryDoc: (value) => { lastGalleryDoc = value; },
-            getIsGalleryLoading: () => isGalleryLoading,
-            setIsGalleryLoading: (value) => { isGalleryLoading = value; },
-            getFollowing: () => following,
-            getCoffees: () => coffees,
+            getCurrentUser: () => getCurrentUserState(),
+            getCurrentUploadCoffeeId: () => getCurrentUploadCoffeeIdState(),
+            setCurrentUploadCoffeeId: (value) => setCurrentUploadCoffeeIdState(value),
+            getLastGalleryVisit: () => getLastGalleryVisitState(),
+            setLastGalleryVisit: (value) => setLastGalleryVisitState(value),
+            getCurrentGalleryMode: () => getCurrentGalleryModeState(),
+            setCurrentGalleryMode: (value) => setCurrentGalleryModeState(value),
+            getLastGalleryDoc: () => getLastGalleryDocState(),
+            setLastGalleryDoc: (value) => setLastGalleryDocState(value),
+            getIsGalleryLoading: () => getIsGalleryLoadingState(),
+            setIsGalleryLoading: (value) => setIsGalleryLoadingState(value),
+            getFollowing: () => getFollowingState(),
+            getCoffees: () => getCoffeesState(),
             dataService,
             storageService,
             imageCompression,
@@ -822,18 +952,18 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             updateBeanMeter,
             renderCharts
         } = createStatsModule({
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getFollowing: () => following,
+            getCurrentUser: () => getCurrentUserState(),
+            getCurrentView: () => getCurrentViewState(),
+            getFollowing: () => getFollowingState(),
             dataService,
             getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
             getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'stats' }),
-            setCurrentStatsData: (value) => { currentStatsData = value; },
-            getCurrentStatsData: () => currentStatsData,
-            setCurrentBeanMeterPeriod: (value) => { currentBeanMeterPeriod = value; },
-            getCurrentBeanMeterPeriod: () => currentBeanMeterPeriod,
+            setCurrentStatsData: (value) => setCurrentStatsDataState(value),
+            getCurrentStatsData: () => getCurrentStatsDataState(),
+            setCurrentBeanMeterPeriod: (value) => setCurrentBeanMeterPeriodState(value),
+            getCurrentBeanMeterPeriod: () => getCurrentBeanMeterPeriodState(),
             Chart
         });
 
@@ -867,15 +997,15 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             exportCoffeesAsCSV,
             exportCoffeesAsJSON
         } = createImportExportModule({
-            getCurrentUser: () => currentUser,
-            getPendingImportBrews: () => pendingImportBrews,
-            setPendingImportBrews: (value) => { pendingImportBrews = value; },
+            getCurrentUser: () => getCurrentUserState(),
+            getPendingImportBrews: () => getPendingImportBrewsState(),
+            setPendingImportBrews: (value) => setPendingImportBrewsState(value),
             parseBeanconquerorCSV,
             mapBeanconquerorBrews,
             dataService,
             getFilteredCoffees: () => getFilteredCoffees(),
-            getBeans: () => beans,
-            getCoffeeTypes: () => coffeeTypes,
+            getBeans: () => getBeansState(),
+            getCoffeeTypes: () => getCoffeeTypesState(),
             getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
             getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
             openAppConfirm
@@ -883,8 +1013,8 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
 
         const { getCoffeeTypeForBrew, getCoffeeTypeDisplay, getCoffeeTypeForBean, getBeanCoffeeTypeDisplay } =
             createCoffeeDisplayModule({
-                getBeans: () => beans,
-                getCoffeeTypes: () => coffeeTypes
+                getBeans: () => getBeansState(),
+                getCoffeeTypes: () => getCoffeeTypesState()
             });
 
         const { exportCSV, handleRecipeInput } = createBrewCsvRecipeModule({
@@ -906,14 +1036,14 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             updateCoffeeCardActionMenu,
             refreshQuickEditGearFieldVisibility
         } = createBrewsCardActionsModule({
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCurrentCoffeeCardId: () => currentCoffeeCardId,
-            getCurrentCoffeeCard: () => currentCardCoffee,
-            getCoffees: () => coffees,
-            getBeans: () => beans,
-            getGasItems: () => gasItems,
-            getCoffeeTypes: () => coffeeTypes,
+            getCurrentUser: () => getCurrentUserState(),
+            getCurrentView: () => getCurrentViewState(),
+            getCurrentCoffeeCardId: () => getCurrentCoffeeCardIdState(),
+            getCurrentCoffeeCard: () => getCurrentCardCoffeeState(),
+            getCoffees: () => getCoffeesState(),
+            getBeans: () => getBeansState(),
+            getGasItems: () => getGasItemsState(),
+            getCoffeeTypes: () => getCoffeeTypesState(),
             brewsRepo,
             parseNum,
             handleQuickEditRecipeInput: (...args) => handleQuickEditRecipeInput(...args),
@@ -922,7 +1052,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             closeCoffeeCard: (...args) => closeCoffeeCard(...args),
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
-            getPinnedBrewsPreferences: () => pinnedBrewsPreferences
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState()
         });
 
         const { resetCardPhotoState, triggerCardPhoto, handleCardPhoto } = createBrewsCardPhotoModule();
@@ -936,21 +1066,24 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             navigateCoffeeCard,
             closeCoffeeCard
         } = createBrewsCardUiModule({
-            getCurrentView: () => currentView,
-            getCoffees: () => coffees,
-            getBeans: () => beans,
-            getFilteredCoffees: () => getFilteredCoffees(),
-            getDisplayedBrewsCount: () => displayedBrewsCount,
+            getCurrentView: () => getCurrentViewState(),
+            getCoffees: () => getCoffeesState(),
+            getBeans: () => getBeansState(),
+            getBrewTableOrderIds: () =>
+                selectVisibleBrewOrderIds({
+                    filteredSortedBrews: getFilteredCoffees(),
+                    displayedCount: getDisplayedBrewsCountState()
+                }),
             getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
-            getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
             getStarDisplay,
             formatTime,
             getTempBadge: (...args) => getTempBadge(...args),
-            setCurrentCardCoffee: (value) => { currentCardCoffee = value; },
-            getCurrentCoffeeCardId: () => currentCoffeeCardId,
-            setCurrentCoffeeCardId: (value) => { currentCoffeeCardId = value; },
-            setCurrentCardGraphData: (value) => { currentCardGraphData = value; },
+            setCurrentCardCoffee: (value) => setCurrentCardCoffeeState(value),
+            getCurrentCoffeeCardId: () => getCurrentCoffeeCardIdState(),
+            setCurrentCoffeeCardId: (value) => setCurrentCoffeeCardIdState(value),
+            setCurrentCardGraphData: (value) => setCurrentCardGraphDataState(value),
             updateCoffeeCardActionMenu: (...args) => updateCoffeeCardActionMenu(...args),
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-ui' }),
@@ -959,11 +1092,11 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             toggleCardMode: (...args) => toggleCardMode(...args)
         });
         const { toggleCardMode, shareCoffeeCard, generateShareImage } = createBrewsCardShareModule({
-            getCoffees: () => coffees,
-            setCurrentCoffeeCardId: (value) => { currentCoffeeCardId = value; },
-            getCurrentCardCoffee: () => currentCardCoffee,
+            getCoffees: () => getCoffeesState(),
+            setCurrentCoffeeCardId: (value) => setCurrentCoffeeCardIdState(value),
+            getCurrentCardCoffee: () => getCurrentCardCoffeeState(),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
-            setCurrentShareMode: (value) => { currentShareMode = value; },
+            setCurrentShareMode: (value) => setCurrentShareModeState(value),
             cancelBrewQuickEditMode: (...args) => cancelBrewQuickEditMode(...args),
             resetCardPhotoState: (...args) => resetCardPhotoState(...args),
             populateCardData: (...args) => populateCardData(...args),
@@ -972,9 +1105,9 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
         });
 
         const { openCardGraphModal, closeCardGraphModal, updateCoffeeGraphNav, navigateCoffeeCardFromGraph } = createBrewsCardGraphModule({
-            getCurrentCardGraphData: () => currentCardGraphData,
-            getCurrentCardCoffee: () => currentCardCoffee,
-            getCurrentCoffeeCardId: () => currentCoffeeCardId,
+            getCurrentCardGraphData: () => getCurrentCardGraphDataState(),
+            getCurrentCardCoffee: () => getCurrentCardCoffeeState(),
+            getCurrentCoffeeCardId: () => getCurrentCoffeeCardIdState(),
             getBrewTableOrder: (...args) => getBrewTableOrder(...args),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
             dispatchCommand: (commandName, payload) =>
@@ -1006,18 +1139,18 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
                 setRating,
                 setNotesMode,
                 getCoffeeScale: () => coffeeScale,
-                getGasItems: () => gasItems,
+                getGasItems: () => getGasItemsState(),
                 fillBeanDetails
             },
             actionsDeps: {
-                getCurrentUser: () => currentUser,
-                getCurrentView: () => currentView,
-                getCurrentCoffeeCardId: () => currentCoffeeCardId,
-                getCurrentCardCoffee: () => currentCardCoffee,
-                getCoffees: () => coffees,
-                getBeans: () => beans,
-                getCoffeeTypes: () => coffeeTypes,
-                getGasItems: () => gasItems,
+                getCurrentUser: () => getCurrentUserState(),
+                getCurrentView: () => getCurrentViewState(),
+                getCurrentCoffeeCardId: () => getCurrentCoffeeCardIdState(),
+                getCurrentCardCoffee: () => getCurrentCardCoffeeState(),
+                getCoffees: () => getCoffeesState(),
+                getBeans: () => getBeansState(),
+                getCoffeeTypes: () => getCoffeeTypesState(),
+                getGasItems: () => getGasItemsState(),
                 getBeanCoffeeTypeDisplay,
                 brewsRepo,
                 openAppConfirm,
@@ -1034,7 +1167,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
                 handleQuickEditRecipeInput,
                 dispatchCommand: (commandName, payload) =>
                     appCommands?.dispatch?.(commandName, payload, { source: 'brews.actions' }),
-                getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
+                getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
                 getFirstBrewDateForBean,
                 uploadPendingCoffeeTypeImage,
                 clearPendingAIBeanImageFile,
@@ -1052,14 +1185,14 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             appEvents,
             autoPinOpenBagsIfEnabled,
             autoUnpinClosedBagsIfEnabled,
-            getCurrentUser: () => currentUser,
-            getCurrentView: () => currentView,
-            getCurrentSort: () => currentSort,
-            getActiveFilters: () => activeFilters,
-            getCoffees: () => coffees,
-            setCoffees: (value) => { coffees = value; },
-            getBeans: () => beans,
-            getPinnedBrewsPreferences: () => pinnedBrewsPreferences,
+            getCurrentUser: () => getCurrentUserState(),
+            getCurrentView: () => getCurrentViewState(),
+            getCurrentSort: () => getCurrentSortState(),
+            getActiveFilters: () => getActiveFiltersState(),
+            getCoffees: () => getCoffeesState(),
+            setCoffees: (value) => setCoffeesState(value),
+            getBeans: () => getBeansState(),
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
             getBeanCalculatedStock,
             getCoffeeTypeForBrew,
             getCoffeeTypeDisplay
@@ -1131,10 +1264,13 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             clearNotificationSubscription,
             clearViewSubscriptions
         });
-        const handleAuthStateChanged = async (user) => {
-            currentUser = user;
-            await authStateChangedHandler(user);
-        };
+        const { handleAuthStateChanged, bindGlobalSearchInput } = createAppLifecycleModule({
+            setCurrentUser: (value) => setCurrentUserState(value),
+            authStateChangedHandler,
+            setDisplayedBrewsCount: (value) => setDisplayedBrewsCountState(value),
+            renderTable: (...args) => renderTable(...args),
+            brewsPerPage: BREWS_PER_PAGE
+        });
 
         const sendEmailLinkActivation = () => {
             if (typeof emailLinkAuth.sendEmailLinkActivation === 'function') {
@@ -1185,15 +1321,15 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
 
         const { fillLegacyGrinderFromGear, migrateGrinderToGear } = createGearMigrationModule({
             dataService,
-            getCurrentUser: () => currentUser,
-            getGasItems: () => gasItems,
-            getCoffees: () => coffees,
-            setCoffees: (value) => { coffees = value; },
+            getCurrentUser: () => getCurrentUserState(),
+            getGasItems: () => getGasItemsState(),
+            getCoffees: () => getCoffeesState(),
+            setCoffees: (value) => setCoffeesState(value),
             refreshBrewGearSelectors: () => refreshBrewGearSelectors()
         });
 
         const { openBrewFormModal, closeBrewFormModal, discardBrewFormModal, submitBrewFormModal } = createBrewsFormModalModule({
-            getCurrentView: () => currentView,
+            getCurrentView: () => getCurrentViewState(),
             changeView,
             resetFormState,
             toggleForm,
@@ -1207,7 +1343,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             changeView,
             resetFormState,
             toggleForm,
-            getCurrentView: () => currentView
+            getCurrentView: () => getCurrentViewState()
         });
 
         registerBrewsFilterCommands({
@@ -1218,7 +1354,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             renderTable,
             renderActiveFilters,
             getBrewsPerPage: () => BREWS_PER_PAGE,
-            setDisplayedBrewsCount: (value) => { displayedBrewsCount = value; }
+            setDisplayedBrewsCount: (value) => setDisplayedBrewsCountState(value)
         });
         createBrewsController({
             appCommands,
@@ -1230,8 +1366,9 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
                 if (!coffeeTypeId) return;
                 clearSearch();
                 clearAllFilters();
-                activeFilters.coffeeType = coffeeTypeId;
-                displayedBrewsCount = BREWS_PER_PAGE;
+                const nextFilters = { ...(getActiveFiltersState() || {}), coffeeType: coffeeTypeId };
+                setActiveFiltersState(nextFilters);
+                setDisplayedBrewsCountState(BREWS_PER_PAGE);
                 renderTable();
                 renderActiveFilters();
             },
@@ -1239,14 +1376,15 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
                 if (!beanId) return;
                 clearSearch();
                 clearAllFilters();
-                activeFilters.bean = beanId;
-                displayedBrewsCount = BREWS_PER_PAGE;
+                const nextFilters = { ...(getActiveFiltersState() || {}), bean: beanId };
+                setActiveFiltersState(nextFilters);
+                setDisplayedBrewsCountState(BREWS_PER_PAGE);
                 renderTable();
                 renderActiveFilters();
             },
             openFormForBean: (beanId, event = null) => {
                 if (!beanId) return;
-                if (currentView !== 'mine') changeView('mine');
+                if (getCurrentViewState() !== 'mine') changeView('mine');
                 const select = document.getElementById('savedBeanSelect');
                 if (select) select.value = beanId;
                 fillBeanDetails(beanId);
@@ -1741,8 +1879,7 @@ export const createAppContainerModules = ({ appCommands = null, appEvents = null
             }
         };
 
-        const searchInput = document.getElementById('globalSearch'); 
-        if(searchInput) { searchInput.addEventListener('input', (e) => { const clearBtn = document.getElementById('searchClearBtn'); if(e.target.value.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden'); displayedBrewsCount = BREWS_PER_PAGE; renderTable(); }); }
+        bindGlobalSearchInput();
 
 
         return { handleAuthStateChanged, actions, featureActions, appCommands, appEvents };

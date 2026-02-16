@@ -1,15 +1,9 @@
 import { createCoffeesVmModule } from './coffees.vm.js';
-
-const DEFAULT_COFFEE_TYPES_FILTERS = {
-    roaster: null,
-    farmer: null,
-    origin: null,
-    processing: null,
-    variety: null,
-    roast: null
-};
-
-const createDefaultFilters = () => ({ ...DEFAULT_COFFEE_TYPES_FILTERS });
+import {
+    createDefaultCoffeeTypeFilters,
+    selectCoffeeTypesQuickFilterValues,
+    selectFilteredSortedCoffeeTypes
+} from '../../app/stores/coffee-types-table.selectors.js';
 
 export const createCoffeeTypesTableModule = ({
     getCoffeeTypes,
@@ -80,13 +74,10 @@ export const createCoffeeTypesTableModule = ({
         const mainDropdown = document.getElementById('coffeeTypesQuickFilterDropdown');
         if (!valuesDropdown || !mainDropdown) return;
 
-        const valueSource = getCoffeeTypes()
-            .map((type) => {
-                if (key === 'roast') return type.roast || type.roastType;
-                return type[key];
-            })
-            .filter(Boolean);
-        const uniqueVals = [...new Set(valueSource)].sort();
+        const uniqueVals = selectCoffeeTypesQuickFilterValues({
+            key,
+            coffeeTypes: getCoffeeTypes()
+        });
 
         if (!uniqueVals.length) {
             valuesDropdown.innerHTML = '<div class="px-4 py-3 text-sm text-coffee-400 dark:text-[#78716c] italic">No values available</div>';
@@ -125,7 +116,7 @@ export const createCoffeeTypesTableModule = ({
     };
 
     const clearCoffeeTypesFilters = () => {
-        setCoffeeTypesFiltersState(createDefaultFilters());
+        setCoffeeTypesFiltersState(createDefaultCoffeeTypeFilters());
         renderCoffeeTypesActiveFilters();
         renderCoffeeTypesTable();
     };
@@ -180,70 +171,12 @@ export const createCoffeeTypesTableModule = ({
     };
 
     const getFilteredSortedCoffeeTypes = () => {
-        const normalizeText = (value) => (value || '').toString().toLowerCase().trim();
-        const searchValue = normalizeText(getCoffeeTypesSearch());
-        const hasSearch = searchValue.length > 0;
-        const uniqueCoffeeTypes = [
-            ...new Map(getCoffeeTypes().map((type, idx) => [type?.id || `__idx_${idx}`, type])).values()
-        ];
-        const filters = getCoffeeTypesFilters();
-
-        const matchesQuickFilters = (type) => {
-            return Object.entries(filters).every(([key, value]) => {
-                if (!value) return true;
-                const targetValue = key === 'roast' ? (type.roast || type.roastType || '') : (type[key] || '');
-                return normalizeText(targetValue) === normalizeText(value);
-            });
-        };
-
-        const filteredTypes = uniqueCoffeeTypes.filter((type) => {
-            const roaster = normalizeText(type.roaster);
-            const farmer = normalizeText(type.farmer);
-            const origin = normalizeText(type.origin);
-            const processing = normalizeText(type.processing);
-            const variety = normalizeText(type.variety);
-            const roast = normalizeText(type.roast || type.roastType);
-
-            if (!matchesQuickFilters(type)) return false;
-            if (!hasSearch) return true;
-            const searchHaystack = [roaster, farmer, origin, processing, variety, roast].join(' ');
-            return searchHaystack.includes(searchValue);
-        });
-
-        const getSortValue = (type, key) => {
-            if (key === 'roast') return type.roast || type.roastType || '';
-            if (key === 'rating') return parseInt(type.rating, 10) || 0;
-            if (key === 'createdAt') return type.createdAt || '';
-            return type[key] || '';
-        };
-
-        return [...filteredTypes].sort((a, b) => {
-            const dir = getCoffeeTypesSortDir() === 'asc' ? 1 : -1;
-            const sortKey = getCoffeeTypesSortKey();
-            const aVal = getSortValue(a, sortKey);
-            const bVal = getSortValue(b, sortKey);
-            let primary;
-
-            if (sortKey === 'rating') {
-                primary = (Number(aVal) || 0) - (Number(bVal) || 0);
-            } else {
-                primary = normalizeText(aVal).localeCompare(normalizeText(bVal));
-            }
-
-            if (primary === 0) {
-                const aRoaster = normalizeText(a.roaster);
-                const bRoaster = normalizeText(b.roaster);
-                const aFarmer = normalizeText(a.farmer);
-                const bFarmer = normalizeText(b.farmer);
-                if (sortKey === 'roaster') {
-                    primary = aFarmer.localeCompare(bFarmer);
-                } else if (sortKey === 'farmer') {
-                    primary = aRoaster.localeCompare(bRoaster);
-                } else {
-                    primary = aRoaster.localeCompare(bRoaster) || aFarmer.localeCompare(bFarmer);
-                }
-            }
-            return primary * dir;
+        return selectFilteredSortedCoffeeTypes({
+            coffeeTypes: getCoffeeTypes(),
+            searchValue: getCoffeeTypesSearch(),
+            filters: getCoffeeTypesFilters(),
+            sortKey: getCoffeeTypesSortKey(),
+            sortDir: getCoffeeTypesSortDir()
         });
     };
 
@@ -346,6 +279,6 @@ export const createCoffeeTypesTableModule = ({
         updateCoffeeTypesSortIcons,
         getFilteredSortedCoffeeTypes,
         renderCoffeeTypesTable,
-        createDefaultCoffeeTypesFilters: createDefaultFilters
+        createDefaultCoffeeTypesFilters: createDefaultCoffeeTypeFilters
     };
 };

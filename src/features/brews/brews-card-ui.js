@@ -4,8 +4,7 @@ export const createBrewsCardUiModule = ({
     getCurrentView,
     getCoffees,
     getBeans,
-    getFilteredCoffees,
-    getDisplayedBrewsCount,
+    getBrewTableOrderIds,
     getCoffeeTypeForBrew,
     getCoffeeTypeDisplay,
     getPinnedBrewsPreferences,
@@ -162,11 +161,7 @@ export const createBrewsCardUiModule = ({
         }
     };
 
-    const getBrewTableOrder = () => {
-        const filteredCoffees = getFilteredCoffees();
-        const displayLimit = Math.min(getDisplayedBrewsCount(), filteredCoffees.length);
-        return filteredCoffees.slice(0, displayLimit).map((c) => c.id);
-    };
+    const getBrewTableOrder = () => getBrewTableOrderIds();
 
     const updateCoffeeCardNav = () => {
         const order = getCardOrder();

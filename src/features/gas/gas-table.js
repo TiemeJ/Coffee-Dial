@@ -1,33 +1,10 @@
-const DEFAULT_GAS_FILTERS = {
-    archived: null
-};
-
-const createDefaultFilters = () => ({ ...DEFAULT_GAS_FILTERS });
-
-const normalizeText = (value) => (value || '').toString().toLowerCase().trim();
-
-const formatCurrency = (value) => {
-    const num = Number(value);
-    if (!Number.isFinite(num)) return '-';
-    return `EUR ${num.toFixed(2)}`;
-};
-
-const parsePrice = (value) => {
-    const num = Number(value);
-    return Number.isFinite(num) ? num : null;
-};
-
-const GAS_TYPE_OPTIONS = ['Coffee maker', 'Grinder', 'Other'];
-const GAS_METHOD_OPTIONS = ['Espresso', 'V60', 'Hario Switch', 'Clever Dripper', 'Aeropress', 'OXO Rapid Brewer', 'French Press', 'Chemex'];
-const normalizeType = (type) => (GAS_TYPE_OPTIONS.includes(type) ? type : 'Other');
-const normalizeMethods = (methods) => {
-    if (!Array.isArray(methods)) return [];
-    return [...new Set(methods.filter((method) => GAS_METHOD_OPTIONS.includes(method)))];
-};
-const getMethodsLabel = (methods) => {
-    const list = normalizeMethods(methods);
-    return list.length ? list.join(', ') : '-';
-};
+import {
+    createDefaultGasFilters,
+    getGasMethodsLabel,
+    normalizeGasType,
+    selectFilteredSortedGasItems,
+    selectGasQuickFilterValues
+} from '../../app/stores/gas-table.selectors.js';
 
 export const createGasTableModule = ({
     getGasItems,
@@ -106,19 +83,7 @@ export const createGasTableModule = ({
         if (!valuesDropdown || !mainDropdown) return;
 
         const filters = getGasFilters();
-        let values = [];
-        if (key === 'archived') {
-            values = [
-                { value: 'active', label: 'Active' },
-                { value: 'archived', label: 'Archived' }
-            ];
-        } else if (key === 'type') {
-            values = [...new Set(getGasItems().map((item) => normalizeType(item.type)))].sort()
-                .map((value) => ({ value, label: value }));
-        } else if (key === 'method') {
-            values = [...new Set(getGasItems().flatMap((item) => normalizeMethods(item.methods)))].sort()
-                .map((value) => ({ value, label: value }));
-        }
+        const values = selectGasQuickFilterValues({ key, gasItems: getGasItems() });
 
         let html = `<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] flex items-center justify-between">
             <span>${label}</span>
@@ -151,7 +116,7 @@ export const createGasTableModule = ({
     };
 
     const clearGasFilters = () => {
-        setGasFiltersState(createDefaultFilters());
+        setGasFiltersState(createDefaultGasFilters());
         renderGasActiveFilters();
         renderGasTable();
     };
@@ -210,51 +175,12 @@ export const createGasTableModule = ({
     };
 
     const getFilteredSortedGasItems = () => {
-        const searchValue = normalizeText(getGasSearch());
-        const hasSearch = searchValue.length > 0;
-        const filters = getGasFilters();
-
-        const filtered = getGasItems().filter((item) => {
-            const methods = normalizeMethods(item.methods);
-            const isArchived = !!item.archived;
-            if (filters.archived === 'archived' && !isArchived) return false;
-            if (filters.archived === 'active' && isArchived) return false;
-            if (filters.type && normalizeType(item.type) !== filters.type) return false;
-            if (filters.method && !methods.includes(filters.method)) return false;
-            if (!hasSearch) return true;
-            const haystack = [item.name, normalizeType(item.type), methods.join(' ')].map(normalizeText).join(' ');
-            return haystack.includes(searchValue);
-        });
-
-        const getSortValue = (item, key) => {
-            if (key === 'price') return parsePrice(item.price);
-            if (key === 'type') return normalizeType(item.type);
-            if (key === 'methods') return normalizeMethods(item.methods).join(', ');
-            if (key === 'purchasedDate') return item.purchasedDate || '';
-            return item.name || '';
-        };
-
-        return [...filtered].sort((a, b) => {
-            const dir = getGasSortDir() === 'asc' ? 1 : -1;
-            const sortKey = getGasSortKey();
-            const aVal = getSortValue(a, sortKey);
-            const bVal = getSortValue(b, sortKey);
-            let primary = 0;
-
-            if (sortKey === 'price') {
-                const aNum = Number(aVal);
-                const bNum = Number(bVal);
-                primary = (Number.isFinite(aNum) ? aNum : -Infinity) - (Number.isFinite(bNum) ? bNum : -Infinity);
-            } else if (sortKey === 'purchasedDate') {
-                primary = normalizeText(aVal).localeCompare(normalizeText(bVal));
-            } else {
-                primary = normalizeText(aVal).localeCompare(normalizeText(bVal));
-            }
-
-            if (primary === 0) {
-                primary = normalizeText(a.name).localeCompare(normalizeText(b.name));
-            }
-            return primary * dir;
+        return selectFilteredSortedGasItems({
+            gasItems: getGasItems(),
+            searchValue: getGasSearch(),
+            filters: getGasFilters(),
+            sortKey: getGasSortKey(),
+            sortDir: getGasSortDir()
         });
     };
 
@@ -293,8 +219,8 @@ export const createGasTableModule = ({
             row.ondblclick = (event) => dispatchCommand('gas.openCard', { id: item.id, event });
             row.innerHTML = `
                 <td class="px-4 py-3 font-semibold">${item.name || '-'}</td>
-                <td class="px-4 py-3">${normalizeType(item.type)}</td>
-                <td class="px-4 py-3 text-xs">${getMethodsLabel(item.methods)}</td>
+                <td class="px-4 py-3">${normalizeGasType(item.type)}</td>
+                <td class="px-4 py-3 text-xs">${getGasMethodsLabel(item.methods)}</td>
                 <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${purchasedDateLabel}</td>
                 <td class="px-4 py-3 text-center">
                     <div class="relative inline-block">
@@ -354,6 +280,6 @@ export const createGasTableModule = ({
         updateGasSortIcons,
         getFilteredSortedGasItems,
         renderGasTable,
-        createDefaultGasFilters: createDefaultFilters
+        createDefaultGasFilters
     };
 };

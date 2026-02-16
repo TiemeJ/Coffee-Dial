@@ -60,13 +60,11 @@ export const createBeansCardUiModule = ({
         }
     };
 
-    const getBeanCardOrder = () =>
-        Array.isArray(navigationOrderOverride) && navigationOrderOverride.length
-            ? navigationOrderOverride
-            : getBeanTableOrder();
-
     const updateBeanCardNav = () => {
-        const order = getBeanCardOrder();
+        const order =
+            Array.isArray(navigationOrderOverride) && navigationOrderOverride.length
+                ? navigationOrderOverride
+                : getBeanTableOrder();
         const idx = order.indexOf(getCurrentBeanCardId());
         const prevBtn = document.getElementById('beanCardPrevBtn');
         const nextBtn = document.getElementById('beanCardNextBtn');
@@ -272,7 +270,10 @@ export const createBeansCardUiModule = ({
     };
 
     const navigateBeanCard = (direction) => {
-        const order = getBeanCardOrder();
+        const order =
+            Array.isArray(navigationOrderOverride) && navigationOrderOverride.length
+                ? navigationOrderOverride
+                : getBeanTableOrder();
         const idx = order.indexOf(getCurrentBeanCardId());
         const nextIdx = idx + direction;
         if (nextIdx < 0 || nextIdx >= order.length) return;

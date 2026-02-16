@@ -8,6 +8,7 @@ import { createBeansCardActionsModule } from '../../features/beans/beans-card-ac
 import { createBeansCardFormModule } from '../../features/beans/beans-card-form.js';
 import { createBeansCardPhotoModule } from '../../features/beans/beans-card-photo.js';
 import { createBeansCardUiModule } from '../../features/beans/beans-card-ui.js';
+import { selectBeanTableOrderIds } from '../stores/beans-table.selectors.js';
 
 export const createBeansCoordinator = ({
     dataService,
@@ -102,20 +103,6 @@ export const createBeansCoordinator = ({
         showAutoArchiveToast: (...args) => showAutoArchiveToast(...args)
     });
 
-    const getBeanTableOrder = () => {
-        const beansWithStock = getBeans().map((bean) => ({ ...bean, calculatedStock: getBeanCalculatedStock(bean) }));
-        const inStockBeans = beansWithStock
-            .filter((b) => !b.archived && !b.frozen && b.calculatedStock !== null && b.calculatedStock > 0)
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-        const frozenBeans = beansWithStock
-            .filter((b) => !b.archived && b.frozen)
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-        const otherBeans = beansWithStock
-            .filter((b) => b.archived || (!b.frozen && (b.calculatedStock === null || b.calculatedStock <= 0)))
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-        return [...inStockBeans, ...frozenBeans, ...otherBeans].map((b) => b.id);
-    };
-
     const { showBrewsForBean, showCoffeeForBean, openBrewWithBean } = createBeansCardActionsModule({
         getCurrentView: () => getCurrentView(),
         getCurrentBeanCardId: () => getCurrentBeanCardId(),
@@ -149,7 +136,11 @@ export const createBeansCoordinator = ({
         setCurrentBeanCardId: (value) => setCurrentBeanCardId(value),
         getBeanCalculatedStock: (...args) => getBeanCalculatedStock(...args),
         getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
-        getBeanTableOrder: (...args) => getBeanTableOrder(...args),
+        getBeanTableOrder: () =>
+            selectBeanTableOrderIds({
+                beans: getBeans(),
+                getBeanCalculatedStock
+            }),
         openBrewWithBean: (...args) => openBrewWithBean(...args),
         deleteBean: (...args) => deleteBean(...args),
         showBrewsForBean: (...args) => showBrewsForBean(...args),
