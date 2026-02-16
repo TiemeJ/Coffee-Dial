@@ -86,6 +86,6 @@ export const createInitialAppState = () => {
         beansSearch: '',
         beansFilters: { coffeeType: null },
         currentSort: { key: null, direction: 'asc' },
-        activeFilters: { bean: null, coffeeType: null, gear: null, method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null }
+        activeFilters: { bean: null, coffeeType: null, gear: null, hasGraph: null, method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, drink: null, grinder: null }
     };
 };

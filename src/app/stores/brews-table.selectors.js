@@ -2,6 +2,7 @@ export const DEFAULT_ACTIVE_FILTERS = {
     bean: null,
     coffeeType: null,
     gear: null,
+    hasGraph: null,
     method: null,
     temp: null,
     roastType: null,
@@ -32,6 +33,9 @@ export const selectBrewsUniqueValuesForKey = ({ coffees = [], key }) => {
 };
 
 export const selectBrewsQuickFilterValues = ({ key, coffees = [], beans = [], coffeeTypes = [], gasItems = [], formatBeanOpenedDate }) => {
+    if (key === 'hasGraph') {
+        return ['Has graph'];
+    }
     if (key === 'bean') {
         return beans.map((bean) => {
             const opened = formatBeanOpenedDate(bean.openedDate);
@@ -63,6 +67,13 @@ export const selectBrewsQuickFilterValues = ({ key, coffees = [], beans = [], co
     }
     return selectBrewsUniqueValuesForKey({ coffees, key });
 };
+
+const hasBrewGraphData = (brew) =>
+    !!(
+        (brew?.scaleCapture && Array.isArray(brew.scaleCapture.samples) && brew.scaleCapture.samples.length) ||
+        (brew?.scaleFlowCapture && Array.isArray(brew.scaleFlowCapture.samples) && brew.scaleFlowCapture.samples.length) ||
+        (brew?.scaleRawCapture && Array.isArray(brew.scaleRawCapture.samples) && brew.scaleRawCapture.samples.length)
+    );
 
 export const selectFilteredSortedBrews = ({
     coffees = [],
@@ -118,10 +129,11 @@ export const selectFilteredSortedBrews = ({
         const dr = !activeFilters.drink || brew.drink === activeFilters.drink;
         const gri = !activeFilters.grinder || brew.grinder === activeFilters.grinder;
         const gearMatch = !activeFilters.gear || (Array.isArray(brew.gearIds) && brew.gearIds.includes(activeFilters.gear));
+        const graphMatch = !activeFilters.hasGraph || hasBrewGraphData(brew);
         const beanMatch = !activeFilters.bean || brew.beanId === activeFilters.bean;
         const typeMatch = !activeFilters.coffeeType || typeId === activeFilters.coffeeType;
 
-        return m && t && r && rost && orig && farm && varr && proc && dr && gri && gearMatch && beanMatch && typeMatch;
+        return m && t && r && rost && orig && farm && varr && proc && dr && gri && gearMatch && graphMatch && beanMatch && typeMatch;
     });
 
     if (currentSort?.key) {
