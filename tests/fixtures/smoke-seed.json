@@ -1,0 +1,105 @@
+{
+  "user": {
+    "uid": "e2e-user",
+    "displayName": "E2E User",
+    "photoURL": "favicon.ico"
+  },
+  "pinnedBrewsPreferences": {
+    "useLegacyBrewForm": false
+  },
+  "coffeeTypes": [
+    {
+      "id": "ct-ethiopia-1",
+      "roaster": "Seed Roasters",
+      "farmer": "Alemu",
+      "origin": "Ethiopia",
+      "processing": "Washed",
+      "variety": "Heirloom",
+      "roast": "Light",
+      "rating": 4,
+      "createdAt": "2026-02-01T08:00:00.000Z"
+    }
+  ],
+  "beans": [
+    {
+      "id": "bean-ethiopia-1",
+      "coffeeTypeId": "ct-ethiopia-1",
+      "stock": 250,
+      "beansLeft": 210,
+      "calculatedStock": 210,
+      "openedDate": "2026-02-10T08:00:00.000Z",
+      "frozenDate": null,
+      "roastDate": "2026-02-04T08:00:00.000Z",
+      "archivedDate": null,
+      "frozen": false,
+      "archived": false,
+      "createdAt": "2026-02-10T08:00:00.000Z",
+      "updatedAt": "2026-02-10T08:00:00.000Z"
+    }
+  ],
+  "coffees": [
+    {
+      "id": "brew-v60-1",
+      "beanId": "bean-ethiopia-1",
+      "roaster": "Seed Roasters",
+      "farmer": "Alemu",
+      "origin": "Ethiopia",
+      "processing": "Washed",
+      "variety": "Heirloom",
+      "roastType": "Light",
+      "method": "V60",
+      "drink": "Filter Coffee",
+      "drinkType": "Filter Coffee",
+      "rating": 4,
+      "grindSize": "24",
+      "grinder": "Comandante",
+      "temp": 93,
+      "time": "2:45",
+      "coffeeAmount": 15,
+      "waterAmount": 250,
+      "notes": "Jasmine and citrus",
+      "isPinned": true,
+      "isActive": true,
+      "createdAt": "2026-02-11T08:00:00.000Z",
+      "updatedAt": "2026-02-11T08:00:00.000Z"
+    },
+    {
+      "id": "brew-espresso-1",
+      "beanId": "bean-ethiopia-1",
+      "roaster": "Seed Roasters",
+      "farmer": "Alemu",
+      "origin": "Ethiopia",
+      "processing": "Washed",
+      "variety": "Heirloom",
+      "roastType": "Light",
+      "method": "Espresso",
+      "drink": "Espresso",
+      "drinkType": "Espresso",
+      "rating": 5,
+      "grindSize": "12",
+      "grinder": "Niche Zero",
+      "temp": 94,
+      "time": "0:28",
+      "coffeeAmount": 18,
+      "waterAmount": 36,
+      "notes": "Sweet berry",
+      "isPinned": false,
+      "isActive": true,
+      "createdAt": "2026-02-12T08:00:00.000Z",
+      "updatedAt": "2026-02-12T08:00:00.000Z"
+    }
+  ],
+  "gasItems": [
+    {
+      "id": "gear-grinder-1",
+      "name": "Comandante C40",
+      "type": "grinder",
+      "methods": [
+        "V60",
+        "Espresso"
+      ],
+      "archived": false,
+      "createdAt": "2026-01-01T08:00:00.000Z"
+    }
+  ]
+}

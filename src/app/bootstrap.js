@@ -33,6 +33,23 @@ import { mountScalesView } from '../features/scales/scales.mount.js';
 import { mountUiShellView } from '../features/ui-shell.mount.js';
 import { mountOverlayHostView } from '../core/overlay-host.mount.js';
 
+const loadE2ESeedData = async () => {
+    if (typeof window === 'undefined') return null;
+    const search = new URLSearchParams(window.location.search);
+    if (search.get('e2eSeed') !== '1') return null;
+    const seedPath = search.get('e2eSeedPath') || '/tests/fixtures/smoke-seed.json';
+    try {
+        const response = await fetch(seedPath, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`Failed to load E2E seed (${response.status}) from ${seedPath}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('[Coffee Dial] Failed to load E2E seed data', error);
+        return null;
+    }
+};
+
 await mountShellHeader();
 await mountSignedOutAuth();
 await mountPinnedSection();
@@ -61,6 +78,10 @@ await mountOverlayHostView();
 const appCommands = createAppCommands();
 const appEvents = createAppEvents();
 const app = createAppContainer({ appCommands, appEvents });
+const e2eSeedData = await loadE2ESeedData();
+if (e2eSeedData && typeof app.applyE2ESeedData === 'function') {
+    await app.applyE2ESeedData(e2eSeedData);
+}
 initViewBindings(app.actions, {
     featureActions: app.featureActions
 });
@@ -71,4 +92,6 @@ if (shouldRunSmokeChecks()) {
     runSmokeChecks({ actions: app.actions, appCommands });
 }
 registerServiceWorker();
-onAuthStateChanged(auth, app.handleAuthStateChanged);
+if (!e2eSeedData) {
+    onAuthStateChanged(auth, app.handleAuthStateChanged);
+}

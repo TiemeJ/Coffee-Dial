@@ -1,0 +1,12 @@
+{
+  "name": "coffee-dial",
+  "private": true,
+  "scripts": {
+    "check:stage4": "node scripts/check-feature-boundaries.mjs && node scripts/check-command-ownership.mjs && node scripts/check-command-dispatch-coverage.mjs",
+    "test:smoke:e2e": "playwright test -c playwright.config.mjs",
+    "test:smoke:e2e:headed": "playwright test -c playwright.config.mjs --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0"
+  }
+}

@@ -1594,6 +1594,62 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         bindGlobalSearchInput();
 
+        const applyE2ESeedData = async (seed = {}) => {
+            const user = seed.user || {
+                uid: 'e2e-user',
+                displayName: 'E2E User',
+                photoURL: 'img/icon-192.png'
+            };
 
-        return { handleAuthStateChanged, actions, featureActions, appCommands, appEvents };
+            setCurrentUserState(user);
+            setCurrentViewState('mine');
+            setHasLoadedBrewsState(true);
+            setHasLoadedBeansState(true);
+
+            const authContainer = document.getElementById('authContainer');
+            if (authContainer) {
+                authContainer.innerHTML = `<div class="flex items-center gap-3"><button data-action-click="openFriendsModal()" class="relative flex-shrink-0 hover:opacity-80 transition-opacity"><img src="${user.photoURL}" class="w-8 h-8 flex-shrink-0 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}"></button></div>`;
+            }
+            document.getElementById('viewSelectorContainer')?.classList.remove('hidden');
+            document.getElementById('signedOutAuthBody')?.classList.add('hidden');
+            document.getElementById('signedInContent')?.classList.remove('hidden');
+
+            [
+                'menuAddBrewBtn',
+                'menuStatsBtn',
+                'menuBeansBtn',
+                'menuCoffeesBtn',
+                'menuGasBtn',
+                'menuGalleryBtn',
+                'menuImportExportBtn',
+                'menuPreferencesBtn',
+                'menuHelpDivider'
+            ].forEach((id) => document.getElementById(id)?.classList.remove('hidden'));
+
+            syncFriendViewSelectValues?.('mine');
+
+            setCoffeeTypesState(Array.isArray(seed.coffeeTypes) ? seed.coffeeTypes : []);
+            setBeansState(Array.isArray(seed.beans) ? seed.beans : []);
+            setCoffeesState(Array.isArray(seed.coffees) ? seed.coffees : []);
+            setGasItemsState(Array.isArray(seed.gasItems) ? seed.gasItems : []);
+
+            if (seed.pinnedBrewsPreferences && typeof seed.pinnedBrewsPreferences === 'object') {
+                setPinnedBrewsPreferencesState({
+                    ...getPinnedBrewsPreferencesState(),
+                    ...seed.pinnedBrewsPreferences
+                });
+            }
+
+            applyBrewFormInlineVisibility?.();
+            updateCoffeeTypeSelectors?.();
+            updateBeanDropdown?.();
+            updateAutocompleteLists?.();
+            renderBeansTable?.();
+            renderCoffeeTypesTable?.();
+            renderGasTable?.();
+            renderPinnedTiles?.();
+            renderTable?.();
+        };
+
+        return { handleAuthStateChanged, actions, featureActions, appCommands, appEvents, applyE2ESeedData };
 };
