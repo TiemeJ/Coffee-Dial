@@ -60,7 +60,8 @@
                     </div>
                 </div>
                 <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-3 border border-coffee-100 dark:border-[#44403c]">
-                    <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                    <div class="grid grid-cols-4 gap-2 text-center text-sm">
+                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Price (€)</div><div id="beanCardPrice" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
                         <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Weight</div><div id="beanCardStock" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
                         <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Beans left</div><div id="beanCardStockLeft" class="font-mono font-bold text-coffee-900 dark:text-white"></div></div>
                         <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Status</div><div id="beanCardStatus" class="font-bold text-coffee-800 dark:text-[#d6ccc2]"></div></div>
@@ -149,6 +150,10 @@
                     <div>
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Roast type</label>
                         <input id="beanEditRoastType" type="text" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Price (€)</label>
+                        <input id="beanEditPrice" type="number" step="0.01" min="0" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Weight (g)</label>

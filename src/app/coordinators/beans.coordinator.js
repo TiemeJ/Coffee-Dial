@@ -260,6 +260,7 @@ export const createBeansCoordinator = ({
         renderBeansActiveFilters: beansTable.renderBeansActiveFilters,
         renderBeansTable: beansTable.renderBeansTable,
         createBeanFromModal: beansActions.createBeanFromModal,
+        saveBeanPrice: beansActions.saveBeanPrice,
         saveBeanStock: beansActions.saveBeanStock,
         toggleBeanArchive: beansActions.toggleBeanArchive,
         toggleBeanFrozen: beansActions.toggleBeanFrozen,

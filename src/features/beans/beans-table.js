@@ -217,6 +217,11 @@ export const createBeansTableModule = ({
                 <td class="px-4 py-3">${process}${variety}</td>
                 <td class="px-4 py-3 text-center">${getRoastBadge(coffeeDisplay.roastType)}</td>
                 <td class="px-4 py-3 text-center">
+                    <input type="number" step="0.01" min="0" value="${bean.price ?? ''}"
+                        ${isMine ? `data-action-change="saveBeanPrice('${bean.id}', this.value)"` : 'disabled'}
+                        class="w-20 text-center text-sm border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="-">
+                </td>
+                <td class="px-4 py-3 text-center">
                     <input type="number" step="1" value="${bean.stock || ''}"
                         ${isMine ? `data-action-change="saveBeanStock('${bean.id}', this.value)"` : 'disabled'}
                         class="w-20 text-center text-sm border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="-">
@@ -280,7 +285,7 @@ export const createBeansTableModule = ({
         if (inStockBeans.length > 0) {
             const headerRow = document.createElement('tr');
             headerRow.className = 'bg-green-50 dark:bg-green-900/20';
-            headerRow.innerHTML = '<td colspan="11" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
+            headerRow.innerHTML = '<td colspan="12" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
             tbody.appendChild(headerRow);
             inStockBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
         }
@@ -289,7 +294,7 @@ export const createBeansTableModule = ({
             if (inStockBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'bg-blue-50 dark:bg-blue-900/20';
-                headerRow.innerHTML = '<td colspan="11" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
+                headerRow.innerHTML = '<td colspan="12" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
                 tbody.appendChild(headerRow);
             }
             frozenBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
@@ -299,7 +304,7 @@ export const createBeansTableModule = ({
             if (inStockBeans.length > 0 || frozenBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'bg-gray-50 dark:bg-[#34302e]';
-                headerRow.innerHTML = '<td colspan="11" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
+                headerRow.innerHTML = '<td colspan="12" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
                 tbody.appendChild(headerRow);
             }
             otherBeans.forEach((bean) => tbody.appendChild(createRow(bean)));

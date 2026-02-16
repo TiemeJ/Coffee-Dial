@@ -121,6 +121,7 @@ export const createCoffeesCoordinator = ({
             shopUrl: type.webshopUrl || type.shopUrl || '',
             archived: false,
             frozen: false,
+            price: null,
             stock: 250,
             beansLeft: 250,
             openedDate: null,

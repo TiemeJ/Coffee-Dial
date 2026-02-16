@@ -17,6 +17,8 @@ export const createBeansVmModule = () => {
 
         const stockLeftDisplay = stockLeft === null || isNaN(stockLeft) ? '-' : `${stockLeft.toFixed(1)}g`;
         const stockDisplay = bean.stock === undefined || bean.stock === null || bean.stock === '' ? '-' : `${bean.stock}g`;
+        const priceValue = bean.price === undefined || bean.price === null || bean.price === '' ? null : Number(bean.price);
+        const priceDisplay = Number.isFinite(priceValue) ? `€${priceValue.toFixed(2)}` : '-';
 
         return {
             archivedDate: formatCardDate(bean.archivedDate),
@@ -29,6 +31,7 @@ export const createBeansVmModule = () => {
             roastType: coffeeDisplay.roastType,
             roaster: coffeeDisplay.roaster !== '-' ? coffeeDisplay.roaster : 'Unknown Roaster',
             status: statusParts.join(' • '),
+            price: priceDisplay,
             stock: stockDisplay,
             stockLeft: stockLeftDisplay,
             variety: coffeeDisplay.variety
@@ -40,4 +43,3 @@ export const createBeansVmModule = () => {
         formatCardDate
     };
 };
-

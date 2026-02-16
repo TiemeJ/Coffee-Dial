@@ -34,6 +34,25 @@ export const createBeansActionsModule = ({
         }
     };
 
+    const saveBeanPrice = async (beanId, amount) => {
+        const user = getCurrentUser();
+        if (!user) return;
+        try {
+            const priceVal = amount === '' ? null : parseFloat(amount);
+            await repo.updateBean({
+                uid: user.uid,
+                beanId,
+                patch: {
+                    price: Number.isFinite(priceVal) ? priceVal : null,
+                    updatedAt: new Date().toISOString()
+                }
+            });
+        } catch (err) {
+            console.error('Error saving price:', err);
+            alert('Failed to save price.');
+        }
+    };
+
     const toggleBeanArchive = async (beanId, isArchived) => {
         const user = getCurrentUser();
         if (!user) return;
@@ -128,6 +147,7 @@ export const createBeansActionsModule = ({
 
         newBeanData.stock = 250;
         newBeanData.beansLeft = 250;
+        newBeanData.price = sourceBean?.price ?? null;
         newBeanData.frozen = false;
         newBeanData.archived = false;
         newBeanData.frozenDate = null;
@@ -192,6 +212,7 @@ export const createBeansActionsModule = ({
             frozen: false,
             stock: 250,
             beansLeft: 250,
+            price: null,
             openedDate: null,
             frozenDate: null,
             archivedDate: null,
@@ -215,6 +236,7 @@ export const createBeansActionsModule = ({
 
     return {
         createBeanFromModal,
+        saveBeanPrice,
         saveBeanStock,
         toggleBeanArchive,
         toggleBeanFrozen,

@@ -93,6 +93,7 @@ export const createBeansCardFormModule = ({
             applyBeanEditCoffeeType(event.target.value);
         };
         document.getElementById('beanEditStock').value = bean.stock ?? '';
+        document.getElementById('beanEditPrice').value = bean.price ?? '';
         document.getElementById('beanEditOpenedDate').value = toInputDate(bean.openedDate);
         document.getElementById('beanEditFrozenDate').value = toInputDate(bean.frozenDate);
         document.getElementById('beanEditRoastDate').value = toInputDate(bean.roastDate);
@@ -127,6 +128,8 @@ export const createBeansCardFormModule = ({
 
         const stockValRaw = document.getElementById('beanEditStock').value;
         const stockVal = stockValRaw === '' ? null : parseFloat(stockValRaw);
+        const priceValRaw = document.getElementById('beanEditPrice').value;
+        const priceVal = priceValRaw === '' ? null : parseFloat(priceValRaw);
         const openedDateVal = document.getElementById('beanEditOpenedDate').value;
         const frozenDateVal = document.getElementById('beanEditFrozenDate').value;
         const roastDateVal = document.getElementById('beanEditRoastDate').value;
@@ -170,6 +173,7 @@ export const createBeansCardFormModule = ({
             roastType: document.getElementById('beanEditRoastType').value || '',
             coffeeTypeId: coffeeTypeIdVal,
             stock: stockVal,
+            price: Number.isFinite(priceVal) ? priceVal : null,
             openedDate: openedDateVal ? new Date(openedDateVal).toISOString() : null,
             frozenDate: frozenDateVal ? new Date(frozenDateVal).toISOString() : null,
             roastDate: roastDateVal ? new Date(roastDateVal).toISOString() : null,
