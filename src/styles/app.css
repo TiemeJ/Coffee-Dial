@@ -42,7 +42,8 @@
         }
         
         input:focus, select:focus, textarea:focus { outline: none; ring: 2px; border-color: #b08968; box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.2); }
-        .editing-mode { border: 2px solid #ea580c !important; }
+        /* Editing state is kept for behavior checks; no visual accent border. */
+        .editing-mode { border: none !important; }
         
         th.filterable { position: relative; cursor: context-menu; touch-action: manipulation; }
         
