@@ -897,6 +897,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setIsGalleryLoading: (value) => setIsGalleryLoadingState(value),
             getFollowing: () => getFollowingState(),
             getCoffees: () => getCoffeesState(),
+            getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
             dataService,
             storageService,
             imageCompression,

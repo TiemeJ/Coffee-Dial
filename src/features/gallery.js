@@ -12,6 +12,7 @@ export const createGalleryModule = ({
     setIsGalleryLoading,
     getFollowing,
     getCoffees,
+    getCoffeeTypeDisplay,
     dataService,
     storageService,
     imageCompression,
@@ -26,6 +27,37 @@ export const createGalleryModule = ({
     if (!storage || !ref || !uploadBytes || !getDownloadURL || !deleteObject) {
         throw new Error('createGalleryModule requires storageService { storage, ref, uploadBytes, getDownloadURL, deleteObject }');
     }
+    const isMissingValue = (value) => {
+        const normalized = (value ?? '').toString().trim();
+        return !normalized || normalized === '-' || normalized.toLowerCase() === 'unknown';
+    };
+    const resolveCoffeeSnapshot = (coffeeData) => {
+        const typeDisplay = typeof getCoffeeTypeDisplay === 'function'
+            ? getCoffeeTypeDisplay(coffeeData)
+            : null;
+        return {
+            roaster: typeDisplay?.roaster || coffeeData?.roaster || coffeeData?.name || 'Unknown',
+            origin: typeDisplay?.origin || coffeeData?.origin || coffeeData?.beanType || 'Unknown',
+            farmer: typeDisplay?.farmer || coffeeData?.farmer || '-',
+            method: coffeeData?.method || '-',
+            rating: coffeeData?.rating || 0
+        };
+    };
+    const resolveSnapshotForCard = (data) => {
+        const snapshot = data?.coffeeSnapshot || {};
+        if (!data?.coffeeId) return snapshot;
+        const coffeeData = getCoffees().find((coffee) => coffee.id === data.coffeeId);
+        if (!coffeeData) return snapshot;
+        const resolved = resolveCoffeeSnapshot(coffeeData);
+        return {
+            ...snapshot,
+            roaster: isMissingValue(snapshot.roaster) ? resolved.roaster : snapshot.roaster,
+            farmer: isMissingValue(snapshot.farmer) ? resolved.farmer : snapshot.farmer,
+            origin: isMissingValue(snapshot.origin) ? resolved.origin : snapshot.origin,
+            method: isMissingValue(snapshot.method) ? resolved.method : snapshot.method,
+            rating: typeof snapshot.rating === 'number' ? snapshot.rating : resolved.rating
+        };
+    };
     const openUploadModal = (coffeeId) => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
         setCurrentUploadCoffeeId(coffeeId);
@@ -80,13 +112,7 @@ export const createGalleryModule = ({
         const coffeeData = getCoffees().find((c) => c.id === uploadCoffeeId);
         if (!coffeeData) return alert('Coffee data not found.');
 
-        const coffeeSnapshot = {
-            roaster: coffeeData.roaster || coffeeData.name || 'Unknown',
-            origin: coffeeData.origin || coffeeData.beanType || 'Unknown',
-            farmer: coffeeData.farmer || '-',
-            method: coffeeData.method || '-',
-            rating: coffeeData.rating || 0
-        };
+        const coffeeSnapshot = resolveCoffeeSnapshot(coffeeData);
 
         document.getElementById('uploadProgress')?.classList.remove('hidden');
 
@@ -205,17 +231,18 @@ export const createGalleryModule = ({
         const grid = document.getElementById('galleryGrid');
         docs.forEach((docItem) => {
             const data = docItem.data();
+            const cardSnapshot = resolveSnapshotForCard(data);
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-[#292524] rounded-lg shadow-md overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col relative group';
-            const ratingHtml = getStarDisplay(data.coffeeSnapshot?.rating || 0);
+            const ratingHtml = getStarDisplay(cardSnapshot.rating || 0);
             const displayUrl = data.thumbURL || data.photoURL;
             const escapedPhotoUrl = String(data.photoURL || '').replace(/'/g, "\\'");
             const escapedThumbUrl = String(data.thumbURL || '').replace(/'/g, "\\'");
             const deleteBtn = getCurrentGalleryMode() === 'mine'
                 ? `<button data-action-click="deletePhoto('${docItem.id}', '${escapedPhotoUrl}', '${escapedThumbUrl}', event)" class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all z-10 opacity-0 group-hover:opacity-100" title="Delete Photo"><i class="fa-solid fa-trash-can text-xs"></i></button>`
                 : '';
-            const secondaryInfo = data.coffeeSnapshot?.farmer || data.coffeeSnapshot?.origin || '-';
-            card.innerHTML = `${deleteBtn}<div class="h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative cursor-pointer"><img src="${displayUrl}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Brew Photo" data-action-click="openExternalUrl('${escapedPhotoUrl}')"><div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs">${new Date(data.createdAt).toLocaleDateString()}</div></div><div class="p-3 flex-1 flex flex-col"><div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-xs">${ratingHtml}</div></div><p class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${data.coffeeSnapshot?.roaster}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${data.coffeeSnapshot?.method}</div></div></div>`;
+            const secondaryInfo = cardSnapshot.farmer || cardSnapshot.origin || '-';
+            card.innerHTML = `${deleteBtn}<div class="h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative cursor-pointer"><img src="${displayUrl}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Brew Photo" data-action-click="openExternalUrl('${escapedPhotoUrl}')"><div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs">${new Date(data.createdAt).toLocaleDateString()}</div></div><div class="p-3 flex-1 flex flex-col"><div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-xs">${ratingHtml}</div></div><p class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${cardSnapshot.roaster}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div></div>`;
             grid.appendChild(card);
         });
     };
