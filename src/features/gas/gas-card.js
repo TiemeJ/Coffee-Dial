@@ -186,9 +186,10 @@ export const createGasCardModule = ({
             search.focus();
         });
 
+        // Use capture so modal-level stopPropagation handlers do not block outside-click close.
         document.addEventListener('click', (event) => {
             if (!root.contains(event.target)) closeGasMethodsDropdown();
-        });
+        }, true);
     };
 
     const getGasMergeUi = () => ({
@@ -459,9 +460,10 @@ export const createGasCardModule = ({
             gearSearch.focus();
         });
 
+        // Use capture so modal-level stopPropagation handlers do not block outside-click close.
         document.addEventListener('click', (event) => {
             if (!gearRoot.contains(event.target)) closeBulkGearFilterDropdown();
-        });
+        }, true);
     };
 
     const triggerGasPhoto = (e) => {

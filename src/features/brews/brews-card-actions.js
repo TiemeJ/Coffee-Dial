@@ -172,9 +172,10 @@ export const createBrewsCardActionsModule = ({
             search.focus();
         });
 
+        // Use capture so modal-level stopPropagation handlers do not block outside-click close.
         document.addEventListener('click', (event) => {
             if (!root.contains(event.target)) closeQuickEditGearDropdown();
-        });
+        }, true);
     };
 
     const refreshQuickEditGearFieldVisibility = () => {

@@ -125,9 +125,10 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
             search.focus();
         });
 
+        // Use capture so modal-level stopPropagation handlers do not block outside-click close.
         document.addEventListener('click', (event) => {
             if (!root.contains(event.target)) closeBrewGearDropdown();
-        });
+        }, true);
     };
 
     const refreshBrewGearField = () => {
