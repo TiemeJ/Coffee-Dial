@@ -87,12 +87,22 @@ The repository is structured as:
 └─ src/
    ├─ app/
    │  ├─ bootstrap.js
-   │  ├─ composition/
    │  ├─ container.js
    │  ├─ container.state.js
+   │  ├─ app-commands.js
+   │  ├─ app-events.js
+   │  ├─ view-bindings.js
+   │  ├─ smoke-check.js
+   │  ├─ core-contract-check.js
+   │  ├─ composition/
+   │  │  ├─ app-composition.js
+   │  │  └─ action-assemblies.js
+   │  ├─ coordinators/
+   │  ├─ runtime/
+   │  ├─ services/
+   │  ├─ stores/
    │  ├─ head.js
-   │  ├─ pwa.js
-   │  └─ view-bindings.js
+   │  └─ pwa.js
    ├─ config/
    │  └─ firebase.js
    ├─ core/
@@ -111,19 +121,26 @@ The repository is structured as:
       ├─ brews/
       ├─ coffees/
       ├─ gas/
-      ├─ gallery.mount.js
+      ├─ pin/
+      ├─ stats/
+      ├─ scales/
+      ├─ social/
+      ├─ media/
       ├─ graph-modals/
       ├─ import-export/
       │  └─ importers/
-      ├─ media/
-      ├─ pin/
-      ├─ scales/
       ├─ shell/
-      ├─ social/
-      ├─ stats/
+      ├─ ui/
+      ├─ ai-import.js
+      ├─ session-auth-view.js
+      ├─ gallery.js
+      ├─ gallery.mount.js
+      ├─ preferences.js
+      ├─ preferences.mount.js
+      ├─ preferences.view.html
       ├─ ui-shell.js
       ├─ ui-shell.mount.js
-      └─ session-auth-view.js
+      └─ ui-shell.view.html
 ```
 
 ---
