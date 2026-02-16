@@ -179,6 +179,7 @@ export const createActionAssemblies = (deps = {}) => {
         ]),
         coffeeActions: pick(deps, [
             'applyCoffeeTypesFilterFromQuick',
+            'backfillCoffeeTypeDecafFromScan',
             'cancelCoffeeTypeEditMode',
             'clearCoffeeTypesFilters',
             'clearCoffeeTypesSearch',
@@ -322,6 +323,7 @@ export const createActionAssemblies = (deps = {}) => {
         coffees: {
             ...pick(deps, [
                 'applyCoffeeTypesFilterFromQuick',
+                'backfillCoffeeTypeDecafFromScan',
                 'cancelCoffeeTypeEditMode',
                 'clearCoffeeTypesFilters',
                 'clearCoffeeTypesSearch',
