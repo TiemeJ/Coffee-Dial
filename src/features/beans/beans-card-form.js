@@ -1,3 +1,5 @@
+import { withDetectedDecaf } from '../../core/coffee-decaf.js';
+
 export const createBeansCardFormModule = ({
     getCurrentUser,
     getCurrentView,
@@ -144,7 +146,7 @@ export const createBeansCardFormModule = ({
         let coffeeTypeIdVal = document.getElementById('beanEditCoffeeType').value || '__new__';
         if (coffeeTypeIdVal === '__new__') {
             const bean = getBeans().find((b) => b.id === beanCardId);
-            const typeData = {
+            const typeData = withDetectedDecaf({
                 uid: user.uid,
                 roaster: document.getElementById('beanEditRoaster').value || '',
                 farmer: document.getElementById('beanEditFarmer').value || '',
@@ -158,7 +160,7 @@ export const createBeansCardFormModule = ({
                 tasteNotes: '',
                 createdAt: nowIso,
                 updatedAt: nowIso
-            };
+            });
             const typeRef = doc(collection(db, 'users', user.uid, 'coffeeTypes'));
             await setDoc(typeRef, typeData);
             coffeeTypeIdVal = typeRef.id;

@@ -131,23 +131,7 @@ export const createBrewPinArtModule = ({
             const subtitleText = swapTitle ? roaster : farmer;
             const imageUrl = coffeeType?.imageUrl || coffeeType?.imageURL || '';
             const stockPercent = getStockPercentForBean(bean);
-            const isDecaf = [
-                coffeeType?.roaster,
-                coffeeType?.farmer,
-                coffeeType?.origin,
-                coffeeType?.variety,
-                coffeeType?.processing,
-                coffeeType?.roast,
-                coffeeType?.roastType,
-                bean?.roaster,
-                bean?.farmer,
-                bean?.origin,
-                bean?.variety,
-                bean?.processing,
-                bean?.roastType,
-                previewBrew?.notes,
-                previewBrew?.name
-            ].some((field) => (field || '').toString().toLowerCase().includes('decaf'));
+            const isDecaf = !!coffeeType?.decaf;
             const decafMoonBadge = isDecaf
                 ? '<div class="absolute top-2 right-2 z-20 w-7 h-7 rounded-full bg-black/45 text-white flex items-center justify-center border border-white/30"><i class="fa-solid fa-moon text-xs"></i></div>'
                 : '';

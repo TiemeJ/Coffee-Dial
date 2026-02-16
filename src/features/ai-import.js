@@ -1,3 +1,5 @@
+import { withDetectedDecaf } from '../core/coffee-decaf.js';
+
 export const createAiImportModule = ({
     BAG_AI_URL,
     imageCompression,
@@ -167,7 +169,7 @@ export const createAiImportModule = ({
             const snapshot = await uploadBytes(storageRef, compressedFile);
             const imageURL = await getDownloadURL(snapshot.ref);
 
-            const typeData = {
+            const typeData = withDetectedDecaf({
                 uid: user.uid,
                 roaster: data.roaster || '',
                 farmer: data.farmer || '',
@@ -181,7 +183,7 @@ export const createAiImportModule = ({
                 imageUrl: imageURL,
                 createdAt: nowIso,
                 updatedAt: nowIso
-            };
+            });
 
             const beanData = {
                 coffeeTypeId: typeRef.id,
@@ -238,7 +240,7 @@ export const createAiImportModule = ({
             const snapshot = await uploadBytes(storageRef, compressedFile);
             const imageURL = await getDownloadURL(snapshot.ref);
 
-            const typeData = {
+            const typeData = withDetectedDecaf({
                 uid: user.uid,
                 roaster: data.roaster || '',
                 farmer: data.farmer || '',
@@ -252,7 +254,7 @@ export const createAiImportModule = ({
                 imageUrl: imageURL,
                 createdAt: nowIso,
                 updatedAt: nowIso
-            };
+            });
 
             await setDoc(typeRef, typeData);
             const newType = { id: typeRef.id, ...typeData };

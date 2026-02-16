@@ -2,6 +2,7 @@ import { createCoffeeTypeCardModule } from '../../features/coffees/coffee-type-c
 import { createCoffeeTypesTableModule } from '../../features/coffees/coffee-types-table.js';
 import { createCoffeesRepoModule } from '../../features/coffees/coffees.repo.js';
 import { createCoffeeMaintenanceModule } from '../../features/coffees/coffee-maintenance.js';
+import { withDetectedDecaf } from '../../core/coffee-decaf.js';
 
 export const createCoffeesCoordinator = ({
     dataService,
@@ -66,7 +67,7 @@ export const createCoffeesCoordinator = ({
         const user = getCurrentUser();
         if (!user) return alert('Please sign in.');
         const nowIso = new Date().toISOString();
-        const typeData = {
+        const typeData = withDetectedDecaf({
             uid: user.uid,
             roaster: '',
             farmer: '',
@@ -81,7 +82,7 @@ export const createCoffeesCoordinator = ({
             imageUrl: '',
             createdAt: nowIso,
             updatedAt: nowIso
-        };
+        });
 
         try {
             const typeRef = await repo.createCoffeeType({ uid: user.uid, data: typeData });

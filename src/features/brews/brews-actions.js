@@ -1,4 +1,5 @@
 import { createBrewsVmModule } from './brews.vm.js';
+import { withDetectedDecaf } from '../../core/coffee-decaf.js';
 
 export const createBrewsActionsModule = ({
     getCurrentUser,
@@ -464,7 +465,7 @@ export const createBrewsActionsModule = ({
                 if (existingType?.id) return { id: existingType.id, created: false };
 
                 const nowIso = new Date().toISOString();
-                const typeData = {
+                const typeData = withDetectedDecaf({
                     uid: user.uid,
                     roaster: beanData.roaster || '',
                     farmer: beanData.farmer || '',
@@ -478,7 +479,7 @@ export const createBrewsActionsModule = ({
                     imageUrl: '',
                     createdAt: nowIso,
                     updatedAt: nowIso
-                };
+                });
                 const typeId = await addCoffeeType(typeData);
                 if (!coffeeTypes.find((ct) => ct.id === typeId)) {
                     coffeeTypes.push({ id: typeId, ...typeData });

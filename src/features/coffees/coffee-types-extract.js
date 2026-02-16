@@ -1,3 +1,5 @@
+import { withDetectedDecaf } from '../../core/coffee-decaf.js';
+
 export const createCoffeeTypesExtractModule = ({
     getCurrentUser,
     getBeans,
@@ -39,7 +41,7 @@ export const createCoffeeTypesExtractModule = ({
         beans.forEach((bean) => {
             const key = makeKey(bean);
             if (existingTypeByKey.has(key) || newTypeByKey.has(key)) return;
-            newTypeByKey.set(key, {
+            newTypeByKey.set(key, withDetectedDecaf({
                 uid: currentUser.uid,
                 roaster: bean.roaster || '',
                 farmer: bean.farmer || '',
@@ -53,7 +55,7 @@ export const createCoffeeTypesExtractModule = ({
                 variety: bean.variety || '',
                 createdAt: nowIso,
                 updatedAt: nowIso
-            });
+            }));
         });
 
         if (!newTypeByKey.size && !coffeeTypes.length) {
