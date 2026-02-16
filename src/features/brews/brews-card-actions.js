@@ -223,6 +223,13 @@ export const createBrewsCardActionsModule = ({
         if (menu) menu.classList.add('hidden');
     };
 
+    const refreshQuickEditManualPinningVisibility = () => {
+        const pinRow = document.getElementById('quickEditIsActiveRow');
+        if (!pinRow) return;
+        const hideManualPinning = !!getPinnedBrewsPreferences?.()?.pinOpenBags;
+        pinRow.classList.toggle('hidden', hideManualPinning);
+    };
+
     const getBeanLabelForBrew = (bean) => {
         const display = getBeanCoffeeTypeDisplay(bean);
         return brewsVm.buildBeanLabel(bean, display);
@@ -331,6 +338,7 @@ export const createBrewsCardActionsModule = ({
         document.getElementById('quickEditNotes').value = brew.notes || '';
         document.getElementById('quickEditImprove').value = brew.improve || '';
         document.getElementById('quickEditIsActive').checked = !!brew.isActive;
+        refreshQuickEditManualPinningVisibility();
         handleQuickEditRecipeInput('yield');
 
         document.getElementById('coffeeCardView').classList.add('hidden');
