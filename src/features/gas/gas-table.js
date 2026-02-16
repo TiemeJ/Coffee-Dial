@@ -215,6 +215,7 @@ export const createGasTableModule = ({
             const archiveLabel = item.archived ? 'Unarchive' : 'Archive';
 
             const row = document.createElement('tr');
+            row.setAttribute('data-id', item.id);
             row.className = 'bg-white dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0';
             row.ondblclick = (event) => dispatchCommand('gas.openCard', { id: item.id, event });
             row.innerHTML = `

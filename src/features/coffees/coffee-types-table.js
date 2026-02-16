@@ -221,6 +221,7 @@ export const createCoffeeTypesTableModule = ({
                 : '';
 
             const row = document.createElement('tr');
+            row.setAttribute('data-id', type.id);
             row.className = 'bg-white dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0';
             row.ondblclick = (event) => openCoffeeTypeCard(type.id, event);
             row.innerHTML = `

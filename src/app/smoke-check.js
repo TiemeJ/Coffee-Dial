@@ -19,6 +19,13 @@ const REQUIRED_ELEMENT_IDS = [
     'coffeeCardNextBtn'
 ];
 
+const TABLE_ROW_ID_CHECKS = [
+    { tableBodyId: 'coffeeTableBody', label: 'brews' },
+    { tableBodyId: 'beansTableBody', label: 'beans' },
+    { tableBodyId: 'coffeeTypesTableBody', label: 'coffee-types' },
+    { tableBodyId: 'gasTableBody', label: 'gas' }
+];
+
 const shouldRunSmokeChecks = () => {
     if (typeof window === 'undefined') return false;
     const search = new URLSearchParams(window.location.search);
@@ -63,6 +70,40 @@ const ensureMineView = (actions) => {
     }
 };
 
+const findRowsMissingDataId = () => {
+    const failures = [];
+    TABLE_ROW_ID_CHECKS.forEach(({ tableBodyId, label }) => {
+        const tbody = document.getElementById(tableBodyId);
+        if (!tbody) return;
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const missingRows = rows.filter((row) => {
+            const singleCell = row.children.length === 1 ? row.children[0] : null;
+            const isSectionHeader = !!singleCell?.hasAttribute('colspan');
+            if (isSectionHeader) return false;
+            return !row.getAttribute('data-id');
+        });
+        if (!missingRows.length) return;
+        failures.push({
+            tableBodyId,
+            table: label,
+            missingCount: missingRows.length
+        });
+    });
+    return failures;
+};
+
+const normalizeBeansTableState = async (actions = {}) => {
+    actions.openBeans?.();
+    await waitFor(() => isVisible('beansModal'), 2500);
+    actions.beansChangeView?.('mine');
+    actions.clearBeansSearch?.();
+    actions.clearBeansFilters?.();
+    await waitFor(
+        () => !!document.querySelector('#beansTableBody tr') || !document.getElementById('beansEmpty')?.classList.contains('hidden'),
+        3000
+    );
+};
+
 const runCommandFlowSmoke = async ({ actions = {}, appCommands = null } = {}) => {
     const flows = [];
 
@@ -70,11 +111,81 @@ const runCommandFlowSmoke = async ({ actions = {}, appCommands = null } = {}) =>
         flows.push({ name, status, detail });
     };
 
+    const extractBeanIdFromAction = (actionValue = '') => {
+        const value = String(actionValue || '');
+        const patterns = [
+            /openBrewWithBean\('([^']+)'\)/,
+            /beansOpenCard\('([^']+)'\)/,
+            /beansOpenCardForEdit\('([^']+)'\)/,
+            /showBrewsForBean\('([^']+)'\)/
+        ];
+        for (const pattern of patterns) {
+            const match = value.match(pattern);
+            if (match?.[1]) return match[1];
+        }
+        return null;
+    };
+
+    const getFirstBeanRowId = () => {
+        const rows = Array.from(document.querySelectorAll('#beansTableBody tr'));
+        for (const row of rows) {
+            const directId = row.getAttribute('data-id');
+            if (directId) return directId;
+
+            const actionEls = Array.from(row.querySelectorAll('[data-action-click]'));
+            for (const actionEl of actionEls) {
+                const beanId = extractBeanIdFromAction(actionEl.getAttribute('data-action-click'));
+                if (beanId) return beanId;
+            }
+        }
+        return null;
+    };
+
+    const findBrewWithCoffeeBeanContext = async (brewIds = []) => {
+        for (const candidateBrewId of brewIds) {
+            actions.showBeanForBrew(candidateBrewId);
+            const beanOpened = await waitFor(() => isVisible('beanCardOverlay'), 2500);
+            if (!beanOpened) {
+                actions.closeBeanCard?.(null);
+                continue;
+            }
+
+            actions.showCoffeeForBean();
+            const coffeeOpened = await waitFor(() => isVisible('coffeeTypeCardOverlay'), 2500);
+            if (!coffeeOpened) {
+                actions.closeBeanCard?.(null);
+                actions.closeCoffeeTypeCard?.(null);
+                continue;
+            }
+
+            actions.showBeansForCoffeeType();
+            await waitFor(() => isVisible('beansModal'), 3000);
+            actions.beansChangeView?.('mine');
+            actions.clearBeansSearch?.();
+            actions.clearBeansFilters?.();
+            const beansReady = await waitFor(
+                () => !!document.querySelector('#beansTableBody tr') || !document.getElementById('beansEmpty')?.classList.contains('hidden'),
+                3000
+            );
+            const hasRows = !!document.querySelector('#beansTableBody tr');
+            const beanId = beansReady && hasRows ? getFirstBeanRowId() : null;
+            if (beanId) {
+                return { brewId: candidateBrewId, beanId };
+            }
+
+            actions.closeBeans?.();
+            actions.closeCoffeeTypeCard?.(null);
+            actions.closeBeanCard?.(null);
+        }
+        return null;
+    };
+
     const preconditionsOk =
         typeof actions.showBeanForBrew === 'function' &&
         typeof actions.showCoffeeForBean === 'function' &&
         typeof actions.openBrewWithBean === 'function' &&
         typeof actions.showBeansForCoffeeType === 'function' &&
+        typeof actions.openBeans === 'function' &&
         typeof actions.openAddBrewFromPinned === 'function' &&
         typeof appCommands?.dispatch === 'function';
 
@@ -106,7 +217,13 @@ const runCommandFlowSmoke = async ({ actions = {}, appCommands = null } = {}) =>
             () => !!document.querySelector('#coffeeTableBody tr[data-id]'),
             5000
         );
-        const brewRow = hasBrewRows ? document.querySelector('#coffeeTableBody tr[data-id]') : null;
+        const brewRows = hasBrewRows
+            ? Array.from(document.querySelectorAll('#coffeeTableBody tr[data-id]'))
+            : [];
+        const brewRow = brewRows.length ? brewRows[0] : null;
+        const brewIds = brewRows
+            .map((row) => row.getAttribute('data-id'))
+            .filter(Boolean);
         const brewId = brewRow?.getAttribute('data-id') || null;
 
         if (!brewId) {
@@ -141,55 +258,34 @@ const runCommandFlowSmoke = async ({ actions = {}, appCommands = null } = {}) =>
         if (!brewId) {
             addFlow('coffee -> brew form', 'skip', 'No brew rows available for coffee context');
         } else {
-            actions.showBeanForBrew(brewId);
-            const beanOpenedForCoffeeFlow = await waitFor(() => isVisible('beanCardOverlay'), 3000);
-            if (!beanOpenedForCoffeeFlow) {
-                addFlow('coffee -> brew form', 'skip', 'Unable to open bean card from brew context');
+            const contextual = await findBrewWithCoffeeBeanContext(brewIds.length ? brewIds : [brewId]);
+            if (!contextual?.beanId) {
+                addFlow('coffee -> brew form', 'skip', 'No brew rows with bean/coffee context');
             } else {
-                actions.showCoffeeForBean();
-                const coffeeOpenedForBrewFlow = await waitFor(() => isVisible('coffeeTypeCardOverlay'), 3000);
-                if (!coffeeOpenedForBrewFlow) {
-                    addFlow('coffee -> brew form', 'skip', 'Unable to open coffee card from bean context');
-                } else {
-                    actions.showBeansForCoffeeType();
-                    const beansModalOpened = await waitFor(
-                        () => isVisible('beansModal') || !!document.querySelector('#beansTableBody tr[data-id]'),
-                        3000
-                    );
-                    const coffeeBeanId = beansModalOpened
-                        ? document.querySelector('#beansTableBody tr[data-id]')?.getAttribute('data-id')
-                        : null;
-                    if (!coffeeBeanId) {
-                        addFlow('coffee -> brew form', 'skip', 'No beans found for selected coffee context');
-                    } else {
-                        actions.openBrewWithBean(coffeeBeanId);
-                        const coffeeBrewFormOpened = await waitFor(
-                            () => isVisible('brewFormModal') || isVisible('formContainer'),
-                            3000
-                        );
-                        addFlow(
-                            'coffee -> brew form',
-                            coffeeBrewFormOpened ? 'pass' : 'fail',
-                            coffeeBrewFormOpened ? '' : 'Neither brewFormModal nor formContainer became visible'
-                        );
-                        actions.discardBrewFormModal?.();
-                    }
-                }
+                actions.openBrewWithBean(contextual.beanId);
+                const coffeeBrewFormOpened = await waitFor(
+                    () => isVisible('brewFormModal') || isVisible('formContainer'),
+                    3000
+                );
+                addFlow(
+                    'coffee -> brew form',
+                    coffeeBrewFormOpened ? 'pass' : 'fail',
+                    coffeeBrewFormOpened ? '' : 'Neither brewFormModal nor formContainer became visible'
+                );
+                actions.discardBrewFormModal?.();
             }
+            actions.closeBeans?.();
             actions.closeCoffeeTypeCard?.(null);
             actions.closeBeanCard?.(null);
         }
 
-        const hasBeanRows = await waitFor(
-            () => !!document.querySelector('#beansTableBody tr[data-id]'),
-            4000
-        );
-        const beanId = hasBeanRows
-            ? document.querySelector('#beansTableBody tr[data-id]')?.getAttribute('data-id')
-            : null;
+        await normalizeBeansTableState(actions);
+        const hasBeanRows = !!document.querySelector('#beansTableBody tr');
+        const beanId = hasBeanRows ? getFirstBeanRowId() : null;
 
         if (!beanId) {
-            addFlow('bean -> brew form', 'skip', 'No bean rows available');
+            const rowCount = document.querySelectorAll('#beansTableBody tr').length;
+            addFlow('bean -> brew form', 'skip', rowCount > 0 ? 'Bean rows found but no resolvable bean id' : 'No bean rows available');
         } else {
             actions.openBrewWithBean(beanId);
             const beanBrewFormOpened = await waitFor(
@@ -236,11 +332,13 @@ const runCommandFlowSmoke = async ({ actions = {}, appCommands = null } = {}) =>
 export const runSmokeChecks = ({ actions = {}, appCommands = null } = {}) => {
     const missingActions = REQUIRED_ACTION_IDS.filter((id) => typeof actions[id] !== 'function');
     const missingElements = REQUIRED_ELEMENT_IDS.filter((id) => !document.getElementById(id));
+    const missingRowDataIds = findRowsMissingDataId();
 
     const report = {
-        ok: missingActions.length === 0 && missingElements.length === 0,
+        ok: missingActions.length === 0 && missingElements.length === 0 && missingRowDataIds.length === 0,
         missingActions,
         missingElements,
+        missingRowDataIds,
         checkedAt: new Date().toISOString(),
         commandFlows: {
             status: 'pending'

@@ -181,6 +181,7 @@ export const createBeansTableModule = ({
 
         const createRow = (bean) => {
             const tr = document.createElement('tr');
+            tr.setAttribute('data-id', bean.id);
             tr.className = 'bg-white dark:bg-[#292524] border-b border-coffee-50 dark:border-[#34302e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors';
             tr.ondblclick = (e) => openBeanCardViaCommand(bean.id, e);
             const coffeeDisplay = getBeanCoffeeTypeDisplay(bean);
