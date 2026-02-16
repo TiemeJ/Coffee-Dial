@@ -214,8 +214,31 @@ export const createBrewsActionsModule = ({
         updateBeanDropdown();
         setBrewGearScope({ includeAll: false });
         const d = stripBrewGraphFields(brew);
+        const clearRepeatOnlyFields = () => {
+            if (title !== 'Repeat brew') return;
+            const setValue = (id, value = '') => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            };
+            setValue('inputYield', '');
+            setValue('time', '');
+            setValue('notes', '');
+            setValue('improve', '');
+            setValue('graphMaxFlow', '');
+            setValue('graphAvgFlow', '');
+            setValue('graphFirstDrip', '');
+            setRating(0);
+            setNotesMode('manual');
+            resetSca();
+            const coffeeScale = scale();
+            document.getElementById('inputYield')?.dispatchEvent(new Event('input', { bubbles: true }));
+            document.getElementById('time')?.dispatchEvent(new Event('input', { bubbles: true }));
+            if (coffeeScale?.syncGraphFormFields) coffeeScale.syncGraphFormFields();
+            if (coffeeScale?.setFirstDripSeconds) coffeeScale.setFirstDripSeconds(null);
+        };
         document.getElementById('editId').value = '';
         populateForm(d);
+        clearRepeatOnlyFields();
         toggleForm(true);
         setCoffeeDetailsCollapsed(true);
         document.getElementById('formContainer').classList.remove('editing-mode');
@@ -230,9 +253,32 @@ export const createBrewsActionsModule = ({
         updateBeanDropdown();
         setBrewGearScope({ includeAll: false });
         const d = stripBrewGraphFields(brew);
+        const clearRepeatOnlyFields = () => {
+            if (title !== 'Repeat brew') return;
+            const setValue = (id, value = '') => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            };
+            setValue('inputYield', '');
+            setValue('time', '');
+            setValue('notes', '');
+            setValue('improve', '');
+            setValue('graphMaxFlow', '');
+            setValue('graphAvgFlow', '');
+            setValue('graphFirstDrip', '');
+            setRating(0);
+            setNotesMode('manual');
+            resetSca();
+            const coffeeScale = scale();
+            document.getElementById('inputYield')?.dispatchEvent(new Event('input', { bubbles: true }));
+            document.getElementById('time')?.dispatchEvent(new Event('input', { bubbles: true }));
+            if (coffeeScale?.syncGraphFormFields) coffeeScale.syncGraphFormFields();
+            if (coffeeScale?.setFirstDripSeconds) coffeeScale.setFirstDripSeconds(null);
+        };
         delete d.beanId;
         document.getElementById('editId').value = '';
         populateForm(d);
+        clearRepeatOnlyFields();
         fillCoffeeDetailsForNewBeanFromBrew(d);
         toggleForm(true);
         setCoffeeDetailsCollapsed(true);
