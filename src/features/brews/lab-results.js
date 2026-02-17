@@ -1,10 +1,11 @@
 const LAB_RESULT_AXIS_FIELDS = [
-    { key: 'date', label: 'Date' },
     { key: 'brew', label: 'Brew' },
+    { key: 'date', label: 'Date' },
+    { key: 'timeOfDay', label: 'Time of day' },
     { key: 'in', label: 'IN' },
     { key: 'out', label: 'Out' },
     { key: 'ratio', label: 'Ratio' },
-    { key: 'time', label: 'Time' },
+    { key: 'time', label: 'Brew time' },
     { key: 'temp', label: 'Temp' },
     { key: 'grind', label: 'Grind size' },
     { key: 'firstDrip', label: 'First drip' },
@@ -15,16 +16,141 @@ const LAB_RESULT_AXIS_FIELDS = [
 ];
 const LAB_RESULT_GRAPHS = [
     { key: 'flowGraph', label: 'Flow graph' },
-    { key: 'weightGraph', label: 'Weight graph' }
+    { key: 'weightGraph', label: 'Weight graph' },
+    { key: 'customGraph', label: 'Custom graph' }
 ];
+const AXIS_LABEL_BY_KEY = Object.fromEntries(LAB_RESULT_AXIS_FIELDS.map((field) => [field.key, field.label]));
+const Y_AXIS_FIELD_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#db2777', '#9333ea', '#0891b2', '#ea580c', '#4f46e5'];
+const AXIS_SKIP_REASONS = Object.freeze({
+    MISSING_AXIS: 'missing-axis',
+    MISSING_BREW: 'missing-brew',
+    MISSING_VALUE: 'missing-value',
+    NON_NUMERIC_VALUE: 'non-numeric-value',
+    UNKNOWN_AXIS: 'unknown-axis'
+});
 
 const escapeAttr = (value) => String(value || '').replace(/'/g, "\\'");
+const toNumber = (value) => {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+};
+const toTimestamp = (value) => {
+    if (!value) return null;
+    if (typeof value?.toDate === 'function') {
+        const dateObj = value.toDate();
+        return Number.isFinite(dateObj?.getTime?.()) ? dateObj.getTime() : null;
+    }
+    const dateObj = new Date(value);
+    return Number.isFinite(dateObj.getTime()) ? dateObj.getTime() : null;
+};
+const toMinutesOfDay = (value) => {
+    const ts = toTimestamp(value);
+    if (!Number.isFinite(ts)) return null;
+    const date = new Date(ts);
+    if (Number.isNaN(date.getTime())) return null;
+    return (date.getHours() * 60) + date.getMinutes();
+};
+
+const resolveAxisFieldValue = ({ axisKey, brew, sample, brewOrder }) => {
+    if (!axisKey) return { ok: false, reason: AXIS_SKIP_REASONS.MISSING_AXIS };
+    if (!brew) return { ok: false, reason: AXIS_SKIP_REASONS.MISSING_BREW };
+
+    if (axisKey === 'date') {
+        const timestamp = toTimestamp(brew.createdAt);
+        return Number.isFinite(timestamp)
+            ? { ok: true, value: timestamp }
+            : { ok: false, reason: AXIS_SKIP_REASONS.MISSING_VALUE };
+    }
+    if (axisKey === 'timeOfDay') {
+        const minutes = toMinutesOfDay(brew.createdAt);
+        return Number.isFinite(minutes)
+            ? { ok: true, value: minutes }
+            : { ok: false, reason: AXIS_SKIP_REASONS.MISSING_VALUE };
+    }
+    if (axisKey === 'brew') {
+        return Number.isFinite(brewOrder)
+            ? { ok: true, value: brewOrder }
+            : { ok: false, reason: AXIS_SKIP_REASONS.MISSING_VALUE };
+    }
+
+    const resolverMap = {
+        in: () => toNumber(brew.weight),
+        out: () => {
+            const outDirect = toNumber(brew.out ?? brew.yield);
+            if (Number.isFinite(outDirect)) return outDirect;
+            const inValue = toNumber(brew.weight);
+            const ratioValue = toNumber(brew.ratio);
+            if (Number.isFinite(inValue) && Number.isFinite(ratioValue)) return inValue * ratioValue;
+            return null;
+        },
+        ratio: () => toNumber(brew.ratio),
+        time: () => (Number.isFinite(sample?.tMs) ? sample.tMs / 1000 : toNumber(brew.time)),
+        temp: () => toNumber(brew.temp),
+        grind: () => toNumber(brew.grind),
+        firstDrip: () => toNumber(brew.firstDrip),
+        maxFlow: () => toNumber(brew.maxFlow),
+        avgFlow: () => toNumber(brew.avgFlow),
+        pourCount: () => toNumber(brew.pourCount),
+        swirlCount: () => toNumber(brew.swirlCount)
+    };
+
+    const resolver = resolverMap[axisKey];
+    if (!resolver) return { ok: false, reason: AXIS_SKIP_REASONS.UNKNOWN_AXIS };
+    const numeric = resolver();
+    if (numeric === null) {
+        const rawValue = brew[axisKey];
+        return rawValue === null || typeof rawValue === 'undefined' || rawValue === ''
+            ? { ok: false, reason: AXIS_SKIP_REASONS.MISSING_VALUE }
+            : { ok: false, reason: AXIS_SKIP_REASONS.NON_NUMERIC_VALUE };
+    }
+    return { ok: true, value: numeric };
+};
+
+// Step 1 mapper: converts selected X/Y axis field keys into numeric points with explicit skip reasons.
+export const createLabAxisPointMapper = ({ visibleBrews = [] } = {}) => {
+    const brewOrderById = new Map(
+        (Array.isArray(visibleBrews) ? visibleBrews : []).map((brew, index) => [brew?.id, index + 1])
+    );
+
+    return ({ xAxisKey, yAxisKey, brew, sample = null } = {}) => {
+        const brewOrder = brewOrderById.get(brew?.id) || null;
+        const x = resolveAxisFieldValue({ axisKey: xAxisKey, brew, sample, brewOrder });
+        if (!x.ok) return { ok: false, reason: `x:${x.reason}` };
+        const y = resolveAxisFieldValue({ axisKey: yAxisKey, brew, sample, brewOrder });
+        if (!y.ok) return { ok: false, reason: `y:${y.reason}` };
+        return { ok: true, point: { x: x.value, y: y.value } };
+    };
+};
+
+const axisKeyUsesSample = (axisKey) => axisKey === 'time';
 
 const formatDate = (value) => {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
     return date.toLocaleDateString();
+};
+const formatLabGraphDate = (value) => {
+    if (!Number.isFinite(Number(value))) return '';
+    const date = new Date(Number(value));
+    if (Number.isNaN(date.getTime())) return '';
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yy = String(date.getFullYear()).slice(-2);
+    return `${dd}-${mm}--${yy}`;
+};
+const formatLabGraphTimeOfDay = (value) => {
+    if (!Number.isFinite(Number(value))) return '';
+    const totalMinutes = Math.max(0, Math.floor(Number(value)));
+    const hh = String(Math.floor(totalMinutes / 60) % 24).padStart(2, '0');
+    const mm = String(totalMinutes % 60).padStart(2, '0');
+    return `${hh}:${mm}`;
 };
 
 export const createLabResultsModule = ({
@@ -44,6 +170,7 @@ export const createLabResultsModule = ({
 
     const getModal = () => document.getElementById('labResultsModal');
 
+    const isCustomGraphSelected = () => selectedGraphKeys.has('customGraph');
     const hasSelectedGraphs = () => selectedGraphKeys.size > 0;
     const GRAPH_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#db2777', '#9333ea', '#0891b2', '#ea580c', '#4f46e5'];
 
@@ -55,11 +182,166 @@ export const createLabResultsModule = ({
     };
 
     const getSelectedBrews = () => visibleBrews.filter((brew) => selectedBrewIds.has(brew.id));
+    const getFirstSelectedKey = (selectedKeys) => {
+        for (const key of selectedKeys || []) return key;
+        return null;
+    };
 
     const toChartPoints = (samples, valueKey) =>
         (Array.isArray(samples) ? samples : [])
             .filter((sample) => Number.isFinite(sample?.tMs) && Number.isFinite(sample?.[valueKey]))
             .map((sample) => ({ x: sample.tMs / 1000, y: sample[valueKey] }));
+
+    // Step 2 builder: one place to assemble graph datasets + axis metadata from selection state.
+    const buildCaptureDatasets = ({
+        selectedBrews = [],
+        selectedGraphModes = new Set(),
+        selectedXAxis = new Set(),
+        selectedYAxis = new Set()
+    } = {}) => {
+        const xAxisKey = getFirstSelectedKey(selectedXAxis);
+        const yAxisKeys = Array.from(selectedYAxis || []);
+        const yAxisKey = yAxisKeys[0] || null;
+        const axisMeta = {
+            xAxisKey,
+            yAxisKey,
+            yAxisKeys,
+            xAxisLabel: AXIS_LABEL_BY_KEY[xAxisKey] || 'Time',
+            yAxisLabel: AXIS_LABEL_BY_KEY[yAxisKey] || 'Value'
+        };
+
+        const hasAxisSelection = Boolean(xAxisKey && yAxisKeys.length > 0);
+        const customMode = selectedGraphModes.has('customGraph');
+        const pointMapper = createLabAxisPointMapper({ visibleBrews });
+        const datasets = [];
+        let mappedPointCount = 0;
+
+        if (customMode) {
+            if (!hasAxisSelection) {
+                return {
+                    datasets: [],
+                    axisMeta: {
+                        ...axisMeta,
+                        hasAxisSelection,
+                        customMode: true
+                    },
+                    mappedPointCount: 0
+                };
+            }
+
+            yAxisKeys.forEach((yKey, index) => {
+                const customPoints = selectedBrews
+                    .map((brew) => pointMapper({ xAxisKey, yAxisKey: yKey, brew, sample: null }))
+                    .filter((result) => result.ok)
+                    .map((result) => result.point);
+
+                if (!customPoints.length) return;
+                const color = Y_AXIS_FIELD_COLORS[index % Y_AXIS_FIELD_COLORS.length];
+                mappedPointCount += customPoints.length;
+                datasets.push({
+                    label: AXIS_LABEL_BY_KEY[yKey] || yKey,
+                    data: customPoints,
+                    borderColor: color,
+                    backgroundColor: color,
+                    yAxisID: 'y',
+                    showLine: true,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                    tension: 0.15
+                });
+            });
+
+            return {
+                datasets,
+                axisMeta: {
+                    ...axisMeta,
+                    hasAxisSelection,
+                    customMode: true
+                },
+                mappedPointCount
+            };
+        }
+        selectedBrews.forEach((brew, brewIndex) => {
+            const baseColor = GRAPH_COLORS[brewIndex % GRAPH_COLORS.length];
+            const brewLabel = getBrewLabel(brew);
+            if (selectedGraphModes.has('weightGraph')) {
+                let points = [];
+                if (hasAxisSelection) {
+                    const sourceSamples = Array.isArray(brew.scaleCapture?.samples) ? brew.scaleCapture.samples : [];
+                    const sampleMode = axisKeyUsesSample(xAxisKey) || axisKeyUsesSample(yAxisKey);
+                    if (sampleMode) {
+                        points = sourceSamples
+                            .map((sample) => pointMapper({ xAxisKey, yAxisKey, brew, sample }))
+                            .filter((result) => result.ok)
+                            .map((result) => result.point);
+                    } else {
+                        const mapped = pointMapper({ xAxisKey, yAxisKey, brew, sample: null });
+                        points = mapped.ok ? [mapped.point] : [];
+                    }
+                } else {
+                    points = toChartPoints(brew.scaleCapture?.samples, 'w');
+                }
+                if (points.length) {
+                    mappedPointCount += points.length;
+                    datasets.push({
+                        label: `${brewLabel} - Weight`,
+                        data: points,
+                        borderColor: baseColor,
+                        backgroundColor: baseColor,
+                        yAxisID: hasAxisSelection ? 'y' : 'yWeight',
+                        pointRadius: 0,
+                        pointHoverRadius: 2,
+                        borderWidth: 2,
+                        tension: 0.15
+                    });
+                }
+            }
+            if (selectedGraphModes.has('flowGraph')) {
+                let points = [];
+                if (hasAxisSelection) {
+                    const sourceSamples = Array.isArray(brew.scaleFlowCapture?.samples) ? brew.scaleFlowCapture.samples : [];
+                    const sampleMode = axisKeyUsesSample(xAxisKey) || axisKeyUsesSample(yAxisKey);
+                    if (sampleMode) {
+                        points = sourceSamples
+                            .map((sample) => pointMapper({ xAxisKey, yAxisKey, brew, sample }))
+                            .filter((result) => result.ok)
+                            .map((result) => result.point);
+                    } else {
+                        const mapped = pointMapper({ xAxisKey, yAxisKey, brew, sample: null });
+                        points = mapped.ok ? [mapped.point] : [];
+                    }
+                } else {
+                    points = toChartPoints(brew.scaleFlowCapture?.samples, 'flow');
+                }
+                if (points.length) {
+                    mappedPointCount += points.length;
+                    datasets.push({
+                        label: `${brewLabel} - Flow`,
+                        data: points,
+                        borderColor: baseColor,
+                        backgroundColor: baseColor,
+                        borderDash: [6, 3],
+                        yAxisID: hasAxisSelection ? 'y' : 'yFlow',
+                        pointRadius: 0,
+                        pointHoverRadius: 2,
+                        borderWidth: 2,
+                        tension: 0.15
+                    });
+                }
+            }
+        });
+
+        return {
+            datasets,
+            axisMeta: {
+                ...axisMeta,
+                hasAxisSelection,
+                customMode: false
+            },
+            mappedPointCount
+        };
+    };
 
     const setGraphEmptyState = (message) => {
         const emptyEl = document.getElementById('labResultsGraphEmpty');
@@ -88,7 +370,7 @@ export const createLabResultsModule = ({
 
         if (!selectedGraphKeys.size) {
             destroyLabGraph();
-            setGraphEmptyState('Select Flow graph and/or Weight graph');
+            setGraphEmptyState('Select Flow graph, Weight graph, or Custom graph');
             return;
         }
 
@@ -99,53 +381,31 @@ export const createLabResultsModule = ({
             return;
         }
 
-        const datasets = [];
-        selectedBrews.forEach((brew, brewIndex) => {
-            const baseColor = GRAPH_COLORS[brewIndex % GRAPH_COLORS.length];
-            const brewLabel = getBrewLabel(brew);
-            if (selectedGraphKeys.has('weightGraph')) {
-                const points = toChartPoints(brew.scaleCapture?.samples, 'w');
-                if (points.length) {
-                    datasets.push({
-                        label: `${brewLabel} - Weight`,
-                        data: points,
-                        borderColor: baseColor,
-                        backgroundColor: baseColor,
-                        yAxisID: 'yWeight',
-                        pointRadius: 0,
-                        pointHoverRadius: 2,
-                        borderWidth: 2,
-                        tension: 0.15
-                    });
-                }
-            }
-            if (selectedGraphKeys.has('flowGraph')) {
-                const points = toChartPoints(brew.scaleFlowCapture?.samples, 'flow');
-                if (points.length) {
-                    datasets.push({
-                        label: `${brewLabel} - Flow`,
-                        data: points,
-                        borderColor: baseColor,
-                        backgroundColor: baseColor,
-                        borderDash: [6, 3],
-                        yAxisID: 'yFlow',
-                        pointRadius: 0,
-                        pointHoverRadius: 2,
-                        borderWidth: 2,
-                        tension: 0.15
-                    });
-                }
-            }
+        const { datasets, axisMeta, mappedPointCount } = buildCaptureDatasets({
+            selectedBrews,
+            selectedGraphModes: selectedGraphKeys,
+            selectedXAxis: selectedXFieldKeys,
+            selectedYAxis: selectedYFieldKeys
         });
 
         if (!datasets.length) {
             destroyLabGraph();
-            setGraphEmptyState('No capture samples found for selected brews');
+            if (axisMeta.hasAxisSelection && mappedPointCount === 0) {
+                setGraphEmptyState('No valid points for selected X-axis and Y-axis');
+            } else if (axisMeta.customMode && !axisMeta.hasAxisSelection) {
+                setGraphEmptyState('Select one X-axis and at least one Y-axis for Custom graph');
+            } else {
+                setGraphEmptyState('No capture samples found for selected brews');
+            }
             return;
         }
 
         hideGraphEmptyState();
         destroyLabGraph();
+        const isDateOnXAxis = axisMeta.xAxisKey === 'date';
+        const isTimeOfDayOnXAxis = axisMeta.xAxisKey === 'timeOfDay';
+        const isDateOnSingleYAxis = axisMeta.yAxisKeys.length === 1 && axisMeta.yAxisKeys[0] === 'date';
+        const isTimeOfDayOnSingleYAxis = axisMeta.yAxisKeys.length === 1 && axisMeta.yAxisKeys[0] === 'timeOfDay';
         labGraphChart = new chartCtor(canvas.getContext('2d'), {
             type: 'line',
             data: { datasets },
@@ -154,29 +414,81 @@ export const createLabResultsModule = ({
                 maintainAspectRatio: false,
                 animation: false,
                 parsing: false,
-                scales: {
-                    x: {
-                        type: 'linear',
-                        title: { display: true, text: 'Time (s)' },
-                        ticks: { maxTicksLimit: 8 }
-                    },
-                    yWeight: {
-                        type: 'linear',
-                        position: 'left',
-                        title: { display: true, text: 'Weight (g)' },
-                        display: selectedGraphKeys.has('weightGraph')
-                    },
-                    yFlow: {
-                        type: 'linear',
-                        position: 'right',
-                        title: { display: true, text: 'Flow (g/s)' },
-                        display: selectedGraphKeys.has('flowGraph'),
-                        grid: { drawOnChartArea: false }
-                    }
-                },
+                scales: axisMeta.hasAxisSelection
+                    ? {
+                          x: {
+                              type: 'linear',
+                              title: { display: true, text: axisMeta.xAxisLabel },
+                              ticks: {
+                                  maxTicksLimit: 8,
+                                  callback: (value) => {
+                                      if (isDateOnXAxis) return formatLabGraphDate(value);
+                                      if (isTimeOfDayOnXAxis) return formatLabGraphTimeOfDay(value);
+                                      return value;
+                                  }
+                              }
+                          },
+                          y: {
+                              type: 'linear',
+                              title: {
+                                  display: true,
+                                  text: axisMeta.yAxisKeys.length > 1
+                                      ? `Y fields (${axisMeta.yAxisKeys.length})`
+                                      : axisMeta.yAxisLabel
+                              },
+                              ticks: {
+                                  callback: (value) => {
+                                      if (isDateOnSingleYAxis) return formatLabGraphDate(value);
+                                      if (isTimeOfDayOnSingleYAxis) return formatLabGraphTimeOfDay(value);
+                                      return value;
+                                  }
+                              }
+                          }
+                      }
+                    : {
+                          x: {
+                              type: 'linear',
+                              title: { display: true, text: 'Time (s)' },
+                              ticks: { maxTicksLimit: 8 }
+                          },
+                          yWeight: {
+                              type: 'linear',
+                              position: 'left',
+                              title: { display: true, text: 'Weight (g)' },
+                              display: selectedGraphKeys.has('weightGraph')
+                          },
+                          yFlow: {
+                              type: 'linear',
+                              position: 'right',
+                              title: { display: true, text: 'Flow (g/s)' },
+                              display: selectedGraphKeys.has('flowGraph'),
+                              grid: { drawOnChartArea: false }
+                          }
+                      },
                 plugins: {
                     legend: { display: true, labels: { boxWidth: 10, boxHeight: 10 } },
-                    tooltip: { mode: 'nearest', intersect: false }
+                    tooltip: {
+                        mode: 'nearest',
+                        intersect: false,
+                        callbacks: {
+                            label: (context) => {
+                                const datasetLabel = context.dataset?.label || '';
+                                const xVal = context.parsed?.x;
+                                const yVal = context.parsed?.y;
+                                const xText = isDateOnXAxis
+                                    ? formatLabGraphDate(xVal)
+                                    : isTimeOfDayOnXAxis
+                                        ? formatLabGraphTimeOfDay(xVal)
+                                        : String(xVal ?? '');
+                                const yText = isDateOnSingleYAxis
+                                    ? formatLabGraphDate(yVal)
+                                    : isTimeOfDayOnSingleYAxis
+                                        ? formatLabGraphTimeOfDay(yVal)
+                                        : String(yVal ?? '');
+                                return `${datasetLabel}: (${xText}, ${yText})`;
+                            }
+                        }
+                    }
                 },
                 interaction: {
                     mode: 'nearest',
@@ -191,9 +503,12 @@ export const createLabResultsModule = ({
         if (!container) return;
         container.innerHTML = LAB_RESULT_GRAPHS.map((graph) => {
             const selected = selectedGraphKeys.has(graph.key);
+            const disableGraph = isCustomGraphSelected() && graph.key !== 'customGraph';
             return `
                 <label class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
-                    selected
+                    disableGraph
+                        ? 'bg-coffee-50 dark:bg-[#201d1b] border-coffee-200 dark:border-[#44403c] text-coffee-400 dark:text-[#78716c] opacity-70 cursor-not-allowed'
+                        : selected
                         ? 'bg-coffee-100 dark:bg-[#34302e] border-coffee-300 dark:border-[#57534e] text-coffee-800 dark:text-white'
                         : 'bg-white dark:bg-[#1c1917] border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e]'
                 }">
@@ -201,6 +516,7 @@ export const createLabResultsModule = ({
                         type="checkbox"
                         data-action-change="toggleLabResultGraph('${graph.key}')"
                         ${selected ? 'checked' : ''}
+                        ${disableGraph ? 'disabled' : ''}
                         class="rounded border-coffee-300 text-coffee-700 focus:ring-coffee-500"
                     />
                     <span>${graph.label}</span>
@@ -212,7 +528,8 @@ export const createLabResultsModule = ({
     const renderAxisSelectors = (containerId, selectedKeys, actionName) => {
         const container = document.getElementById(containerId);
         if (!container) return;
-        const disabled = hasSelectedGraphs();
+        const disabled = !isCustomGraphSelected();
+        const isXAxis = containerId === 'labResultsXAxisSelectors';
         container.innerHTML = LAB_RESULT_AXIS_FIELDS.map((field) => {
             const selected = selectedKeys.has(field.key);
             return `
@@ -224,7 +541,8 @@ export const createLabResultsModule = ({
                         : 'bg-white dark:bg-[#1c1917] border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e]'
                 }">
                     <input
-                        type="checkbox"
+                        type="${isXAxis ? 'radio' : 'checkbox'}"
+                        ${isXAxis ? 'name="labResultsXAxisField"' : ''}
                         data-action-change="${actionName}('${field.key}')"
                         ${selected ? 'checked' : ''}
                         ${disabled ? 'disabled' : ''}
@@ -298,7 +616,7 @@ export const createLabResultsModule = ({
         event?.stopPropagation?.();
         visibleBrews = (getFilteredCoffees() || []).slice(0, 20);
         selectedGraphKeys = new Set();
-        selectedXFieldKeys = new Set();
+        selectedXFieldKeys = new Set(['brew']);
         selectedYFieldKeys = new Set();
         selectedBrewIds = new Set(visibleBrews.map((brew) => brew.id));
         render();
@@ -313,15 +631,20 @@ export const createLabResultsModule = ({
     };
 
     const toggleAxisField = (fieldKey, selectedKeys) => {
-        if (hasSelectedGraphs()) return;
+        if (!isCustomGraphSelected()) return;
         if (!fieldKey) return;
         if (selectedKeys.has(fieldKey)) selectedKeys.delete(fieldKey);
         else selectedKeys.add(fieldKey);
         renderFieldSelectors();
+        renderCaptureGraph();
     };
 
     const toggleLabResultXField = (fieldKey) => {
-        toggleAxisField(fieldKey, selectedXFieldKeys);
+        if (!isCustomGraphSelected()) return;
+        if (!fieldKey) return;
+        selectedXFieldKeys = new Set([fieldKey]);
+        renderFieldSelectors();
+        renderCaptureGraph();
     };
 
     const toggleLabResultYField = (fieldKey) => {
@@ -330,8 +653,17 @@ export const createLabResultsModule = ({
 
     const toggleLabResultGraph = (graphKey) => {
         if (!graphKey) return;
+        if (isCustomGraphSelected() && graphKey !== 'customGraph') return;
         if (selectedGraphKeys.has(graphKey)) selectedGraphKeys.delete(graphKey);
-        else selectedGraphKeys.add(graphKey);
+        else {
+            if (graphKey === 'customGraph') {
+                selectedGraphKeys.clear();
+                selectedGraphKeys.add('customGraph');
+            } else {
+                selectedGraphKeys.delete('customGraph');
+                selectedGraphKeys.add(graphKey);
+            }
+        }
         renderGraphSelectors();
         renderFieldSelectors();
         renderCaptureGraph();
