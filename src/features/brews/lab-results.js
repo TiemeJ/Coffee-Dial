@@ -155,7 +155,8 @@ const formatLabGraphTimeOfDay = (value) => {
 
 export const createLabResultsModule = ({
     getFilteredCoffees,
-    getCoffeeTypeDisplay
+    getCoffeeTypeDisplay,
+    dispatchCommand
 } = {}) => {
     if (typeof getFilteredCoffees !== 'function') {
         throw new Error('createLabResultsModule requires getFilteredCoffees');
@@ -168,8 +169,30 @@ export const createLabResultsModule = ({
     let visibleBrews = [];
     let labGraphChart = null;
     let customGraphRenderMode = 'points';
+    let longPressTimer = null;
+    let longPressBrewId = null;
+    let suppressNextTileClickBrewId = null;
+    let longPressListenersBound = false;
 
     const getModal = () => document.getElementById('labResultsModal');
+    const LONG_PRESS_MS = 420;
+
+    const clearLongPressTimer = () => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        longPressBrewId = null;
+    };
+
+    const bindLongPressListeners = () => {
+        if (longPressListenersBound) return;
+        longPressListenersBound = true;
+        const clear = () => clearLongPressTimer();
+        window.addEventListener('pointerup', clear, true);
+        window.addEventListener('pointercancel', clear, true);
+        window.addEventListener('contextmenu', clear, true);
+    };
 
     const isCustomGraphSelected = () => selectedGraphKeys.has('customGraph');
     const hasSelectedGraphs = () => selectedGraphKeys.size > 0;
@@ -597,6 +620,7 @@ export const createLabResultsModule = ({
                 <button
                     type="button"
                     data-action-click="toggleLabResultBrewSelection('${escapeAttr(brew.id)}')"
+                    data-action-pointerdown="startLabResultBrewLongPress('${escapeAttr(brew.id)}', event)"
                     class="w-full text-left px-3 py-2 rounded-lg border transition-colors ${
                         selected
                             ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
@@ -688,10 +712,29 @@ export const createLabResultsModule = ({
 
     const toggleLabResultBrewSelection = (brewId) => {
         if (!brewId) return;
+        if (suppressNextTileClickBrewId === brewId) {
+            suppressNextTileClickBrewId = null;
+            return;
+        }
         if (selectedBrewIds.has(brewId)) selectedBrewIds.delete(brewId);
         else selectedBrewIds.add(brewId);
         renderBrewTiles();
         renderCaptureGraph();
+    };
+
+    const startLabResultBrewLongPress = (brewId, event = null) => {
+        if (!brewId) return;
+        bindLongPressListeners();
+        clearLongPressTimer();
+        longPressBrewId = brewId;
+        longPressTimer = setTimeout(() => {
+            longPressTimer = null;
+            if (longPressBrewId !== brewId) return;
+            suppressNextTileClickBrewId = brewId;
+            dispatchCommand?.('brews.openCard', { id: brewId, event: null, options: {} });
+            longPressBrewId = null;
+            event?.preventDefault?.();
+        }, LONG_PRESS_MS);
     };
 
     const setLabResultCustomGraphRenderMode = (mode) => {
@@ -710,6 +753,7 @@ export const createLabResultsModule = ({
         toggleLabResultXField,
         toggleLabResultYField,
         toggleLabResultBrewSelection,
+        startLabResultBrewLongPress,
         setLabResultCustomGraphRenderMode
     };
 };

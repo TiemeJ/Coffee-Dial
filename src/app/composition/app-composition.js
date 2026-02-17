@@ -1024,13 +1024,16 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             openLabResultsModal,
             closeLabResultsModal,
             setLabResultCustomGraphRenderMode,
+            startLabResultBrewLongPress,
             toggleLabResultGraph,
             toggleLabResultXField,
             toggleLabResultYField,
             toggleLabResultBrewSelection
         } = createLabResultsModule({
             getFilteredCoffees,
-            getCoffeeTypeDisplay
+            getCoffeeTypeDisplay,
+            dispatchCommand: (commandName, payload) =>
+                appCommands?.dispatch?.(commandName, payload, { source: 'brews.lab-results' })
         });
         initCoffeeDetailsUi();
 
@@ -1639,6 +1642,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setRating,
             setTempMode,
             shareCoffeeCard,
+            startLabResultBrewLongPress,
             showBeanForBrew,
             showBeansForCoffeeType,
             showBeansForCoffeeTypeFromTable,
