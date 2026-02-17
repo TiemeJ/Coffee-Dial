@@ -174,11 +174,12 @@ export const createLabResultsModule = ({
     const hasSelectedGraphs = () => selectedGraphKeys.size > 0;
     const GRAPH_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#db2777', '#9333ea', '#0891b2', '#ea580c', '#4f46e5'];
 
-    const getBrewLabel = (brew) => {
+    const getBrewLabel = (brew, brewIndex = null) => {
         const typeDisplay = getCoffeeTypeDisplay?.(brew) || {};
-        const farmer = typeDisplay.farmer || brew.farmer || 'Unknown';
-        const method = brew.method || '-';
-        return `${farmer} (${method})`;
+        const name = typeDisplay.farmer || brew.farmer || 'Unknown';
+        const dateText = formatLabGraphDate(toTimestamp(brew.createdAt)) || '-';
+        const indexPrefix = Number.isFinite(brewIndex) ? `${brewIndex + 1}. ` : '';
+        return `${indexPrefix}${name} (${dateText})`;
     };
 
     const getSelectedBrews = () => visibleBrews.filter((brew) => selectedBrewIds.has(brew.id));
@@ -264,7 +265,7 @@ export const createLabResultsModule = ({
         }
         selectedBrews.forEach((brew, brewIndex) => {
             const baseColor = GRAPH_COLORS[brewIndex % GRAPH_COLORS.length];
-            const brewLabel = getBrewLabel(brew);
+            const brewLabel = getBrewLabel(brew, brewIndex);
             if (selectedGraphModes.has('weightGraph')) {
                 let points = [];
                 if (hasAxisSelection) {
