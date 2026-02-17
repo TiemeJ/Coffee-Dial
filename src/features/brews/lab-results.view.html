@@ -1,0 +1,42 @@
+<div id="labResultsModal" data-feature-root="brews" class="hidden fixed inset-0 z-[10050] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeLabResultsModal(event)">
+    <div class="bg-white dark:bg-[#292524] rounded-2xl shadow-2xl w-full max-w-3xl border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[90vh]" data-action-click="event.stopPropagation()">
+        <div class="flex items-center justify-between p-4 border-b border-coffee-200 dark:border-[#44403c]">
+            <h3 class="text-lg font-bold text-coffee-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-flask text-coffee-700 dark:text-[#d6ccc2]"></i>
+                <span>Lab results</span>
+            </h3>
+            <button data-action-click="closeLabResultsModal(event)" class="w-8 h-8 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="p-4 overflow-y-auto space-y-4">
+            <div class="bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-xl p-4">
+                <div class="h-56 rounded-lg border border-coffee-300 dark:border-[#57534e] bg-white dark:bg-[#292524] relative">
+                    <canvas id="labResultsGraphCanvas" class="w-full h-full"></canvas>
+                    <div id="labResultsGraphEmpty" class="absolute inset-0 flex items-center justify-center text-coffee-400 dark:text-[#78716c] text-sm font-medium pointer-events-none">
+                        Select Flow graph and/or Weight graph
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">Graphs</div>
+                <div id="labResultsGraphSelectors" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">X-axis</div>
+                <div id="labResultsXAxisSelectors" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">Y-axis</div>
+                <div id="labResultsYAxisSelectors" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">Brews</div>
+                    <div id="labResultsBrewCount" class="text-xs text-coffee-500 dark:text-[#a8a29e]"></div>
+                </div>
+                <div id="labResultsBrewTiles" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+            </div>
+        </div>
+    </div>
+</div>

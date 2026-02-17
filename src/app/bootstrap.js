@@ -14,6 +14,7 @@ import {
     mountBrewsCardView,
     mountBrewsFormView,
     mountBrewsFormModalView,
+    mountLabResultsModalView,
     mountBrewsPinArtView,
     mountBrewsTablePrefsView,
     mountBrewsTableView
@@ -59,6 +60,7 @@ await mountBrewsFormModalView();
 await mountBrewsTableView();
 await mountBrewsTablePrefsView();
 await mountBrewsCardView();
+await mountLabResultsModalView();
 await mountBeansTableView();
 await mountBeansCardView();
 await mountCoffeeTypesTableView();

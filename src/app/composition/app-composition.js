@@ -39,6 +39,7 @@
         import { createBrewFormUiModule } from '../../features/brews/brew-form-ui.js';
         import { createBrewFormActionsModule } from '../../features/brews/brew-form-actions.js';
         import { createBrewCsvRecipeModule } from '../../features/brews/brew-csv-recipe.js';
+        import { createLabResultsModule } from '../../features/brews/lab-results.js';
         import { createCoffeeTypesExtractModule } from '../../features/coffees/coffee-types-extract.js';
         import { createActionMenuModule } from '../../features/ui/action-menu.js';
         import { createUiShellModule } from '../../features/ui-shell.js';
@@ -998,6 +999,17 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getFilteredCoffees,
             getCoffeeTypeDisplay
         });
+        const {
+            openLabResultsModal,
+            closeLabResultsModal,
+            toggleLabResultGraph,
+            toggleLabResultXField,
+            toggleLabResultYField,
+            toggleLabResultBrewSelection
+        } = createLabResultsModule({
+            getFilteredCoffees,
+            getCoffeeTypeDisplay
+        });
         initCoffeeDetailsUi();
 
         const {
@@ -1446,6 +1458,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeImageModal,
             closeImportExportModal,
             closeImportModal,
+            closeLabResultsModal,
             closeMenus,
             closeModal,
             closeStats,
@@ -1556,6 +1569,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             openImageModal,
             openImportExportModal,
             openImportModal,
+            openLabResultsModal,
             openNewBag,
             openNewBagForCoffeeType,
             openNewBagForCoffeeTypeFromTable,
@@ -1629,6 +1643,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             toggleGasArchive,
             toggleGasArchiveFromTable,
             toggleGasQuickFilter,
+            toggleLabResultBrewSelection,
+            toggleLabResultGraph,
+            toggleLabResultXField,
+            toggleLabResultYField,
             toggleMainMenu,
             toggleMethodOther,
             togglePinnedTiles,

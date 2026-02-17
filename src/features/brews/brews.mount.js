@@ -33,3 +33,7 @@ export const mountBrewsTablePrefsView = async () => {
 export const mountBrewsPinArtView = async () => {
     await mountView('brewPinArtMount', './src/features/pin/brew-pin-art.view.html');
 };
+
+export const mountLabResultsModalView = async () => {
+    await mountView('labResultsModalMount', './src/features/brews/lab-results.view.html');
+};
