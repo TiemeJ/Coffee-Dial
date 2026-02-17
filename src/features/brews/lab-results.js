@@ -522,12 +522,9 @@ export const createLabResultsModule = ({
         if (!container) return;
         container.innerHTML = LAB_RESULT_GRAPHS.map((graph) => {
             const selected = selectedGraphKeys.has(graph.key);
-            const disableGraph = isCustomGraphSelected() && graph.key !== 'customGraph';
             return `
                 <label class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
-                    disableGraph
-                        ? 'bg-coffee-50 dark:bg-[#201d1b] border-coffee-200 dark:border-[#44403c] text-coffee-400 dark:text-[#78716c] opacity-70 cursor-not-allowed'
-                        : selected
+                    selected
                         ? 'bg-coffee-100 dark:bg-[#34302e] border-coffee-300 dark:border-[#57534e] text-coffee-800 dark:text-white'
                         : 'bg-white dark:bg-[#1c1917] border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e]'
                 }">
@@ -535,7 +532,6 @@ export const createLabResultsModule = ({
                         type="checkbox"
                         data-action-change="toggleLabResultGraph('${graph.key}')"
                         ${selected ? 'checked' : ''}
-                        ${disableGraph ? 'disabled' : ''}
                         class="rounded border-coffee-300 text-coffee-700 focus:ring-coffee-500"
                     />
                     <span>${graph.label}</span>
@@ -674,16 +670,15 @@ export const createLabResultsModule = ({
 
     const toggleLabResultGraph = (graphKey) => {
         if (!graphKey) return;
-        if (isCustomGraphSelected() && graphKey !== 'customGraph') return;
-        if (selectedGraphKeys.has(graphKey)) selectedGraphKeys.delete(graphKey);
-        else {
-            if (graphKey === 'customGraph') {
-                selectedGraphKeys.clear();
-                selectedGraphKeys.add('customGraph');
-            } else {
-                selectedGraphKeys.delete('customGraph');
-                selectedGraphKeys.add(graphKey);
-            }
+        if (selectedGraphKeys.has(graphKey)) {
+            selectedGraphKeys.delete(graphKey);
+        } else if (graphKey === 'customGraph') {
+            selectedGraphKeys.delete('flowGraph');
+            selectedGraphKeys.delete('weightGraph');
+            selectedGraphKeys.add('customGraph');
+        } else {
+            selectedGraphKeys.delete('customGraph');
+            selectedGraphKeys.add(graphKey);
         }
         renderGraphSelectors();
         renderFieldSelectors();
