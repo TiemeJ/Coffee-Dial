@@ -23,6 +23,7 @@
         import { createBrewsCardGraphModule } from '../../features/brews/brews-card-graph.js';
         import { createBrewsCardPhotoModule } from '../../features/brews/brews-card-photo.js';
         import { createBrewsFormModalModule } from '../../features/brews/brews-form-modal.js';
+        import { createBrewsTableStatePresetsModule } from '../../features/brews/brews-table-state-presets.js';
         import { createBrewsCoordinator, createBrewsTableCoordinator } from '../coordinators/brews.coordinator.js';
         import { createBrewsController } from '../../features/brews/brews.controller.js';
         import { createBrewsRepo } from '../../features/brews/brews.repo.js';
@@ -401,6 +402,26 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 getColumnPreferences: () => getColumnPreferencesState(),
                 setColumnPreferences: (value) => setColumnPreferencesState(value)
             }
+        });
+        const {
+            toggleBrewsTableStateMenu,
+            closeBrewsTableStateMenu,
+            saveCurrentBrewsTableState,
+            loadBrewsTableStatePreset,
+            deleteBrewsTableStatePreset
+        } = createBrewsTableStatePresetsModule({
+            getCurrentUser: () => getCurrentUserState(),
+            dataService,
+            getCurrentSort: () => getCurrentSortState(),
+            setCurrentSort: (value) => setCurrentSortState(value),
+            getActiveFilters: () => getActiveFiltersState(),
+            setActiveFilters: (value) => setActiveFiltersState(value),
+            getCurrentView: () => getCurrentViewState(),
+            setDisplayedBrewsCount: (value) => setDisplayedBrewsCountState(value),
+            getBrewsPerPage: () => BREWS_PER_PAGE,
+            renderTable: (...args) => renderTable(...args),
+            renderActiveFilters: (...args) => renderActiveFilters(...args),
+            updateBrewSortIcons: (...args) => updateBrewSortIcons(...args)
         });
 
         const {
@@ -1448,6 +1469,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeCoffeeTypeCreatedToast,
             closeCoffeeTypes,
             closeConnectScaleModal,
+            closeBrewsTableStateMenu,
             closeEasterEgg,
             closeExportModal,
             closeGasBulkAddModal,
@@ -1469,6 +1491,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             createCoffeeTypeFromModal,
             createGasItemFromModal,
             deleteBean,
+            deleteBrewsTableStatePreset,
             deleteCoffee,
             deleteCoffeeType,
             deleteCoffeeTypeFromTable,
@@ -1524,6 +1547,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             hideGalleryModal,
             hidePreferencesModal,
             loadMoreBrews,
+            loadBrewsTableStatePreset,
             loadMoreGallery,
             mergeGasItem,
             migrateGrinderToGear,
@@ -1599,6 +1623,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             saveBeanRoastDate,
             saveBeanStock,
             saveBrewQuickEdits,
+            saveCurrentBrewsTableState,
             saveCoffeeTypeEdits,
             saveGasEdits,
             sendEmailLinkActivation,
@@ -1645,6 +1670,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             toggleGasArchive,
             toggleGasArchiveFromTable,
             toggleGasQuickFilter,
+            toggleBrewsTableStateMenu,
             toggleLabResultBrewSelection,
             toggleLabResultGraph,
             toggleLabResultXField,

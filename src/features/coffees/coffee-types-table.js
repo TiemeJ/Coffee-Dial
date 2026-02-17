@@ -118,6 +118,10 @@ export const createCoffeeTypesTableModule = ({
 
     const clearCoffeeTypesFilters = () => {
         setCoffeeTypesFiltersState(createDefaultCoffeeTypeFilters());
+        setCoffeeTypesSearchState('');
+        const input = document.getElementById('coffeeTypesSearch');
+        if (input) input.value = '';
+        document.getElementById('coffeeTypesSearchClearBtn')?.classList.add('hidden');
         renderCoffeeTypesActiveFilters();
         renderCoffeeTypesTable();
     };

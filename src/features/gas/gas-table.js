@@ -117,6 +117,10 @@ export const createGasTableModule = ({
 
     const clearGasFilters = () => {
         setGasFiltersState(createDefaultGasFilters());
+        setGasSearchState('');
+        const input = document.getElementById('gasSearch');
+        if (input) input.value = '';
+        document.getElementById('gasSearchClearBtn')?.classList.add('hidden');
         renderGasActiveFilters();
         renderGasTable();
     };

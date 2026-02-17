@@ -141,6 +141,9 @@ export const createBrewsTableModule = ({
 
     const clearAllFilters = () => {
         setActiveFilters(createDefaultActiveFilters());
+        const input = document.getElementById('globalSearch');
+        if (input) input.value = '';
+        document.getElementById('searchClearBtn')?.classList.add('hidden');
         setDisplayedBrewsCount(getBrewsPerPage());
         renderTable();
         renderActiveFilters();

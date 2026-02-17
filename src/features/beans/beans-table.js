@@ -140,6 +140,10 @@ export const createBeansTableModule = ({
 
     const clearBeansFilters = () => {
         setBeansFiltersState(createDefaultBeansFilters());
+        setBeansSearchState('');
+        const input = document.getElementById('beansSearch');
+        if (input) input.value = '';
+        document.getElementById('beansSearchClearBtn')?.classList.add('hidden');
         renderBeansActiveFilters();
         renderBeansTable();
     };
