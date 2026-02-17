@@ -1002,6 +1002,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const {
             openLabResultsModal,
             closeLabResultsModal,
+            setLabResultCustomGraphRenderMode,
             toggleLabResultGraph,
             toggleLabResultXField,
             toggleLabResultYField,
@@ -1608,6 +1609,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setGasSearch,
             setGasSort,
             setImportExportMode,
+            setLabResultCustomGraphRenderMode,
             setNotesMode,
             setRating,
             setTempMode,

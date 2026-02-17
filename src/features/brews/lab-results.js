@@ -167,6 +167,7 @@ export const createLabResultsModule = ({
     let selectedBrewIds = new Set();
     let visibleBrews = [];
     let labGraphChart = null;
+    let customGraphRenderMode = 'points';
 
     const getModal = () => document.getElementById('labResultsModal');
 
@@ -198,7 +199,8 @@ export const createLabResultsModule = ({
         selectedBrews = [],
         selectedGraphModes = new Set(),
         selectedXAxis = new Set(),
-        selectedYAxis = new Set()
+        selectedYAxis = new Set(),
+        customRenderMode = 'points'
     } = {}) => {
         const xAxisKey = getFirstSelectedKey(selectedXAxis);
         const yAxisKeys = Array.from(selectedYAxis || []);
@@ -242,14 +244,18 @@ export const createLabResultsModule = ({
                 datasets.push({
                     label: AXIS_LABEL_BY_KEY[yKey] || yKey,
                     data: customPoints,
+                    type: customRenderMode === 'bars' ? 'bar' : 'line',
                     borderColor: color,
                     backgroundColor: color,
                     yAxisID: 'y',
-                    showLine: true,
-                    pointRadius: 3,
+                    showLine: customRenderMode === 'lines',
+                    pointRadius: customRenderMode === 'points' ? 4 : 0,
                     pointHoverRadius: 5,
-                    borderWidth: 2,
-                    tension: 0.15
+                    borderWidth: customRenderMode === 'bars' ? 1 : 2,
+                    tension: customRenderMode === 'lines' ? 0.15 : 0,
+                    barPercentage: customRenderMode === 'bars' ? 0.9 : undefined,
+                    categoryPercentage: customRenderMode === 'bars' ? 0.9 : undefined,
+                    maxBarThickness: customRenderMode === 'bars' ? 24 : undefined
                 });
             });
 
@@ -344,6 +350,16 @@ export const createLabResultsModule = ({
         };
     };
 
+    const renderCustomGraphModeControl = () => {
+        const selectEl = document.getElementById('labResultsCustomRenderMode');
+        const wrapEl = document.getElementById('labResultsCustomRenderModeWrap');
+        if (!selectEl || !wrapEl) return;
+        selectEl.value = customGraphRenderMode;
+        const enabled = isCustomGraphSelected();
+        selectEl.disabled = !enabled;
+        wrapEl.classList.toggle('opacity-60', !enabled);
+    };
+
     const setGraphEmptyState = (message) => {
         const emptyEl = document.getElementById('labResultsGraphEmpty');
         if (!emptyEl) return;
@@ -386,7 +402,8 @@ export const createLabResultsModule = ({
             selectedBrews,
             selectedGraphModes: selectedGraphKeys,
             selectedXAxis: selectedXFieldKeys,
-            selectedYAxis: selectedYFieldKeys
+            selectedYAxis: selectedYFieldKeys,
+            customRenderMode: customGraphRenderMode
         });
 
         if (!datasets.length) {
@@ -608,6 +625,7 @@ export const createLabResultsModule = ({
     const render = () => {
         renderGraphSelectors();
         renderFieldSelectors();
+        renderCustomGraphModeControl();
         renderBrewTiles();
         renderCaptureGraph();
     };
@@ -619,6 +637,7 @@ export const createLabResultsModule = ({
         selectedGraphKeys = new Set();
         selectedXFieldKeys = new Set(['brew']);
         selectedYFieldKeys = new Set();
+        customGraphRenderMode = 'points';
         selectedBrewIds = new Set(visibleBrews.map((brew) => brew.id));
         render();
         getModal()?.classList.remove('hidden');
@@ -667,6 +686,7 @@ export const createLabResultsModule = ({
         }
         renderGraphSelectors();
         renderFieldSelectors();
+        renderCustomGraphModeControl();
         renderCaptureGraph();
     };
 
@@ -678,12 +698,22 @@ export const createLabResultsModule = ({
         renderCaptureGraph();
     };
 
+    const setLabResultCustomGraphRenderMode = (mode) => {
+        const nextMode = mode === 'lines' || mode === 'bars' ? mode : 'points';
+        customGraphRenderMode = nextMode;
+        renderCustomGraphModeControl();
+        if (isCustomGraphSelected()) {
+            renderCaptureGraph();
+        }
+    };
+
     return {
         openLabResultsModal,
         closeLabResultsModal,
         toggleLabResultGraph,
         toggleLabResultXField,
         toggleLabResultYField,
-        toggleLabResultBrewSelection
+        toggleLabResultBrewSelection,
+        setLabResultCustomGraphRenderMode
     };
 };

@@ -29,6 +29,18 @@
             <div>
                 <div class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">X-axis</div>
                 <div id="labResultsXAxisSelectors" class="flex flex-wrap gap-2"></div>
+                <div id="labResultsCustomRenderModeWrap" class="mt-3">
+                    <label for="labResultsCustomRenderMode" class="block text-[11px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Custom graph style</label>
+                    <select
+                        id="labResultsCustomRenderMode"
+                        data-action-change="setLabResultCustomGraphRenderMode(this.value)"
+                        class="w-full sm:w-56 bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2 shadow-sm"
+                    >
+                        <option value="points">Points</option>
+                        <option value="lines">Lines</option>
+                        <option value="bars">Bars</option>
+                    </select>
+                </div>
             </div>
             <div>
                 <div class="flex items-center justify-between mb-2">
