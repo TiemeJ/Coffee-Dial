@@ -215,6 +215,7 @@ export const createLabResultsModule = ({
 
         const hasAxisSelection = Boolean(xAxisKey && yAxisKeys.length > 0);
         const customMode = selectedGraphModes.has('customGraph');
+        const useCustomAxes = customMode && hasAxisSelection;
         const pointMapper = createLabAxisPointMapper({ visibleBrews });
         const datasets = [];
         let mappedPointCount = 0;
@@ -274,7 +275,7 @@ export const createLabResultsModule = ({
             const brewLabel = getBrewLabel(brew, brewIndex);
             if (selectedGraphModes.has('weightGraph')) {
                 let points = [];
-                if (hasAxisSelection) {
+                if (useCustomAxes) {
                     const sourceSamples = Array.isArray(brew.scaleCapture?.samples) ? brew.scaleCapture.samples : [];
                     const sampleMode = axisKeyUsesSample(xAxisKey) || axisKeyUsesSample(yAxisKey);
                     if (sampleMode) {
@@ -296,7 +297,7 @@ export const createLabResultsModule = ({
                         data: points,
                         borderColor: baseColor,
                         backgroundColor: baseColor,
-                        yAxisID: hasAxisSelection ? 'y' : 'yWeight',
+                        yAxisID: useCustomAxes ? 'y' : 'yWeight',
                         pointRadius: 0,
                         pointHoverRadius: 2,
                         borderWidth: 2,
@@ -306,7 +307,7 @@ export const createLabResultsModule = ({
             }
             if (selectedGraphModes.has('flowGraph')) {
                 let points = [];
-                if (hasAxisSelection) {
+                if (useCustomAxes) {
                     const sourceSamples = Array.isArray(brew.scaleFlowCapture?.samples) ? brew.scaleFlowCapture.samples : [];
                     const sampleMode = axisKeyUsesSample(xAxisKey) || axisKeyUsesSample(yAxisKey);
                     if (sampleMode) {
@@ -329,7 +330,7 @@ export const createLabResultsModule = ({
                         borderColor: baseColor,
                         backgroundColor: baseColor,
                         borderDash: [6, 3],
-                        yAxisID: hasAxisSelection ? 'y' : 'yFlow',
+                        yAxisID: useCustomAxes ? 'y' : 'yFlow',
                         pointRadius: 0,
                         pointHoverRadius: 2,
                         borderWidth: 2,
@@ -343,7 +344,7 @@ export const createLabResultsModule = ({
             datasets,
             axisMeta: {
                 ...axisMeta,
-                hasAxisSelection,
+                hasAxisSelection: useCustomAxes,
                 customMode: false
             },
             mappedPointCount
@@ -420,10 +421,10 @@ export const createLabResultsModule = ({
 
         hideGraphEmptyState();
         destroyLabGraph();
-        const isDateOnXAxis = axisMeta.xAxisKey === 'date';
-        const isTimeOfDayOnXAxis = axisMeta.xAxisKey === 'timeOfDay';
-        const isDateOnSingleYAxis = axisMeta.yAxisKeys.length === 1 && axisMeta.yAxisKeys[0] === 'date';
-        const isTimeOfDayOnSingleYAxis = axisMeta.yAxisKeys.length === 1 && axisMeta.yAxisKeys[0] === 'timeOfDay';
+        const isDateOnXAxis = axisMeta.hasAxisSelection && axisMeta.xAxisKey === 'date';
+        const isTimeOfDayOnXAxis = axisMeta.hasAxisSelection && axisMeta.xAxisKey === 'timeOfDay';
+        const isDateOnSingleYAxis = axisMeta.hasAxisSelection && axisMeta.yAxisKeys.length === 1 && axisMeta.yAxisKeys[0] === 'date';
+        const isTimeOfDayOnSingleYAxis = axisMeta.hasAxisSelection && axisMeta.yAxisKeys.length === 1 && axisMeta.yAxisKeys[0] === 'timeOfDay';
         labGraphChart = new chartCtor(canvas.getContext('2d'), {
             type: 'line',
             data: { datasets },
