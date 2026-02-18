@@ -14,6 +14,7 @@ export const createSocialFriendRequestsModule = ({
 
     let lastPublicResults = [];
     let outgoingPendingByTarget = new Set();
+    let outgoingByTarget = new Map();
     let outgoingRequests = [];
     let incomingPending = [];
     let hasSearchedPublicUsers = false;
@@ -36,8 +37,12 @@ export const createSocialFriendRequestsModule = ({
     const isEnabled = () => !!getIsPublic?.();
 
     const requestDocId = (fromUid, toUid) => `${fromUid}__${toUid}`;
+    const DECLINED_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 
     const normalizeDisplayName = (value) => (value || '').toString().trim();
+    const getRequestTime = (req) => new Date(req?.updatedAt || req?.createdAt || 0).getTime();
+    const isDeclinedOnCooldown = (req) =>
+        req?.status === 'declined' && (Date.now() - getRequestTime(req)) < DECLINED_COOLDOWN_MS;
 
     const applyPublicState = () => {
         const enabled = isEnabled();
@@ -93,14 +98,19 @@ export const createSocialFriendRequestsModule = ({
                 const uid = item.uid;
                 const alreadyFollowing = followingIds.has(uid);
                 const pending = outgoingPendingByTarget.has(uid);
+                const existingRequest = outgoingByTarget.get(uid);
                 const isSelf = !!currentUser && currentUser.uid === uid;
                 let btnHtml = '';
                 if (isSelf) {
                     btnHtml = '<span class="text-[11px] text-coffee-500 dark:text-[#78716c]">You</span>';
                 } else if (alreadyFollowing) {
                     btnHtml = '<span class="text-[11px] text-coffee-500 dark:text-[#78716c]">Following</span>';
+                } else if (isDeclinedOnCooldown(existingRequest)) {
+                    btnHtml = '<span class="text-[11px] text-red-600 dark:text-red-400">Declined</span>';
                 } else if (pending) {
                     btnHtml = '<span class="text-[11px] text-amber-600 dark:text-amber-400">Requested</span>';
+                } else if (existingRequest?.status === 'accepted') {
+                    btnHtml = '<span class="text-[11px] text-green-600 dark:text-green-400">Accepted</span>';
                 } else {
                     btnHtml = `<button data-action-click="sendFriendRequest('${esc(uid)}')" class="text-xs bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-2 py-1 rounded">Request</button>`;
                 }
@@ -182,11 +192,17 @@ export const createSocialFriendRequestsModule = ({
         incomingPending = incomingSnap.docs
             .map((item) => ({ id: item.id, ...item.data() }))
             .filter((item) => item.status === 'pending');
-        const outgoingAll = outgoingSnap.docs
-            .map((item) => ({ id: item.id, ...item.data() }));
+        const outgoingAll = outgoingSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
         const acceptedOutgoing = outgoingAll.filter((item) => item.status === 'accepted' && item.toUid);
+        const staleDeclinedOutgoing = outgoingAll.filter((item) =>
+            item.status === 'declined' &&
+            (Date.now() - getRequestTime(item)) >= DECLINED_COOLDOWN_MS
+        );
 
-        if (acceptedOutgoing.length) {
+        if (acceptedOutgoing.length || staleDeclinedOutgoing.length) {
+            for (const req of staleDeclinedOutgoing) {
+                await deleteDoc(doc(db, 'friendRequests', req.id));
+            }
             for (const req of acceptedOutgoing) {
                 const friendUid = req.toUid;
                 const friendName = req.toName || friendUid;
@@ -214,21 +230,23 @@ export const createSocialFriendRequestsModule = ({
                 await deleteDoc(doc(db, 'friendRequests', req.id));
                 onOutgoingAccepted?.(friendName);
             }
-            if (typeof onFollowersChanged === 'function') {
+            if (acceptedOutgoing.length && typeof onFollowersChanged === 'function') {
                 await onFollowersChanged();
             }
-            if (typeof onFollowingChanged === 'function') {
+            if (acceptedOutgoing.length && typeof onFollowingChanged === 'function') {
                 await onFollowingChanged();
             }
         }
 
         outgoingRequests = outgoingAll
             .filter((item) => item.status !== 'accepted')
+            .filter((item) => !(item.status === 'declined' && (Date.now() - getRequestTime(item)) >= DECLINED_COOLDOWN_MS))
             .sort((a, b) => {
-                const aDate = new Date(a.updatedAt || a.createdAt || 0).getTime();
-                const bDate = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                const aDate = getRequestTime(a);
+                const bDate = getRequestTime(b);
                 return bDate - aDate;
             });
+        outgoingByTarget = new Map(outgoingRequests.filter((item) => item?.toUid).map((item) => [item.toUid, item]));
         outgoingPendingByTarget = new Set(outgoingRequests.filter((item) => item?.status === 'pending').map((item) => item.toUid).filter(Boolean));
 
         applyPublicState();
@@ -310,6 +328,15 @@ export const createSocialFriendRequestsModule = ({
         const currentUser = getCurrentUser?.();
         if (!currentUser || !toUid || toUid === currentUser.uid) return;
         if (!isEnabled()) return alert('Enable Public profile to send friend requests.');
+        const existingRequest = outgoingByTarget.get(toUid);
+        if (isDeclinedOnCooldown(existingRequest)) {
+            alert('Request was declined recently. You can send a new request after 30 days.');
+            return;
+        }
+        if (existingRequest?.status === 'pending') {
+            alert('Request already pending.');
+            return;
+        }
 
         const targetSnap = await getDoc(doc(db, 'publicProfiles', toUid));
         if (!targetSnap.exists()) return alert('User not found.');
