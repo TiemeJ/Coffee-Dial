@@ -1,9 +1,9 @@
         <div data-feature-root="brews" class="bg-white dark:bg-[#292524] rounded-xl shadow-lg border border-coffee-100 dark:border-[#44403c] overflow-hidden transition-colors duration-300 relative">
             <!-- Brew Selector & Search/Filter Section -->
-            <div id="viewSelectorContainer" class="hidden p-6 flex flex-col gap-3 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-100/50 dark:bg-[#1c1917]">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div class="flex items-center gap-4 w-full sm:w-auto">
-                    <div class="flex items-center gap-2">
+            <div id="viewSelectorContainer" class="hidden p-3 flex flex-col gap-1.5 border-b border-coffee-200 dark:border-[#44403c] bg-coffee-100/50 dark:bg-[#1c1917]">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div data-friend-select-wrap="viewSelect" class="flex items-center gap-1">
                         <select id="viewSelect" data-action-change="brewsChangeView(this.value)" class="bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[150px]">
                             <option value="mine">My brews</option>
                             </select>
@@ -38,7 +38,7 @@
                         </div>
                         <div id="quickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto">
                         </div>
-                        <div id="brewsTableStateDropdown" class="hidden absolute left-0 mt-2 w-64 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"></div>
+                        <div id="brewsTableStateDropdown" class="hidden absolute left-0 right-0 sm:right-auto mt-2 sm:w-64 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"></div>
                     </div>
                 </div>
             </div>

@@ -42,6 +42,15 @@
         }
         
         input:focus, select:focus, textarea:focus { outline: none; ring: 2px; border-color: #b08968; box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.2); }
+        /* Keep friend-view selectors aligned with search inputs in macOS Safari */
+        #viewSelect,
+        #beansViewSelect,
+        #coffeeTypesViewSelect,
+        #gasViewSelect,
+        #statsViewSelect {
+            height: 42px;
+            line-height: 1.25rem;
+        }
         /* Editing state is kept for behavior checks; no visual accent border. */
         .editing-mode { border: none !important; }
         

@@ -202,16 +202,31 @@ export const createSocialModule = ({
     };
 
     const updateFriendViewSelectors = () => {
+        const following = Array.isArray(getFollowing?.()) ? getFollowing() : [];
+        const hasFriendOptions = following.length > 0;
+        if (!hasFriendOptions && getCurrentView() !== 'mine') {
+            setCurrentView('mine');
+            changeView('mine');
+        }
+
         const populateSelect = (select, label) => {
             if (!select) return;
             select.innerHTML = `<option value="mine">My ${label}</option>`;
-            getFollowing().forEach((f) => {
+            following.forEach((f) => {
                 const option = document.createElement('option');
                 option.value = f.uid;
                 option.text = f.name || `Friend (${f.uid.substr(0, 5)}...)`;
                 select.appendChild(option);
             });
-            select.value = getCurrentView();
+            const nextValue = hasFriendOptions ? getCurrentView() : 'mine';
+            select.value = nextValue;
+            const wrapper = document.querySelector(`[data-friend-select-wrap="${select.id}"]`);
+            if (wrapper) {
+                wrapper.classList.toggle('hidden', !hasFriendOptions);
+                select.classList.remove('hidden');
+            } else {
+                select.classList.toggle('hidden', !hasFriendOptions);
+            }
         };
         populateSelect(document.getElementById('viewSelect'), 'brews');
         populateSelect(document.getElementById('beansViewSelect'), 'beans');

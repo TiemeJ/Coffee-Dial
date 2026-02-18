@@ -59,16 +59,19 @@ export const createStatsModule = ({
         document.getElementById('statsModal')?.classList.remove('hidden');
         const sl = document.getElementById('statsViewSelect');
         if (!sl) return;
+        const following = Array.isArray(getFollowing?.()) ? getFollowing() : [];
+        const hasFriendOptions = following.length > 0;
         sl.innerHTML = '<option value="mine">My brews</option>';
-        getFollowing().forEach((f) => {
+        following.forEach((f) => {
             const o = document.createElement('option');
             o.value = f.uid;
             o.text = f.name || `Friend (${f.uid.substr(0, 5)}...)`;
             sl.appendChild(o);
         });
-        sl.value = getCurrentView();
+        sl.value = hasFriendOptions ? getCurrentView() : 'mine';
+        sl.classList.toggle('hidden', !hasFriendOptions);
         toggleStatsUniqueTable(false);
-        changeStatsView(getCurrentView());
+        changeStatsView(hasFriendOptions ? getCurrentView() : 'mine');
     };
 
     const changeStatsView = async (uid) => {
