@@ -7,3 +7,8 @@ node_modules/
 test-results/
 playwright-report/
 blob-report/
+
+# Others
+share-id-defensive-test.html
+cloud/
+
