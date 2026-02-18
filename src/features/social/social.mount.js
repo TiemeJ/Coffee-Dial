@@ -12,4 +12,5 @@ const mountView = async (mountId, viewPath) => {
 
 export const mountSocialModalView = async () => {
     await mountView('socialModalMount', './src/features/social/social.view.html');
+    await mountView('friendRequestsMount', './src/features/social/social-friend-requests.view.html');
 };

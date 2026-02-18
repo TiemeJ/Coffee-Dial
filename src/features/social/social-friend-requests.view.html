@@ -1,0 +1,23 @@
+<div id="friendRequestsSection" class="mb-3">
+    <div class="text-xs font-semibold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Find public users</div>
+    <p id="friendRequestsDisabledHint" class="hidden text-[11px] text-coffee-500 dark:text-[#78716c] mb-2">
+        Enable Public profile to search users and send requests.
+    </p>
+    <div id="friendRequestSearchWrap" class="relative mb-2">
+        <input
+            type="text"
+            id="friendRequestSearchInput"
+            data-action-input="searchPublicUsers()"
+            data-action-click="searchPublicUsers()"
+            placeholder="Search public users by name or Share ID"
+            autocomplete="off"
+            class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white"
+        />
+        <div id="friendRequestSearchResults" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-lg border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#1c1917] shadow-xl p-2 space-y-2"></div>
+    </div>
+
+    <div class="text-xs font-semibold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Friend requests</div>
+    <div id="friendRequestIncomingList" class="space-y-2"></div>
+    <div class="text-xs font-semibold text-coffee-500 dark:text-[#78716c] uppercase mb-1 mt-3">Your requests</div>
+    <div id="friendRequestOutgoingList" class="space-y-2"></div>
+</div>

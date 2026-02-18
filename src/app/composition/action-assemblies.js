@@ -504,11 +504,17 @@ export const createActionAssemblies = (deps = {}) => {
             togglePinnedTiles: deps.togglePinnedTiles
         },
         social: pick(deps, [
+            'acceptFriendRequest',
             'closeModal',
             'copyShareId',
+            'declineFriendRequest',
             'followUser',
             'googleLogout',
             'openFriendsModal',
+            'removeFollower',
+            'refreshFriendRequests',
+            'searchPublicUsers',
+            'sendFriendRequest',
             'switchModalTab',
             'togglePublicProfile',
             'unfollowUser'

@@ -1,3 +1,5 @@
+import { createSocialFriendRequestsModule } from './social-friend-requests.js';
+
 export const createSocialModule = ({
     getCurrentUser,
     getCurrentView,
@@ -9,7 +11,8 @@ export const createSocialModule = ({
     setIsPublicState,
     dataService,
     openAppConfirm,
-    changeView
+    changeView,
+    showToast
 }) => {
     const { db, doc, setDoc, updateDoc, getDoc, getDocs, collection, writeBatch } = dataService || {};
     if (!db || !doc || !setDoc || !updateDoc || !getDoc || !getDocs || !collection || !writeBatch) {
@@ -31,12 +34,15 @@ export const createSocialModule = ({
         }
     };
 
-    const openFriendsModal = () => {
+    const openFriendsModal = async () => {
         document.getElementById('modalOverlay')?.classList.remove('hidden');
         switchModalTab('profile');
+        friendRequests.applyPublicState();
+        await friendRequests.refreshFriendRequests();
     };
 
     const closeModal = () => {
+        friendRequests.resetSearchUi();
         document.getElementById('modalOverlay')?.classList.add('hidden');
     };
 
@@ -78,6 +84,10 @@ export const createSocialModule = ({
             isPublic: nextIsPublic,
             updatedAt: new Date().toISOString()
         }, { merge: true });
+        friendRequests.applyPublicState();
+        if (nextIsPublic) {
+            await friendRequests.refreshFriendRequests();
+        }
     };
 
     const copyShareId = () => {
@@ -240,7 +250,26 @@ export const createSocialModule = ({
         }
     };
 
+    const friendRequests = createSocialFriendRequestsModule({
+        getCurrentUser,
+        getIsPublic,
+        getFollowing,
+        dataService,
+        onFollowersChanged: loadFollowersList,
+        onFollowingChanged: loadFollowingList,
+        onOutgoingAccepted: (friendName) => {
+            showToast?.(`Request accepted. ${friendName || 'Friend'} was added to your friend list.`);
+        }
+    });
+
+    const searchPublicUsers = () => friendRequests.searchPublicUsers();
+    const sendFriendRequest = (toUid) => friendRequests.sendFriendRequest(toUid);
+    const acceptFriendRequest = (requestId) => friendRequests.acceptFriendRequest(requestId);
+    const declineFriendRequest = (requestId) => friendRequests.declineFriendRequest(requestId);
+    const refreshFriendRequests = () => friendRequests.refreshFriendRequests();
+
     return {
+        acceptFriendRequest,
         openFriendsModal,
         closeModal,
         switchModalTab,
@@ -253,6 +282,10 @@ export const createSocialModule = ({
         syncFriendViewSelectValues,
         updateFriendViewSelectors,
         loadFollowingList,
-        loadFollowersList
+        loadFollowersList,
+        declineFriendRequest,
+        refreshFriendRequests,
+        searchPublicUsers,
+        sendFriendRequest
     };
 };

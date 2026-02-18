@@ -1,4 +1,4 @@
-import { createSocialModule } from '../../features/social.js';
+import { createSocialModule } from '../../features/social/social.module.js';
 
 export const createSocialCoordinator = ({
     getCurrentUser,
@@ -11,7 +11,8 @@ export const createSocialCoordinator = ({
     setIsPublicState,
     dataService,
     openAppConfirm,
-    changeView
+    changeView,
+    showToast
 }) =>
     createSocialModule({
         getCurrentUser,
@@ -24,5 +25,6 @@ export const createSocialCoordinator = ({
         setIsPublicState,
         dataService,
         openAppConfirm,
-        changeView
+        changeView,
+        showToast
     });

@@ -514,6 +514,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             markOnboardingSeen,
             changeView,
             initNotificationListener,
+            setOutgoingFriendRequestsProcessor,
             clearViewSubscriptions,
             clearNotificationSubscription
         } = createSessionAuthViewModule({
@@ -872,13 +873,19 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         });
 
         const {
+            acceptFriendRequest,
             openFriendsModal,
             closeModal,
             switchModalTab,
             togglePublicProfile,
             updatePublicToggleUI,
             copyShareId,
+            declineFriendRequest,
             followUser,
+            removeFollower,
+            refreshFriendRequests,
+            searchPublicUsers,
+            sendFriendRequest,
             unfollowUser,
             syncFriendViewSelectValues,
             updateFriendViewSelectors,
@@ -895,8 +902,11 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getIsPublic: () => getIsPublicState(),
             setIsPublicState: (value) => setIsPublicState(value),
             openAppConfirm,
-            changeView
+            changeView,
+            showToast
         });
+
+        setOutgoingFriendRequestsProcessor?.(() => refreshFriendRequests());
 
         const {
             openUploadModal,
@@ -1428,6 +1438,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         const { actions, featureActions } = createActionAssemblies({
             addScaToNotes,
+            acceptFriendRequest,
             applyBeansFilterFromQuick,
             applyCoffeeTypesFilterFromQuick,
             applyFilter,
@@ -1493,6 +1504,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             createBeanFromModal,
             createCoffeeTypeFromModal,
             createGasItemFromModal,
+            declineFriendRequest,
             deleteBean,
             deleteBrewsTableStatePreset,
             deleteCoffee,
@@ -1610,7 +1622,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             performImport,
             pinToggleActionMenu: toggleActionMenu,
             recalculateAllBeanStockLeft,
+            refreshFriendRequests,
             refreshTableData,
+            removeFollower,
             removeBeanPhoto,
             removeCoffeeTypePhoto,
             removeGasPhoto,
@@ -1629,8 +1643,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             saveCurrentBrewsTableState,
             saveCoffeeTypeEdits,
             saveGasEdits,
+            searchPublicUsers,
             sendEmailLinkActivation,
             sendEmailLinkLogin,
+            sendFriendRequest,
             setBeansSearch,
             setCoffeeTypesSearch,
             setCoffeeTypesSort,

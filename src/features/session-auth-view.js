@@ -55,6 +55,7 @@ export const createSessionAuthViewModule = ({
     if (!db || !doc || !setDoc || !updateDoc || !getDoc || !collection || !query || !where || !orderBy || !limit || !onSnapshot) {
         throw new Error('createSessionAuthViewModule requires dataService { db, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, limit, onSnapshot }');
     }
+    let outgoingFriendRequestsProcessor = null;
     const googleLogin = () => signInWithPopup(auth, provider).catch((e) => alert(e.message));
 
     const googleLogout = () => signOut(auth).then(() => location.reload());
@@ -316,7 +317,32 @@ export const createSessionAuthViewModule = ({
     const initNotificationListener = (uid) => {
         clearNotificationSubscription();
         const q = query(collection(db, 'photos'), where('sharedWith', 'array-contains', uid), orderBy('createdAt', 'desc'), limit(1));
+        const friendRequestsQ = query(
+            collection(db, 'friendRequests'),
+            where('toUid', '==', uid),
+            where('status', '==', 'pending'),
+            limit(100)
+        );
+        const acceptedOutgoingQ = query(
+            collection(db, 'friendRequests'),
+            where('fromUid', '==', uid),
+            where('status', '==', 'accepted'),
+            limit(100)
+        );
         let latestPhotoDate = null;
+        let pendingFriendRequestsCount = 0;
+
+        const syncAvatarBadge = () => {
+            const avatarBadge = document.getElementById('avatarBadge');
+            if (!avatarBadge) return;
+            if (!pendingFriendRequestsCount) {
+                avatarBadge.classList.add('hidden');
+                avatarBadge.textContent = '';
+                return;
+            }
+            avatarBadge.classList.remove('hidden');
+            avatarBadge.textContent = pendingFriendRequestsCount > 99 ? '99+' : String(pendingFriendRequestsCount);
+        };
 
         const syncGalleryBadge = () => {
             const menuBadge = document.getElementById('menuBadge');
@@ -353,10 +379,53 @@ export const createSessionAuthViewModule = ({
             syncGalleryBadge();
         });
 
+        const unsubFriendRequests = onSnapshot(
+            friendRequestsQ,
+            async (snapshot) => {
+                pendingFriendRequestsCount = snapshot.size;
+                syncAvatarBadge();
+                const isSocialModalOpen = !document.getElementById('modalOverlay')?.classList.contains('hidden');
+                if (isSocialModalOpen && typeof outgoingFriendRequestsProcessor === 'function') {
+                    try {
+                        await outgoingFriendRequestsProcessor();
+                    } catch (error) {
+                        console.error('Friend request modal refresh error:', error);
+                    }
+                }
+            },
+            (error) => {
+                console.error('Friend request notification listener error:', error);
+                pendingFriendRequestsCount = 0;
+                syncAvatarBadge();
+            }
+        );
+
+        const unsubAcceptedOutgoing = onSnapshot(
+            acceptedOutgoingQ,
+            async (snapshot) => {
+                if (!snapshot.empty && typeof outgoingFriendRequestsProcessor === 'function') {
+                    try {
+                        await outgoingFriendRequestsProcessor();
+                    } catch (error) {
+                        console.error('Accepted outgoing request processor error:', error);
+                    }
+                }
+            },
+            (error) => {
+                console.error('Accepted outgoing friend request listener error:', error);
+            }
+        );
+
         setUnsubscribeNotifications(() => {
             unsubPhotos();
             unsubUser();
+            unsubFriendRequests();
+            unsubAcceptedOutgoing();
         });
+    };
+
+    const setOutgoingFriendRequestsProcessor = (processor) => {
+        outgoingFriendRequestsProcessor = typeof processor === 'function' ? processor : null;
     };
 
     return {
@@ -366,6 +435,7 @@ export const createSessionAuthViewModule = ({
         markOnboardingSeen,
         changeView,
         initNotificationListener,
+        setOutgoingFriendRequestsProcessor,
         clearViewSubscriptions,
         clearNotificationSubscription
     };
