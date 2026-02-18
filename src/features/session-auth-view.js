@@ -314,10 +314,18 @@ export const createSessionAuthViewModule = ({
             galleryBadge.classList.toggle('hidden', !hasNew);
         };
 
-        const unsubPhotos = onSnapshot(q, (snapshot) => {
-            latestPhotoDate = snapshot.empty ? null : snapshot.docs[0].data().createdAt;
-            syncGalleryBadge();
-        });
+        const unsubPhotos = onSnapshot(
+            q,
+            (snapshot) => {
+                latestPhotoDate = snapshot.empty ? null : snapshot.docs[0].data().createdAt;
+                syncGalleryBadge();
+            },
+            (error) => {
+                console.error('Photo notification listener error:', error);
+                latestPhotoDate = null;
+                syncGalleryBadge();
+            }
+        );
 
         const userDocRef = doc(db, 'users', uid);
         const unsubUser = onSnapshot(userDocRef, (snapshot) => {

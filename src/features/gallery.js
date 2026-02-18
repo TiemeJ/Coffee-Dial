@@ -206,23 +206,29 @@ export const createGalleryModule = ({
         setIsGalleryLoading(true);
         const btn = document.getElementById('galleryLoadMore');
         const empty = document.getElementById('galleryEmpty');
-        let q;
-        const constraints = [orderBy('createdAt', 'desc'), limit(9)];
-        if (getLastGalleryDoc()) constraints.push(startAfter(getLastGalleryDoc()));
+        try {
+            let q;
+            const constraints = [orderBy('createdAt', 'desc'), limit(9)];
+            if (getLastGalleryDoc()) constraints.push(startAfter(getLastGalleryDoc()));
 
-        const user = getCurrentUser();
-        if (getCurrentGalleryMode() === 'mine') q = query(collection(db, 'photos'), where('uid', '==', user.uid), ...constraints);
-        else q = query(collection(db, 'photos'), where('sharedWith', 'array-contains', user.uid), ...constraints);
+            const user = getCurrentUser();
+            if (getCurrentGalleryMode() === 'mine') q = query(collection(db, 'photos'), where('uid', '==', user.uid), ...constraints);
+            else q = query(collection(db, 'photos'), where('sharedWith', 'array-contains', user.uid), ...constraints);
 
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-            setLastGalleryDoc(snapshot.docs[snapshot.docs.length - 1]);
-            renderGalleryGrid(snapshot.docs);
-            if (snapshot.docs.length < 9) btn.classList.add('hidden');
-            else btn.classList.remove('hidden');
-        } else {
-            btn.classList.add('hidden');
-            if (!getLastGalleryDoc()) empty.classList.remove('hidden');
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                setLastGalleryDoc(snapshot.docs[snapshot.docs.length - 1]);
+                renderGalleryGrid(snapshot.docs);
+                if (snapshot.docs.length < 9) btn.classList.add('hidden');
+                else btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+                if (!getLastGalleryDoc()) empty.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error loading gallery photos:', error);
+            btn?.classList.add('hidden');
+            if (!getLastGalleryDoc()) empty?.classList.remove('hidden');
         }
         setIsGalleryLoading(false);
     };

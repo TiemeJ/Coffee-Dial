@@ -88,15 +88,19 @@ export const createSocialModule = ({
         const uId = u || i?.value.trim();
         if (!uId || uId === user.uid) return alert('Invalid ID');
         try {
-            const d = await getDoc(doc(db, 'users', uId));
             let n = 'Friend';
-            if (d.exists() && d.data().displayName) n = d.data().displayName;
+            const d = await getDoc(doc(db, 'users', uId));
+            if (!d.exists()) return alert('Invalid ID');
+            const userData = d.data() || {};
+            if (userData.isPublic !== true) return alert('This profile is private and cannot be followed by Share ID.');
+            if (userData.displayName) n = userData.displayName;
             const batch = writeBatch(db);
             batch.set(doc(db, 'users', user.uid, 'following', uId), { uid: uId, name: n, addedAt: new Date().toISOString() });
-            batch.set(doc(db, 'users', uId, 'followers', user.uid), { uid: user.uid, name: user.displayName || 'Unknown User', addedAt: new Date().toISOString() });
+            batch.set(doc(db, 'users', user.uid, 'followers', uId), { uid: uId, name: n, addedAt: new Date().toISOString() });
             await batch.commit();
             if (i) i.value = '';
             loadFollowingList();
+            loadFollowersList();
             alert(`Following ${n}!`);
         } catch (e) {
             console.error(e);
@@ -118,7 +122,6 @@ export const createSocialModule = ({
         try {
             const batch = writeBatch(db);
             batch.delete(doc(db, 'users', user.uid, 'following', u));
-            batch.delete(doc(db, 'users', u, 'followers', user.uid));
             await batch.commit();
             loadFollowingList();
             if (getCurrentView() === u) {
@@ -128,6 +131,28 @@ export const createSocialModule = ({
         } catch (e) {
             console.error('Unfollow error', e);
             alert('Error unfollowing');
+        }
+    };
+
+    const removeFollower = async (followerUid) => {
+        const user = getCurrentUser();
+        if (!user || !followerUid) return;
+        const shouldRemove = await openAppConfirm({
+            title: 'Remove follower?',
+            message: 'This removes them from your followers list.',
+            confirmLabel: 'Remove',
+            cancelLabel: 'Cancel',
+            danger: true
+        });
+        if (!shouldRemove) return;
+        try {
+            const batch = writeBatch(db);
+            batch.delete(doc(db, 'users', user.uid, 'followers', followerUid));
+            await batch.commit();
+            loadFollowersList();
+        } catch (e) {
+            console.error('Remove follower error', e);
+            alert('Error removing follower');
         }
     };
 
@@ -198,7 +223,7 @@ export const createSocialModule = ({
                 followers.forEach((f) => {
                     const d = document.createElement('div');
                     d.className = 'flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]';
-                    d.innerHTML = `<span class="text-sm font-mono text-coffee-700 dark:text-[#a8a29e] truncate w-full">${f.name || f.uid}</span>`;
+                    d.innerHTML = `<span class="text-sm font-mono text-coffee-700 dark:text-[#a8a29e] truncate w-40">${f.name || f.uid}</span><button data-action-click="removeFollower('${f.uid}')" class="text-xs text-red-500 hover:text-red-700">Remove</button>`;
                     listEl.appendChild(d);
                 });
             }
@@ -216,6 +241,7 @@ export const createSocialModule = ({
         updatePublicToggleUI,
         copyShareId,
         followUser,
+        removeFollower,
         unfollowUser,
         syncFriendViewSelectValues,
         updateFriendViewSelectors,
