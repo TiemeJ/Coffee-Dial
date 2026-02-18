@@ -511,6 +511,7 @@ export const createActionAssemblies = (deps = {}) => {
             'followUser',
             'googleLogout',
             'openFriendsModal',
+            'removeBlockedUser',
             'removeFollower',
             'refreshFriendRequests',
             'searchPublicUsers',

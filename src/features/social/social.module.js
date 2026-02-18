@@ -81,6 +81,7 @@ export const createSocialModule = ({
             cProf.classList.remove('hidden');
             cFoll.classList.add('hidden');
             loadFollowersList();
+            loadBlockedUsersList();
         } else {
             tFoll.classList.add('bg-white', 'dark:bg-[#292524]', 'text-coffee-800', 'dark:text-white', 'shadow-sm');
             tFoll.classList.remove('text-coffee-500', 'dark:text-[#a8a29e]', 'hover:text-coffee-700', 'dark:hover:text-white');
@@ -270,6 +271,33 @@ export const createSocialModule = ({
         }
     };
 
+    const loadBlockedUsersList = async () => {
+        const user = getCurrentUser();
+        if (!user) return;
+        const listEl = document.getElementById('blockedUsersList');
+        if (!listEl) return;
+        listEl.innerHTML = '<p class="text-xs text-gray-400 italic animate-pulse">Loading...</p>';
+        try {
+            const s = await getDocs(collection(db, 'users', user.uid, 'blockedUsers'));
+            const blocked = [];
+            s.forEach((d) => blocked.push(d.data()));
+            listEl.innerHTML = '';
+            if (!blocked.length) {
+                listEl.innerHTML = '<p class="text-xs text-gray-400 italic">No blocked users.</p>';
+            } else {
+                blocked.forEach((b) => {
+                    const d = document.createElement('div');
+                    d.className = 'flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917] p-2 rounded border border-coffee-200 dark:border-[#44403c]';
+                    d.innerHTML = `<span class="text-sm font-mono text-coffee-700 dark:text-[#a8a29e] truncate w-40">${b.name || b.uid}</span><button data-action-click="removeBlockedUser('${b.uid}')" class="text-xs text-blue-500 hover:text-blue-700">Unblock</button>`;
+                    listEl.appendChild(d);
+                });
+            }
+        } catch (e) {
+            console.error('Error loading blocked users', e);
+            listEl.innerHTML = '<p class="text-xs text-red-400 italic">Error loading blocked users.</p>';
+        }
+    };
+
     const friendRequests = createSocialFriendRequestsModule({
         getCurrentUser,
         getIsPublic,
@@ -277,10 +305,40 @@ export const createSocialModule = ({
         dataService,
         onFollowersChanged: loadFollowersList,
         onFollowingChanged: loadFollowingList,
+        onBlockedChanged: loadBlockedUsersList,
         onOutgoingAccepted: (friendName) => {
             showToast?.(`Request accepted. ${friendName || 'Friend'} was added to your friend list.`);
         }
     });
+
+    const removeBlockedUser = async (blockedUid) => {
+        const user = getCurrentUser();
+        if (!user || !blockedUid) return;
+        const shouldUnblock = await openAppConfirm({
+            title: 'Unblock user?',
+            message: 'This allows this user to send friend requests again.',
+            confirmLabel: 'Unblock',
+            cancelLabel: 'Cancel',
+            danger: false
+        });
+        if (!shouldUnblock) return;
+        try {
+            const blockedRef = doc(db, 'users', user.uid, 'blockedUsers', blockedUid);
+            const blockedSnap = await getDoc(blockedRef);
+            const requestId = blockedSnap.exists()
+                ? ((blockedSnap.data() || {}).requestId || `${blockedUid}__${user.uid}`)
+                : `${blockedUid}__${user.uid}`;
+            const batch = writeBatch(db);
+            batch.delete(blockedRef);
+            batch.delete(doc(db, 'friendRequests', requestId));
+            await batch.commit();
+            await loadBlockedUsersList();
+            await friendRequests.refreshFriendRequests();
+        } catch (e) {
+            console.error('Remove blocked user error', e);
+            alert('Error unblocking user.');
+        }
+    };
 
     const searchPublicUsers = () => friendRequests.searchPublicUsers();
     const sendFriendRequest = (toUid) => friendRequests.sendFriendRequest(toUid);
@@ -298,12 +356,14 @@ export const createSocialModule = ({
         updatePublicToggleUI,
         copyShareId,
         followUser,
+        removeBlockedUser,
         removeFollower,
         unfollowUser,
         syncFriendViewSelectValues,
         updateFriendViewSelectors,
         loadFollowingList,
         loadFollowersList,
+        loadBlockedUsersList,
         declineFriendRequest,
         refreshFriendRequests,
         searchPublicUsers,

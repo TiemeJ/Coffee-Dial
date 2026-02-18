@@ -5,6 +5,7 @@ export const createSocialFriendRequestsModule = ({
     dataService,
     onFollowersChanged,
     onFollowingChanged,
+    onBlockedChanged,
     onOutgoingAccepted
 }) => {
     const { db, collection, query, where, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, limit, writeBatch } = dataService || {};
@@ -37,12 +38,13 @@ export const createSocialFriendRequestsModule = ({
     const isEnabled = () => !!getIsPublic?.();
 
     const requestDocId = (fromUid, toUid) => `${fromUid}__${toUid}`;
-    const DECLINED_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 
     const normalizeDisplayName = (value) => (value || '').toString().trim();
     const getRequestTime = (req) => new Date(req?.updatedAt || req?.createdAt || 0).getTime();
-    const isDeclinedOnCooldown = (req) =>
-        req?.status === 'declined' && (Date.now() - getRequestTime(req)) < DECLINED_COOLDOWN_MS;
+    const isDeniedStatus = (req) => {
+        const status = (req?.status || '').toString().toLowerCase();
+        return status === 'denied' || status === 'declined';
+    };
 
     const applyPublicState = () => {
         const enabled = isEnabled();
@@ -105,8 +107,8 @@ export const createSocialFriendRequestsModule = ({
                     btnHtml = '<span class="text-[11px] text-coffee-500 dark:text-[#78716c]">You</span>';
                 } else if (alreadyFollowing) {
                     btnHtml = '<span class="text-[11px] text-coffee-500 dark:text-[#78716c]">Following</span>';
-                } else if (isDeclinedOnCooldown(existingRequest)) {
-                    btnHtml = '<span class="text-[11px] text-red-600 dark:text-red-400">Declined</span>';
+                } else if (isDeniedStatus(existingRequest)) {
+                    btnHtml = '<span class="text-[11px] text-red-600 dark:text-red-400">Denied</span>';
                 } else if (pending) {
                     btnHtml = '<span class="text-[11px] text-amber-600 dark:text-amber-400">Requested</span>';
                 } else if (existingRequest?.status === 'accepted') {
@@ -155,7 +157,7 @@ export const createSocialFriendRequestsModule = ({
     const getRequestStatusBadge = (status) => {
         const normalized = (status || '').toString().toLowerCase();
         if (normalized === 'accepted') return '<span class="text-[11px] text-green-600 dark:text-green-400">Accepted</span>';
-        if (normalized === 'declined') return '<span class="text-[11px] text-red-600 dark:text-red-400">Declined</span>';
+        if (normalized === 'declined' || normalized === 'denied') return '<span class="text-[11px] text-red-600 dark:text-red-400">Denied</span>';
         if (normalized === 'cancelled') return '<span class="text-[11px] text-coffee-500 dark:text-[#78716c]">Cancelled</span>';
         return '<span class="text-[11px] text-amber-600 dark:text-amber-400">Requested</span>';
     };
@@ -194,15 +196,8 @@ export const createSocialFriendRequestsModule = ({
             .filter((item) => item.status === 'pending');
         const outgoingAll = outgoingSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
         const acceptedOutgoing = outgoingAll.filter((item) => item.status === 'accepted' && item.toUid);
-        const staleDeclinedOutgoing = outgoingAll.filter((item) =>
-            item.status === 'declined' &&
-            (Date.now() - getRequestTime(item)) >= DECLINED_COOLDOWN_MS
-        );
 
-        if (acceptedOutgoing.length || staleDeclinedOutgoing.length) {
-            for (const req of staleDeclinedOutgoing) {
-                await deleteDoc(doc(db, 'friendRequests', req.id));
-            }
+        if (acceptedOutgoing.length) {
             for (const req of acceptedOutgoing) {
                 const friendUid = req.toUid;
                 const friendName = req.toName || friendUid;
@@ -240,7 +235,6 @@ export const createSocialFriendRequestsModule = ({
 
         outgoingRequests = outgoingAll
             .filter((item) => item.status !== 'accepted')
-            .filter((item) => !(item.status === 'declined' && (Date.now() - getRequestTime(item)) >= DECLINED_COOLDOWN_MS))
             .sort((a, b) => {
                 const aDate = getRequestTime(a);
                 const bDate = getRequestTime(b);
@@ -329,8 +323,8 @@ export const createSocialFriendRequestsModule = ({
         if (!currentUser || !toUid || toUid === currentUser.uid) return;
         if (!isEnabled()) return alert('Enable Public profile to send friend requests.');
         const existingRequest = outgoingByTarget.get(toUid);
-        if (isDeclinedOnCooldown(existingRequest)) {
-            alert('Request was declined recently. You can send a new request after 30 days.');
+        if (isDeniedStatus(existingRequest)) {
+            alert('Request was denied. Ask the user to unblock you before sending a new request.');
             return;
         }
         if (existingRequest?.status === 'pending') {
@@ -409,11 +403,25 @@ export const createSocialFriendRequestsModule = ({
         if (!requestSnap.exists()) return;
         const req = requestSnap.data() || {};
         if (req.toUid !== currentUser.uid || req.status !== 'pending') return;
-        await updateDoc(doc(db, 'friendRequests', requestId), {
-            status: 'declined',
-            updatedAt: new Date().toISOString()
+        const nowIso = new Date().toISOString();
+        const batch = writeBatch(db);
+        batch.update(doc(db, 'friendRequests', requestId), {
+            status: 'denied',
+            updatedAt: nowIso
         });
+        batch.set(
+            doc(db, 'users', currentUser.uid, 'blockedUsers', req.fromUid),
+            {
+                uid: req.fromUid,
+                name: req.fromName || req.fromUid,
+                requestId,
+                blockedAt: nowIso
+            },
+            { merge: true }
+        );
+        await batch.commit();
         await refreshFriendRequests();
+        onBlockedChanged?.();
     };
 
     return {
