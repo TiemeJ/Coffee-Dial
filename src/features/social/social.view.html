@@ -1,7 +1,7 @@
     <!-- Other Modals -->
-    <div id="modalOverlay" data-feature-root="social" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] min-h-[70vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
-            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
+    <div id="modalOverlay" data-feature-root="social" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center bg-coffee-50 dark:bg-[#1c1917]">
                 <h3 class="font-bold text-coffee-900 dark:text-white">
                     <i class="fa-solid fa-user-group mr-2"></i>Profile & friends
                 </h3>
@@ -9,29 +9,77 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <div class="px-6 pt-4">
-                <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-coffee-900 dark:text-white">Public profile</span><button id="togglePublicBtn" data-action-click="togglePublicProfile()" class="bg-gray-200 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative"><div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform"></div></button></div>
-                <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">When enabled, other users can send you friend requests.</p>
-                <div id="friendRequestsMount" class="mb-3"></div>
-                <div id="shareIdContainer" class="hidden mb-3"><p class="text-sm font-medium text-coffee-900 dark:text-white mb-1">Add friends manually</p><p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-2">Exchange share ID's with a friend to start following each other without setting your profiles to public.</p><p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-2">Copy your share ID and ask your friend to add it to their profile:</p><div class="flex gap-2"><input type="text" id="myShareId" readonly class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1 text-sm font-mono text-coffee-900 dark:text-white select-all"><button data-action-click="copyShareId()" class="bg-coffee-200 dark:bg-[#44403c] hover:bg-coffee-300 px-3 rounded text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-regular fa-copy"></i></button></div></div>
-                <p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-1">Add a friends share ID to ypur profile:</p>
-                <div class="flex gap-2 mb-3"><input type="text" id="friendIdInput" placeholder="Enter Friend's Share ID" class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white"><button data-action-click="followUser()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-3 py-2 rounded-lg text-sm font-medium">Follow</button></div>
-                <p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-3">Adding a friend adds them to both your followers and following list. Friends must add you back before you can see their brews.</p>
+            <div class="flex-1 overflow-y-auto px-6 pt-4 pb-4">
+                <div class="bg-coffee-50 dark:bg-[#1c1917]/50 p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] mb-3">
+                    <div
+                        data-action-click="toggleSocialAccordion('requests')"
+                        class="flex justify-between items-center mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] cursor-pointer select-none"
+                        title="Collapse or expand friend requests"
+                    >
+                        <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                            <i class="fa-solid fa-user-group text-coffee-600 dark:text-[#a8a29e]"></i>
+                            <span>Friend requests</span>
+                        </h3>
+                        <button
+                            type="button"
+                            class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center"
+                            title="Collapse friend requests"
+                        >
+                            <i id="socialRequestsToggleIcon" class="fa-solid fa-chevron-up transition-transform"></i>
+                        </button>
+                    </div>
+                    <div id="socialRequestsBody">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-coffee-900 dark:text-white">Public profile</span>
+                            <button id="togglePublicBtn" data-action-click="togglePublicProfile()" class="bg-gray-200 dark:bg-[#44403c] w-12 h-6 rounded-full p-1 transition-colors relative"><div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform"></div></button>
+                        </div>
+                        <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">When enabled, other users can send you friend requests.</p>
+                        <div id="friendRequestsMount"></div>
+                    </div>
+                </div>
+
+                <div class="bg-coffee-50 dark:bg-[#1c1917]/50 p-4 rounded-lg border border-coffee-100 dark:border-[#44403c] mb-3">
+                    <div
+                        data-action-click="toggleSocialAccordion('manual')"
+                        class="flex justify-between items-center mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] cursor-pointer select-none"
+                        title="Collapse or expand manual friend add"
+                    >
+                        <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                            <i class="fa-solid fa-id-card text-coffee-600 dark:text-[#a8a29e]"></i>
+                            <span>Add friends manually</span>
+                        </h3>
+                        <button
+                            type="button"
+                            class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center"
+                            title="Collapse manual add"
+                        >
+                            <i id="socialManualToggleIcon" class="fa-solid fa-chevron-down transition-transform"></i>
+                        </button>
+                    </div>
+                    <div id="socialManualBody" class="hidden">
+                        <div id="shareIdContainer" class="hidden mb-3"><p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-2">Exchange share ID's with a friend to start following each other without setting your profiles to public.</p><p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-2">Copy your share ID and ask your friend to add it to their profile:</p><div class="flex gap-2"><input type="text" id="myShareId" readonly class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1 text-sm font-mono text-coffee-900 dark:text-white select-all"><button data-action-click="copyShareId()" class="bg-coffee-200 dark:bg-[#44403c] hover:bg-coffee-300 px-3 rounded text-coffee-700 dark:text-[#d6ccc2]"><i class="fa-regular fa-copy"></i></button></div></div>
+                        <p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-1">Add a friends share ID to your profile:</p>
+                        <div class="flex gap-2 mb-3"><input type="text" id="friendIdInput" placeholder="Enter Friend's Share ID" class="flex-1 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white"><button data-action-click="followUser()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-3 py-2 rounded-lg text-sm font-medium">Follow</button></div>
+                        <p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-3">Adding a friend adds them to both your followers and following list. Friends must add you back before you can see their brews.</p>
+                    </div>
+                </div>
                 <div class="flex gap-2 bg-coffee-50 dark:bg-[#1c1917] rounded-lg p-1 border border-coffee-200 dark:border-[#44403c]">
                     <button data-action-click="switchModalTab('profile')" id="tabProfile" class="flex-1 px-3 py-2 rounded-md text-xs font-bold bg-white dark:bg-[#292524] text-coffee-800 dark:text-white shadow-sm">Followers</button>
                     <button data-action-click="switchModalTab('following')" id="tabFollowing" class="flex-1 px-3 py-2 rounded-md text-xs font-bold text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700 dark:hover:text-white">Following</button>
                 </div>
-            </div>
-            <div id="contentProfile" class="px-6 pb-6 pt-4 flex-1 overflow-y-auto">
+            <div id="contentProfile" class="pt-4">
                 <div class="text-xs font-semibold text-coffee-500 dark:text-[#78716c] uppercase mb-2">People that follow you</div>
                 <p class="text-[11px] text-coffee-500 dark:text-[#78716c] mb-2">Users listed here can see your brews. Remove a user here to revoke access.</p>
-                <div id="followersList" class="space-y-2 max-h-48 overflow-y-auto mb-4"></div>
+                <div id="followersList" class="space-y-2 mb-4"></div>
                 <hr class="my-6 border-coffee-200 dark:border-[#44403c]">
-                <button data-action-click="googleLogout()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-300 py-2 rounded-lg text-sm font-medium">Sign Out</button>
             </div>
-            <div id="contentFollowing" class="hidden px-6 pb-6 pt-4 flex-1 overflow-y-auto">
+            <div id="contentFollowing" class="hidden pt-4">
                 <div class="text-xs font-semibold text-coffee-500 dark:text-[#78716c] uppercase mb-2">People you follow</div>
-                <div id="followingList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                <div id="followingList" class="space-y-2"></div>
+            </div>
+            </div>
+            <div class="px-6 py-3 border-t border-coffee-200 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917]">
+                <button data-action-click="googleLogout()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-300 py-2 rounded-lg text-sm font-medium">Sign out</button>
             </div>
         </div>
     </div>

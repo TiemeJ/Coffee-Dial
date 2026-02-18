@@ -516,6 +516,7 @@ export const createActionAssemblies = (deps = {}) => {
             'searchPublicUsers',
             'sendFriendRequest',
             'switchModalTab',
+            'toggleSocialAccordion',
             'togglePublicProfile',
             'unfollowUser'
         ])

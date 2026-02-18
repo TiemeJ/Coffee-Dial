@@ -34,8 +34,28 @@ export const createSocialModule = ({
         }
     };
 
+    const setSocialAccordionState = (section, expanded) => {
+        const isManual = section === 'manual';
+        const body = document.getElementById(isManual ? 'socialManualBody' : 'socialRequestsBody');
+        const icon = document.getElementById(isManual ? 'socialManualToggleIcon' : 'socialRequestsToggleIcon');
+        if (!body || !icon) return;
+        body.classList.toggle('hidden', !expanded);
+        icon.classList.toggle('fa-chevron-up', expanded);
+        icon.classList.toggle('fa-chevron-down', !expanded);
+    };
+
+    const toggleSocialAccordion = (section) => {
+        const isManual = section === 'manual';
+        const body = document.getElementById(isManual ? 'socialManualBody' : 'socialRequestsBody');
+        if (!body) return;
+        const nextExpanded = body.classList.contains('hidden');
+        setSocialAccordionState(section, nextExpanded);
+    };
+
     const openFriendsModal = async () => {
         document.getElementById('modalOverlay')?.classList.remove('hidden');
+        setSocialAccordionState('requests', true);
+        setSocialAccordionState('manual', false);
         switchModalTab('profile');
         friendRequests.applyPublicState();
         await friendRequests.refreshFriendRequests();
@@ -273,6 +293,7 @@ export const createSocialModule = ({
         openFriendsModal,
         closeModal,
         switchModalTab,
+        toggleSocialAccordion,
         togglePublicProfile,
         updatePublicToggleUI,
         copyShareId,
