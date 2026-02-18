@@ -57,6 +57,15 @@ export const createBrewsActionsModule = ({
         if (!btn) return;
         btn.classList.toggle('hidden', !visible);
     };
+    const setCoffeeTypeFieldsLocked = (locked) => {
+        ['roaster', 'farmer', 'origin', 'variety', 'processing', 'roastType'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.disabled = !!locked;
+            el.classList.toggle('cursor-not-allowed', !!locked);
+            el.classList.toggle('opacity-70', !!locked);
+        });
+    };
     const refreshManualPinningVisibility = () => {
         const isActiveRow = document.getElementById('isActiveRow');
         if (!isActiveRow) return;
@@ -107,15 +116,7 @@ export const createBrewsActionsModule = ({
             const el = document.getElementById(id);
             if (el) el.value = value || '';
         };
-        const unlockCoffeeTypeFields = () => {
-            ['roaster', 'farmer', 'origin', 'variety', 'processing', 'roastType'].forEach((id) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.disabled = false;
-                el.classList.remove('cursor-not-allowed', 'opacity-70');
-            });
-        };
-        unlockCoffeeTypeFields();
+        setCoffeeTypeFieldsLocked(false);
         setValue('roaster', resolved.roaster);
         setValue('farmer', resolved.farmer);
         setValue('origin', resolved.origin);
@@ -331,6 +332,11 @@ export const createBrewsActionsModule = ({
         document.getElementById('isActiveToggle').checked = false;
         refreshManualPinningVisibility();
         updateBeanDropdown();
+        setCoffeeTypeFieldsLocked(false);
+        const beanSelect = document.getElementById('savedBeanSelect');
+        if (beanSelect) beanSelect.value = '';
+        const savedBeanEditBtn = document.getElementById('savedBeanEditBtn');
+        if (savedBeanEditBtn) savedBeanEditBtn.disabled = true;
         setBrewGearScope({ includeAll: false });
         setCoffeeDetailsCollapsed(false);
         document.getElementById('drinkOther').classList.add('hidden');
