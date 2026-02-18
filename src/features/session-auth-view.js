@@ -82,6 +82,7 @@ export const createSessionAuthViewModule = ({
 
     const initUserData = async (user) => {
         const userDocRef = doc(db, 'users', user.uid);
+        const publicProfileRef = doc(db, 'publicProfiles', user.uid);
         const snap = await getDoc(userDocRef);
         let shouldShowOnboarding = false;
 
@@ -113,7 +114,19 @@ export const createSessionAuthViewModule = ({
 
             if (data.displayName !== user.displayName) {
                 await updateDoc(userDocRef, { displayName: user.displayName });
+                await setDoc(publicProfileRef, {
+                    uid: user.uid,
+                    displayName: user.displayName || 'Unknown User',
+                    isPublic: data.isPublic || false,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
             }
+            await setDoc(publicProfileRef, {
+                uid: user.uid,
+                displayName: user.displayName || data.displayName || 'Unknown User',
+                isPublic: data.isPublic || false,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
         } else {
             loadColumnPreferencesFromStorage();
             await setDoc(userDocRef, {
@@ -124,6 +137,12 @@ export const createSessionAuthViewModule = ({
                 onboardingSeen: false,
                 lastGalleryVisit: null
             });
+            await setDoc(publicProfileRef, {
+                uid: user.uid,
+                displayName: user.displayName || 'Unknown User',
+                isPublic: false,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
             shouldShowOnboarding = true;
             setLastGalleryVisit(null);
             const coffeeScale = getCoffeeScale?.();

@@ -11,9 +11,9 @@ export const createSocialModule = ({
     openAppConfirm,
     changeView
 }) => {
-    const { db, doc, updateDoc, getDoc, getDocs, collection, writeBatch } = dataService || {};
-    if (!db || !doc || !updateDoc || !getDoc || !getDocs || !collection || !writeBatch) {
-        throw new Error('createSocialModule requires dataService { db, doc, updateDoc, getDoc, getDocs, collection, writeBatch }');
+    const { db, doc, setDoc, updateDoc, getDoc, getDocs, collection, writeBatch } = dataService || {};
+    if (!db || !doc || !setDoc || !updateDoc || !getDoc || !getDocs || !collection || !writeBatch) {
+        throw new Error('createSocialModule requires dataService { db, doc, setDoc, updateDoc, getDoc, getDocs, collection, writeBatch }');
     }
     const updatePublicToggleUI = () => {
         const btn = document.getElementById('togglePublicBtn');
@@ -70,7 +70,14 @@ export const createSocialModule = ({
         if (!user) return;
         setIsPublicState(!getIsPublic());
         updatePublicToggleUI();
-        await updateDoc(doc(db, 'users', user.uid), { isPublic: getIsPublic() });
+        const nextIsPublic = getIsPublic();
+        await updateDoc(doc(db, 'users', user.uid), { isPublic: nextIsPublic });
+        await setDoc(doc(db, 'publicProfiles', user.uid), {
+            uid: user.uid,
+            displayName: user.displayName || 'Unknown User',
+            isPublic: nextIsPublic,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
     };
 
     const copyShareId = () => {
@@ -89,7 +96,7 @@ export const createSocialModule = ({
         if (!uId || uId === user.uid) return alert('Invalid ID');
         try {
             let n = 'Friend';
-            const d = await getDoc(doc(db, 'users', uId));
+            const d = await getDoc(doc(db, 'publicProfiles', uId));
             if (!d.exists()) return alert('Invalid ID');
             const userData = d.data() || {};
             if (userData.isPublic !== true) return alert('This profile is private and cannot be followed by Share ID.');
