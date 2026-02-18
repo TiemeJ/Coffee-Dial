@@ -1,4 +1,5 @@
 import { createBrewsVmModule } from './brews.vm.js';
+import { createBrewGrinderGearSyncModule } from './brew-grinder-gear-sync.js';
 
 export const createBrewsCardActionsModule = ({
     getCurrentUser,
@@ -16,13 +17,18 @@ export const createBrewsCardActionsModule = ({
     closeCoffeeCard,
     getBeanCoffeeTypeDisplay,
     getFirstBrewDateForBean,
-    getPinnedBrewsPreferences
+    getPinnedBrewsPreferences,
+    showToast
 }) => {
     const brewsVm = createBrewsVmModule();
-    const { updateBean, updateCoffee } = brewsRepo || {};
+    const { addGear, updateBean, updateCoffee } = brewsRepo || {};
     if (!updateBean || !updateCoffee) {
         throw new Error('createBrewsCardActionsModule requires brewsRepo');
     }
+    const grinderGearSync = createBrewGrinderGearSyncModule({
+        getGasItems,
+        addGear
+    });
     const QUICK_EDIT_METHODS = ['Espresso', 'V60', 'Hario Switch', 'Clever Dripper', 'Aeropress', 'OXO Rapid Brewer', 'French Press', 'Chemex'];
     const QUICK_EDIT_DRINKS = [
         'Espresso',
@@ -400,6 +406,10 @@ export const createBrewsCardActionsModule = ({
         };
         const grinderNameFromGear = resolveGrinderNameFromGearIds(updates.gearIds);
         if (grinderNameFromGear) updates.grinder = grinderNameFromGear;
+        else {
+            const syncResult = await grinderGearSync.ensureGrinderGearAssociation(updates);
+            if (syncResult?.createdGearName) showToast?.(`Added grinder to gear: ${syncResult.createdGearName}.`);
+        }
 
         try {
             await updateCoffee(cardId, updates);

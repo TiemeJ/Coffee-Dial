@@ -46,10 +46,20 @@ export const createBrewsRepo = ({ dataService, getCurrentUser }) => {
         return ref.id;
     };
 
+    const addGear = async (payload) => {
+        const uid = requireUid();
+        const ref = await addDoc(collection(db, 'users', uid, 'gear'), {
+            uid,
+            ...payload
+        });
+        return ref.id;
+    };
+
     return {
         addBean,
         addCoffee,
         addCoffeeType,
+        addGear,
         deleteCoffee,
         updateBean,
         updateCoffee

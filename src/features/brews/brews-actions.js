@@ -1,5 +1,6 @@
 import { createBrewsVmModule } from './brews.vm.js';
 import { withDetectedDecaf } from '../../core/coffee-decaf.js';
+import { createBrewGrinderGearSyncModule } from './brew-grinder-gear-sync.js';
 
 export const createBrewsActionsModule = ({
     getCurrentUser,
@@ -33,6 +34,7 @@ export const createBrewsActionsModule = ({
     uploadPendingCoffeeTypeImage,
     clearPendingAIBeanImageFile,
     getCoffeeScale,
+    showToast,
     getSelectedBrewGearIds,
     setSelectedBrewGearIds,
     shouldUseLegacyBrewForm,
@@ -43,6 +45,7 @@ export const createBrewsActionsModule = ({
         addBean,
         addCoffee,
         addCoffeeType,
+        addGear,
         deleteCoffee: deleteCoffeeInRepo,
         updateBean,
         updateCoffee
@@ -51,6 +54,10 @@ export const createBrewsActionsModule = ({
         throw new Error('createBrewsActionsModule requires brewsRepo');
     }
     const clean = (value) => (value || '').toString().toLowerCase().trim();
+    const grinderGearSync = createBrewGrinderGearSyncModule({
+        getGasItems,
+        addGear
+    });
     const scale = () => getCoffeeScale?.();
     const setAiAddVisibility = (visible) => {
         const btn = document.getElementById('aiScanBtn');
@@ -198,6 +205,12 @@ export const createBrewsActionsModule = ({
         if (!user || !sourceBrew) return;
 
         const d = buildDuplicateBrewData(sourceBrew);
+        const grinderNameFromGear = resolveGrinderNameFromGearIds(d.gearIds);
+        if (grinderNameFromGear) d.grinder = grinderNameFromGear;
+        else {
+            const syncResult = await grinderGearSync.ensureGrinderGearAssociation(d);
+            if (syncResult?.createdGearName) showToast?.(`Added grinder to gear: ${syncResult.createdGearName}.`);
+        }
         try {
             const newId = await addCoffee(d);
             if (d.beanId) {
@@ -406,6 +419,10 @@ export const createBrewsActionsModule = ({
         };
         const grinderNameFromGear = resolveGrinderNameFromGearIds(d.gearIds);
         if (grinderNameFromGear) d.grinder = grinderNameFromGear;
+        else {
+            const syncResult = await grinderGearSync.ensureGrinderGearAssociation(d);
+            if (syncResult?.createdGearName) showToast?.(`Added grinder to gear: ${syncResult.createdGearName}.`);
+        }
 
         const firstDripEl = document.getElementById('graphFirstDrip');
         const maxFlowEl = document.getElementById('graphMaxFlow');
@@ -778,9 +795,12 @@ export const createBrewsActionsModule = ({
             notes: document.getElementById('quickEditNotes').value || '',
             improve: document.getElementById('quickEditImprove').value || '',
             isActive: !!document.getElementById('quickEditIsActive').checked,
+            gearIds: Array.isArray(brew.gearIds) ? [...new Set(brew.gearIds.filter(Boolean))] : [],
             beanId: selectedBeanId,
             updatedAt: nowIso
         };
+        const quickEditSync = await grinderGearSync.ensureGrinderGearAssociation(updates);
+        if (quickEditSync?.createdGearName) showToast?.(`Added grinder to gear: ${quickEditSync.createdGearName}.`);
 
         try {
             await updateCoffee(currentCardId, updates);

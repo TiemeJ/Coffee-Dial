@@ -1078,7 +1078,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeCoffeeCard: (...args) => closeCoffeeCard(...args),
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
-            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState()
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
+            showToast
         });
 
         const { resetCardPhotoState, triggerCardPhoto, handleCardPhoto } = createBrewsCardPhotoModule();
@@ -1198,6 +1199,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 uploadPendingCoffeeTypeImage,
                 clearPendingAIBeanImageFile,
                 getCoffeeScale: () => coffeeScale,
+                showToast,
                 shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
                 openBrewFormModal: dispatchBrewOpenForm
             },
