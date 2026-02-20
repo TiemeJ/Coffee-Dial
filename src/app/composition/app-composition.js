@@ -930,6 +930,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             storageService,
             functionsService,
             imageCompression,
+            html2canvas,
             getStarDisplay,
             openAppConfirm
         });

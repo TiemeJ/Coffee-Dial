@@ -17,6 +17,7 @@ export const createGalleryModule = ({
     storageService,
     functionsService,
     imageCompression,
+    html2canvas,
     getStarDisplay,
     openAppConfirm
 }) => {
@@ -37,6 +38,7 @@ export const createGalleryModule = ({
     const getPhotoSignedUrl = httpsCallable(functions, 'getPhotoSignedUrl');
     const getPhotoSignedUrlsBatch = httpsCallable(functions, 'getPhotoSignedUrlsBatch');
     const signedUrlCache = new Map();
+    const preparedMomentShares = new Map();
     const DEFAULT_URL_TTL_SECONDS = 180;
     const CACHE_SKEW_MS = 15000;
     const SESSION_CACHE_PREFIX = 'gallerySignedUrl:v1';
@@ -271,9 +273,6 @@ export const createGalleryModule = ({
         const normalized = (contentType || '').toLowerCase();
         if (normalized.includes('png')) return 'png';
         if (normalized.includes('webp')) return 'webp';
-        if (normalized.includes('gif')) return 'gif';
-        if (normalized.includes('heic')) return 'heic';
-        if (normalized.includes('heif')) return 'heif';
         return 'jpg';
     };
 
@@ -295,20 +294,172 @@ export const createGalleryModule = ({
         return parts.join('\n');
     };
 
-    const createShareFileFromUrl = async ({ url, photoId }) => {
-        if (!url) return null;
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Image fetch failed (${response.status})`);
+    const getHtml2Canvas = () => {
+        if (typeof html2canvas === 'function') return html2canvas;
+        if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
+            return window.html2canvas;
         }
-        const blob = await response.blob();
-        const extension = inferExtensionFromContentType(blob?.type || response.headers.get('content-type'));
+        return null;
+    };
+
+    const waitForCardImages = async (cardElement) => {
+        const images = Array.from(cardElement.querySelectorAll('img'));
+        if (!images.length) return;
+        await Promise.all(images.map((img) => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve) => {
+                const done = () => {
+                    img.removeEventListener('load', done);
+                    img.removeEventListener('error', done);
+                    resolve();
+                };
+                img.addEventListener('load', done, { once: true });
+                img.addEventListener('error', done, { once: true });
+            });
+        }));
+    };
+
+    const formatMomentDate = (isoValue) => {
+        if (!isoValue) return '';
+        const date = new Date(isoValue);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleDateString();
+    };
+
+    const buildShareTemplateCard = ({ photoUrl, data, cardSnapshot, widthPx }) => {
+        const width = Math.max(280, Math.min(640, widthPx || 560));
+        const hasRating = (Number(cardSnapshot?.rating) || 0) > 0;
+
+        const card = document.createElement('div');
+        card.style.cssText = [
+            `width:${width}px`,
+            'border-radius:24px',
+            'overflow:hidden',
+            'background:#302a28',
+            'border:1px solid rgba(255,255,255,0.18)',
+            'box-shadow:0 20px 46px rgba(0,0,0,0.4)',
+            "font-family:'Nunito', system-ui, sans-serif",
+            'color:#f5f5f4'
+        ].join(';');
+
+        const mediaWrap = document.createElement('div');
+        mediaWrap.style.cssText = 'position:relative;width:100%;background:#1f1b19;overflow:hidden;';
+        if (photoUrl) {
+            const img = document.createElement('img');
+            img.src = photoUrl;
+            img.alt = 'Moment photo';
+            img.crossOrigin = 'anonymous';
+            img.style.cssText = 'width:100%;height:auto;display:block;';
+            mediaWrap.appendChild(img);
+        }
+        const dateBadge = document.createElement('div');
+        dateBadge.style.cssText = 'position:absolute;left:16px;bottom:14px;color:#ffffff;font-size:18px;font-weight:800;line-height:1;';
+        dateBadge.textContent = formatMomentDate(data?.createdAt);
+        mediaWrap.appendChild(dateBadge);
+        card.appendChild(mediaWrap);
+
+        const body = document.createElement('div');
+        body.style.cssText = 'padding:24px 24px 22px;';
+
+        const topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:16px;';
+        const uploader = document.createElement('div');
+        uploader.style.cssText = 'font-size:13px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:#a8a29e;line-height:1;';
+        uploader.textContent = data?.uploaderName || 'Unknown';
+        const rating = document.createElement('div');
+        rating.style.cssText = 'font-size:12px;color:#f5f5f4;font-weight:600;white-space:nowrap;line-height:1;';
+        rating.textContent = hasRating ? `${Number(cardSnapshot?.rating) || 0}/5` : '-';
+        topRow.appendChild(uploader);
+        topRow.appendChild(rating);
+        body.appendChild(topRow);
+
+        const message = document.createElement('p');
+        message.style.cssText = 'margin:0 0 18px 0;max-width:88%;color:#e7e5e4;font-size:14px;line-height:1.45;font-style:italic;font-weight:400;';
+        const rawMessage = (data?.message || '').trim();
+        message.textContent = rawMessage ? `"${rawMessage}"` : '"-"';
+        body.appendChild(message);
+
+        const info = document.createElement('div');
+        info.style.cssText = 'padding:0;';
+        const farmer = document.createElement('div');
+        farmer.style.cssText = 'font-size:14px;font-weight:700;color:#ffffff;line-height:1.2;';
+        farmer.textContent = cardSnapshot?.farmer || '-';
+        const roaster = document.createElement('div');
+        roaster.style.cssText = 'margin-top:4px;font-size:13px;font-weight:500;color:#d6d3d1;line-height:1.2;';
+        roaster.textContent = cardSnapshot?.roaster || '-';
+        const method = document.createElement('div');
+        method.style.cssText = 'margin-top:8px;font-size:13px;font-weight:500;color:#d6d3d1;line-height:1.2;text-align:left;';
+        method.textContent = cardSnapshot?.method || '-';
+        info.appendChild(farmer);
+        info.appendChild(roaster);
+        info.appendChild(method);
+        body.appendChild(info);
+
+        card.appendChild(body);
+        return card;
+    };
+
+    const createShareFileFromMomentCard = async ({ photoId, cardElement, data, cardSnapshot, photoUrl }) => {
+        const capture = getHtml2Canvas();
+        if (!capture) {
+            throw new Error('Screenshot capture is not available.');
+        }
+        const rect = cardElement?.getBoundingClientRect?.();
+        const widthPx = rect?.width ? Math.round(rect.width) : 560;
+        const templateCard = buildShareTemplateCard({ photoUrl, data, cardSnapshot, widthPx });
+        const host = document.createElement('div');
+        host.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none;z-index:-1;';
+        host.appendChild(templateCard);
+        document.body.appendChild(host);
+
+        let canvas;
+        try {
+            await waitForCardImages(templateCard);
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            canvas = await capture(templateCard, {
+                scale: Math.min(2, window.devicePixelRatio || 1),
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: null,
+                logging: false
+            });
+        } finally {
+            host.remove();
+        }
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
+        if (!blob) {
+            throw new Error('Screenshot generation failed.');
+        }
+        const extension = inferExtensionFromContentType(blob.type);
         return new File([blob], `moment-${photoId}.${extension}`, {
             type: blob.type || `image/${extension}`
         });
     };
 
-    const shareMoment = async ({ photoId, data, cardSnapshot }) => {
+    const prepareMomentSharePayload = async ({ photoId, data, cardSnapshot, cardElement, shareText }) => {
+        const fullPhotoUrl = await resolveSignedPhotoUrl({
+            photoId,
+            variant: 'full',
+            data
+        });
+        const shareFile = await createShareFileFromMomentCard({
+            photoId,
+            cardElement,
+            data,
+            cardSnapshot,
+            photoUrl: fullPhotoUrl
+        });
+
+        const payload = { text: shareText };
+        if (shareFile && (!navigator.canShare || navigator.canShare({ files: [shareFile] }))) {
+            payload.files = [shareFile];
+        }
+        preparedMomentShares.set(photoId, payload);
+        return payload;
+    };
+
+    const shareMoment = async ({ photoId, data, cardSnapshot, cardElement }) => {
         const appLink = typeof window !== 'undefined' ? window.location.origin : '';
         const shareText = buildMomentShareText({ data, cardSnapshot, appLink });
         if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
@@ -319,31 +470,55 @@ export const createGalleryModule = ({
         // Best-effort: copy details for apps that only keep the image payload.
         try {
             if (navigator?.clipboard?.writeText) {
-                await navigator.clipboard.writeText(shareText);
+                navigator.clipboard.writeText(shareText).catch(() => {});
             }
         } catch (error) {
             console.warn('Clipboard copy failed before sharing moment:', error);
         }
 
-        const sharePayload = {
-            text: shareText
-        };
-
-        try {
-            const fullUrl = await resolveSignedPhotoUrl({
-                photoId,
-                variant: 'full',
-                data
-            });
-            const shareFile = await createShareFileFromUrl({ url: fullUrl, photoId });
-            if (shareFile && (!navigator.canShare || navigator.canShare({ files: [shareFile] }))) {
-                sharePayload.files = [shareFile];
+        let sharePayload = preparedMomentShares.get(photoId);
+        if (!sharePayload) {
+            try {
+                sharePayload = await prepareMomentSharePayload({
+                    photoId,
+                    data,
+                    cardSnapshot,
+                    cardElement,
+                    shareText
+                });
+            } catch (error) {
+                console.warn('Moment card screenshot share fallback to text-only:', error);
+                sharePayload = { text: shareText };
             }
-        } catch (error) {
-            console.warn('Moment image share fallback to text-only:', error);
+        } else {
+            sharePayload = { ...sharePayload, text: shareText };
         }
 
-        await navigator.share(sharePayload);
+        try {
+            await navigator.share(sharePayload);
+            preparedMomentShares.delete(photoId);
+        } catch (error) {
+            if (error?.name === 'NotAllowedError') {
+                const hasPreparedFile = Array.isArray(sharePayload?.files) && sharePayload.files.length > 0;
+                if (hasPreparedFile) {
+                    throw new Error('Share sheet was blocked by the browser. Tap Share moment again.');
+                }
+            }
+            throw error;
+        }
+    };
+
+    const setMomentShareButtonLoading = (button, isLoading) => {
+        if (!button) return;
+        if (isLoading) {
+            button.disabled = true;
+            button.classList.add('opacity-100', 'cursor-wait');
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i>';
+            return;
+        }
+        button.disabled = false;
+        button.classList.remove('cursor-wait');
+        button.innerHTML = '<i class="fa-solid fa-share-nodes text-xs"></i>';
     };
 
     const setGalleryLoadingVisible = (isVisible) => {
@@ -546,6 +721,7 @@ export const createGalleryModule = ({
         docsWithData.forEach(({ docItem, data }) => {
             const cardSnapshot = resolveSnapshotForCard(data);
             const card = document.createElement('div');
+            card.id = `moment-card-${docItem.id}`;
             card.className = 'bg-white dark:bg-[#292524] rounded-lg shadow-md overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col relative group';
 
             const ratingHtml = getStarDisplay(cardSnapshot.rating || 0);
@@ -559,20 +735,25 @@ export const createGalleryModule = ({
                 const shareBtn = document.createElement('button');
                 shareBtn.type = 'button';
                 shareBtn.title = 'Share moment';
+                shareBtn.dataset.momentAction = 'true';
                 shareBtn.className = 'absolute top-2 left-2 bg-white/80 hover:bg-white text-coffee-700 w-8 h-8 rounded-full flex items-center justify-center shadow transition-all z-10 opacity-0 group-hover:opacity-100';
                 shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes text-xs"></i>';
                 shareBtn.addEventListener('click', async (event) => {
                     event.stopPropagation();
+                    setMomentShareButtonLoading(shareBtn, true);
                     try {
                         await shareMoment({
                             photoId: docItem.id,
                             data,
-                            cardSnapshot
+                            cardSnapshot,
+                            cardElement: card
                         });
                     } catch (error) {
                         if (error?.name === 'AbortError') return;
                         console.error('Share moment failed:', error);
                         alert(`Share failed: ${error.message || 'Unknown error'}`);
+                    } finally {
+                        setMomentShareButtonLoading(shareBtn, false);
                     }
                 });
                 card.appendChild(shareBtn);
@@ -580,6 +761,7 @@ export const createGalleryModule = ({
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
                 deleteBtn.title = 'Delete Photo';
+                deleteBtn.dataset.momentAction = 'true';
                 deleteBtn.className = 'absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all z-10 opacity-0 group-hover:opacity-100';
                 deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
                 deleteBtn.addEventListener('click', (event) => {
@@ -591,10 +773,12 @@ export const createGalleryModule = ({
             }
 
             const imageWrap = document.createElement('div');
+            imageWrap.dataset.momentImageWrap = 'true';
             imageWrap.className = 'h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative cursor-pointer';
 
             const img = document.createElement('img');
             img.src = displayUrl;
+            img.crossOrigin = 'anonymous';
             img.loading = 'lazy';
             img.className = 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110';
             img.alt = 'Brew Photo';
@@ -607,8 +791,9 @@ export const createGalleryModule = ({
             card.appendChild(imageWrap);
 
             const body = document.createElement('div');
+            body.dataset.momentBody = 'true';
             body.className = 'p-3 flex-1 flex flex-col';
-            body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-xs">${ratingHtml}</div></div><p class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
+            body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-xs">${ratingHtml}</div></div><p data-moment-message="true" class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div data-moment-info="true" class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
             card.appendChild(body);
             grid.appendChild(card);
 
