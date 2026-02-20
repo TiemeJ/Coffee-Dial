@@ -14,6 +14,7 @@ export const createCoffeeMaintenanceModule = ({
         throw new Error('createCoffeeMaintenanceModule requires dataService { db, writeBatch, doc }');
     }
 
+    // TODO(admin-script): replace with scripts/backfill-coffee-type-decaf-from-scan.mjs and remove this UI migration after rollout.
     const backfillCoffeeTypeDecafFromScan = async () => {
         const user = getCurrentUser();
         if (!user) return;

@@ -20,6 +20,7 @@ export const createGearMigrationModule = ({
 
     const denormalizeName = (value) => (value || '').toString().trim().replace(/\s+/g, ' ');
 
+    // TODO(admin-script): replace with scripts/migrate-grinder-to-gear.mjs and remove this UI migration after rollout.
     const migrateGrinderToGear = async () => {
         const currentUser = getCurrentUser();
         if (!currentUser) return alert('Please sign in.');
@@ -131,6 +132,7 @@ export const createGearMigrationModule = ({
         }
     };
 
+    // TODO(admin-script): replace with scripts/fill-legacy-grinder-from-gear.mjs and remove this UI migration after rollout.
     const fillLegacyGrinderFromGear = async () => {
         const currentUser = getCurrentUser();
         if (!currentUser) return alert('Please sign in.');

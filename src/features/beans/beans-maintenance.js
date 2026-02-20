@@ -56,6 +56,7 @@ export const createBeansMaintenanceModule = ({
         }
     };
 
+    // TODO(admin-script): replace with scripts/sync-legacy-beans.mjs and remove this UI migration after rollout.
     const syncLegacyBeans = async () => {
         const user = getCurrentUser();
         if (!user) return;
@@ -161,6 +162,7 @@ export const createBeansMaintenanceModule = ({
         }
     };
 
+    // TODO(admin-script): replace with scripts/backfill-bean-dates-from-brews.mjs and remove this UI migration after rollout.
     const backfillBeanDatesFromBrews = async () => {
         const user = getCurrentUser();
         if (!user) return;

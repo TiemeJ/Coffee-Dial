@@ -11,6 +11,7 @@ export const createCoffeeTypesExtractModule = ({
     if (!db || !writeBatch || !doc || !collection) {
         throw new Error('createCoffeeTypesExtractModule requires dataService { db, writeBatch, doc, collection }');
     }
+    // TODO(admin-script): replace with scripts/extract-coffee-types-from-beans.mjs and remove this UI migration after rollout.
     const extractCoffeeTypesFromBeans = async () => {
         const currentUser = getCurrentUser();
         const beans = getBeans();

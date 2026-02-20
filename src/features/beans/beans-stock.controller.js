@@ -56,6 +56,7 @@ export const createBeansStockControllerModule = ({
         }
     };
 
+    // TODO(admin-script): replace with scripts/maybe-migrate-beans-left.mjs and remove this UI migration after rollout.
     const maybeMigrateBeansLeft = async () => {
         const currentUser = getCurrentUser();
         if (!currentUser) return;
@@ -107,6 +108,7 @@ export const createBeansStockControllerModule = ({
         }
     };
 
+    // TODO(admin-script): replace with scripts/recalculate-all-beans-left.mjs and remove this UI migration after rollout.
     const recalculateAllBeanStockLeft = async () => {
         const currentUser = getCurrentUser();
         if (!currentUser) return;
