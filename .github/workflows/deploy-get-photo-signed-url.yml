@@ -25,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -39,9 +39,10 @@ jobs:
     env:
       FUNCTION_NAME: getPhotoSignedUrl
       FUNCTION_REGION: us-central1
-      FUNCTION_RUNTIME: nodejs20
+      FUNCTION_RUNTIME: nodejs22
       FUNCTION_SOURCE: cloud/google-cloud-functions/getPhotoSignedUrl-function-source
       FUNCTION_ENTRY_POINT: getPhotoSignedUrl
+      FUNCTION_SERVICE_ACCOUNT: coffee-dial-app-9db38@appspot.gserviceaccount.com
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,5 +67,6 @@ jobs:
             --runtime="${FUNCTION_RUNTIME}" \
             --source="${FUNCTION_SOURCE}" \
             --entry-point="${FUNCTION_ENTRY_POINT}" \
+            --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
             --trigger-http \
             --no-allow-unauthenticated
