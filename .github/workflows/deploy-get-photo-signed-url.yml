@@ -1,0 +1,70 @@
+name: Deploy getPhotoSignedUrl Function
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "cloud/google-cloud-functions/getPhotoSignedUrl-function-source/**"
+      - ".github/workflows/deploy-get-photo-signed-url.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud/google-cloud-functions/getPhotoSignedUrl-function-source
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+  deploy:
+    needs: lint
+    runs-on: ubuntu-latest
+    env:
+      FUNCTION_NAME: getPhotoSignedUrl
+      FUNCTION_REGION: us-central1
+      FUNCTION_RUNTIME: nodejs20
+      FUNCTION_SOURCE: cloud/google-cloud-functions/getPhotoSignedUrl-function-source
+      FUNCTION_ENTRY_POINT: getPhotoSignedUrl
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy function (Gen2)
+        run: |
+          gcloud functions deploy "${FUNCTION_NAME}" \
+            --gen2 \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --region="${FUNCTION_REGION}" \
+            --runtime="${FUNCTION_RUNTIME}" \
+            --source="${FUNCTION_SOURCE}" \
+            --entry-point="${FUNCTION_ENTRY_POINT}" \
+            --trigger-http \
+            --no-allow-unauthenticated

@@ -1,0 +1,19 @@
+steps:
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - functions
+      - deploy
+      - getPhotoSignedUrl
+      - --gen2
+      - --project=${PROJECT_ID}
+      - --region=${_REGION}
+      - --runtime=${_RUNTIME}
+      - --source=cloud/google-cloud-functions/getPhotoSignedUrl-function-source
+      - --entry-point=getPhotoSignedUrl
+      - --trigger-http
+      - --no-allow-unauthenticated
+
+substitutions:
+  _REGION: us-central1
+  _RUNTIME: nodejs20
