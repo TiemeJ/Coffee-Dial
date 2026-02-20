@@ -1,0 +1,86 @@
+name: Deploy AI Functions
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "cloud/google-cloud-functions/ai-functions-source/**"
+      - ".github/workflows/deploy-ai-functions.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud/google-cloud-functions/ai-functions-source
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run lint
+        run: npm run lint
+
+  deploy:
+    needs: lint
+    runs-on: ubuntu-latest
+    env:
+      FUNCTION_REGION: us-central1
+      FUNCTION_RUNTIME: nodejs22
+      FUNCTION_SOURCE: cloud/google-cloud-functions/ai-functions-source
+      FUNCTION_SERVICE_ACCOUNT: coffee-dial-app-9db38@appspot.gserviceaccount.com
+      GEMINI_SECRET_REF: GEMINI_API_KEY=GEMINI_API_KEY:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy analyzeCoffeeBag (Gen2)
+        run: |
+          gcloud functions deploy "analyzeCoffeeBag" \
+            --gen2 \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --region="${FUNCTION_REGION}" \
+            --runtime="${FUNCTION_RUNTIME}" \
+            --source="${FUNCTION_SOURCE}" \
+            --entry-point="analyzeCoffeeBag" \
+            --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
+            --set-secrets="${GEMINI_SECRET_REF}" \
+            --trigger-http \
+            --allow-unauthenticated
+
+      - name: Deploy analyzeBrewProfile (Gen2)
+        run: |
+          gcloud functions deploy "analyzeBrewProfile" \
+            --gen2 \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --region="${FUNCTION_REGION}" \
+            --runtime="${FUNCTION_RUNTIME}" \
+            --source="${FUNCTION_SOURCE}" \
+            --entry-point="analyzeBrewProfile" \
+            --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
+            --set-secrets="${GEMINI_SECRET_REF}" \
+            --trigger-http \
+            --allow-unauthenticated

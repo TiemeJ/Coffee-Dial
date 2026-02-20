@@ -1,0 +1,35 @@
+name: Lint AI Functions
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "cloud/google-cloud-functions/ai-functions-source/**"
+      - ".github/workflows/lint-ai-functions.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "cloud/google-cloud-functions/ai-functions-source/**"
+      - ".github/workflows/lint-ai-functions.yml"
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud/google-cloud-functions/ai-functions-source
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run lint
+        run: npm run lint

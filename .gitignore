@@ -10,7 +10,5 @@ blob-report/
 
 # Others
 scripts/
-cloud/google-cloud-functions/analyzeBrewProfile-function-source/
-cloud/google-cloud-functions/analyzeCoffeeBag-function-source/
 cloud/firebase-config/
 
