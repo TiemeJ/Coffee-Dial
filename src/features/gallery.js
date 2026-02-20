@@ -39,6 +39,8 @@ export const createGalleryModule = ({
     const signedUrlCache = new Map();
     const DEFAULT_URL_TTL_SECONDS = 180;
     const CACHE_SKEW_MS = 15000;
+    const SESSION_CACHE_PREFIX = 'gallerySignedUrl:v1';
+    const SESSION_INDEX_PREFIX = 'gallerySignedUrlIndex:v1';
 
     const isMissingValue = (value) => {
         const normalized = (value ?? '').toString().trim();
@@ -75,12 +77,77 @@ export const createGalleryModule = ({
     };
 
     const getSignedUrlCacheKey = (photoId, variant) => `${photoId}:${variant}`;
+    const getSessionBaseKey = (photoId, variant) => `${SESSION_CACHE_PREFIX}:${photoId}:${variant}`;
+    const getSessionIndexKey = (photoId, variant) => `${SESSION_INDEX_PREFIX}:${photoId}:${variant}`;
+    const isSessionStorageAvailable = () => {
+        try {
+            return typeof window !== 'undefined' && !!window.sessionStorage;
+        } catch (_) {
+            return false;
+        }
+    };
+
+    const setPersistentSignedUrl = (photoId, variant, url, expiresAtMs) => {
+        if (!isSessionStorageAvailable() || !url || !Number.isFinite(expiresAtMs)) return;
+        const baseKey = getSessionBaseKey(photoId, variant);
+        const indexKey = getSessionIndexKey(photoId, variant);
+        const entryKey = `${baseKey}:${expiresAtMs}`;
+        try {
+            const previousEntryKey = window.sessionStorage.getItem(indexKey);
+            if (previousEntryKey && previousEntryKey !== entryKey) {
+                window.sessionStorage.removeItem(previousEntryKey);
+            }
+            window.sessionStorage.setItem(entryKey, JSON.stringify({ url, expiresAtMs }));
+            window.sessionStorage.setItem(indexKey, entryKey);
+        } catch (_) {
+            // Ignore quota/access errors; in-memory cache still works.
+        }
+    };
+
+    const removePersistentSignedUrl = (photoId, variant) => {
+        if (!isSessionStorageAvailable()) return;
+        const indexKey = getSessionIndexKey(photoId, variant);
+        try {
+            const entryKey = window.sessionStorage.getItem(indexKey);
+            if (entryKey) window.sessionStorage.removeItem(entryKey);
+            window.sessionStorage.removeItem(indexKey);
+        } catch (_) {
+            // Ignore storage errors.
+        }
+    };
+
+    const getPersistentSignedUrl = (photoId, variant) => {
+        if (!isSessionStorageAvailable()) return '';
+        const indexKey = getSessionIndexKey(photoId, variant);
+        try {
+            const entryKey = window.sessionStorage.getItem(indexKey);
+            if (!entryKey) return '';
+            const raw = window.sessionStorage.getItem(entryKey);
+            if (!raw) {
+                window.sessionStorage.removeItem(indexKey);
+                return '';
+            }
+            const parsed = JSON.parse(raw);
+            const url = typeof parsed?.url === 'string' ? parsed.url.trim() : '';
+            const expiresAtMs = Number(parsed?.expiresAtMs);
+            if (!url || !Number.isFinite(expiresAtMs) || Date.now() >= expiresAtMs - CACHE_SKEW_MS) {
+                window.sessionStorage.removeItem(entryKey);
+                window.sessionStorage.removeItem(indexKey);
+                return '';
+            }
+            signedUrlCache.set(getSignedUrlCacheKey(photoId, variant), { url, expiresAtMs });
+            return url;
+        } catch (_) {
+            return '';
+        }
+    };
 
     const getCachedSignedUrl = (photoId, variant) => {
         const entry = signedUrlCache.get(getSignedUrlCacheKey(photoId, variant));
         if (!entry) return '';
         if (Date.now() >= entry.expiresAtMs - CACHE_SKEW_MS) {
             signedUrlCache.delete(getSignedUrlCacheKey(photoId, variant));
+            removePersistentSignedUrl(photoId, variant);
             return '';
         }
         return entry.url;
@@ -107,6 +174,7 @@ export const createGalleryModule = ({
             url: signedUrl,
             expiresAtMs
         });
+        setPersistentSignedUrl(photoId, variant, signedUrl, expiresAtMs);
         return signedUrl;
     };
 
@@ -129,6 +197,8 @@ export const createGalleryModule = ({
 
         const cached = getCachedSignedUrl(photoId, variant);
         if (cached) return cached;
+        const persistent = getPersistentSignedUrl(photoId, variant);
+        if (persistent) return persistent;
 
         if (!hasStoragePath(data, variant)) {
             return resolveLegacyUrl(data, variant);
@@ -171,6 +241,25 @@ export const createGalleryModule = ({
             console.warn('Batch signed URL retrieval failed:', error);
             return new Map();
         }
+    };
+
+    const toDocsWithData = (docs) => docs.map((docItem) => ({
+        docItem,
+        data: docItem.data()
+    }));
+
+    const buildThumbBatchItems = (docsWithData) => {
+        const batchItems = [];
+        docsWithData.forEach(({ docItem, data }) => {
+            if (!hasStoragePath(data, 'thumb')) return;
+            const photoId = docItem.id;
+            const cached = getCachedSignedUrl(photoId, 'thumb');
+            if (cached) return;
+            const persistent = getPersistentSignedUrl(photoId, 'thumb');
+            if (persistent) return;
+            batchItems.push({ photoId, variant: 'thumb' });
+        });
+        return batchItems;
     };
 
     const openExternalUrl = (url) => {
@@ -346,8 +435,14 @@ export const createGalleryModule = ({
 
             const snapshot = await getDocs(q);
             if (!snapshot.empty) {
+                const docsWithData = toDocsWithData(snapshot.docs);
+                const thumbBatchItems = buildThumbBatchItems(docsWithData);
+                const prefetchedThumbUrlsPromise = resolveBatchSignedPhotoUrls({
+                    items: thumbBatchItems
+                });
                 setLastGalleryDoc(snapshot.docs[snapshot.docs.length - 1]);
-                await renderGalleryGrid(snapshot.docs);
+                const prefetchedThumbUrls = await prefetchedThumbUrlsPromise;
+                renderGalleryGrid(snapshot.docs, { prefetchedThumbUrls });
                 if (snapshot.docs.length < 9) btn.classList.add('hidden');
                 else btn.classList.remove('hidden');
             } else {
@@ -364,22 +459,12 @@ export const createGalleryModule = ({
         setIsGalleryLoading(false);
     };
 
-    const renderGalleryGrid = async (docs) => {
+    const renderGalleryGrid = (docs, options = {}) => {
         const grid = document.getElementById('galleryGrid');
-        const docsWithData = docs.map((docItem) => ({
-            docItem,
-            data: docItem.data()
-        }));
-
-        const batchItems = [];
-        docsWithData.forEach(({ docItem, data }) => {
-            if (!hasStoragePath(data, 'thumb')) return;
-            const photoId = docItem.id;
-            const cached = getCachedSignedUrl(photoId, 'thumb');
-            if (cached) return;
-            batchItems.push({ photoId, variant: 'thumb' });
-        });
-        const batchUrls = await resolveBatchSignedPhotoUrls({ items: batchItems });
+        const docsWithData = toDocsWithData(docs);
+        const prefetchedThumbUrls = options.prefetchedThumbUrls instanceof Map
+            ? options.prefetchedThumbUrls
+            : new Map();
 
         docsWithData.forEach(({ docItem, data }) => {
             const cardSnapshot = resolveSnapshotForCard(data);
@@ -388,7 +473,7 @@ export const createGalleryModule = ({
 
             const ratingHtml = getStarDisplay(cardSnapshot.rating || 0);
             const cachedThumb = getCachedSignedUrl(docItem.id, 'thumb');
-            const batchThumb = batchUrls.get(getSignedUrlCacheKey(docItem.id, 'thumb'));
+            const batchThumb = prefetchedThumbUrls.get(getSignedUrlCacheKey(docItem.id, 'thumb'));
             const displayUrl = cachedThumb || batchThumb || resolveLegacyUrl(data, 'thumb');
             const primaryInfo = cardSnapshot.farmer || '-';
             const secondaryInfo = cardSnapshot.roaster || cardSnapshot.origin || '-';
@@ -463,6 +548,8 @@ export const createGalleryModule = ({
             }
             signedUrlCache.delete(getSignedUrlCacheKey(photoId, 'full'));
             signedUrlCache.delete(getSignedUrlCacheKey(photoId, 'thumb'));
+            removePersistentSignedUrl(photoId, 'full');
+            removePersistentSignedUrl(photoId, 'thumb');
             alert('Photo deleted successfully.');
             openGallery();
         } catch (err) {
