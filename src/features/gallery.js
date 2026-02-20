@@ -372,7 +372,6 @@ export const createGalleryModule = ({
 
     const openGallery = async () => {
         document.getElementById('galleryModal')?.classList.remove('hidden');
-        const hasNotification = !document.getElementById('galleryBadge')?.classList.contains('hidden');
         const user = getCurrentUser();
         const nowIso = new Date().toISOString();
         setLastGalleryVisit(nowIso);
@@ -385,8 +384,7 @@ export const createGalleryModule = ({
         }
         document.getElementById('menuBadge')?.classList.add('hidden');
         document.getElementById('galleryBadge')?.classList.add('hidden');
-        if (hasNotification) switchGalleryTab('shared');
-        else switchGalleryTab('mine');
+        switchGalleryTab('shared');
         setLastGalleryDoc(null);
         document.getElementById('galleryGrid').innerHTML = '';
         document.getElementById('galleryEmpty')?.classList.add('hidden');
