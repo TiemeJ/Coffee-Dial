@@ -316,6 +316,15 @@ export const createGalleryModule = ({
             return;
         }
 
+        // Best-effort: copy details for apps that only keep the image payload.
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(shareText);
+            }
+        } catch (error) {
+            console.warn('Clipboard copy failed before sharing moment:', error);
+        }
+
         const sharePayload = {
             text: shareText
         };
