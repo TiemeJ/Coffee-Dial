@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Photos sharedWith audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; max-width: 900px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+    input { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    button { padding: 9px 12px; border: 1px solid #bbb; border-radius: 6px; background: #f5f5f5; cursor: pointer; margin-right: 8px; margin-top: 8px; }
+    button:hover { background: #eee; }
+    pre { background: #111; color: #ddd; padding: 12px; border-radius: 8px; min-height: 240px; overflow: auto; }
+    .ok { color: #0a7a2f; }
+    .warn { color: #b25d00; }
+    .bad { color: #b00020; }
+  </style>
+</head>
+<body>
+  <h1>One-time photos `sharedWith` audit</h1>
+  <p>
+    Audits your own uploaded <code>photos</code> docs (<code>where uid == currentUser.uid</code>) and detects malformed
+    <code>sharedWith</code>. Use <strong>dry run</strong> first, then run repair if needed.
+  </p>
+
+  <div class="card">
+    <label>Firebase API key</label>
+    <input id="apiKey" value="AIzaSyAjKRgCrNuwaAvjOJPzTrmippI2sv5QG6M" />
+    <label style="margin-top:10px;display:block;">Auth domain</label>
+    <input id="authDomain" value="coffee-dial-app-9db38.firebaseapp.com" />
+    <label style="margin-top:10px;display:block;">Project ID</label>
+    <input id="projectId" value="coffee-dial-app-9db38" />
+    <label style="margin-top:10px;display:block;">App ID</label>
+    <input id="appId" value="1:513325852224:web:0af5f15c4968a5bfad61a5" />
+    <div>
+      <button id="initBtn">1) Init Firebase</button>
+      <button id="signInBtn" disabled>2) Sign in with Google (popup)</button>
+      <button id="signInRedirectBtn" disabled>2b) Sign in with Google (redirect)</button>
+      <button id="auditBtn" disabled>3) Audit (dry run)</button>
+      <button id="probeSharedBtn" disabled>3b) Probe shared-with-me</button>
+      <button id="repairBtn" disabled>4) Repair malformed docs</button>
+    </div>
+    <p id="status"></p>
+  </div>
+
+  <div class="card">
+    <pre id="log"></pre>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
+    import {
+      getFirestore,
+      collection,
+      query,
+      where,
+      orderBy,
+      getDocs,
+      doc,
+      writeBatch
+    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+
+    const $ = (id) => document.getElementById(id);
+    const logEl = $('log');
+    const statusEl = $('status');
+    let app = null;
+    let auth = null;
+    let db = null;
+    let currentUser = null;
+
+    const log = (line) => {
+      const ts = new Date().toISOString();
+      logEl.textContent += `[${ts}] ${line}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+
+    const setStatus = (cls, text) => {
+      statusEl.className = cls;
+      statusEl.textContent = text;
+    };
+
+    const cfg = () => ({
+      apiKey: $('apiKey').value.trim(),
+      authDomain: $('authDomain').value.trim(),
+      projectId: $('projectId').value.trim(),
+      appId: $('appId').value.trim()
+    });
+
+    const normalizeSharedWith = (value) => {
+      if (Array.isArray(value)) {
+        const items = value
+          .map((v) => (typeof v === 'string' ? v.trim() : ''))
+          .filter(Boolean);
+        return [...new Set(items)].sort();
+      }
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            return normalizeSharedWith(parsed);
+          } catch {
+            return [trimmed];
+          }
+        }
+        if (trimmed.includes(',')) {
+          return [...new Set(trimmed.split(',').map((x) => x.trim()).filter(Boolean))].sort();
+        }
+        return [trimmed];
+      }
+      if (value == null) return [];
+      return [];
+    };
+
+    const isEqualStringArray = (a, b) => {
+      if (!Array.isArray(a) || !Array.isArray(b)) return false;
+      if (a.length !== b.length) return false;
+      return a.every((x, i) => x === b[i]);
+    };
+
+    const runAudit = async ({ repair = false } = {}) => {
+      if (!db || !currentUser) return;
+      log(`Starting ${repair ? 'repair' : 'audit'} for uid=${currentUser.uid}`);
+
+      const q = query(
+        collection(db, 'photos'),
+        where('uid', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+
+      const snap = await getDocs(q);
+      log(`Fetched ${snap.size} photo docs owned by current user.`);
+      if (snap.empty) {
+        setStatus('warn', 'No owned photo docs found.');
+        return;
+      }
+
+      const malformed = [];
+      snap.forEach((d) => {
+        const data = d.data() || {};
+        const normalized = normalizeSharedWith(data.sharedWith);
+        const current = Array.isArray(data.sharedWith) ? [...data.sharedWith] : data.sharedWith;
+        const currentNorm = Array.isArray(current) ? normalizeSharedWith(current) : normalizeSharedWith(current);
+        const validArray = Array.isArray(data.sharedWith) && isEqualStringArray(currentNorm, normalized);
+        if (!validArray) {
+          malformed.push({
+            id: d.id,
+            beforeType: Array.isArray(data.sharedWith) ? 'array' : typeof data.sharedWith,
+            beforeValue: data.sharedWith,
+            normalized
+          });
+        }
+      });
+
+      log(`Malformed sharedWith docs: ${malformed.length}`);
+      malformed.slice(0, 25).forEach((m) => {
+        log(` - ${m.id}: type=${m.beforeType}, normalized=${JSON.stringify(m.normalized)}`);
+      });
+      if (malformed.length > 25) log(`... and ${malformed.length - 25} more`);
+
+      if (!repair) {
+        setStatus(malformed.length ? 'warn' : 'ok', malformed.length ? `Audit finished: ${malformed.length} malformed docs.` : 'Audit finished: no malformed docs.');
+        return;
+      }
+
+      if (!malformed.length) {
+        setStatus('ok', 'Nothing to repair.');
+        return;
+      }
+
+      let totalUpdated = 0;
+      for (let i = 0; i < malformed.length; i += 400) {
+        const chunk = malformed.slice(i, i + 400);
+        const batch = writeBatch(db);
+        chunk.forEach((item) => {
+          batch.update(doc(db, 'photos', item.id), { sharedWith: item.normalized });
+        });
+        await batch.commit();
+        totalUpdated += chunk.length;
+        log(`Committed batch: ${chunk.length} docs`);
+      }
+
+      setStatus('ok', `Repair finished. Updated ${totalUpdated} docs.`);
+    };
+
+    const probeSharedWithMe = async () => {
+      if (!db || !currentUser) return;
+      log(`Starting shared-with-me probe for uid=${currentUser.uid}`);
+      const q = query(
+        collection(db, 'photos'),
+        where('sharedWith', 'array-contains', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const snap = await getDocs(q);
+      const owners = new Map();
+      snap.forEach((d) => {
+        const uid = d.data()?.uid || '(missing uid)';
+        owners.set(uid, (owners.get(uid) || 0) + 1);
+      });
+      log(`Shared-with-me docs readable: ${snap.size}`);
+      if (owners.size) {
+        log('Owners in shared set:');
+        for (const [uid, count] of owners.entries()) {
+          log(` - ${uid}: ${count}`);
+        }
+      }
+      setStatus('ok', `Shared probe ok. Read ${snap.size} docs.`);
+    };
+
+    $('initBtn').addEventListener('click', () => {
+      try {
+        app = initializeApp(cfg(), `photos-audit-${Date.now()}`);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        $('signInBtn').disabled = false;
+        $('signInRedirectBtn').disabled = false;
+        setStatus('ok', 'Firebase initialized.');
+        getRedirectResult(auth).catch((e) => {
+          log(`Redirect sign-in result error: ${e.message || e}`);
+        });
+        onAuthStateChanged(auth, (u) => {
+          currentUser = u;
+          $('auditBtn').disabled = !u;
+          $('probeSharedBtn').disabled = !u;
+          $('repairBtn').disabled = !u;
+          log(u ? `Signed in as ${u.uid}` : 'Signed out');
+        });
+      } catch (e) {
+        log(`Init failed: ${e.message || e}`);
+        setStatus('bad', 'Init failed.');
+      }
+    });
+
+    $('signInBtn').addEventListener('click', async () => {
+      try {
+        await signInWithPopup(auth, new GoogleAuthProvider());
+      } catch (e) {
+        const msg = String(e?.message || e || '');
+        log(`Popup sign-in failed: ${msg}`);
+        if (
+          msg.includes('Cross-Origin-Opener-Policy') ||
+          msg.includes('popup') ||
+          msg.includes('auth/cancelled-popup-request')
+        ) {
+          setStatus('warn', 'Popup sign-in failed. Trying redirect sign-in...');
+          try {
+            await signInWithRedirect(auth, new GoogleAuthProvider());
+            return;
+          } catch (redirectErr) {
+            log(`Redirect sign-in failed: ${redirectErr.message || redirectErr}`);
+            setStatus('bad', 'Sign-in failed.');
+            return;
+          }
+        }
+        setStatus('bad', 'Sign-in failed.');
+      }
+    });
+
+    $('signInRedirectBtn').addEventListener('click', async () => {
+      try {
+        await signInWithRedirect(auth, new GoogleAuthProvider());
+      } catch (e) {
+        log(`Redirect sign-in failed: ${e.message || e}`);
+        setStatus('bad', 'Redirect sign-in failed.');
+      }
+    });
+
+    $('auditBtn').addEventListener('click', async () => {
+      try {
+        await runAudit({ repair: false });
+      } catch (e) {
+        log(`Audit failed: ${e.message || e}`);
+        setStatus('bad', 'Audit failed.');
+      }
+    });
+
+    $('probeSharedBtn').addEventListener('click', async () => {
+      try {
+        await probeSharedWithMe();
+      } catch (e) {
+        log(`Shared-with-me probe failed: ${e.message || e}`);
+        setStatus('bad', 'Shared-with-me probe failed.');
+      }
+    });
+
+    $('repairBtn').addEventListener('click', async () => {
+      const ok = window.confirm('Repair malformed sharedWith for your owned photos?');
+      if (!ok) return;
+      try {
+        await runAudit({ repair: true });
+      } catch (e) {
+        log(`Repair failed: ${e.message || e}`);
+        setStatus('bad', 'Repair failed.');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Share ID Defensive Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; max-width: 900px; }
+    h1 { margin-bottom: 8px; }
+    p { color: #333; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .full { grid-column: 1 / -1; }
+    label { font-weight: 600; font-size: 13px; display: block; margin-bottom: 4px; }
+    input, textarea { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    textarea { min-height: 74px; resize: vertical; }
+    button { padding: 9px 12px; border: 1px solid #bbb; border-radius: 6px; background: #f5f5f5; cursor: pointer; }
+    button:hover { background: #eee; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    pre { background: #111; color: #ddd; padding: 12px; border-radius: 8px; overflow: auto; min-height: 220px; }
+    .ok { color: #0a7a2f; font-weight: 700; }
+    .warn { color: #b25d00; font-weight: 700; }
+    .bad { color: #b30000; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Share ID Defensive Test</h1>
+  <p>
+    Safe security check tool. It can verify read visibility by Share ID and verify that writes are blocked.
+    The write check is <strong>non-mutating</strong>: it uses <code>updateDoc</code> on a guaranteed non-existent doc.
+  </p>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label for="apiKey">Firebase API key</label>
+        <input id="apiKey" autocomplete="off" value="AIzaSyAjKRgCrNuwaAvjOJPzTrmippI2sv5QG6M" />
+      </div>
+      <div>
+        <label for="authDomain">Auth domain</label>
+        <input id="authDomain" autocomplete="off" value="coffee-dial-app-9db38.firebaseapp.com" />
+      </div>
+      <div>
+        <label for="projectId">Project ID</label>
+        <input id="projectId" autocomplete="off" value="coffee-dial-app-9db38" />
+      </div>
+      <div>
+        <label for="appId">App ID (optional)</label>
+        <input id="appId" autocomplete="off" value="1:513325852224:web:0af5f15c4968a5bfad61a5" />
+      </div>
+      <div class="full">
+        <label for="shareId">Target Share ID (UID)</label>
+        <input id="shareId" autocomplete="off" />
+      </div>
+      <div class="full">
+        <label for="message">Probe message (included in blocked write payload)</label>
+        <textarea id="message" placeholder="Pen test message"></textarea>
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="initBtn">1) Initialize Firebase</button>
+      <button id="anonBtn" disabled>2) Sign in anonymously</button>
+      <button id="googlePopupBtn" disabled>2b) Sign in with Google (popup)</button>
+      <button id="googleRedirectBtn" disabled>2c) Sign in with Google (redirect)</button>
+      <button id="signOutBtn" disabled>Sign out</button>
+      <button id="runBtn" disabled>3) Run checks</button>
+    </div>
+    <div id="status" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">Log</h3>
+    <pre id="log"></pre>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInAnonymously,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      signOut,
+      onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      collection,
+      query,
+      limit,
+      getDocs,
+      updateDoc,
+      serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+
+    const $ = (id) => document.getElementById(id);
+    const logEl = $('log');
+    const statusEl = $('status');
+
+    let app = null;
+    let auth = null;
+    let db = null;
+
+    const log = (line) => {
+      const ts = new Date().toISOString();
+      logEl.textContent += `[${ts}] ${line}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+
+    const setStatus = (cls, text) => {
+      statusEl.className = cls;
+      statusEl.textContent = text;
+    };
+
+    const getConfig = () => ({
+      apiKey: $('apiKey').value.trim(),
+      authDomain: $('authDomain').value.trim(),
+      projectId: $('projectId').value.trim(),
+      appId: $('appId').value.trim() || undefined
+    });
+
+    const parseError = (err) => ({
+      code: err?.code || 'unknown',
+      message: err?.message || String(err)
+    });
+
+    const classifyWriteProbe = (err) => {
+      const { code, message } = parseError(err);
+      if (code.includes('permission-denied')) {
+        return { verdict: 'PASS', detail: 'Write blocked by rules (permission-denied).' };
+      }
+      if (code.includes('not-found')) {
+        return { verdict: 'WARN', detail: 'No write occurred (target missing), but permission may be too broad. Review rules.' };
+      }
+      return { verdict: 'WARN', detail: `Unexpected result: ${code} ${message}` };
+    };
+
+    $('initBtn').addEventListener('click', () => {
+      try {
+        const cfg = getConfig();
+        if (!cfg.apiKey || !cfg.authDomain || !cfg.projectId) {
+          setStatus('bad', 'Missing required Firebase config fields.');
+          return;
+        }
+        app = initializeApp(cfg, `share-id-defensive-test-${Date.now()}`);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        $('anonBtn').disabled = false;
+        $('googlePopupBtn').disabled = false;
+        $('googleRedirectBtn').disabled = false;
+        $('signOutBtn').disabled = false;
+        $('runBtn').disabled = false;
+        setStatus('ok', 'Firebase initialized.');
+        log(`Initialized Firebase for project ${cfg.projectId}.`);
+        getRedirectResult(auth).catch((err) => {
+          const e = parseError(err);
+          log(`Redirect sign-in result error: ${e.code} ${e.message}`);
+        });
+        onAuthStateChanged(auth, (user) => {
+          log(user ? `Auth state: signed in (${user.uid}).` : 'Auth state: signed out.');
+        });
+      } catch (err) {
+        const e = parseError(err);
+        setStatus('bad', `Init failed: ${e.code}`);
+        log(`Init failed: ${e.code} ${e.message}`);
+      }
+    });
+
+    $('anonBtn').addEventListener('click', async () => {
+      if (!auth) return;
+      try {
+        await signInAnonymously(auth);
+        setStatus('ok', 'Signed in anonymously.');
+      } catch (err) {
+        const e = parseError(err);
+        setStatus('warn', `Anonymous sign-in unavailable: ${e.code}`);
+        log(`Anonymous sign-in failed: ${e.code} ${e.message}`);
+      }
+    });
+
+    $('signOutBtn').addEventListener('click', async () => {
+      if (!auth) return;
+      await signOut(auth);
+      setStatus('ok', 'Signed out.');
+    });
+
+    $('googlePopupBtn').addEventListener('click', async () => {
+      if (!auth) return;
+      try {
+        await signInWithPopup(auth, new GoogleAuthProvider());
+        setStatus('ok', 'Signed in with Google (popup).');
+      } catch (err) {
+        const e = parseError(err);
+        log(`Google popup sign-in failed: ${e.code} ${e.message}`);
+        const msg = `${e.code} ${e.message}`.toLowerCase();
+        if (msg.includes('popup') || msg.includes('cross-origin-opener-policy')) {
+          setStatus('warn', 'Popup sign-in failed, falling back to redirect...');
+          try {
+            await signInWithRedirect(auth, new GoogleAuthProvider());
+            return;
+          } catch (redirectErr) {
+            const re = parseError(redirectErr);
+            log(`Google redirect fallback failed: ${re.code} ${re.message}`);
+          }
+        }
+        setStatus('bad', `Google sign-in failed: ${e.code}`);
+      }
+    });
+
+    $('googleRedirectBtn').addEventListener('click', async () => {
+      if (!auth) return;
+      try {
+        await signInWithRedirect(auth, new GoogleAuthProvider());
+      } catch (err) {
+        const e = parseError(err);
+        log(`Google redirect sign-in failed: ${e.code} ${e.message}`);
+        setStatus('bad', `Google redirect sign-in failed: ${e.code}`);
+      }
+    });
+
+    $('runBtn').addEventListener('click', async () => {
+      if (!db) return;
+      const shareId = $('shareId').value.trim();
+      const message = $('message').value.trim();
+      if (!shareId) {
+        setStatus('bad', 'Share ID is required.');
+        return;
+      }
+
+      log('--- Running checks ---');
+      log(`Target Share ID: ${shareId}`);
+      log(`Current auth user: ${auth.currentUser ? auth.currentUser.uid : 'none (unauthenticated)'}`);
+
+      // Read checks (visibility)
+      try {
+        const userSnap = await getDoc(doc(db, 'users', shareId));
+        log(`READ users/{shareId}: ${userSnap.exists() ? 'allowed (doc exists)' : 'allowed (doc missing or hidden fields)'}`);
+      } catch (err) {
+        const e = parseError(err);
+        log(`READ users/{shareId}: blocked (${e.code})`);
+      }
+
+      try {
+        const q = query(collection(db, 'users', shareId, 'coffees'), limit(1));
+        const snap = await getDocs(q);
+        log(`READ users/{shareId}/coffees (limit 1): allowed, rows=${snap.size}`);
+      } catch (err) {
+        const e = parseError(err);
+        log(`READ users/{shareId}/coffees: blocked (${e.code})`);
+      }
+
+      // Non-mutating write protection check:
+      // updateDoc on a guaranteed non-existent doc never creates data.
+      const probeDocId = `__defensive_probe__${Date.now()}`;
+      try {
+        await updateDoc(doc(db, 'users', shareId, 'coffeeTypes', probeDocId), {
+          name: 'Pen test',
+          tasteNotes: message || 'defensive-probe',
+          updatedAt: serverTimestamp()
+        });
+        log('WRITE probe: unexpected success. This indicates severe rules misconfiguration.');
+        setStatus('bad', 'FAIL: Write probe unexpectedly succeeded.');
+      } catch (err) {
+        const result = classifyWriteProbe(err);
+        log(`WRITE probe (non-mutating updateDoc): ${result.verdict} - ${result.detail}`);
+        if (result.verdict === 'PASS') {
+          setStatus('ok', 'PASS: Read checked; write appears blocked by rules.');
+        } else {
+          setStatus('warn', `WARNING: ${result.detail}`);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -2,9 +2,14 @@
   "name": "coffee-dial",
   "private": true,
   "scripts": {
+    "backfill:photo-paths:dry": "node scripts/backfill-photo-paths.mjs",
+    "backfill:photo-paths:apply": "node scripts/backfill-photo-paths.mjs --apply",
     "check:stage4": "node scripts/check-feature-boundaries.mjs && node scripts/check-command-ownership.mjs && node scripts/check-command-dispatch-coverage.mjs",
     "test:smoke:e2e": "playwright test -c playwright.config.mjs",
     "test:smoke:e2e:headed": "playwright test -c playwright.config.mjs --headed"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.6.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0"
