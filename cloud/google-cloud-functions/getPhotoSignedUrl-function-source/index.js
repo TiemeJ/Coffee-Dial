@@ -22,7 +22,10 @@ function resolveTtlMinutes(value) {
   if (!Number.isFinite(parsed)) {
     return DEFAULT_URL_TTL_MINUTES;
   }
-  return Math.max(MIN_URL_TTL_MINUTES, Math.min(MAX_URL_TTL_MINUTES, Math.floor(parsed)));
+  return Math.max(
+      MIN_URL_TTL_MINUTES,
+      Math.min(MAX_URL_TTL_MINUTES, Math.floor(parsed)),
+  );
 }
 
 /**
@@ -31,8 +34,12 @@ function resolveTtlMinutes(value) {
  * @return {string}
  */
 function selectStoragePath(photoData, variant) {
-  const fullPath = typeof photoData.photoPath === "string" ? photoData.photoPath.trim() : "";
-  const thumbPath = typeof photoData.thumbPath === "string" ? photoData.thumbPath.trim() : "";
+  const fullPath = typeof photoData.photoPath === "string" ?
+      photoData.photoPath.trim() :
+      "";
+  const thumbPath = typeof photoData.thumbPath === "string" ?
+      photoData.thumbPath.trim() :
+      "";
 
   if (variant === "thumb" && thumbPath) {
     return thumbPath;
@@ -43,7 +50,10 @@ function selectStoragePath(photoData, variant) {
   if (thumbPath) {
     return thumbPath;
   }
-  throw new HttpsError("failed-precondition", "Photo does not have a valid storage path.");
+  throw new HttpsError(
+      "failed-precondition",
+      "Photo does not have a valid storage path.",
+  );
 }
 
 /**
@@ -53,18 +63,23 @@ function selectStoragePath(photoData, variant) {
 function validateOwnerPath(path, ownerUid) {
   const expectedPrefix = `photos/${ownerUid}/`;
   if (!path.startsWith(expectedPrefix)) {
-    throw new HttpsError("permission-denied", "Storage path is outside the owner namespace.");
+    throw new HttpsError(
+        "permission-denied",
+        "Storage path is outside the owner namespace.",
+    );
   }
 }
 
 exports.getPhotoSignedUrl = onCall({cors: true}, async (request) => {
-  if (!request.auth?.uid) {
+  if (!request.auth || !request.auth.uid) {
     throw new HttpsError("unauthenticated", "Authentication is required.");
   }
 
   const callerUid = request.auth.uid;
   const payload = request.data || {};
-  const photoId = typeof payload.photoId === "string" ? payload.photoId.trim() : "";
+  const photoId = typeof payload.photoId === "string" ?
+      payload.photoId.trim() :
+      "";
   const variant = payload.variant === "thumb" ? "thumb" : "full";
   const ttlMinutes = resolveTtlMinutes(payload.expiresInMinutes);
 
@@ -83,7 +98,10 @@ exports.getPhotoSignedUrl = onCall({cors: true}, async (request) => {
 
   const canAccess = callerUid === ownerUid || sharedWith.includes(callerUid);
   if (!canAccess) {
-    throw new HttpsError("permission-denied", "You are not allowed to access this photo.");
+    throw new HttpsError(
+        "permission-denied",
+        "You are not allowed to access this photo.",
+    );
   }
 
   const path = selectStoragePath(photo, variant);
