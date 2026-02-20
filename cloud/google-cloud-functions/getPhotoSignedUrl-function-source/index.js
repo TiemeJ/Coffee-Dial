@@ -1,8 +1,13 @@
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
+const configuredBucket = process.env.STORAGE_BUCKET ||
+  "coffee-dial-app-9db38.firebasestorage.app";
+
 if (!admin.apps.length) {
-  admin.initializeApp();
+  admin.initializeApp({
+    storageBucket: configuredBucket,
+  });
 }
 
 const db = admin.firestore();
@@ -108,11 +113,12 @@ exports.getPhotoSignedUrl = onCall({cors: true}, async (request) => {
   validateOwnerPath(path, ownerUid);
 
   const expiresAtMs = Date.now() + ttlMinutes * 60 * 1000;
-  const [signedUrl] = await storage.bucket().file(path).getSignedUrl({
-    version: "v4",
-    action: "read",
-    expires: expiresAtMs,
-  });
+  const [signedUrl] = await storage.bucket(configuredBucket).file(path)
+      .getSignedUrl({
+        version: "v4",
+        action: "read",
+        expires: expiresAtMs,
+      });
 
   return {
     photoId,

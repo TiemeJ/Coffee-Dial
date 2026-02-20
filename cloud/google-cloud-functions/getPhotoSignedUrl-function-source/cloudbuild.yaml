@@ -12,6 +12,7 @@ steps:
       - --source=cloud/google-cloud-functions/getPhotoSignedUrl-function-source
       - --entry-point=getPhotoSignedUrl
       - --service-account=${_SERVICE_ACCOUNT}
+      - --set-env-vars=STORAGE_BUCKET=${_STORAGE_BUCKET}
       - --trigger-http
       - --allow-unauthenticated
 
@@ -19,3 +20,4 @@ substitutions:
   _REGION: us-central1
   _RUNTIME: nodejs22
   _SERVICE_ACCOUNT: coffee-dial-app-9db38@appspot.gserviceaccount.com
+  _STORAGE_BUCKET: coffee-dial-app-9db38.firebasestorage.app

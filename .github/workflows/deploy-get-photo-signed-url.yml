@@ -43,6 +43,7 @@ jobs:
       FUNCTION_SOURCE: cloud/google-cloud-functions/getPhotoSignedUrl-function-source
       FUNCTION_ENTRY_POINT: getPhotoSignedUrl
       FUNCTION_SERVICE_ACCOUNT: coffee-dial-app-9db38@appspot.gserviceaccount.com
+      STORAGE_BUCKET: coffee-dial-app-9db38.firebasestorage.app
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,5 +69,6 @@ jobs:
             --source="${FUNCTION_SOURCE}" \
             --entry-point="${FUNCTION_ENTRY_POINT}" \
             --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
+            --set-env-vars="STORAGE_BUCKET=${STORAGE_BUCKET}" \
             --trigger-http \
             --allow-unauthenticated
