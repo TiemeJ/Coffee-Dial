@@ -1,7 +1,6 @@
 import { createCoffeeTypeCardModule } from '../../features/coffees/coffee-type-card.js';
 import { createCoffeeTypesTableModule } from '../../features/coffees/coffee-types-table.js';
 import { createCoffeesRepoModule } from '../../features/coffees/coffees.repo.js';
-import { createCoffeeMaintenanceModule } from '../../features/coffees/coffee-maintenance.js';
 import { withDetectedDecaf } from '../../core/coffee-decaf.js';
 
 export const createCoffeesCoordinator = ({
@@ -262,18 +261,6 @@ export const createCoffeesCoordinator = ({
     });
     getFilteredSortedCoffeeTypes = coffeeTypesTable.getFilteredSortedCoffeeTypes;
     renderCoffeeTypesTable = coffeeTypesTable.renderCoffeeTypesTable;
-    const coffeeMaintenance = createCoffeeMaintenanceModule({
-        getCurrentUser,
-        getCoffeeTypes,
-        setCoffeeTypesState,
-        getBeans,
-        getCoffees,
-        dataService,
-        renderCoffeeTypesTable: () => renderCoffeeTypesTable(),
-        renderPinnedTiles,
-        dispatchCommand: dispatchOnly
-    });
-
     return {
         openCoffeeTypes,
         closeCoffeeTypes,
@@ -310,7 +297,6 @@ export const createCoffeesCoordinator = ({
         setCoffeeTypesSort: coffeeTypesTable.setCoffeeTypesSort,
         updateCoffeeTypesSortIcons: coffeeTypesTable.updateCoffeeTypesSortIcons,
         getFilteredSortedCoffeeTypes: coffeeTypesTable.getFilteredSortedCoffeeTypes,
-        renderCoffeeTypesTable: coffeeTypesTable.renderCoffeeTypesTable,
-        backfillCoffeeTypeDecafFromScan: coffeeMaintenance.backfillCoffeeTypeDecafFromScan
+        renderCoffeeTypesTable: coffeeTypesTable.renderCoffeeTypesTable
     };
 };

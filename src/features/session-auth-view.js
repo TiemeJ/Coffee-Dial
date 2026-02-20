@@ -26,7 +26,6 @@ export const createSessionAuthViewModule = ({
     renderPinnedTiles,
     renderTable,
     updateAutocompleteLists,
-    maybeMigrateBeansLeft,
     updateBeanDropdown,
     renderBeansTable,
     updateCoffeeTypeSelectors,
@@ -115,19 +114,7 @@ export const createSessionAuthViewModule = ({
 
             if (data.displayName !== user.displayName) {
                 await updateDoc(userDocRef, { displayName: user.displayName });
-                await setDoc(publicProfileRef, {
-                    uid: user.uid,
-                    displayName: user.displayName || 'Unknown User',
-                    isPublic: data.isPublic || false,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
             }
-            await setDoc(publicProfileRef, {
-                uid: user.uid,
-                displayName: user.displayName || data.displayName || 'Unknown User',
-                isPublic: data.isPublic || false,
-                updatedAt: new Date().toISOString()
-            }, { merge: true });
         } else {
             loadColumnPreferencesFromStorage();
             await setDoc(userDocRef, {
@@ -219,7 +206,6 @@ export const createSessionAuthViewModule = ({
                     renderTable();
                     updateAutocompleteLists();
                     setHasLoadedBrews(true);
-                    if (isMine) maybeMigrateBeansLeft();
                 },
                 (error) => {
                     console.error(error);
@@ -248,7 +234,6 @@ export const createSessionAuthViewModule = ({
                     renderPinnedTiles();
                     renderTable();
                     setHasLoadedBeans(true);
-                    if (isMine) maybeMigrateBeansLeft();
                 },
                 (error) => {
                     console.error('Error loading beans:', error);

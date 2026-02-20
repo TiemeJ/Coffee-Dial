@@ -84,8 +84,6 @@ export const createBeansCoordinator = ({
 
     const {
         updateBeansLeftForBean,
-        maybeMigrateBeansLeft,
-        recalculateAllBeanStockLeft,
         archiveBeanIfStockDepleted
     } = createBeansStockControllerModule({
         dataService,
@@ -93,10 +91,6 @@ export const createBeansCoordinator = ({
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
         getCoffees: () => getCoffees(),
-        getHasLoadedBeans: () => getHasLoadedBeans(),
-        getHasLoadedBrews: () => getHasLoadedBrews(),
-        getCurrentBeanCardId: () => getCurrentBeanCardId(),
-        renderBeansTable: (...args) => renderBeansTable(...args),
         dispatchCommand,
         computeBeansLeft: (...args) => computeBeansLeft(...args),
         getRemainingStockAfterBrew: (...args) => getRemainingStockAfterBrew(...args),
@@ -218,8 +212,6 @@ export const createBeansCoordinator = ({
         getRemainingStockAfterBrew,
         getFirstBrewDateForBean,
         updateBeansLeftForBean,
-        maybeMigrateBeansLeft,
-        recalculateAllBeanStockLeft,
         archiveBeanIfStockDepleted,
         showAutoArchiveToast,
         closeAutoArchiveToast,
@@ -268,8 +260,6 @@ export const createBeansCoordinator = ({
         deleteBean: beansActions.deleteBean,
         saveBeanRoastDate: beansMaintenance.saveBeanRoastDate,
         saveBeanOpenedDate: beansMaintenance.saveBeanOpenedDate,
-        saveBeanFrozenDate: beansMaintenance.saveBeanFrozenDate,
-        syncLegacyBeans: beansMaintenance.syncLegacyBeans,
-        backfillBeanDatesFromBrews: beansMaintenance.backfillBeanDatesFromBrews
+        saveBeanFrozenDate: beansMaintenance.saveBeanFrozenDate
     };
 };

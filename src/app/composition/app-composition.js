@@ -43,7 +43,6 @@
         import { createBrewFormActionsModule } from '../../features/brews/brew-form-actions.js';
         import { createBrewCsvRecipeModule } from '../../features/brews/brew-csv-recipe.js';
         import { createLabResultsModule } from '../../features/brews/lab-results.js';
-        import { createCoffeeTypesExtractModule } from '../../features/coffees/coffee-types-extract.js';
         import { createActionMenuModule } from '../../features/ui/action-menu.js';
         import { createUiShellModule } from '../../features/ui-shell.js';
         import { createMediaModalsModule } from '../../features/media/media-modals.js';
@@ -60,7 +59,6 @@
         import { selectVisibleBrewOrderIds } from '../stores/brews-table.selectors.js';
         import { createAuthStateChangedHandler } from '../runtime/auth-state.js';
         import { createAppLifecycleModule } from '../runtime/app-lifecycle.js';
-        import { createGearMigrationModule } from '../runtime/gear-migration.js';
         import { createOpenAddBrewFromPinned } from '../runtime/open-add-brew.js';
         import { installCardNavigationHandlers } from '../runtime/card-navigation.js';
         
@@ -551,7 +549,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             renderPinnedTiles: (...args) => renderPinnedTiles(...args),
             renderTable: (...args) => renderTable(...args),
             updateAutocompleteLists: (...args) => updateAutocompleteLists(...args),
-            maybeMigrateBeansLeft: (...args) => maybeMigrateBeansLeft(...args),
             updateBeanDropdown: (...args) => updateBeanDropdown(...args),
             renderBeansTable: (...args) => renderBeansTable(...args),
             updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args),
@@ -618,13 +615,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             updateCoffeeDetailsTitle: (...args) => updateCoffeeDetailsTitle(...args)
         });
 
-        const { extractCoffeeTypesFromBeans } = createCoffeeTypesExtractModule({
-            getCurrentUser: () => getCurrentUserState(),
-            getBeans: () => getBeansState(),
-            getCoffeeTypes: () => getCoffeeTypesState(),
-            setBeansState: (value) => setBeansState(value),
-            dataService
-        });
         const parseNum = (v) => (v === '' || v === null || isNaN(v)) ? null : parseFloat(v);
         const {
             bindMethodOtherChangeListener,
@@ -643,8 +633,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getRemainingStockAfterBrew,
             getFirstBrewDateForBean,
             updateBeansLeftForBean,
-            maybeMigrateBeansLeft,
-            recalculateAllBeanStockLeft,
             archiveBeanIfStockDepleted,
             showAutoArchiveToast,
             closeAutoArchiveToast,
@@ -693,9 +681,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             deleteBean,
             saveBeanRoastDate,
             saveBeanOpenedDate,
-            saveBeanFrozenDate,
-            syncLegacyBeans,
-            backfillBeanDatesFromBrews
+            saveBeanFrozenDate
         } = createBeansController({
             dataService,
             storageService,
@@ -749,7 +735,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             cancelCoffeeTypeEditMode,
             saveCoffeeTypeEdits,
             closeCoffeeTypeCardMenu,
-            backfillCoffeeTypeDecafFromScan,
             setCoffeeTypesSearch,
             clearCoffeeTypesSearch,
             toggleCoffeeTypesQuickFilter,
@@ -1354,15 +1339,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             window.open(url, '_blank', 'noopener,noreferrer');
         };
 
-        const { fillLegacyGrinderFromGear, migrateGrinderToGear } = createGearMigrationModule({
-            dataService,
-            getCurrentUser: () => getCurrentUserState(),
-            getGasItems: () => getGasItemsState(),
-            getCoffees: () => getCoffeesState(),
-            setCoffees: (value) => setCoffeesState(value),
-            refreshBrewGearSelectors: () => refreshBrewGearSelectors()
-        });
-
         const { openBrewFormModal, closeBrewFormModal, discardBrewFormModal, submitBrewFormModal } = createBrewsFormModalModule({
             getCurrentView: () => getCurrentViewState(),
             changeView,
@@ -1455,8 +1431,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             applyFilter,
             applyFilterFromQuick,
             applyGasFilterFromQuick,
-            backfillBeanDatesFromBrews,
-            backfillCoffeeTypeDecafFromScan,
             beansOpenCard,
             beansOpenCardForEdit,
             brewsOpenCard,
@@ -1539,11 +1513,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             exportCSV,
             exportCoffeesAsCSV,
             exportCoffeesAsJSON,
-            extractCoffeeTypesFromBeans,
             fastDuplicateFromCard,
             fastRepeatCoffee,
             fillBeanDetails,
-            fillLegacyGrinderFromGear,
             followUser,
             gasToggleActionMenu: toggleActionMenu,
             generateShareImage,
@@ -1576,7 +1548,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             loadBrewsTableStatePreset,
             loadMoreGallery,
             mergeGasItem,
-            migrateGrinderToGear,
             navigateBeanCard,
             navigateCoffeeCard,
             navigateCoffeeCardFromGraph,
@@ -1632,7 +1603,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             performExport,
             performImport,
             pinToggleActionMenu: toggleActionMenu,
-            recalculateAllBeanStockLeft,
             refreshFriendRequests,
             refreshTableData,
             removeBlockedUser,
@@ -1685,7 +1655,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             switchGalleryTab,
             switchModalTab,
             toggleSocialAccordion,
-            syncLegacyBeans,
             toggleActionMenu,
             toggleActive,
             toggleAiMenu,

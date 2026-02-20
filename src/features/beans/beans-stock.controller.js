@@ -6,10 +6,6 @@ export const createBeansStockControllerModule = ({
     getBeans,
     setBeansState,
     getCoffees,
-    getHasLoadedBeans,
-    getHasLoadedBrews,
-    getCurrentBeanCardId,
-    renderBeansTable,
     dispatchCommand,
     computeBeansLeft,
     getRemainingStockAfterBrew,
@@ -56,92 +52,6 @@ export const createBeansStockControllerModule = ({
         }
     };
 
-    // TODO(admin-script): replace with scripts/maybe-migrate-beans-left.mjs and remove this UI migration after rollout.
-    const maybeMigrateBeansLeft = async () => {
-        const currentUser = getCurrentUser();
-        if (!currentUser) return;
-        if (!getHasLoadedBeans() || !getHasLoadedBrews()) return;
-
-        const key = `beansLeftMigrated_${currentUser.uid}`;
-        if (localStorage.getItem(key) === 'true') return;
-
-        const beans = getBeans();
-        const coffees = getCoffees();
-        const toUpdate = beans.filter((bean) => {
-            const hasWeight = bean.stock !== undefined && bean.stock !== null && bean.stock !== '';
-            const hasBeansLeft = bean.beansLeft !== undefined && bean.beansLeft !== null && bean.beansLeft !== '';
-            return hasWeight && !hasBeansLeft;
-        });
-
-        if (!toUpdate.length) {
-            localStorage.setItem(key, 'true');
-            return;
-        }
-
-        const nowIso = new Date().toISOString();
-        const updates = toUpdate
-            .map((bean) => ({ beanId: bean.id, beansLeft: computeBeansLeft(bean, coffees) }))
-            .filter((u) => u.beansLeft !== null && !isNaN(u.beansLeft));
-
-        if (!updates.length) {
-            localStorage.setItem(key, 'true');
-            return;
-        }
-
-        try {
-            await repo.batchUpdateBeansLeft({ uid: currentUser.uid, updates, updatedAt: nowIso });
-            const updatesMap = new Map(updates.map((u) => [u.beanId, u.beansLeft]));
-            setBeansState(
-                beans.map((bean) => {
-                    if (!updatesMap.has(bean.id)) return bean;
-                    return { ...bean, beansLeft: updatesMap.get(bean.id), updatedAt: nowIso };
-                })
-            );
-            localStorage.setItem(key, 'true');
-            renderBeansTable();
-            const currentBeanCardId = getCurrentBeanCardId();
-            if (currentBeanCardId) {
-                dispatchCommand?.('beans.openCard', { beanId: currentBeanCardId, event: null, keepNavigationOrder: false });
-            }
-        } catch (err) {
-            console.error('Beans left migration failed', err);
-        }
-    };
-
-    // TODO(admin-script): replace with scripts/recalculate-all-beans-left.mjs and remove this UI migration after rollout.
-    const recalculateAllBeanStockLeft = async () => {
-        const currentUser = getCurrentUser();
-        if (!currentUser) return;
-
-        const beans = getBeans();
-        const coffees = getCoffees();
-        const nowIso = new Date().toISOString();
-
-        const updates = beans
-            .map((bean) => ({ beanId: bean.id, beansLeft: computeBeansLeft(bean, coffees) }))
-            .filter((u) => u.beansLeft !== null && !isNaN(u.beansLeft));
-
-        if (!updates.length) return;
-
-        try {
-            await repo.batchUpdateBeansLeft({ uid: currentUser.uid, updates, updatedAt: nowIso });
-            const updatesMap = new Map(updates.map((u) => [u.beanId, u.beansLeft]));
-            setBeansState(
-                beans.map((bean) => {
-                    if (!updatesMap.has(bean.id)) return bean;
-                    return { ...bean, beansLeft: updatesMap.get(bean.id), updatedAt: nowIso };
-                })
-            );
-            renderBeansTable();
-            const currentBeanCardId = getCurrentBeanCardId();
-            if (currentBeanCardId) {
-                dispatchCommand?.('beans.openCard', { beanId: currentBeanCardId, event: null, keepNavigationOrder: false });
-            }
-        } catch (err) {
-            console.error('Recalculate beans left failed', err);
-        }
-    };
-
     const archiveBeanIfStockDepleted = async ({ beanId, brew, existingBrewId = null }) => {
         const currentUser = getCurrentUser();
         if (!currentUser || !beanId) return;
@@ -174,8 +84,6 @@ export const createBeansStockControllerModule = ({
 
     return {
         updateBeansLeftForBean,
-        maybeMigrateBeansLeft,
-        recalculateAllBeanStockLeft,
         archiveBeanIfStockDepleted
     };
 };
