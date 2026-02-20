@@ -15,22 +15,36 @@ export const createGalleryModule = ({
     getCoffeeTypeDisplay,
     dataService,
     storageService,
+    functionsService,
     imageCompression,
     getStarDisplay,
     openAppConfirm
 }) => {
     const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDocs, doc, updateDoc, deleteDoc } = dataService || {};
-    const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
+    const { storage, ref, uploadBytes, deleteObject } = storageService || {};
+    const { functions, httpsCallable } = functionsService || {};
+
     if (!db || !addDoc || !collection || !query || !where || !orderBy || !limit || !startAfter || !getDocs || !doc || !updateDoc || !deleteDoc) {
         throw new Error('createGalleryModule requires dataService { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDocs, doc, updateDoc, deleteDoc }');
     }
-    if (!storage || !ref || !uploadBytes || !getDownloadURL || !deleteObject) {
-        throw new Error('createGalleryModule requires storageService { storage, ref, uploadBytes, getDownloadURL, deleteObject }');
+    if (!storage || !ref || !uploadBytes || !deleteObject) {
+        throw new Error('createGalleryModule requires storageService { storage, ref, uploadBytes, deleteObject }');
     }
+    if (!functions || typeof httpsCallable !== 'function') {
+        throw new Error('createGalleryModule requires functionsService { functions, httpsCallable }');
+    }
+
+    const getPhotoSignedUrl = httpsCallable(functions, 'getPhotoSignedUrl');
+    const getPhotoSignedUrlsBatch = httpsCallable(functions, 'getPhotoSignedUrlsBatch');
+    const signedUrlCache = new Map();
+    const DEFAULT_URL_TTL_SECONDS = 180;
+    const CACHE_SKEW_MS = 15000;
+
     const isMissingValue = (value) => {
         const normalized = (value ?? '').toString().trim();
         return !normalized || normalized === '-' || normalized.toLowerCase() === 'unknown';
     };
+
     const resolveCoffeeSnapshot = (coffeeData) => {
         const typeDisplay = typeof getCoffeeTypeDisplay === 'function'
             ? getCoffeeTypeDisplay(coffeeData)
@@ -43,6 +57,7 @@ export const createGalleryModule = ({
             rating: coffeeData?.rating || 0
         };
     };
+
     const resolveSnapshotForCard = (data) => {
         const snapshot = data?.coffeeSnapshot || {};
         if (!data?.coffeeId) return snapshot;
@@ -58,6 +73,117 @@ export const createGalleryModule = ({
             rating: typeof snapshot.rating === 'number' ? snapshot.rating : resolved.rating
         };
     };
+
+    const getSignedUrlCacheKey = (photoId, variant) => `${photoId}:${variant}`;
+
+    const getCachedSignedUrl = (photoId, variant) => {
+        const entry = signedUrlCache.get(getSignedUrlCacheKey(photoId, variant));
+        if (!entry) return '';
+        if (Date.now() >= entry.expiresAtMs - CACHE_SKEW_MS) {
+            signedUrlCache.delete(getSignedUrlCacheKey(photoId, variant));
+            return '';
+        }
+        return entry.url;
+    };
+
+    const setCachedSignedUrl = (photoId, variant, signedUrlData) => {
+        const signedUrl = typeof signedUrlData?.signedUrl === 'string'
+            ? signedUrlData.signedUrl.trim()
+            : '';
+        if (!signedUrl) return '';
+
+        let expiresAtMs = Number.NaN;
+        if (typeof signedUrlData?.expiresAt === 'string') {
+            expiresAtMs = new Date(signedUrlData.expiresAt).getTime();
+        }
+        if (!Number.isFinite(expiresAtMs)) {
+            const ttlSeconds = Number.isFinite(Number(signedUrlData?.cacheTtlSeconds))
+                ? Number(signedUrlData.cacheTtlSeconds)
+                : DEFAULT_URL_TTL_SECONDS;
+            expiresAtMs = Date.now() + Math.max(30, ttlSeconds) * 1000;
+        }
+
+        signedUrlCache.set(getSignedUrlCacheKey(photoId, variant), {
+            url: signedUrl,
+            expiresAtMs
+        });
+        return signedUrl;
+    };
+
+    const resolveLegacyUrl = (data, variant) => {
+        const photoURL = typeof data?.photoURL === 'string' ? data.photoURL.trim() : '';
+        const thumbURL = typeof data?.thumbURL === 'string' ? data.thumbURL.trim() : '';
+        if (variant === 'thumb') return thumbURL || photoURL || '';
+        return photoURL || thumbURL || '';
+    };
+
+    const hasStoragePath = (data, variant) => {
+        const photoPath = typeof data?.photoPath === 'string' ? data.photoPath.trim() : '';
+        const thumbPath = typeof data?.thumbPath === 'string' ? data.thumbPath.trim() : '';
+        if (variant === 'thumb') return !!(thumbPath || photoPath);
+        return !!(photoPath || thumbPath);
+    };
+
+    const resolveSignedPhotoUrl = async ({ photoId, variant, data }) => {
+        if (!photoId) return resolveLegacyUrl(data, variant);
+
+        const cached = getCachedSignedUrl(photoId, variant);
+        if (cached) return cached;
+
+        if (!hasStoragePath(data, variant)) {
+            return resolveLegacyUrl(data, variant);
+        }
+
+        try {
+            const result = await getPhotoSignedUrl({
+                photoId,
+                variant,
+                expiresInMinutes: 3
+            });
+            const signedUrl = setCachedSignedUrl(photoId, variant, result?.data || {});
+            if (signedUrl) return signedUrl;
+        } catch (error) {
+            console.warn(`Signed URL retrieval failed for ${photoId}/${variant}:`, error);
+        }
+
+        return resolveLegacyUrl(data, variant);
+    };
+
+    const resolveBatchSignedPhotoUrls = async ({ items, expiresInMinutes = 3 }) => {
+        if (!Array.isArray(items) || !items.length) return new Map();
+        try {
+            const result = await getPhotoSignedUrlsBatch({
+                items,
+                expiresInMinutes
+            });
+            const signedItems = Array.isArray(result?.data?.items) ? result.data.items : [];
+            const resolved = new Map();
+            signedItems.forEach((entry) => {
+                const photoId = typeof entry?.photoId === 'string' ? entry.photoId : '';
+                const variant = entry?.variant === 'thumb' ? 'thumb' : 'full';
+                if (!photoId) return;
+                const signedUrl = setCachedSignedUrl(photoId, variant, entry);
+                if (!signedUrl) return;
+                resolved.set(getSignedUrlCacheKey(photoId, variant), signedUrl);
+            });
+            return resolved;
+        } catch (error) {
+            console.warn('Batch signed URL retrieval failed:', error);
+            return new Map();
+        }
+    };
+
+    const openExternalUrl = (url) => {
+        if (!url) return;
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    const setGalleryLoadingVisible = (isVisible) => {
+        const loading = document.getElementById('galleryLoading');
+        if (!loading) return;
+        loading.classList.toggle('hidden', !isVisible);
+    };
+
     const openUploadModal = (coffeeId) => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
         setCurrentUploadCoffeeId(coffeeId);
@@ -118,28 +244,29 @@ export const createGalleryModule = ({
 
         try {
             const timestamp = Date.now();
-            const storageRef = ref(storage, `photos/${user.uid}/${timestamp}_${file.name}_original`);
+            const photoPath = `photos/${user.uid}/${timestamp}_${file.name}_original`;
+            const storageRef = ref(storage, photoPath);
             const originalOptions = { maxSizeMB: 1.5, maxWidthOrHeight: 1920, useWebWorker: true };
             const compressedOriginal = await imageCompression(file, originalOptions);
-            const snapshot = await uploadBytes(storageRef, compressedOriginal);
-            const downloadURL = await getDownloadURL(snapshot.ref);
+            await uploadBytes(storageRef, compressedOriginal);
 
-            let thumbURL = null;
+            let thumbPath = null;
             const thumbOptions = { maxSizeMB: 0.1, maxWidthOrHeight: 600, useWebWorker: true };
             try {
                 const thumbFile = await imageCompression(file, thumbOptions);
-                const thumbRef = ref(storage, `photos/${user.uid}/${timestamp}_${file.name}_thumb`);
-                const thumbSnapshot = await uploadBytes(thumbRef, thumbFile);
-                thumbURL = await getDownloadURL(thumbSnapshot.ref);
+                thumbPath = `photos/${user.uid}/${timestamp}_${file.name}_thumb`;
+                const thumbRef = ref(storage, thumbPath);
+                await uploadBytes(thumbRef, thumbFile);
             } catch (error) {
                 console.log('Thumbnail generation failed:', error);
+                thumbPath = null;
             }
 
             await addDoc(collection(db, 'photos'), {
                 uid: user.uid,
                 uploaderName: user.displayName || 'Unknown User',
-                photoURL: downloadURL,
-                thumbURL,
+                photoPath,
+                thumbPath,
                 message,
                 coffeeId: uploadCoffeeId,
                 coffeeSnapshot,
@@ -206,6 +333,8 @@ export const createGalleryModule = ({
         setIsGalleryLoading(true);
         const btn = document.getElementById('galleryLoadMore');
         const empty = document.getElementById('galleryEmpty');
+        const isInitialLoad = !getLastGalleryDoc();
+        if (isInitialLoad) setGalleryLoadingVisible(true);
         try {
             let q;
             const constraints = [orderBy('createdAt', 'desc'), limit(9)];
@@ -218,7 +347,7 @@ export const createGalleryModule = ({
             const snapshot = await getDocs(q);
             if (!snapshot.empty) {
                 setLastGalleryDoc(snapshot.docs[snapshot.docs.length - 1]);
-                renderGalleryGrid(snapshot.docs);
+                await renderGalleryGrid(snapshot.docs);
                 if (snapshot.docs.length < 9) btn.classList.add('hidden');
                 else btn.classList.remove('hidden');
             } else {
@@ -229,32 +358,90 @@ export const createGalleryModule = ({
             console.error('Error loading gallery photos:', error);
             btn?.classList.add('hidden');
             if (!getLastGalleryDoc()) empty?.classList.remove('hidden');
+        } finally {
+            if (isInitialLoad) setGalleryLoadingVisible(false);
         }
         setIsGalleryLoading(false);
     };
 
-    const renderGalleryGrid = (docs) => {
+    const renderGalleryGrid = async (docs) => {
         const grid = document.getElementById('galleryGrid');
-        docs.forEach((docItem) => {
-            const data = docItem.data();
+        const docsWithData = docs.map((docItem) => ({
+            docItem,
+            data: docItem.data()
+        }));
+
+        const batchItems = [];
+        docsWithData.forEach(({ docItem, data }) => {
+            if (!hasStoragePath(data, 'thumb')) return;
+            const photoId = docItem.id;
+            const cached = getCachedSignedUrl(photoId, 'thumb');
+            if (cached) return;
+            batchItems.push({ photoId, variant: 'thumb' });
+        });
+        const batchUrls = await resolveBatchSignedPhotoUrls({ items: batchItems });
+
+        docsWithData.forEach(({ docItem, data }) => {
             const cardSnapshot = resolveSnapshotForCard(data);
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-[#292524] rounded-lg shadow-md overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col relative group';
+
             const ratingHtml = getStarDisplay(cardSnapshot.rating || 0);
-            const displayUrl = data.thumbURL || data.photoURL;
-            const escapedPhotoUrl = String(data.photoURL || '').replace(/'/g, "\\'");
-            const escapedThumbUrl = String(data.thumbURL || '').replace(/'/g, "\\'");
-            const deleteBtn = getCurrentGalleryMode() === 'mine'
-                ? `<button data-action-click="deletePhoto('${docItem.id}', '${escapedPhotoUrl}', '${escapedThumbUrl}', event)" class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all z-10 opacity-0 group-hover:opacity-100" title="Delete Photo"><i class="fa-solid fa-trash-can text-xs"></i></button>`
-                : '';
+            const cachedThumb = getCachedSignedUrl(docItem.id, 'thumb');
+            const batchThumb = batchUrls.get(getSignedUrlCacheKey(docItem.id, 'thumb'));
+            const displayUrl = cachedThumb || batchThumb || resolveLegacyUrl(data, 'thumb');
             const primaryInfo = cardSnapshot.farmer || '-';
             const secondaryInfo = cardSnapshot.roaster || cardSnapshot.origin || '-';
-            card.innerHTML = `${deleteBtn}<div class="h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative cursor-pointer"><img src="${displayUrl}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Brew Photo" data-action-click="openExternalUrl('${escapedPhotoUrl}')"><div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs">${new Date(data.createdAt).toLocaleDateString()}</div></div><div class="p-3 flex-1 flex flex-col"><div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-xs">${ratingHtml}</div></div><p class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div></div>`;
+
+            if (getCurrentGalleryMode() === 'mine') {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.title = 'Delete Photo';
+                deleteBtn.className = 'absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all z-10 opacity-0 group-hover:opacity-100';
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
+                deleteBtn.addEventListener('click', (event) => {
+                    const photoRefValue = data.photoPath || data.photoURL || '';
+                    const thumbRefValue = data.thumbPath || data.thumbURL || '';
+                    deletePhoto(docItem.id, photoRefValue, thumbRefValue, event);
+                });
+                card.appendChild(deleteBtn);
+            }
+
+            const imageWrap = document.createElement('div');
+            imageWrap.className = 'h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative cursor-pointer';
+
+            const img = document.createElement('img');
+            img.src = displayUrl;
+            img.loading = 'lazy';
+            img.className = 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110';
+            img.alt = 'Brew Photo';
+            imageWrap.appendChild(img);
+
+            const dateBadge = document.createElement('div');
+            dateBadge.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs';
+            dateBadge.textContent = new Date(data.createdAt).toLocaleDateString();
+            imageWrap.appendChild(dateBadge);
+            card.appendChild(imageWrap);
+
+            const body = document.createElement('div');
+            body.className = 'p-3 flex-1 flex flex-col';
+            body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-xs">${ratingHtml}</div></div><p class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
+            card.appendChild(body);
             grid.appendChild(card);
+
+            img.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const fullUrl = await resolveSignedPhotoUrl({
+                    photoId: docItem.id,
+                    variant: 'full',
+                    data
+                });
+                openExternalUrl(fullUrl);
+            });
         });
     };
 
-    const deletePhoto = async (photoId, photoURL, thumbURL, ev) => {
+    const deletePhoto = async (photoId, photoRefValue, thumbRefValue, ev) => {
         if (ev) ev.stopPropagation();
         const shouldDelete = await openAppConfirm({
             title: 'Delete photo?',
@@ -266,12 +453,16 @@ export const createGalleryModule = ({
         if (!shouldDelete) return;
         try {
             await deleteDoc(doc(db, 'photos', photoId));
-            const photoRef = ref(storage, photoURL);
-            await deleteObject(photoRef);
-            if (thumbURL) {
-                const thumbRef = ref(storage, thumbURL);
-                await deleteObject(thumbRef);
+            const normalizedPhotoRef = typeof photoRefValue === 'string' ? photoRefValue.trim() : '';
+            if (normalizedPhotoRef) {
+                await deleteObject(ref(storage, normalizedPhotoRef));
             }
+            const normalizedThumbRef = typeof thumbRefValue === 'string' ? thumbRefValue.trim() : '';
+            if (normalizedThumbRef) {
+                await deleteObject(ref(storage, normalizedThumbRef));
+            }
+            signedUrlCache.delete(getSignedUrlCacheKey(photoId, 'full'));
+            signedUrlCache.delete(getSignedUrlCacheKey(photoId, 'thumb'));
             alert('Photo deleted successfully.');
             openGallery();
         } catch (err) {

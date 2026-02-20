@@ -1,6 +1,7 @@
-        import { BAG_AI_URL, STATS_AI_URL, auth, db, storage, provider } from '../../config/firebase.js';
+        import { BAG_AI_URL, STATS_AI_URL, auth, db, functions, storage, provider } from '../../config/firebase.js';
         import { signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { collection, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
         import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
         import { initCoffeeScale } from '../../features/scales/scales.js';
         import { createScaleModalsModule } from '../../features/scales/scales-modals.js';
@@ -32,6 +33,7 @@
         import { createBrewsPreferencesModule } from '../../features/preferences.js';
         import { createDataService } from '../services/data.service.js';
         import { createStorageService } from '../services/storage.service.js';
+        import { createFunctionsService } from '../services/functions.service.js';
         import { createAuthService } from '../services/auth.service.js';
         import { createSessionAuthViewModule } from '../../features/session-auth-view.js';
         import { createAiImportModule } from '../../features/ai-import.js';
@@ -275,6 +277,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             uploadBytes,
             getDownloadURL,
             deleteObject
+        });
+        const functionsService = createFunctionsService({
+            functions,
+            httpsCallable
         });
         const createE2EBrewsRepo = () => {
             let e2eIdCounter = 1;
@@ -937,6 +943,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
             dataService,
             storageService,
+            functionsService,
             imageCompression,
             getStarDisplay,
             openAppConfirm
