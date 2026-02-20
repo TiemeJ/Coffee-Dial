@@ -69,4 +69,4 @@ jobs:
             --entry-point="${FUNCTION_ENTRY_POINT}" \
             --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
             --trigger-http \
-            --no-allow-unauthenticated
+            --allow-unauthenticated

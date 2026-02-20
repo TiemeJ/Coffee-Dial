@@ -13,7 +13,7 @@ steps:
       - --entry-point=getPhotoSignedUrl
       - --service-account=${_SERVICE_ACCOUNT}
       - --trigger-http
-      - --no-allow-unauthenticated
+      - --allow-unauthenticated
 
 substitutions:
   _REGION: us-central1
