@@ -166,6 +166,7 @@ export const createBeansCoordinator = ({
         getCurrentUser: () => getCurrentUser(),
         getCurrentView: () => getCurrentView(),
         getBeans: () => getBeans(),
+        getCoffees: () => getCoffees(),
         getCoffeeTypes: () => getCoffeeTypes(),
         getBeansSearch: () => getBeansSearch(),
         setBeansSearchState: (value) => setBeansSearchState(value),

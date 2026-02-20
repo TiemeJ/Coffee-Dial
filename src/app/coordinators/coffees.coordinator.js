@@ -247,6 +247,8 @@ export const createCoffeesCoordinator = ({
 
     const coffeeTypesTable = createCoffeeTypesTableModule({
         getCoffeeTypes,
+        getBeans,
+        getCoffees,
         getCurrentView,
         getCoffeeTypesSearch,
         setCoffeeTypesSearchState,

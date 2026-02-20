@@ -8,6 +8,7 @@ import {
 
 export const createGasTableModule = ({
     getGasItems,
+    getCoffees,
     getCurrentView,
     getGasSearch,
     setGasSearchState,
@@ -164,7 +165,7 @@ export const createGasTableModule = ({
     };
 
     const updateGasSortIcons = () => {
-        const keys = ['name', 'type', 'methods', 'price', 'purchasedDate'];
+        const keys = ['name', 'type', 'methods', 'brews', 'price', 'purchasedDate'];
         const sortKey = getGasSortKey();
         const sortDir = getGasSortDir();
         keys.forEach((key) => {
@@ -179,8 +180,20 @@ export const createGasTableModule = ({
     };
 
     const getFilteredSortedGasItems = () => {
+        const brewCountByGearId = new Map();
+        getCoffees().forEach((brew) => {
+            const ids = Array.isArray(brew?.gearIds) ? brew.gearIds : [];
+            ids.forEach((gearId) => {
+                if (!gearId) return;
+                brewCountByGearId.set(gearId, (brewCountByGearId.get(gearId) || 0) + 1);
+            });
+        });
+        const gasItemsWithCounts = getGasItems().map((item) => ({
+            ...item,
+            brewsCount: brewCountByGearId.get(item.id) || 0
+        }));
         return selectFilteredSortedGasItems({
-            gasItems: getGasItems(),
+            gasItems: gasItemsWithCounts,
             searchValue: getGasSearch(),
             filters: getGasFilters(),
             sortKey: getGasSortKey(),
@@ -216,6 +229,7 @@ export const createGasTableModule = ({
             const menuId = `gas-action-menu-${item.id}`;
             const purchasedDate = item.purchasedDate;
             const purchasedDateLabel = purchasedDate ? new Date(purchasedDate).toLocaleDateString() : '-';
+            const brewsCount = Number(item.brewsCount) || 0;
             const archiveLabel = item.archived ? 'Unarchive' : 'Archive';
 
             const row = document.createElement('tr');
@@ -226,6 +240,7 @@ export const createGasTableModule = ({
                 <td class="px-4 py-3 font-semibold">${item.name || '-'}</td>
                 <td class="px-4 py-3">${normalizeGasType(item.type)}</td>
                 <td class="px-4 py-3 text-xs">${getGasMethodsLabel(item.methods)}</td>
+                <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${brewsCount}</td>
                 <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${purchasedDateLabel}</td>
                 <td class="px-4 py-3 text-center">
                     <div class="relative inline-block">
@@ -255,7 +270,7 @@ export const createGasTableModule = ({
         if (activeItems.length > 0) {
             const headerRow = document.createElement('tr');
             headerRow.className = 'bg-green-50 dark:bg-green-900/20';
-            headerRow.innerHTML = '<td colspan="5" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Active</td>';
+            headerRow.innerHTML = '<td colspan="6" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Active</td>';
             tbody.appendChild(headerRow);
             activeItems.forEach((item) => tbody.appendChild(createRow(item)));
         }
@@ -263,7 +278,7 @@ export const createGasTableModule = ({
         if (archivedItems.length > 0) {
             const headerRow = document.createElement('tr');
             headerRow.className = 'bg-gray-50 dark:bg-[#34302e]';
-            headerRow.innerHTML = '<td colspan="5" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Archived</td>';
+            headerRow.innerHTML = '<td colspan="6" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Archived</td>';
             tbody.appendChild(headerRow);
             archivedItems.forEach((item) => tbody.appendChild(createRow(item)));
         }

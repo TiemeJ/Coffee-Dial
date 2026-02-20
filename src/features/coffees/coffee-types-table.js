@@ -7,6 +7,8 @@ import {
 
 export const createCoffeeTypesTableModule = ({
     getCoffeeTypes,
+    getBeans,
+    getCoffees,
     getCurrentView,
     getCoffeeTypesSearch,
     setCoffeeTypesSearchState,
@@ -162,7 +164,7 @@ export const createCoffeeTypesTableModule = ({
     };
 
     const updateCoffeeTypesSortIcons = () => {
-        const keys = ['farmer', 'roaster', 'origin', 'processing', 'decaf', 'variety', 'roast', 'rating', 'createdAt'];
+        const keys = ['farmer', 'roaster', 'origin', 'processing', 'decaf', 'variety', 'roast', 'brews', 'bags', 'ground', 'rating', 'createdAt'];
         const sortKey = getCoffeeTypesSortKey();
         const sortDir = getCoffeeTypesSortDir();
         keys.forEach((key) => {
@@ -177,8 +179,35 @@ export const createCoffeeTypesTableModule = ({
     };
 
     const getFilteredSortedCoffeeTypes = () => {
+        const beanToCoffeeTypeId = new Map();
+        const bagCountByCoffeeTypeId = new Map();
+        const groundKgByCoffeeTypeId = new Map();
+        getBeans().forEach((bean) => {
+            if (!bean?.id || !bean?.coffeeTypeId) return;
+            beanToCoffeeTypeId.set(bean.id, bean.coffeeTypeId);
+            bagCountByCoffeeTypeId.set(bean.coffeeTypeId, (bagCountByCoffeeTypeId.get(bean.coffeeTypeId) || 0) + 1);
+            const stockGrams = Number.parseFloat(bean.stock);
+            if (Number.isFinite(stockGrams)) {
+                groundKgByCoffeeTypeId.set(bean.coffeeTypeId, (groundKgByCoffeeTypeId.get(bean.coffeeTypeId) || 0) + (stockGrams / 1000));
+            }
+        });
+        const brewCountByCoffeeTypeId = new Map();
+        getCoffees().forEach((brew) => {
+            let coffeeTypeId = brew?.coffeeTypeId || null;
+            if (!coffeeTypeId && brew?.beanId) {
+                coffeeTypeId = beanToCoffeeTypeId.get(brew.beanId) || null;
+            }
+            if (!coffeeTypeId) return;
+            brewCountByCoffeeTypeId.set(coffeeTypeId, (brewCountByCoffeeTypeId.get(coffeeTypeId) || 0) + 1);
+        });
+        const coffeeTypesWithCounts = getCoffeeTypes().map((type) => ({
+            ...type,
+            brewsCount: brewCountByCoffeeTypeId.get(type.id) || 0,
+            bagsCount: bagCountByCoffeeTypeId.get(type.id) || 0,
+            groundKg: groundKgByCoffeeTypeId.get(type.id) || 0
+        }));
         return selectFilteredSortedCoffeeTypes({
-            coffeeTypes: getCoffeeTypes(),
+            coffeeTypes: coffeeTypesWithCounts,
             searchValue: getCoffeeTypesSearch(),
             filters: getCoffeeTypesFilters(),
             sortKey: getCoffeeTypesSortKey(),
@@ -220,6 +249,9 @@ export const createCoffeeTypesTableModule = ({
             const rating = rowVm.rating;
             const createdAt = rowVm.createdAt;
             const decaf = rowVm.decaf;
+            const brewsCount = Number(type.brewsCount) || 0;
+            const bagsCount = Number(type.bagsCount) || 0;
+            const groundKg = Number(type.groundKg) || 0;
             const decafIcon = decaf
                 ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e]" title="Decaf"></i>'
                 : '';
@@ -242,6 +274,9 @@ export const createCoffeeTypesTableModule = ({
                 <td class="px-4 py-3 text-center">${decafIcon}</td>
                 <td class="px-4 py-3 text-sm">${variety}</td>
                 <td class="px-4 py-3 text-center text-sm">${roast}</td>
+                <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${brewsCount}</td>
+                <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${bagsCount}</td>
+                <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${groundKg.toFixed(2)} kg</td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">${getStarDisplay(rating)}</td>
                 <td class="px-4 py-3 text-center text-xs font-mono text-coffee-500">${createdAt}</td>
                 <td class="px-4 py-3 text-center">

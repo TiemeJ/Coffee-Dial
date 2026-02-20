@@ -63,6 +63,9 @@ export const selectFilteredSortedCoffeeTypes = ({
     const getSortValue = (type, key) => {
         if (key === 'decaf') return type.decaf ? 1 : 0;
         if (key === 'roast') return type.roast || type.roastType || '';
+        if (key === 'brews') return Number(type.brewsCount) || 0;
+        if (key === 'bags') return Number(type.bagsCount) || 0;
+        if (key === 'ground') return Number(type.groundKg) || 0;
         if (key === 'rating') return parseInt(type.rating, 10) || 0;
         if (key === 'createdAt') return type.createdAt || '';
         return type[key] || '';
@@ -74,7 +77,7 @@ export const selectFilteredSortedCoffeeTypes = ({
         const bVal = getSortValue(b, sortKey);
 
         let primary;
-        if (sortKey === 'rating') {
+        if (sortKey === 'rating' || sortKey === 'brews' || sortKey === 'bags' || sortKey === 'ground') {
             primary = (Number(aVal) || 0) - (Number(bVal) || 0);
         } else {
             primary = normalizeText(aVal).localeCompare(normalizeText(bVal));

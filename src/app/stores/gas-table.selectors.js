@@ -62,6 +62,7 @@ export const selectFilteredSortedGasItems = ({ gasItems = [], searchValue = '', 
 
     const getSortValue = (item, key) => {
         if (key === 'price') return parsePrice(item.price);
+        if (key === 'brews') return Number(item.brewsCount) || 0;
         if (key === 'type') return normalizeGasType(item.type);
         if (key === 'methods') return normalizeGasMethods(item.methods).join(', ');
         if (key === 'purchasedDate') return item.purchasedDate || '';
@@ -74,7 +75,7 @@ export const selectFilteredSortedGasItems = ({ gasItems = [], searchValue = '', 
         const bVal = getSortValue(b, sortKey);
         let primary = 0;
 
-        if (sortKey === 'price') {
+        if (sortKey === 'price' || sortKey === 'brews') {
             const aNum = Number(aVal);
             const bNum = Number(bVal);
             primary = (Number.isFinite(aNum) ? aNum : -Infinity) - (Number.isFinite(bNum) ? bNum : -Infinity);

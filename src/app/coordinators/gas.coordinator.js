@@ -85,6 +85,7 @@ export const createGasCoordinator = ({
 
     const gasTable = createGasTableModule({
         getGasItems,
+        getCoffees,
         getCurrentView,
         getGasSearch,
         setGasSearchState,

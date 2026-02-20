@@ -9,6 +9,7 @@ export const createBeansTableModule = ({
     getCurrentUser,
     getCurrentView,
     getBeans,
+    getCoffees,
     getCoffeeTypes,
     getBeansSearch,
     setBeansSearchState,
@@ -184,6 +185,11 @@ export const createBeansTableModule = ({
             decafFilter: getBeansFilters().decaf,
             getBeanCoffeeTypeDisplay
         });
+        const brewCountByBeanId = new Map();
+        getCoffees().forEach((brew) => {
+            if (!brew?.beanId) return;
+            brewCountByBeanId.set(brew.beanId, (brewCountByBeanId.get(brew.beanId) || 0) + 1);
+        });
 
         if (finalBeans.length === 0) {
             empty.classList.remove('hidden');
@@ -226,6 +232,7 @@ export const createBeansTableModule = ({
             const decafIcon = coffeeDisplay.decaf
                 ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e]" title="Decaf"></i>'
                 : '';
+            const brewCount = brewCountByBeanId.get(bean.id) || 0;
             const openedDateInputValue = formatBeanDateForInput(bean.openedDate);
             const frozenDateInputValue = formatBeanDateForInput(bean.frozenDate);
             const roastDateInputValue = formatBeanDateForInput(bean.roastDate);
@@ -257,6 +264,7 @@ export const createBeansTableModule = ({
                         ${isMine ? `data-action-change="saveBeanStock('${bean.id}', this.value)"` : 'disabled'}
                         class="w-20 text-center text-sm border border-coffee-200 dark:border-[#44403c] rounded p-1 bg-coffee-50 dark:bg-[#1c1917] text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="-">
                 </td>
+                <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${brewCount}</td>
                 <td class="px-4 py-3 text-center font-mono font-bold text-coffee-700 dark:text-[#d6ccc2]">${stockLeftDisplay}</td>
                 <td class="px-4 py-3 text-center">
                     <input type="date" value="${roastDateInputValue}"
@@ -316,7 +324,7 @@ export const createBeansTableModule = ({
         if (inStockBeans.length > 0) {
             const headerRow = document.createElement('tr');
             headerRow.className = 'bg-green-50 dark:bg-green-900/20';
-            headerRow.innerHTML = '<td colspan="13" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
+            headerRow.innerHTML = '<td colspan="14" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
             tbody.appendChild(headerRow);
             inStockBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
         }
@@ -325,7 +333,7 @@ export const createBeansTableModule = ({
             if (inStockBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'bg-blue-50 dark:bg-blue-900/20';
-                headerRow.innerHTML = '<td colspan="13" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
+                headerRow.innerHTML = '<td colspan="14" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
                 tbody.appendChild(headerRow);
             }
             frozenBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
@@ -335,7 +343,7 @@ export const createBeansTableModule = ({
             if (inStockBeans.length > 0 || frozenBeans.length > 0) {
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'bg-gray-50 dark:bg-[#34302e]';
-                headerRow.innerHTML = '<td colspan="13" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
+                headerRow.innerHTML = '<td colspan="14" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
                 tbody.appendChild(headerRow);
             }
             otherBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
