@@ -75,6 +75,39 @@ function validateOwnerPath(path, ownerUid) {
   }
 }
 
+/**
+ * @param {Record<string, unknown>} photo
+ * @param {string} callerUid
+ * @return {string}
+ */
+function assertPhotoAccess(photo, callerUid) {
+  const ownerUid = typeof photo.uid === "string" ? photo.uid : "";
+  const sharedWith = Array.isArray(photo.sharedWith) ? photo.sharedWith : [];
+  const canAccess = callerUid === ownerUid || sharedWith.includes(callerUid);
+  if (!canAccess) {
+    throw new HttpsError(
+        "permission-denied",
+        "You are not allowed to access this photo.",
+    );
+  }
+  return ownerUid;
+}
+
+/**
+ * @param {string} path
+ * @param {number} expiresAtMs
+ * @return {Promise<string>}
+ */
+async function signPath(path, expiresAtMs) {
+  const [signedUrl] = await storage.bucket(configuredBucket).file(path)
+      .getSignedUrl({
+        version: "v4",
+        action: "read",
+        expires: expiresAtMs,
+      });
+  return signedUrl;
+}
+
 exports.getPhotoSignedUrl = onCall({cors: true}, async (request) => {
   if (!request.auth || !request.auth.uid) {
     throw new HttpsError("unauthenticated", "Authentication is required.");
@@ -98,27 +131,13 @@ exports.getPhotoSignedUrl = onCall({cors: true}, async (request) => {
   }
 
   const photo = photoSnap.data() || {};
-  const ownerUid = typeof photo.uid === "string" ? photo.uid : "";
-  const sharedWith = Array.isArray(photo.sharedWith) ? photo.sharedWith : [];
-
-  const canAccess = callerUid === ownerUid || sharedWith.includes(callerUid);
-  if (!canAccess) {
-    throw new HttpsError(
-        "permission-denied",
-        "You are not allowed to access this photo.",
-    );
-  }
+  const ownerUid = assertPhotoAccess(photo, callerUid);
 
   const path = selectStoragePath(photo, variant);
   validateOwnerPath(path, ownerUid);
 
   const expiresAtMs = Date.now() + ttlMinutes * 60 * 1000;
-  const [signedUrl] = await storage.bucket(configuredBucket).file(path)
-      .getSignedUrl({
-        version: "v4",
-        action: "read",
-        expires: expiresAtMs,
-      });
+  const signedUrl = await signPath(path, expiresAtMs);
 
   return {
     photoId,
@@ -127,4 +146,78 @@ exports.getPhotoSignedUrl = onCall({cors: true}, async (request) => {
     expiresAt: new Date(expiresAtMs).toISOString(),
     cacheTtlSeconds: ttlMinutes * 60,
   };
+});
+
+exports.getPhotoSignedUrlsBatch = onCall({cors: true}, async (request) => {
+  if (!request.auth || !request.auth.uid) {
+    throw new HttpsError("unauthenticated", "Authentication is required.");
+  }
+
+  const callerUid = request.auth.uid;
+  const payload = request.data || {};
+  const ttlMinutes = resolveTtlMinutes(payload.expiresInMinutes);
+  const rawItems = Array.isArray(payload.items) ? payload.items : [];
+  const limitedItems = rawItems.slice(0, 25);
+
+  if (!limitedItems.length) {
+    return {items: []};
+  }
+
+  const requestedItems = limitedItems
+      .map((entry) => {
+        const photoId = typeof entry === "object" &&
+          entry !== null &&
+          typeof entry.photoId === "string" ?
+            entry.photoId.trim() :
+            "";
+        const variant = typeof entry === "object" &&
+          entry !== null &&
+          entry.variant === "thumb" ? "thumb" : "full";
+        if (!photoId) return null;
+        return {photoId, variant};
+      })
+      .filter(Boolean);
+
+  if (!requestedItems.length) {
+    return {items: []};
+  }
+
+  const uniquePhotoIds = [
+    ...new Set(requestedItems.map((item) => item.photoId)),
+  ];
+  const photoRefs = uniquePhotoIds
+      .map((photoId) => db.collection("photos").doc(photoId));
+  const photoSnaps = await db.getAll(...photoRefs);
+  const photoById = new Map();
+  photoSnaps.forEach((snap) => {
+    if (!snap.exists) return;
+    photoById.set(snap.id, snap.data() || {});
+  });
+
+  const expiresAtMs = Date.now() + ttlMinutes * 60 * 1000;
+  const items = [];
+
+  for (const requestedItem of requestedItems) {
+    const photo = photoById.get(requestedItem.photoId);
+    if (!photo) continue;
+
+    try {
+      const ownerUid = assertPhotoAccess(photo, callerUid);
+      const path = selectStoragePath(photo, requestedItem.variant);
+      validateOwnerPath(path, ownerUid);
+      const signedUrl = await signPath(path, expiresAtMs);
+      items.push({
+        photoId: requestedItem.photoId,
+        variant: requestedItem.variant,
+        signedUrl,
+        expiresAt: new Date(expiresAtMs).toISOString(),
+        cacheTtlSeconds: ttlMinutes * 60,
+      });
+    } catch (error) {
+      if (error instanceof HttpsError) continue;
+      console.error("Batch signing failed:", requestedItem.photoId, error);
+    }
+  }
+
+  return {items};
 });

@@ -38,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FUNCTION_NAME: getPhotoSignedUrl
+      FUNCTION_BATCH_NAME: getPhotoSignedUrlsBatch
       FUNCTION_REGION: us-central1
       FUNCTION_RUNTIME: nodejs22
       FUNCTION_SOURCE: cloud/google-cloud-functions/getPhotoSignedUrl-function-source
@@ -68,6 +69,18 @@ jobs:
             --runtime="${FUNCTION_RUNTIME}" \
             --source="${FUNCTION_SOURCE}" \
             --entry-point="${FUNCTION_ENTRY_POINT}" \
+            --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
+            --set-env-vars="STORAGE_BUCKET=${STORAGE_BUCKET}" \
+            --trigger-http \
+            --allow-unauthenticated
+
+          gcloud functions deploy "${FUNCTION_BATCH_NAME}" \
+            --gen2 \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --region="${FUNCTION_REGION}" \
+            --runtime="${FUNCTION_RUNTIME}" \
+            --source="${FUNCTION_SOURCE}" \
+            --entry-point="${FUNCTION_BATCH_NAME}" \
             --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
             --set-env-vars="STORAGE_BUCKET=${STORAGE_BUCKET}" \
             --trigger-http \
