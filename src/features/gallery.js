@@ -267,6 +267,76 @@ export const createGalleryModule = ({
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
+    const inferExtensionFromContentType = (contentType) => {
+        const normalized = (contentType || '').toLowerCase();
+        if (normalized.includes('png')) return 'png';
+        if (normalized.includes('webp')) return 'webp';
+        if (normalized.includes('gif')) return 'gif';
+        if (normalized.includes('heic')) return 'heic';
+        if (normalized.includes('heif')) return 'heif';
+        return 'jpg';
+    };
+
+    const buildMomentShareText = ({ data, cardSnapshot, appLink }) => {
+        const parts = [];
+        if (data?.message) {
+            parts.push(data.message.trim());
+            parts.push('');
+        }
+        parts.push(`Farmer: ${cardSnapshot?.farmer || '-'}`);
+        parts.push(`Roaster: ${cardSnapshot?.roaster || '-'}`);
+        parts.push(`Method: ${cardSnapshot?.method || '-'}`);
+        const numericRating = Number(cardSnapshot?.rating) || 0;
+        if (numericRating > 0) {
+            parts.push(`Rating: ${numericRating}/5`);
+        }
+        parts.push('');
+        parts.push(appLink);
+        return parts.join('\n');
+    };
+
+    const createShareFileFromUrl = async ({ url, photoId }) => {
+        if (!url) return null;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Image fetch failed (${response.status})`);
+        }
+        const blob = await response.blob();
+        const extension = inferExtensionFromContentType(blob?.type || response.headers.get('content-type'));
+        return new File([blob], `moment-${photoId}.${extension}`, {
+            type: blob.type || `image/${extension}`
+        });
+    };
+
+    const shareMoment = async ({ photoId, data, cardSnapshot }) => {
+        const appLink = typeof window !== 'undefined' ? window.location.origin : '';
+        const shareText = buildMomentShareText({ data, cardSnapshot, appLink });
+        if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+            alert('Sharing is not supported on this device.');
+            return;
+        }
+
+        const sharePayload = {
+            text: shareText
+        };
+
+        try {
+            const fullUrl = await resolveSignedPhotoUrl({
+                photoId,
+                variant: 'full',
+                data
+            });
+            const shareFile = await createShareFileFromUrl({ url: fullUrl, photoId });
+            if (shareFile && (!navigator.canShare || navigator.canShare({ files: [shareFile] }))) {
+                sharePayload.files = [shareFile];
+            }
+        } catch (error) {
+            console.warn('Moment image share fallback to text-only:', error);
+        }
+
+        await navigator.share(sharePayload);
+    };
+
     const setGalleryLoadingVisible = (isVisible) => {
         const loading = document.getElementById('galleryLoading');
         if (!loading) return;
@@ -477,6 +547,27 @@ export const createGalleryModule = ({
             const secondaryInfo = cardSnapshot.roaster || cardSnapshot.origin || '-';
 
             if (getCurrentGalleryMode() === 'mine') {
+                const shareBtn = document.createElement('button');
+                shareBtn.type = 'button';
+                shareBtn.title = 'Share moment';
+                shareBtn.className = 'absolute top-2 left-2 bg-white/80 hover:bg-white text-coffee-700 w-8 h-8 rounded-full flex items-center justify-center shadow transition-all z-10 opacity-0 group-hover:opacity-100';
+                shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes text-xs"></i>';
+                shareBtn.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    try {
+                        await shareMoment({
+                            photoId: docItem.id,
+                            data,
+                            cardSnapshot
+                        });
+                    } catch (error) {
+                        if (error?.name === 'AbortError') return;
+                        console.error('Share moment failed:', error);
+                        alert(`Share failed: ${error.message || 'Unknown error'}`);
+                    }
+                });
+                card.appendChild(shareBtn);
+
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
                 deleteBtn.title = 'Delete Photo';
