@@ -1,4 +1,5 @@
 import { createGalleryLikesModule } from './gallery-likes.js';
+import { createGalleryCommentsModule } from './gallery-comments.js';
 
 export const createGalleryModule = ({
     getCurrentUser,
@@ -47,6 +48,16 @@ export const createGalleryModule = ({
         updateDoc,
         arrayUnion,
         arrayRemove
+    });
+    const commentsModule = createGalleryCommentsModule({
+        getCurrentUser,
+        db,
+        collection,
+        query,
+        orderBy,
+        limit,
+        getDocs,
+        addDoc
     });
     const signedUrlCache = new Map();
     const preparedMomentShares = new Map();
@@ -1280,41 +1291,7 @@ export const createGalleryModule = ({
             const displayUrl = cachedThumb || batchThumb || resolveLegacyUrl(data, 'thumb');
             const primaryInfo = cardSnapshot.farmer || '-';
             const secondaryInfo = cardSnapshot.roaster || cardSnapshot.origin || '-';
-            const updateSharedCountLabel = (el) => {
-                if (!el) return;
-                const count = getMomentSharedWith(data).length;
-                el.textContent = count === 0
-                    ? 'Visible only to you'
-                    : `Shared with ${count} friend${count === 1 ? '' : 's'}`;
-            };
-
             if (getCurrentGalleryMode() === 'mine') {
-                const shareBtn = document.createElement('button');
-                shareBtn.type = 'button';
-                shareBtn.title = 'Share moment';
-                shareBtn.dataset.momentAction = 'true';
-                shareBtn.className = 'absolute top-2 left-2 bg-white/80 hover:bg-white text-coffee-700 w-8 h-8 rounded-full flex items-center justify-center shadow transition-all z-10 opacity-0 group-hover:opacity-100';
-                shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes text-xs"></i>';
-                shareBtn.addEventListener('click', async (event) => {
-                    event.stopPropagation();
-                    setMomentShareButtonLoading(shareBtn, true);
-                    try {
-                        await shareMoment({
-                            photoId: docItem.id,
-                            data,
-                            cardSnapshot,
-                            cardElement: card
-                        });
-                    } catch (error) {
-                        if (error?.name === 'AbortError') return;
-                        console.error('Share moment failed:', error);
-                        alert(`Share failed: ${error.message || 'Unknown error'}`);
-                    } finally {
-                        setMomentShareButtonLoading(shareBtn, false);
-                    }
-                });
-                card.appendChild(shareBtn);
-
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
                 deleteBtn.title = 'Delete Photo';
@@ -1345,17 +1322,40 @@ export const createGalleryModule = ({
             dateBadge.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs';
             dateBadge.textContent = new Date(data.createdAt).toLocaleDateString();
             imageWrap.appendChild(dateBadge);
-
-            const typeIcon = document.createElement('div');
-            typeIcon.className = `absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-[11px] ${momentTypeMeta.iconWrapClass}`;
-            typeIcon.innerHTML = `<i class="fa-solid ${momentTypeMeta.icon}"></i>`;
-            imageWrap.appendChild(typeIcon);
             card.appendChild(imageWrap);
 
             const body = document.createElement('div');
             body.dataset.momentBody = 'true';
             body.className = 'p-3 flex-1 flex flex-col';
-            body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-[10px] px-1.5 py-0.5 rounded border ${momentTypeMeta.badgeClass} inline-flex items-center gap-1"><i class="fa-solid ${momentTypeMeta.icon} text-[9px]"></i><span>${momentTypeMeta.label}</span></div></div><p data-moment-message="true" class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div data-moment-info="true" class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
+            body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div data-moment-header-actions="true" class="flex items-center gap-1"></div></div><p data-moment-message="true" class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div data-moment-info="true" class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
+            if (getCurrentGalleryMode() === 'mine') {
+                const headerActions = body.querySelector('[data-moment-header-actions="true"]');
+                const shareBtn = document.createElement('button');
+                shareBtn.type = 'button';
+                shareBtn.title = 'Share moment';
+                shareBtn.dataset.momentAction = 'true';
+                shareBtn.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] inline-flex items-center gap-1';
+                shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes text-[10px]"></i>';
+                shareBtn.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    setMomentShareButtonLoading(shareBtn, true);
+                    try {
+                        await shareMoment({
+                            photoId: docItem.id,
+                            data,
+                            cardSnapshot,
+                            cardElement: card
+                        });
+                    } catch (error) {
+                        if (error?.name === 'AbortError') return;
+                        console.error('Share moment failed:', error);
+                        alert(`Share failed: ${error.message || 'Unknown error'}`);
+                    } finally {
+                        setMomentShareButtonLoading(shareBtn, false);
+                    }
+                });
+                headerActions?.appendChild(shareBtn);
+            }
             const momentInfoEl = body.querySelector('[data-moment-info="true"]');
             const linkedBrewId = typeof data?.coffeeId === 'string' ? data.coffeeId.trim() : '';
             const ownerUid = typeof data?.uid === 'string' ? data.uid.trim() : '';
@@ -1383,9 +1383,10 @@ export const createGalleryModule = ({
             }
 
             let mineManageRow = null;
+            let friendsFooterRow = null;
             if (getCurrentGalleryMode() === 'mine') {
                 const shareMetaWrap = document.createElement('div');
-                shareMetaWrap.className = 'mt-2 flex items-center justify-between gap-2';
+                shareMetaWrap.className = 'mt-2 flex items-center gap-2';
 
                 const manageBtn = document.createElement('button');
                 manageBtn.type = 'button';
@@ -1393,10 +1394,10 @@ export const createGalleryModule = ({
                 manageBtn.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] inline-flex items-center gap-1';
                 const setManageBtnLabel = () => {
                     const count = getMomentSharedWith(data).length;
-                    const label = count === 0
-                        ? 'Visible only to you'
-                        : `Shared with ${count} friend${count === 1 ? '' : 's'}`;
-                    manageBtn.innerHTML = `<i class="fa-solid fa-user-gear text-[10px]"></i><span>${label}</span>`;
+                    manageBtn.innerHTML = `<i class="fa-solid fa-user-group text-[10px]"></i><span>${count}</span>`;
+                    manageBtn.title = count === 0
+                        ? 'Visible only to you (manage sharing)'
+                        : `Shared with ${count} friend${count === 1 ? '' : 's'} (manage sharing)`;
                 };
                 setManageBtnLabel();
                 manageBtn.addEventListener('click', (event) => {
@@ -1418,45 +1419,50 @@ export const createGalleryModule = ({
                 shareMetaWrap.appendChild(manageBtn);
                 body.appendChild(shareMetaWrap);
                 mineManageRow = shareMetaWrap;
+            } else {
+                const footerRow = document.createElement('div');
+                footerRow.className = 'mt-2 flex items-center gap-2';
+                const sharedCount = getMomentSharedWith(data).length;
+                const sharedReadOnly = document.createElement('div');
+                sharedReadOnly.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] inline-flex items-center gap-1 opacity-90';
+                sharedReadOnly.innerHTML = `<i class="fa-solid fa-user-group text-[10px]"></i><span>${sharedCount}</span>`;
+                sharedReadOnly.title = sharedCount === 0
+                    ? 'Visible only to owner'
+                    : `Shared with ${sharedCount} friend${sharedCount === 1 ? '' : 's'}`;
+                footerRow.appendChild(sharedReadOnly);
+                body.appendChild(footerRow);
+                friendsFooterRow = footerRow;
             }
 
             const likesRow = document.createElement('div');
             likesRow.className = 'mt-2 flex items-center justify-between gap-2';
-            const likesCount = document.createElement('div');
-            likesCount.className = 'text-[11px] text-coffee-500 dark:text-[#a8a29e] inline-flex items-center gap-1';
-            const likesCountIcon = document.createElement('i');
-            likesCountIcon.className = 'fa-solid fa-heart text-red-500 text-[10px]';
-            const likesCountText = document.createElement('span');
-            likesCount.appendChild(likesCountIcon);
-            likesCount.appendChild(likesCountText);
-
-            const likeBtn = document.createElement('button');
-            likeBtn.type = 'button';
-            likeBtn.dataset.momentAction = 'true';
-            likeBtn.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] inline-flex items-center gap-1';
+            const likeControl = document.createElement('button');
+            likeControl.type = 'button';
+            likeControl.dataset.momentAction = 'true';
+            likeControl.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] inline-flex items-center gap-1';
 
             const updateLikesUi = () => {
                 const count = likesModule.getLikeCount(data);
-                likesCountText.textContent = `${count} like${count === 1 ? '' : 's'}`;
-                likesCount.classList.toggle('hidden', count <= 0);
 
                 const isMineTab = getCurrentGalleryMode() === 'mine';
                 const canLike = !isMineTab && likesModule.canLikeMoment(data);
-                likeBtn.classList.toggle('hidden', !canLike);
-                if (canLike) {
-                    const liked = likesModule.hasLiked(data);
-                    likeBtn.innerHTML = liked
-                        ? '<i class="fa-solid fa-heart text-red-500 text-[10px]"></i><span>Unlike</span>'
-                        : '<i class="fa-regular fa-heart text-[10px]"></i><span>Like</span>';
-                }
+                const liked = likesModule.hasLiked(data);
+                const showFilledIcon = liked || (isMineTab && count > 0);
+                const iconClass = showFilledIcon ? 'fa-solid text-red-500' : 'fa-regular text-coffee-500 dark:text-[#a8a29e]';
+                likeControl.innerHTML = `<i class="${iconClass} fa-heart text-[10px]"></i><span>${count}</span>`;
+                likeControl.disabled = !canLike;
+                likeControl.classList.toggle('cursor-pointer', canLike);
+                likeControl.classList.toggle('hover:bg-coffee-100', canLike);
+                likeControl.classList.toggle('dark:hover:bg-[#34302e]', canLike);
+                likeControl.classList.toggle('opacity-80', !canLike);
                 likesRow.classList.toggle('hidden', isMineTab && count <= 0);
             };
 
-            likeBtn.addEventListener('click', async (event) => {
+            likeControl.addEventListener('click', async (event) => {
                 event.stopPropagation();
                 if (!likesModule.canLikeMoment(data)) return;
-                likeBtn.disabled = true;
-                likeBtn.classList.add('opacity-70', 'cursor-wait');
+                likeControl.disabled = true;
+                likeControl.classList.add('opacity-70', 'cursor-wait');
                 try {
                     const nowLiked = await likesModule.toggleLike({ photoId: docItem.id, data });
                     const currentLikedBy = Array.isArray(data.likedBy) ? [...data.likedBy] : [];
@@ -1471,21 +1477,191 @@ export const createGalleryModule = ({
                     console.error('Failed toggling moment like', error);
                     alert(`Could not update like: ${error?.message || 'Unknown error'}`);
                 } finally {
-                    likeBtn.disabled = false;
-                    likeBtn.classList.remove('opacity-70', 'cursor-wait');
+                    likeControl.disabled = false;
+                    likeControl.classList.remove('opacity-70', 'cursor-wait');
                 }
             });
 
-            likesRow.appendChild(likesCount);
-            likesRow.appendChild(likeBtn);
+            likesRow.appendChild(likeControl);
             updateLikesUi();
             if (getCurrentGalleryMode() === 'mine' && mineManageRow) {
                 likesRow.className = 'flex items-center gap-2';
                 likesRow.classList.remove('mt-2');
                 mineManageRow.insertBefore(likesRow, mineManageRow.firstChild);
+            } else if (friendsFooterRow) {
+                likesRow.className = 'flex items-center gap-2';
+                likesRow.classList.remove('mt-2');
+                friendsFooterRow.insertBefore(likesRow, friendsFooterRow.firstChild);
             } else {
                 body.appendChild(likesRow);
             }
+
+            const commentsWrap = document.createElement('div');
+            commentsWrap.className = 'mt-2';
+            commentsWrap.dataset.momentAction = 'true';
+
+            const commentsToolbar = document.createElement('div');
+            commentsToolbar.className = 'flex items-center justify-between gap-2';
+            commentsToolbar.dataset.momentAction = 'true';
+
+            const commentBtn = document.createElement('button');
+            commentBtn.type = 'button';
+            commentBtn.dataset.momentAction = 'true';
+            commentBtn.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] inline-flex items-center gap-1';
+            commentBtn.innerHTML = '<i class="fa-regular fa-comment text-[10px]"></i><span>0 comments</span>';
+            if (getCurrentGalleryMode() === 'mine' && mineManageRow) {
+                commentBtn.classList.add('ml-auto');
+                mineManageRow.appendChild(commentBtn);
+            } else if (friendsFooterRow) {
+                commentBtn.classList.add('ml-auto');
+                friendsFooterRow.appendChild(commentBtn);
+            } else {
+                commentsToolbar.appendChild(commentBtn);
+                commentsWrap.appendChild(commentsToolbar);
+            }
+
+            const commentsPanel = document.createElement('div');
+            commentsPanel.className = 'hidden mt-2 rounded-lg border border-coffee-200 dark:border-[#57534e] bg-coffee-50 dark:bg-[#1c1917] p-2 space-y-2';
+            commentsPanel.dataset.momentAction = 'true';
+
+            const commentsList = document.createElement('div');
+            commentsList.className = 'max-h-36 overflow-y-auto space-y-1';
+            commentsList.dataset.momentAction = 'true';
+
+            const commentComposer = document.createElement('div');
+            commentComposer.className = 'flex items-end gap-2';
+            commentComposer.dataset.momentAction = 'true';
+
+            const commentInput = document.createElement('textarea');
+            commentInput.rows = 2;
+            commentInput.maxLength = 1000;
+            commentInput.placeholder = 'Write a comment...';
+            commentInput.className = 'flex-1 bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-xs text-coffee-900 dark:text-white';
+            commentInput.dataset.momentAction = 'true';
+
+            const commentPostBtn = document.createElement('button');
+            commentPostBtn.type = 'button';
+            commentPostBtn.dataset.momentAction = 'true';
+            commentPostBtn.className = 'px-2.5 py-1.5 text-xs rounded bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white';
+            commentPostBtn.textContent = 'Post';
+
+            commentComposer.appendChild(commentInput);
+            commentComposer.appendChild(commentPostBtn);
+            commentsPanel.appendChild(commentsList);
+            commentsPanel.appendChild(commentComposer);
+            commentsWrap.appendChild(commentsPanel);
+            body.appendChild(commentsWrap);
+
+            let commentsLoaded = false;
+            let commentsEntries = [];
+            const setCommentBtnLabel = (count) => {
+                commentBtn.innerHTML = `<i class="fa-regular fa-comment text-[10px]"></i><span>${count} comment${count === 1 ? '' : 's'}</span>`;
+            };
+
+            const formatCommentDate = (value) => {
+                const parsed = new Date(value);
+                if (Number.isNaN(parsed.getTime())) return '';
+                return parsed.toLocaleString([], {
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            };
+
+            const renderComments = () => {
+                commentsList.innerHTML = '';
+                commentsEntries.forEach((entry) => {
+                    const row = document.createElement('div');
+                    row.className = 'rounded bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] px-2 py-1.5';
+                    row.dataset.momentAction = 'true';
+
+                    const meta = document.createElement('div');
+                    meta.className = 'flex items-center justify-between gap-2 mb-1';
+                    meta.dataset.momentAction = 'true';
+
+                    const author = document.createElement('span');
+                    author.className = 'text-[11px] font-semibold text-coffee-700 dark:text-[#d6ccc2] truncate';
+                    author.textContent = entry?.uploaderName || 'Unknown';
+                    author.dataset.momentAction = 'true';
+
+                    const date = document.createElement('span');
+                    date.className = 'text-[10px] text-coffee-500 dark:text-[#a8a29e]';
+                    date.textContent = formatCommentDate(entry?.createdAt);
+                    date.dataset.momentAction = 'true';
+
+                    const text = document.createElement('p');
+                    text.className = 'text-xs text-coffee-800 dark:text-[#e7e5e4] whitespace-pre-wrap break-words';
+                    text.textContent = (entry?.text || '').toString();
+                    text.dataset.momentAction = 'true';
+
+                    meta.appendChild(author);
+                    meta.appendChild(date);
+                    row.appendChild(meta);
+                    row.appendChild(text);
+                    commentsList.appendChild(row);
+                });
+
+                if (!commentsEntries.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'text-xs italic text-coffee-500 dark:text-[#a8a29e]';
+                    empty.textContent = 'No comments yet.';
+                    empty.dataset.momentAction = 'true';
+                    commentsList.appendChild(empty);
+                }
+
+                const commentCount = commentsEntries.length;
+                setCommentBtnLabel(commentCount);
+            };
+
+            const loadComments = async () => {
+                commentsEntries = await commentsModule.listComments({ photoId: docItem.id, max: 30 });
+                commentsLoaded = true;
+                renderComments();
+            };
+
+            // Prime comment count during card render so button label is correct before first click.
+            loadComments().catch(() => {
+                // Keep default 0 comments label if prefetch fails.
+            });
+
+            commentBtn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const willShow = commentsPanel.classList.contains('hidden');
+                commentsPanel.classList.toggle('hidden', !willShow);
+                if (!willShow) return;
+                if (commentsLoaded) return;
+                commentsList.innerHTML = '<div class="text-xs italic text-coffee-500 dark:text-[#a8a29e]">Loading comments...</div>';
+                try {
+                    await loadComments();
+                } catch (error) {
+                    commentsList.innerHTML = '<div class="text-xs italic text-red-500">Could not load comments.</div>';
+                }
+            });
+
+            commentPostBtn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const text = commentInput.value.trim();
+                if (!text) return;
+                commentPostBtn.disabled = true;
+                commentPostBtn.classList.add('opacity-70', 'cursor-wait');
+                try {
+                    const created = await commentsModule.addComment({ photoId: docItem.id, text });
+                    commentInput.value = '';
+                    commentsEntries = [created, ...commentsEntries];
+                    commentsLoaded = true;
+                    commentsPanel.classList.remove('hidden');
+                    renderComments();
+                } catch (error) {
+                    console.error('Failed creating comment', error);
+                    alert(`Could not add comment: ${error?.message || 'Unknown error'}`);
+                } finally {
+                    commentPostBtn.disabled = false;
+                    commentPostBtn.classList.remove('opacity-70', 'cursor-wait');
+                }
+            });
+
             card.appendChild(body);
             grid.appendChild(card);
 
