@@ -427,6 +427,63 @@ export const createGalleryModule = ({
         return new File([blob], fileName, { type: 'image/png' });
     };
 
+    const buildMomentBrewDetailsSnapshot = (brew) => {
+        const toNumber = (value) => {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        };
+        const hasText = (value) => typeof value === 'string' && value.trim().length > 0;
+        const normalizeText = (value) => {
+            if (!hasText(value)) return '';
+            const trimmed = value.trim();
+            const numeric = Number(trimmed);
+            if (Number.isFinite(numeric) && numeric === 0) return '';
+            return trimmed;
+        };
+        const normalizeNumberText = (value, digits = 1, options = {}) => {
+            const n = toNumber(value);
+            if (n === null) return '';
+            const allowZero = options.allowZero === true;
+            if (!allowZero && n === 0) return '';
+            const factor = 10 ** digits;
+            return `${Math.round(n * factor) / factor}`;
+        };
+
+        const steps = Array.isArray(brew?.recipeSteps) ? brew.recipeSteps : [];
+        const derivedPourCount = steps.filter((step) => step?.type === 'pour').length;
+        const derivedSwirlCount = steps.filter((step) => step?.type === 'swirl').length;
+        const weight = toNumber(brew?.weight);
+        const ratio = toNumber(brew?.ratio);
+        const yieldValue = toNumber(brew?.yield);
+        const derivedOut = Number.isFinite(weight) && Number.isFinite(ratio)
+            ? (weight * ratio)
+            : null;
+
+        const grinderText = normalizeText(brew?.grinder);
+        const grindText = normalizeText(brew?.grind);
+
+        return {
+            weight: weight === null ? '' : normalizeNumberText(weight, 1),
+            ratio: ratio === null ? '' : normalizeNumberText(ratio, 2),
+            out: yieldValue !== null
+                ? normalizeNumberText(yieldValue, 1)
+                : (derivedOut !== null ? normalizeNumberText(derivedOut, 1) : ''),
+            grinder: grinderText,
+            grind: grindText || normalizeNumberText(brew?.grind, 1),
+            time: normalizeNumberText(brew?.time, 0),
+            temp: normalizeText(brew?.temp) || normalizeNumberText(brew?.temp, 1),
+            firstDrip: normalizeNumberText(brew?.firstDrip, 0),
+            maxFlow: normalizeNumberText(brew?.maxFlow, 1),
+            avgFlow: normalizeNumberText(brew?.avgFlow, 1),
+            pourCount: Number.isFinite(Number(brew?.pourCount))
+                ? (Math.round(Number(brew.pourCount)) > 0 ? `${Math.round(Number(brew.pourCount))}` : '')
+                : (derivedPourCount > 0 ? `${derivedPourCount}` : ''),
+            swirlCount: Number.isFinite(Number(brew?.swirlCount))
+                ? (Math.round(Number(brew.swirlCount)) > 0 ? `${Math.round(Number(brew.swirlCount))}` : '')
+                : (derivedSwirlCount > 0 ? `${derivedSwirlCount}` : '')
+        };
+    };
+
     const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, options = {}) => {
         const normalized = (text || '').toString().trim();
         if (!normalized) return y;
@@ -548,124 +605,6 @@ export const createGalleryModule = ({
         return canvasToPngFile(canvas, `moment-graph-${timestamp}.png`);
     };
 
-    const buildMomentDetailsFile = async ({ brew, timestamp }) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1080;
-        canvas.height = 1350;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Canvas context unavailable.');
-
-        ctx.fillStyle = '#1c1917';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const cardX = 44;
-        const cardY = 42;
-        const cardW = 992;
-        const cardH = 1266;
-        ctx.fillStyle = '#292524';
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.roundRect(cardX, cardY, cardW, cardH, 28);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#1c1917';
-        ctx.beginPath();
-        ctx.roundRect(cardX + 28, cardY + 26, cardW - 56, 110, 18);
-        ctx.fill();
-        ctx.fillStyle = '#fafaf9';
-        ctx.font = '700 40px Nunito, sans-serif';
-        ctx.fillText('Brew details', cardX + 54, cardY + 94);
-
-        const toNumber = (value) => {
-            const n = Number(value);
-            return Number.isFinite(n) ? n : null;
-        };
-        const hasText = (value) => typeof value === 'string' && value.trim().length > 0;
-        const fmtNumber = (value, digits = 1) => {
-            const n = toNumber(value);
-            if (n === null) return '';
-            return `${Math.round(n * (10 ** digits)) / (10 ** digits)}`;
-        };
-        const steps = Array.isArray(brew?.recipeSteps) ? brew.recipeSteps : [];
-        const derivedPourCount = steps.filter((step) => step?.type === 'pour').length;
-        const derivedSwirlCount = steps.filter((step) => step?.type === 'swirl').length;
-        const inValue = fmtNumber(brew?.weight, 1);
-        const ratioValue = fmtNumber(brew?.ratio, 2);
-        const outDerived = (() => {
-            const w = toNumber(brew?.weight);
-            const r = toNumber(brew?.ratio);
-            if (!Number.isFinite(w) || !Number.isFinite(r)) return '';
-            return fmtNumber(w * r, 1);
-        })();
-        const grinderValue = hasText(brew?.grinder) ? brew.grinder.trim() : '';
-        const grindValue = (() => {
-            if (hasText(brew?.grind)) return brew.grind.toString().trim();
-            const n = toNumber(brew?.grind);
-            return n === null ? '' : fmtNumber(n, 1);
-        })();
-        const timeValue = fmtNumber(brew?.time, 0);
-        const tempValue = hasText(brew?.temp) ? brew.temp.trim() : fmtNumber(brew?.temp, 1);
-        const firstDripValue = fmtNumber(brew?.firstDrip, 0);
-        const maxFlowValue = fmtNumber(brew?.maxFlow, 1);
-        const avgFlowValue = fmtNumber(brew?.avgFlow, 1);
-        const pourCountValue = Number.isFinite(Number(brew?.pourCount))
-            ? `${Math.round(Number(brew.pourCount))}`
-            : (derivedPourCount > 0 ? `${derivedPourCount}` : '');
-        const swirlCountValue = Number.isFinite(Number(brew?.swirlCount))
-            ? `${Math.round(Number(brew.swirlCount))}`
-            : (derivedSwirlCount > 0 ? `${derivedSwirlCount}` : '');
-
-        const metrics = [
-            { label: 'In', value: inValue, suffix: 'g' },
-            { label: 'Ratio', value: ratioValue, suffix: '' },
-            { label: 'Out', value: outDerived, suffix: 'g' },
-            { label: 'Grinder', value: grinderValue, suffix: '' },
-            { label: 'Grind size', value: grindValue, suffix: '' },
-            { label: 'Time', value: timeValue, suffix: 's' },
-            { label: 'Temp', value: tempValue, suffix: 'C' },
-            { label: 'First drip', value: firstDripValue, suffix: 's' },
-            { label: 'Max flow', value: maxFlowValue, suffix: 'g/s' },
-            { label: 'Avg flow', value: avgFlowValue, suffix: 'g/s' },
-            { label: 'Pour count', value: pourCountValue, suffix: '' },
-            { label: 'Swirl count', value: swirlCountValue, suffix: '' }
-        ].filter((metric) => hasText(metric.value));
-
-        const gridX = cardX + 28;
-        const gridY = cardY + 166;
-        const gridW = cardW - 56;
-        const colGap = 14;
-        const rowGap = 14;
-        const cols = 3;
-        const boxW = Math.floor((gridW - (colGap * (cols - 1))) / cols);
-        const boxH = 126;
-
-        metrics.forEach((metric, index) => {
-            const col = index % cols;
-            const row = Math.floor(index / cols);
-            const x = gridX + col * (boxW + colGap);
-            const y = gridY + row * (boxH + rowGap);
-            ctx.fillStyle = '#fafaf9';
-            ctx.beginPath();
-            ctx.roundRect(x, y, boxW, boxH, 12);
-            ctx.fill();
-            ctx.strokeStyle = '#e7e5e4';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            ctx.fillStyle = '#78716c';
-            ctx.font = '700 18px Nunito, sans-serif';
-            ctx.fillText(metric.label.toUpperCase(), x + 14, y + 28);
-            ctx.fillStyle = '#1c1917';
-            ctx.font = '700 34px Nunito, sans-serif';
-            const suffix = metric.suffix ? ` ${metric.suffix}` : '';
-            ctx.fillText(`${metric.value}${suffix}`, x + 14, y + 82);
-        });
-
-        return canvasToPngFile(canvas, `moment-details-${timestamp}.png`);
-    };
-
     const formatMomentDate = (isoValue) => {
         if (!isoValue) return '';
         const date = new Date(isoValue);
@@ -676,6 +615,7 @@ export const createGalleryModule = ({
     const buildShareTemplateCard = ({ photoUrl, data, cardSnapshot, widthPx }) => {
         const width = Math.max(280, Math.min(640, widthPx || 560));
         const hasRating = (Number(cardSnapshot?.rating) || 0) > 0;
+        const isDetailsMoment = data?.momentType === 'details';
 
         const card = document.createElement('div');
         card.style.cssText = [
@@ -691,16 +631,63 @@ export const createGalleryModule = ({
 
         const mediaWrap = document.createElement('div');
         mediaWrap.style.cssText = 'position:relative;width:100%;background:#1f1b19;overflow:hidden;';
-        if (photoUrl) {
+        if (!isDetailsMoment && photoUrl) {
             const img = document.createElement('img');
             img.src = photoUrl;
             img.alt = 'Moment photo';
             img.crossOrigin = 'anonymous';
             img.style.cssText = 'width:100%;height:auto;display:block;';
             mediaWrap.appendChild(img);
+        } else if (isDetailsMoment) {
+            const details = data?.brewDetailsSnapshot || {};
+            const inText = details.weight ? `${details.weight}g` : '-';
+            const ratioText = details.ratio ? `1:${details.ratio}` : '-';
+            const outText = details.out ? `${details.out}g` : '-';
+            const tempText = details.temp
+                ? (/[a-z]/i.test(details.temp) ? details.temp : `${details.temp}C`)
+                : '-';
+            const timeText = details.time ? `${details.time}s` : '';
+            const extraMeta = [
+                { label: 'First drip', value: details.firstDrip ? `${details.firstDrip}s` : '' },
+                { label: 'Max flow', value: details.maxFlow ? `${details.maxFlow}g/s` : '' },
+                { label: 'Avg flow', value: details.avgFlow ? `${details.avgFlow}g/s` : '' },
+                { label: 'Pours', value: details.pourCount || '' },
+                { label: 'Swirls', value: details.swirlCount || '' }
+            ].filter((item) => !!item.value);
+
+            const detailsWrap = document.createElement('div');
+            detailsWrap.style.cssText = 'padding:16px;background:#1c1917;border-bottom:1px solid rgba(255,255,255,0.08);';
+            const statsCard = document.createElement('div');
+            statsCard.style.cssText = 'background:#1c1917;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.12);';
+
+            const timeBlock = timeText
+                ? `<div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Time</div><div style="font-weight:700;color:#f5f5f4;">${timeText}</div></div>`
+                : '';
+            const extraChips = extraMeta.map((item) =>
+                `<span style="display:inline-flex;align-items:center;padding:2px 6px;background:#292524;border-radius:6px;border:1px solid rgba(255,255,255,0.15);font-size:10px;color:#d6ccc2;">${item.label}: ${item.value}</span>`
+            ).join('');
+
+            statsCard.innerHTML = `
+                <div style="font-size:10px;font-weight:700;color:#a8a29e;text-transform:uppercase;margin-bottom:8px;">Brew stats</div>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;margin-bottom:8px;">
+                    <div style="background:#292524;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);"><div style="font-size:10px;color:#78716c;text-transform:uppercase;">In</div><div style="font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:#f5f5f4;">${inText}</div></div>
+                    <div style="background:#292524;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);"><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Ratio</div><div style="font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:#f5f5f4;">${ratioText}</div></div>
+                    <div style="background:#292524;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);"><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Out</div><div style="font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:#f5f5f4;">${outText}</div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;border-top:1px solid rgba(255,255,255,0.12);padding-top:8px;">
+                    <div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">${details.grinder ? 'Grinder' : 'Grind'}</div><div style="font-weight:700;color:#f5f5f4;">${details.grinder || details.grind || '-'}</div></div>
+                    ${timeBlock}
+                    <div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Temp</div><div style="font-weight:700;color:#f5f5f4;">${tempText}</div></div>
+                </div>
+                ${extraChips ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">${extraChips}</div>` : ''}
+            `;
+            detailsWrap.appendChild(statsCard);
+            mediaWrap.appendChild(detailsWrap);
         }
         const dateBadge = document.createElement('div');
-        dateBadge.style.cssText = 'position:absolute;left:16px;bottom:14px;color:#ffffff;font-size:18px;font-weight:800;line-height:1;';
+        dateBadge.style.cssText = isDetailsMoment
+            ? 'padding:0 16px 12px 16px;color:#ffffff;font-size:13px;font-weight:700;line-height:1;text-align:right;'
+            : 'position:absolute;left:16px;bottom:14px;color:#ffffff;font-size:18px;font-weight:800;line-height:1;';
         dateBadge.textContent = formatMomentDate(data?.createdAt);
         mediaWrap.appendChild(dateBadge);
         card.appendChild(mediaWrap);
@@ -1055,38 +1042,33 @@ export const createGalleryModule = ({
                     timestamp
                 });
             } else if (momentType === 'details') {
-                fileToUpload = await buildMomentDetailsFile({
-                    brew: coffeeData,
-                    timestamp
-                });
+                fileToUpload = null;
             }
+            let photoPath = '';
+            let thumbPath = '';
+            if (fileToUpload) {
+                photoPath = `photos/${user.uid}/${timestamp}_${fileToUpload.name}_original`;
+                const storageRef = ref(storage, photoPath);
+                const originalOptions = { maxSizeMB: 1.5, maxWidthOrHeight: 1920, useWebWorker: true };
+                const compressedOriginal = await imageCompression(fileToUpload, originalOptions);
+                await uploadBytes(storageRef, compressedOriginal);
 
-            if (!fileToUpload) throw new Error('No moment image available.');
-
-            const photoPath = `photos/${user.uid}/${timestamp}_${fileToUpload.name}_original`;
-            const storageRef = ref(storage, photoPath);
-            const originalOptions = { maxSizeMB: 1.5, maxWidthOrHeight: 1920, useWebWorker: true };
-            const compressedOriginal = await imageCompression(fileToUpload, originalOptions);
-            await uploadBytes(storageRef, compressedOriginal);
-
-            let thumbPath = null;
-            const thumbOptions = { maxSizeMB: 0.1, maxWidthOrHeight: 600, useWebWorker: true };
-            try {
-                const thumbFile = await imageCompression(fileToUpload, thumbOptions);
-                thumbPath = `photos/${user.uid}/${timestamp}_${fileToUpload.name}_thumb`;
-                const thumbRef = ref(storage, thumbPath);
-                await uploadBytes(thumbRef, thumbFile);
-            } catch (error) {
-                console.log('Thumbnail generation failed:', error);
-                thumbPath = null;
+                const thumbOptions = { maxSizeMB: 0.1, maxWidthOrHeight: 600, useWebWorker: true };
+                try {
+                    const thumbFile = await imageCompression(fileToUpload, thumbOptions);
+                    thumbPath = `photos/${user.uid}/${timestamp}_${fileToUpload.name}_thumb`;
+                    const thumbRef = ref(storage, thumbPath);
+                    await uploadBytes(thumbRef, thumbFile);
+                } catch (error) {
+                    console.log('Thumbnail generation failed:', error);
+                    thumbPath = '';
+                }
             }
 
             const createdAtIso = new Date().toISOString();
             const momentPayload = {
                 uid: user.uid,
                 uploaderName: user.displayName || 'Unknown User',
-                photoPath,
-                thumbPath,
                 message,
                 coffeeId: uploadCoffeeId,
                 coffeeSnapshot,
@@ -1095,6 +1077,11 @@ export const createGalleryModule = ({
                 likedBy: [],
                 createdAt: createdAtIso
             };
+            if (photoPath) momentPayload.photoPath = photoPath;
+            if (thumbPath) momentPayload.thumbPath = thumbPath;
+            if (momentType === 'details') {
+                momentPayload.brewDetailsSnapshot = buildMomentBrewDetailsSnapshot(coffeeData);
+            }
             const createdMomentRef = await addDoc(collection(db, 'photos'), momentPayload);
             closeUploadModal();
 
@@ -1286,23 +1273,84 @@ export const createGalleryModule = ({
                 card.appendChild(deleteBtn);
             }
 
-            const imageWrap = document.createElement('div');
-            imageWrap.dataset.momentImageWrap = 'true';
-            imageWrap.className = 'h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative cursor-pointer';
+            let img = null;
+            if (momentType === 'details') {
+                const details = data?.brewDetailsSnapshot || {};
+                const inText = details.weight ? `${details.weight}g` : '-';
+                const ratioText = details.ratio ? `1:${details.ratio}` : '-';
+                const outText = details.out ? `${details.out}g` : '-';
+                const tempText = details.temp
+                    ? (/[a-z]/i.test(details.temp) ? details.temp : `${details.temp}C`)
+                    : '-';
+                const timeText = details.time ? `${details.time}s` : '';
+                const timeBlock = timeText
+                    ? `<div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Time</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${timeText}</div></div>`
+                    : '';
+                const detailsWrap = document.createElement('div');
+                detailsWrap.className = 'p-3 bg-coffee-50 dark:bg-[#1c1917] border-b border-coffee-100 dark:border-[#44403c]';
 
-            const img = document.createElement('img');
-            img.src = displayUrl;
-            img.loading = 'lazy';
-            img.className = 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110';
-            img.alt = 'Brew Photo';
-            img.dataset.momentId = docItem.id;
-            imageWrap.appendChild(img);
+                const statsCard = document.createElement('div');
+                statsCard.className = 'bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-3 border border-coffee-100 dark:border-[#44403c]';
+                statsCard.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew stats</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center mb-2">
+                        <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">In</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${inText}</div></div>
+                        <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Ratio</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${ratioText}</div></div>
+                        <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Out</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${outText}</div></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center border-t border-coffee-200 dark:border-[#44403c] pt-2">
+                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase truncate px-1">${details.grinder ? 'Grinder' : 'Grind'}</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${details.grinder || details.grind || '-'}</div></div>
+                        ${timeBlock}
+                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Temp</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${tempText}</div></div>
+                    </div>
+                `;
 
-            const dateBadge = document.createElement('div');
-            dateBadge.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs';
-            dateBadge.textContent = new Date(data.createdAt).toLocaleDateString();
-            imageWrap.appendChild(dateBadge);
-            card.appendChild(imageWrap);
+                const extraMeta = [
+                    { label: 'First drip', value: details.firstDrip ? `${details.firstDrip}s` : '' },
+                    { label: 'Max flow', value: details.maxFlow ? `${details.maxFlow}g/s` : '' },
+                    { label: 'Avg flow', value: details.avgFlow ? `${details.avgFlow}g/s` : '' },
+                    { label: 'Pours', value: details.pourCount || '' },
+                    { label: 'Swirls', value: details.swirlCount || '' }
+                ].filter((item) => item.value);
+                if (extraMeta.length) {
+                    const extraWrap = document.createElement('div');
+                    extraWrap.className = 'mt-2 flex flex-wrap gap-1.5';
+                    extraMeta.forEach((item) => {
+                        const chip = document.createElement('span');
+                        chip.className = 'inline-flex items-center px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-[10px] text-coffee-700 dark:text-[#d6ccc2]';
+                        chip.textContent = `${item.label}: ${item.value}`;
+                        extraWrap.appendChild(chip);
+                    });
+                    statsCard.appendChild(extraWrap);
+                }
+
+                const dateBadge = document.createElement('div');
+                dateBadge.className = 'mt-2 text-right text-[11px] text-coffee-500 dark:text-[#a8a29e]';
+                dateBadge.textContent = new Date(data.createdAt).toLocaleDateString();
+                detailsWrap.appendChild(statsCard);
+                detailsWrap.appendChild(dateBadge);
+                card.appendChild(detailsWrap);
+            } else {
+                const imageWrap = document.createElement('div');
+                imageWrap.dataset.momentImageWrap = 'true';
+                imageWrap.className = 'h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative cursor-pointer';
+
+                img = document.createElement('img');
+                img.src = displayUrl;
+                img.loading = 'lazy';
+                img.className = 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110';
+                img.alt = 'Brew Photo';
+                img.dataset.momentId = docItem.id;
+                imageWrap.appendChild(img);
+
+                const dateBadge = document.createElement('div');
+                dateBadge.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs';
+                dateBadge.textContent = new Date(data.createdAt).toLocaleDateString();
+                imageWrap.appendChild(dateBadge);
+                card.appendChild(imageWrap);
+            }
 
             const body = document.createElement('div');
             body.dataset.momentBody = 'true';
@@ -1645,24 +1693,26 @@ export const createGalleryModule = ({
             card.appendChild(body);
             grid.appendChild(card);
 
-            img.addEventListener('click', async (event) => {
-                event.stopPropagation();
-                const fullUrl = await resolveSignedPhotoUrl({
-                    photoId: docItem.id,
-                    variant: 'full',
-                    data
+            if (img) {
+                img.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    const fullUrl = await resolveSignedPhotoUrl({
+                        photoId: docItem.id,
+                        variant: 'full',
+                        data
+                    });
+                    img.dataset.lightboxFullUrl = fullUrl;
+                    const galleryImages = Array.from(document.querySelectorAll('#galleryGrid img[data-moment-id]'));
+                    const items = galleryImages
+                        .map((imageEl) => ({
+                            url: imageEl.dataset.lightboxFullUrl || imageEl.currentSrc || imageEl.src || '',
+                            alt: imageEl.alt || 'Moment image'
+                        }))
+                        .filter((item) => !!item.url);
+                    const startIndex = Math.max(0, galleryImages.indexOf(img));
+                    openExternalUrl(fullUrl, { items, startIndex });
                 });
-                img.dataset.lightboxFullUrl = fullUrl;
-                const galleryImages = Array.from(document.querySelectorAll('#galleryGrid img[data-moment-id]'));
-                const items = galleryImages
-                    .map((imageEl) => ({
-                        url: imageEl.dataset.lightboxFullUrl || imageEl.currentSrc || imageEl.src || '',
-                        alt: imageEl.alt || 'Moment image'
-                    }))
-                    .filter((item) => !!item.url);
-                const startIndex = Math.max(0, galleryImages.indexOf(img));
-                openExternalUrl(fullUrl, { items, startIndex });
-            });
+            }
         });
     };
 
