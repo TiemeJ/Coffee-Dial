@@ -886,6 +886,103 @@ export const createGalleryModule = ({
         });
     };
 
+    const getMomentSharedWith = (data) => {
+        if (!Array.isArray(data?.sharedWith)) return [];
+        return data.sharedWith
+            .map((uid) => (typeof uid === 'string' ? uid.trim() : ''))
+            .filter((uid) => !!uid);
+    };
+
+    const closeOpenMomentShareEditors = () => {
+        document.querySelectorAll('[data-moment-share-editor="true"]').forEach((el) => el.remove());
+    };
+
+    const buildMomentShareEditor = ({ photoId, data, onSaved }) => {
+        const wrapper = document.createElement('div');
+        wrapper.dataset.momentShareEditor = 'true';
+        wrapper.className = 'mt-2 rounded-lg border border-coffee-200 dark:border-[#57534e] bg-coffee-50 dark:bg-[#1c1917] p-2 space-y-2';
+
+        const header = document.createElement('div');
+        header.className = 'text-[11px] font-semibold uppercase text-coffee-600 dark:text-[#a8a29e]';
+        header.textContent = 'In-app sharing';
+        wrapper.appendChild(header);
+
+        const following = getFollowing();
+        const selectedSet = new Set(getMomentSharedWith(data));
+
+        if (!following.length) {
+            const empty = document.createElement('div');
+            empty.className = 'text-xs italic text-coffee-500 dark:text-[#a8a29e]';
+            empty.textContent = 'No friends followed yet.';
+            wrapper.appendChild(empty);
+        } else {
+            const list = document.createElement('div');
+            list.className = 'max-h-36 overflow-y-auto space-y-1';
+            following.forEach((friend) => {
+                const uid = typeof friend?.uid === 'string' ? friend.uid : '';
+                if (!uid) return;
+                const row = document.createElement('label');
+                row.className = 'flex items-center justify-between gap-2 rounded bg-white dark:bg-[#292524] border border-coffee-100 dark:border-[#44403c] px-2 py-1.5';
+                const name = document.createElement('span');
+                name.className = 'text-xs text-coffee-800 dark:text-[#d6ccc2] truncate';
+                name.textContent = friend?.name || uid;
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = uid;
+                checkbox.checked = selectedSet.has(uid);
+                checkbox.className = 'rounded border-coffee-300 dark:border-[#57534e]';
+                row.appendChild(name);
+                row.appendChild(checkbox);
+                list.appendChild(row);
+            });
+            wrapper.appendChild(list);
+        }
+
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center justify-end gap-2';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'px-2 py-1 text-xs rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e]';
+        cancelBtn.textContent = 'Close';
+        cancelBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            wrapper.remove();
+        });
+
+        const saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.className = 'px-2.5 py-1 text-xs rounded bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white';
+        saveBtn.textContent = 'Save';
+        saveBtn.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            saveBtn.disabled = true;
+            saveBtn.classList.add('opacity-70', 'cursor-wait');
+            saveBtn.textContent = 'Saving...';
+            try {
+                const selected = Array.from(wrapper.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map((cb) => cb.value)
+                    .filter((uid) => !!uid);
+                await updateDoc(doc(db, 'photos', photoId), { sharedWith: selected });
+                data.sharedWith = selected;
+                if (typeof onSaved === 'function') onSaved(selected);
+                wrapper.remove();
+                alert('Moment sharing updated.');
+            } catch (error) {
+                console.error('Failed updating moment sharing', error);
+                alert(`Failed to update sharing: ${error?.message || 'Unknown error'}`);
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-70', 'cursor-wait');
+                saveBtn.textContent = 'Save';
+            }
+        });
+
+        actions.appendChild(cancelBtn);
+        actions.appendChild(saveBtn);
+        wrapper.appendChild(actions);
+        return wrapper;
+    };
+
     const closeUploadModal = () => {
         currentUploadMomentBrew = null;
         document.getElementById('uploadPhotoModal')?.classList.add('hidden');
@@ -1144,6 +1241,13 @@ export const createGalleryModule = ({
             const displayUrl = cachedThumb || batchThumb || resolveLegacyUrl(data, 'thumb');
             const primaryInfo = cardSnapshot.farmer || '-';
             const secondaryInfo = cardSnapshot.roaster || cardSnapshot.origin || '-';
+            const updateSharedCountLabel = (el) => {
+                if (!el) return;
+                const count = getMomentSharedWith(data).length;
+                el.textContent = count === 0
+                    ? 'Visible only to you'
+                    : `Shared with ${count} friend${count === 1 ? '' : 's'}`;
+            };
 
             if (getCurrentGalleryMode() === 'mine') {
                 const shareBtn = document.createElement('button');
@@ -1213,6 +1317,40 @@ export const createGalleryModule = ({
             body.dataset.momentBody = 'true';
             body.className = 'p-3 flex-1 flex flex-col';
             body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-[10px] px-1.5 py-0.5 rounded border ${momentTypeMeta.badgeClass} inline-flex items-center gap-1"><i class="fa-solid ${momentTypeMeta.icon} text-[9px]"></i><span>${momentTypeMeta.label}</span></div></div><p data-moment-message="true" class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div data-moment-info="true" class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
+
+            if (getCurrentGalleryMode() === 'mine') {
+                const shareMetaWrap = document.createElement('div');
+                shareMetaWrap.className = 'mt-2 flex items-center justify-between gap-2';
+
+                const sharedCount = document.createElement('div');
+                sharedCount.className = 'text-[11px] text-coffee-500 dark:text-[#a8a29e]';
+                updateSharedCountLabel(sharedCount);
+
+                const manageBtn = document.createElement('button');
+                manageBtn.type = 'button';
+                manageBtn.dataset.momentAction = 'true';
+                manageBtn.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] inline-flex items-center gap-1';
+                manageBtn.innerHTML = '<i class="fa-solid fa-user-gear text-[10px]"></i><span>Manage sharing</span>';
+                manageBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const existing = body.querySelector('[data-moment-share-editor="true"]');
+                    if (existing) {
+                        existing.remove();
+                        return;
+                    }
+                    closeOpenMomentShareEditors();
+                    const editor = buildMomentShareEditor({
+                        photoId: docItem.id,
+                        data,
+                        onSaved: () => updateSharedCountLabel(sharedCount)
+                    });
+                    body.appendChild(editor);
+                });
+
+                shareMetaWrap.appendChild(sharedCount);
+                shareMetaWrap.appendChild(manageBtn);
+                body.appendChild(shareMetaWrap);
+            }
             card.appendChild(body);
             grid.appendChild(card);
 
