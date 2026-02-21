@@ -4,6 +4,8 @@ export const installCardNavigationHandlers = ({
     navigateCoffeeCardFromGraph,
     navigateCoffeeTypeCard,
     navigateGasCard,
+    showPrevLightboxImage,
+    showNextLightboxImage,
     handleEscapeKey
 }) => {
     const isVisible = (id) => {
@@ -33,6 +35,14 @@ export const installCardNavigationHandlers = ({
         if (isTextInputTarget(target)) return;
 
         const dir = event.key === 'ArrowLeft' ? -1 : 1;
+
+        if (isVisible('lightboxOverlay')) {
+            if (dir < 0) showPrevLightboxImage?.(event);
+            else showNextLightboxImage?.(event);
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
 
         if (isVisible('cardGraphModal')) {
             if (tryNavigate(dir < 0 ? 'cardGraphPrevBtn' : 'cardGraphNextBtn', () => navigateCoffeeCardFromGraph(dir))) {

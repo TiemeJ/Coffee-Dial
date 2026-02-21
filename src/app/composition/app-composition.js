@@ -593,7 +593,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeCoffeeTypeCard: (...args) => closeCoffeeTypeCard(...args),
             closeBeanCard: (...args) => closeBeanCard(...args),
             closeGasCard: (...args) => closeGasCard(...args),
-            closeImageModal: (...args) => closeImageModal(...args),
             closeLightbox: (...args) => closeLightbox?.(...args),
             closeCoffeeTypes: (...args) => closeCoffeeTypes(...args),
             closeBeans: (...args) => closeBeans(...args),
@@ -942,12 +941,13 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const {
             openGraphModal,
             closeGraphModal,
-            openImageModal,
-            closeImageModal,
+            openScaWheelLightbox,
             openLightbox,
             closeLightbox,
-            resetZoom,
-            initZoomListeners
+            showPrevLightboxImage,
+            showNextLightboxImage,
+            resetLightboxZoom,
+            initLightboxListeners
         } = createMediaModalsModule({
             getCoffeeScale: () => coffeeScale
         });
@@ -1278,6 +1278,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             navigateCoffeeCardFromGraph,
             navigateCoffeeTypeCard,
             navigateGasCard,
+            showPrevLightboxImage,
+            showNextLightboxImage,
             handleEscapeKey
         });
 
@@ -1287,7 +1289,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             changeView,
             initNotificationListener,
             openHelp,
-            initZoomListeners,
+            initLightboxListeners,
             clearNotificationSubscription,
             clearViewSubscriptions
         });
@@ -1484,7 +1486,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeGasMergeModal,
             closeGraphModal,
             closeHelp,
-            closeImageModal,
             closeImportExportModal,
             closeImportModal,
             closeLabResultsModal,
@@ -1595,7 +1596,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             openGasQuickFilterValues,
             openGraphModal,
             openHelp,
-            openImageModal,
+            openScaWheelLightbox,
             openImportExportModal,
             openImportModal,
             openLabResultsModal,
@@ -1620,7 +1621,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             resetCardPhotoState,
             resetFormState,
             resetSca,
-            resetZoom,
+            resetLightboxZoom,
             resolveAppConfirm,
             saveBeanCardEdits,
             saveBeanFrozenDate,

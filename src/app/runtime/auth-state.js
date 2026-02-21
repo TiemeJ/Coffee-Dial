@@ -4,7 +4,7 @@ export const createAuthStateChangedHandler = ({
     changeView,
     initNotificationListener,
     openHelp,
-    initZoomListeners,
+    initLightboxListeners,
     clearNotificationSubscription,
     clearViewSubscriptions
 }) => {
@@ -40,7 +40,7 @@ export const createAuthStateChangedHandler = ({
             changeView('mine');
             initNotificationListener(user.uid);
             if (shouldShowOnboarding) openHelp();
-            initZoomListeners();
+            initLightboxListeners();
             return;
         }
 

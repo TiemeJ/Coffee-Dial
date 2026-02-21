@@ -1,17 +1,3 @@
-    <div id="imageModalOverlay" class="hidden fixed inset-0 z-[10100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden relative flex flex-col h-[80vh]">
-            <div class="absolute top-0 right-0 p-4 z-20">
-                <button data-action-click="closeImageModal(null)" class="bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors">&times;</button>
-            </div>
-            <div class="flex-1 overflow-hidden relative bg-coffee-50 dark:bg-[#1c1917] flex items-center justify-center" id="imageContainer" style="touch-action: none;">
-                <img id="zoomableImage" src="img/SCA_wheel.png" alt="SCA Flavor Wheel" class="max-w-full max-h-full object-contain cursor-grab" style="transform-origin: center center;">
-            </div>
-            <div class="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
-                 <span class="bg-black/50 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm">Drag to Pan • Pinch/Wheel to Zoom • Double Tap to Reset</span>
-            </div>
-        </div>
-    </div>
-
     <div id="lightboxOverlay" class="hidden fixed inset-0 bg-black/95" style="z-index: 2147483000;">
         <button id="lightboxCloseBtn" type="button" class="absolute z-30 bg-white/15 hover:bg-white/25 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors" style="top: calc(env(safe-area-inset-top, 0px) + 12px); right: calc(env(safe-area-inset-right, 0px) + 12px);" aria-label="Close image viewer">
             <i class="fa-solid fa-xmark"></i>
