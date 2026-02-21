@@ -12,7 +12,8 @@ export const createGasCardModule = ({
     storageService,
     imageCompression,
     openAppConfirm,
-    renderGasTable
+    renderGasTable,
+    openLightbox
 }) => {
     const { db, doc, collection, updateDoc, deleteDoc, writeBatch } = dataService || {};
     const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
@@ -476,7 +477,15 @@ export const createGasCardModule = ({
         if (e) e.stopPropagation();
         const item = getCurrentGasItem();
         const url = item?.imageUrl || item?.imageURL;
-        if (url) window.open(url, '_blank');
+        if (!url) return;
+        if (typeof openLightbox === 'function') {
+            openLightbox({
+                items: [{ url, alt: 'Gear photo' }],
+                startIndex: 0
+            });
+            return;
+        }
+        window.open(url, '_blank');
     };
 
     const removeGasPhoto = async (e) => {

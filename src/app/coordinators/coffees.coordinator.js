@@ -27,6 +27,7 @@ export const createCoffeesCoordinator = ({
     openAppConfirm,
     updateCoffeeTypeSelectors,
     renderPinnedTiles,
+    openLightbox,
     appCommands = null,
     appEvents = null
 }) => {
@@ -239,7 +240,8 @@ export const createCoffeesCoordinator = ({
         dispatchCommand,
         openCoffeeTypeShopUrl,
         openNewBagForCoffeeType,
-        updateCoffeeTypeCardNav
+        updateCoffeeTypeCardNav,
+        openLightbox
     });
     openCoffeeTypeCard = coffeeTypeCard.openCoffeeTypeCard;
     closeCoffeeTypeCard = coffeeTypeCard.closeCoffeeTypeCard;

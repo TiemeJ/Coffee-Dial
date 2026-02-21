@@ -1,4 +1,4 @@
-    <div id="imageModalOverlay" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div id="imageModalOverlay" class="hidden fixed inset-0 z-[10100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden relative flex flex-col h-[80vh]">
             <div class="absolute top-0 right-0 p-4 z-20">
                 <button data-action-click="closeImageModal(null)" class="bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors">&times;</button>
@@ -9,6 +9,22 @@
             <div class="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
                  <span class="bg-black/50 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm">Drag to Pan • Pinch/Wheel to Zoom • Double Tap to Reset</span>
             </div>
+        </div>
+    </div>
+
+    <div id="lightboxOverlay" class="hidden fixed inset-0 bg-black/95" style="z-index: 2147483000;">
+        <button id="lightboxCloseBtn" type="button" class="absolute z-30 bg-white/15 hover:bg-white/25 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors" style="top: calc(env(safe-area-inset-top, 0px) + 12px); right: calc(env(safe-area-inset-right, 0px) + 12px);" aria-label="Close image viewer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <button id="lightboxPrevBtn" type="button" class="absolute top-1/2 -translate-y-1/2 z-30 bg-white/15 hover:bg-white/25 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors" style="left: calc(env(safe-area-inset-left, 0px) + 12px);" aria-label="Previous image">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button id="lightboxNextBtn" type="button" class="absolute top-1/2 -translate-y-1/2 z-30 bg-white/15 hover:bg-white/25 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors" style="right: calc(env(safe-area-inset-right, 0px) + 12px);" aria-label="Next image">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        <div id="lightboxCounter" class="absolute z-30 text-white text-xs px-2 py-1 rounded bg-black/40 hidden" style="top: calc(env(safe-area-inset-top, 0px) + 12px); left: calc(env(safe-area-inset-left, 0px) + 12px);"></div>
+        <div id="lightboxViewport" class="absolute inset-0 overflow-hidden flex items-center justify-center" style="touch-action: none;">
+            <img id="lightboxImage" alt="Image preview" class="max-w-full max-h-full object-contain select-none" style="transform-origin: center center;">
         </div>
     </div>
 

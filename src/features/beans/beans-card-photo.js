@@ -7,7 +7,8 @@ export const createBeansCardPhotoModule = ({
     dataService,
     storageService,
     imageCompression,
-    dispatchCommand
+    dispatchCommand,
+    openLightbox
 }) => {
     const { db, doc, updateDoc } = dataService || {};
     const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
@@ -30,7 +31,15 @@ export const createBeansCardPhotoModule = ({
         if (event) event.stopPropagation();
         const bean = getCurrentBean();
         const url = bean?.imageURL || bean?.imageUrl;
-        if (url) window.open(url, '_blank');
+        if (!url) return;
+        if (typeof openLightbox === 'function') {
+            openLightbox({
+                items: [{ url, alt: 'Bean photo' }],
+                startIndex: 0
+            });
+            return;
+        }
+        window.open(url, '_blank');
     };
 
     const removeBeanPhoto = async (event) => {

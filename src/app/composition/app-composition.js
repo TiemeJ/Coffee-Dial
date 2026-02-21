@@ -594,6 +594,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeBeanCard: (...args) => closeBeanCard(...args),
             closeGasCard: (...args) => closeGasCard(...args),
             closeImageModal: (...args) => closeImageModal(...args),
+            closeLightbox: (...args) => closeLightbox?.(...args),
             closeCoffeeTypes: (...args) => closeCoffeeTypes(...args),
             closeBeans: (...args) => closeBeans(...args),
             closeGasList: (...args) => closeGasList(...args),
@@ -706,7 +707,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             getCoffeeTypeForBean: (...args) => getCoffeeTypeForBean(...args),
             updateCoffeeTypeSelectors: (...args) => updateCoffeeTypeSelectors(...args),
-            openAppConfirm
+            openAppConfirm,
+            openLightbox: (...args) => openLightbox?.(...args)
         });
         // --- Coffee Management Functions ---
         const {
@@ -771,7 +773,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getStarDisplay,
             openAppConfirm,
             updateCoffeeTypeSelectors,
-            renderPinnedTiles: () => renderPinnedTiles()
+            renderPinnedTiles: () => renderPinnedTiles(),
+            openLightbox: (...args) => openLightbox?.(...args)
         });
 
         const {
@@ -838,7 +841,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getCoffees: () => getCoffeesState(),
             setCoffeesState: (value) => setCoffeesState(value),
             openAppConfirm,
-            getRefreshBrewGearSelectors: () => refreshBrewGearSelectors
+            getRefreshBrewGearSelectors: () => refreshBrewGearSelectors,
+            openLightbox: (...args) => openLightbox?.(...args)
         });
 
         
@@ -931,6 +935,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             functionsService,
             imageCompression,
             html2canvas,
+            openLightbox: (...args) => openLightbox?.(...args),
             openAppConfirm
         });
 
@@ -939,6 +944,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeGraphModal,
             openImageModal,
             closeImageModal,
+            openLightbox,
+            closeLightbox,
             resetZoom,
             initZoomListeners
         } = createMediaModalsModule({

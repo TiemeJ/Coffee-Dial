@@ -24,7 +24,8 @@ export const createGasCoordinator = ({
     getCoffees,
     setCoffeesState,
     openAppConfirm,
-    getRefreshBrewGearSelectors
+    getRefreshBrewGearSelectors,
+    openLightbox
 }) => {
     if (!appCommands?.dispatch) {
         throw new Error('createGasCoordinator requires appCommands.dispatch');
@@ -115,7 +116,8 @@ export const createGasCoordinator = ({
         getFilteredSortedGasItems: gasTable.getFilteredSortedGasItems,
         imageCompression,
         openAppConfirm,
-        renderGasTable: gasTable.renderGasTable
+        renderGasTable: gasTable.renderGasTable,
+        openLightbox
     });
     openGasCard = gasCard.openGasCard;
     enterGasEditMode = gasCard.enterGasEditMode;

@@ -18,6 +18,7 @@ export const createGalleryModule = ({
     functionsService,
     imageCompression,
     html2canvas,
+    openLightbox,
     openAppConfirm
 }) => {
     const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDocs, doc, updateDoc, deleteDoc } = dataService || {};
@@ -264,8 +265,16 @@ export const createGalleryModule = ({
         return batchItems;
     };
 
-    const openExternalUrl = (url) => {
+    const openExternalUrl = (url, options = {}) => {
         if (!url) return;
+        if (typeof openLightbox === 'function') {
+            const fallbackItems = [{ url, alt: 'Moment image' }];
+            openLightbox({
+                items: Array.isArray(options.items) && options.items.length ? options.items : fallbackItems,
+                startIndex: Number.isFinite(options.startIndex) ? options.startIndex : 0
+            });
+            return;
+        }
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
@@ -1183,10 +1192,10 @@ export const createGalleryModule = ({
 
             const img = document.createElement('img');
             img.src = displayUrl;
-            img.crossOrigin = 'anonymous';
             img.loading = 'lazy';
             img.className = 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110';
             img.alt = 'Brew Photo';
+            img.dataset.momentId = docItem.id;
             imageWrap.appendChild(img);
 
             const dateBadge = document.createElement('div');
@@ -1214,7 +1223,16 @@ export const createGalleryModule = ({
                     variant: 'full',
                     data
                 });
-                openExternalUrl(fullUrl);
+                img.dataset.lightboxFullUrl = fullUrl;
+                const galleryImages = Array.from(document.querySelectorAll('#galleryGrid img[data-moment-id]'));
+                const items = galleryImages
+                    .map((imageEl) => ({
+                        url: imageEl.dataset.lightboxFullUrl || imageEl.currentSrc || imageEl.src || '',
+                        alt: imageEl.alt || 'Moment image'
+                    }))
+                    .filter((item) => !!item.url);
+                const startIndex = Math.max(0, galleryImages.indexOf(img));
+                openExternalUrl(fullUrl, { items, startIndex });
             });
         });
     };

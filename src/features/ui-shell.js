@@ -11,6 +11,7 @@ export const createUiShellModule = ({
     closeBeanCard,
     closeGasCard,
     closeImageModal,
+    closeLightbox,
     closeCoffeeTypes,
     closeBeans,
     closeGasList,
@@ -422,6 +423,7 @@ export const createUiShellModule = ({
             closeIfVisible('galleryModal', () => document.getElementById('galleryModal')?.classList.add('hidden')) ||
             closeIfVisible('gasCardOverlay', () => closeGasCard(null)) ||
             closeIfVisible('beanCardOverlay', () => closeBeanCard(null)) ||
+            closeIfVisible('lightboxOverlay', () => closeLightbox?.(null)) ||
             closeIfVisible('imageModalOverlay', () => closeImageModal(null)) ||
             closeIfVisible('coffeeTypesModal', () => closeCoffeeTypes()) ||
             closeIfVisible('gasModal', () => closeGasList()) ||

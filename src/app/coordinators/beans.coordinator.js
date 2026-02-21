@@ -33,6 +33,7 @@ export const createBeansCoordinator = ({
     getCoffeeTypeForBean,
     updateCoffeeTypeSelectors,
     openAppConfirm,
+    openLightbox,
     appCommands = null,
     appEvents = null
 }) => {
@@ -159,7 +160,8 @@ export const createBeansCoordinator = ({
         getBeans: () => getBeans(),
         setBeansState: (value) => setBeansState(value),
         imageCompression,
-        dispatchCommand
+        dispatchCommand,
+        openLightbox
     });
 
     const beansTable = createBeansTableModule({

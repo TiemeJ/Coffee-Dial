@@ -19,7 +19,8 @@ export const createCoffeeTypeCardModule = ({
     dispatchCommand,
     openCoffeeTypeShopUrl,
     openNewBagForCoffeeType,
-    updateCoffeeTypeCardNav
+    updateCoffeeTypeCardNav,
+    openLightbox
 }) => {
     const { db, doc, updateDoc, writeBatch } = dataService || {};
     const { storage, ref, uploadBytes, getDownloadURL, deleteObject } = storageService || {};
@@ -117,7 +118,15 @@ export const createCoffeeTypeCardModule = ({
         if (e) e.stopPropagation();
         const type = getCurrentType();
         const url = type?.imageUrl || type?.imageURL;
-        if (url) window.open(url, '_blank');
+        if (!url) return;
+        if (typeof openLightbox === 'function') {
+            openLightbox({
+                items: [{ url, alt: 'Coffee type photo' }],
+                startIndex: 0
+            });
+            return;
+        }
+        window.open(url, '_blank');
     };
 
     const removeCoffeeTypePhoto = async (e) => {
