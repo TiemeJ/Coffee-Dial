@@ -548,7 +548,7 @@ export const createGalleryModule = ({
         return canvasToPngFile(canvas, `moment-graph-${timestamp}.png`);
     };
 
-    const buildMomentDetailsFile = async ({ brew, snapshot, message, timestamp }) => {
+    const buildMomentDetailsFile = async ({ brew, timestamp }) => {
         const canvas = document.createElement('canvas');
         canvas.width = 1080;
         canvas.height = 1350;
@@ -572,18 +572,11 @@ export const createGalleryModule = ({
 
         ctx.fillStyle = '#1c1917';
         ctx.beginPath();
-        ctx.roundRect(cardX + 28, cardY + 26, cardW - 56, 216, 18);
+        ctx.roundRect(cardX + 28, cardY + 26, cardW - 56, 110, 18);
         ctx.fill();
-
         ctx.fillStyle = '#fafaf9';
-        ctx.font = '700 48px Nunito, sans-serif';
-        ctx.fillText((snapshot?.farmer || '-').toString(), cardX + 54, cardY + 92);
-        ctx.fillStyle = '#d6d3d1';
-        ctx.font = '500 34px Nunito, sans-serif';
-        ctx.fillText((snapshot?.roaster || '-').toString(), cardX + 54, cardY + 140);
-        ctx.fillStyle = '#a8a29e';
-        ctx.font = '500 30px Nunito, sans-serif';
-        ctx.fillText((snapshot?.method || '-').toString(), cardX + 54, cardY + 186);
+        ctx.font = '700 40px Nunito, sans-serif';
+        ctx.fillText('Brew details', cardX + 54, cardY + 94);
 
         const toNumber = (value) => {
             const n = Number(value);
@@ -640,7 +633,7 @@ export const createGalleryModule = ({
         ].filter((metric) => hasText(metric.value));
 
         const gridX = cardX + 28;
-        const gridY = cardY + 270;
+        const gridY = cardY + 166;
         const gridW = cardW - 56;
         const colGap = 14;
         const rowGap = 14;
@@ -669,19 +662,6 @@ export const createGalleryModule = ({
             const suffix = metric.suffix ? ` ${metric.suffix}` : '';
             ctx.fillText(`${metric.value}${suffix}`, x + 14, y + 82);
         });
-
-        const rowsUsed = Math.max(1, Math.ceil(Math.max(1, metrics.length) / cols));
-        let messageY = gridY + rowsUsed * (boxH + rowGap) + 22;
-        if (messageY < 960) messageY = 960;
-
-        if (message?.trim()) {
-            ctx.fillStyle = '#f5f5f4';
-            ctx.font = '600 30px Nunito, sans-serif';
-            ctx.fillText('Message', cardX + 54, messageY);
-            ctx.fillStyle = '#e7e5e4';
-            ctx.font = '400 30px Nunito, sans-serif';
-            drawWrappedText(ctx, message.trim(), cardX + 54, messageY + 48, cardW - 108, 40, { maxLines: 5 });
-        }
 
         return canvasToPngFile(canvas, `moment-details-${timestamp}.png`);
     };
@@ -1077,8 +1057,6 @@ export const createGalleryModule = ({
             } else if (momentType === 'details') {
                 fileToUpload = await buildMomentDetailsFile({
                     brew: coffeeData,
-                    snapshot: coffeeSnapshot,
-                    message,
                     timestamp
                 });
             }
