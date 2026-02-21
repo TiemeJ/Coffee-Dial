@@ -18,7 +18,6 @@ export const createGalleryModule = ({
     functionsService,
     imageCompression,
     html2canvas,
-    getStarDisplay,
     openAppConfirm
 }) => {
     const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDocs, doc, updateDoc, deleteDoc } = dataService || {};
@@ -39,6 +38,7 @@ export const createGalleryModule = ({
     const getPhotoSignedUrlsBatch = httpsCallable(functions, 'getPhotoSignedUrlsBatch');
     const signedUrlCache = new Map();
     const preparedMomentShares = new Map();
+    let currentUploadMomentBrew = null;
     const DEFAULT_URL_TTL_SECONDS = 180;
     const CACHE_SKEW_MS = 15000;
     const SESSION_CACHE_PREFIX = 'gallerySignedUrl:v1';
@@ -269,6 +269,50 @@ export const createGalleryModule = ({
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
+    const getSelectedMomentType = () => {
+        const selected = document.querySelector('input[name="momentContentType"]:checked');
+        const type = (selected?.value || 'photo').toLowerCase();
+        return type === 'graph' || type === 'details' ? type : 'photo';
+    };
+
+    const hasCapturedGraphForBrew = (brew) => {
+        const weightSamples = Array.isArray(brew?.scaleCapture?.samples) ? brew.scaleCapture.samples : [];
+        const flowSamples = Array.isArray(brew?.scaleFlowCapture?.samples) ? brew.scaleFlowCapture.samples : [];
+        const hasWeight = weightSamples.some((sample) => Number.isFinite(Number(sample?.tMs)) && Number.isFinite(Number(sample?.w)));
+        const hasFlow = flowSamples.some((sample) => Number.isFinite(Number(sample?.tMs)) && Number.isFinite(Number(sample?.flow)));
+        return hasWeight && hasFlow;
+    };
+
+    const updateUploadMomentTypeUi = () => {
+        const momentType = getSelectedMomentType();
+        const photoWrap = document.getElementById('momentPhotoInputWrap');
+        const autoHint = document.getElementById('momentAutoGenHint');
+        const photoInput = document.getElementById('photoInput');
+        const graphWrap = document.getElementById('momentTypeGraphWrap');
+        const graphInput = document.getElementById('momentTypeGraph');
+        const graphAvailable = hasCapturedGraphForBrew(currentUploadMomentBrew);
+        if (graphWrap) graphWrap.classList.toggle('hidden', !graphAvailable);
+        if (!graphAvailable && graphInput?.checked) {
+            const photoType = document.getElementById('momentTypePhoto');
+            if (photoType) photoType.checked = true;
+        }
+
+        const effectiveType = getSelectedMomentType();
+        const effectiveRequiresPhoto = effectiveType === 'photo';
+        if (photoWrap) photoWrap.classList.toggle('hidden', !effectiveRequiresPhoto);
+        if (autoHint) autoHint.classList.toggle('hidden', effectiveRequiresPhoto);
+        if (photoInput) photoInput.required = effectiveRequiresPhoto;
+    };
+
+    const bindUploadMomentTypeControls = () => {
+        const radios = document.querySelectorAll('input[name="momentContentType"]');
+        radios.forEach((radio) => {
+            if (radio.dataset.boundMomentType === 'true') return;
+            radio.dataset.boundMomentType = 'true';
+            radio.addEventListener('change', updateUploadMomentTypeUi);
+        });
+    };
+
     const inferExtensionFromContentType = (contentType) => {
         const normalized = (contentType || '').toLowerCase();
         if (normalized.includes('png')) return 'png';
@@ -317,6 +361,271 @@ export const createGalleryModule = ({
                 img.addEventListener('error', done, { once: true });
             });
         }));
+    };
+
+    const canvasToPngFile = async (canvas, fileName) => {
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
+        if (!blob) throw new Error('Failed to generate image.');
+        return new File([blob], fileName, { type: 'image/png' });
+    };
+
+    const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, options = {}) => {
+        const normalized = (text || '').toString().trim();
+        if (!normalized) return y;
+        const words = normalized.split(/\s+/);
+        const lines = [];
+        let current = '';
+        words.forEach((word) => {
+            const test = current ? `${current} ${word}` : word;
+            if (ctx.measureText(test).width <= maxWidth) {
+                current = test;
+            } else {
+                if (current) lines.push(current);
+                current = word;
+            }
+        });
+        if (current) lines.push(current);
+
+        const maxLines = Number.isFinite(options.maxLines) ? options.maxLines : lines.length;
+        const displayLines = lines.slice(0, Math.max(1, maxLines));
+        displayLines.forEach((line, index) => {
+            ctx.fillText(line, x, y + index * lineHeight);
+        });
+        return y + displayLines.length * lineHeight;
+    };
+
+    const buildMomentGraphFile = async ({ brew, snapshot, message, timestamp }) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1350;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas context unavailable.');
+
+        ctx.fillStyle = '#171717';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#f5f5f4';
+        ctx.font = '700 54px Nunito, sans-serif';
+        ctx.fillText('Brew Graph', 72, 110);
+
+        ctx.fillStyle = '#a8a29e';
+        ctx.font = '500 30px Nunito, sans-serif';
+        ctx.fillText((snapshot?.roaster || '-').toString(), 72, 160);
+        ctx.fillText((snapshot?.farmer || '-').toString(), 72, 198);
+        ctx.fillText((snapshot?.method || '-').toString(), 72, 236);
+        const weightSamples = (Array.isArray(brew?.scaleCapture?.samples) ? brew.scaleCapture.samples : [])
+            .filter((sample) => Number.isFinite(Number(sample?.tMs)) && Number.isFinite(Number(sample?.w)))
+            .map((sample) => ({ tMs: Number(sample.tMs), w: Number(sample.w) }));
+        const flowSamples = (Array.isArray(brew?.scaleFlowCapture?.samples) ? brew.scaleFlowCapture.samples : [])
+            .filter((sample) => Number.isFinite(Number(sample?.tMs)) && Number.isFinite(Number(sample?.flow)))
+            .map((sample) => ({ tMs: Number(sample.tMs), flow: Number(sample.flow) }));
+
+        if (!weightSamples.length || !flowSamples.length) {
+            throw new Error('No captured weight/flow graph available for this brew.');
+        }
+
+        const times = weightSamples.map((s) => s.tMs).concat(flowSamples.map((s) => s.tMs));
+        const minT = Math.min(...times);
+        const maxT = Math.max(...times);
+        const spanT = Math.max(1, maxT - minT);
+        const maxWeight = Math.max(1, ...weightSamples.map((s) => s.w));
+        const maxFlow = Math.max(0.5, ...flowSamples.map((s) => s.flow));
+
+        const chart = { x: 72, y: 310, w: 936, h: 620 };
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(chart.x, chart.y, chart.w, chart.h);
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 5; i += 1) {
+            const y = chart.y + (chart.h / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(chart.x, y);
+            ctx.lineTo(chart.x + chart.w, y);
+            ctx.stroke();
+        }
+
+        const xFor = (tMs) => chart.x + ((tMs - minT) / spanT) * chart.w;
+        const yWeightFor = (w) => chart.y + chart.h - (Math.max(0, w) / maxWeight) * chart.h;
+        const yFlowFor = (flow) => chart.y + chart.h - (Math.max(0, flow) / maxFlow) * chart.h;
+
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        weightSamples.forEach((sample, index) => {
+            const x = xFor(sample.tMs);
+            const y = yWeightFor(sample.w);
+            if (index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        flowSamples.forEach((sample, index) => {
+            const x = xFor(sample.tMs);
+            const y = yFlowFor(sample.flow);
+            if (index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle = '#93c5fd';
+        ctx.font = '600 24px Nunito, sans-serif';
+        ctx.fillText(`Weight max: ${maxWeight.toFixed(1)} g`, chart.x, chart.y + chart.h + 38);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText(`Flow max: ${maxFlow.toFixed(1)} g/s`, chart.x + 340, chart.y + chart.h + 38);
+        ctx.fillStyle = '#d1d5db';
+        ctx.fillText(`Time: ${(spanT / 1000).toFixed(1)} s`, chart.x + 670, chart.y + chart.h + 38);
+
+        if (message?.trim()) {
+            ctx.fillStyle = '#f5f5f4';
+            ctx.font = '600 30px Nunito, sans-serif';
+            ctx.fillText('Note', 72, 1010);
+            ctx.fillStyle = '#e5e7eb';
+            ctx.font = '400 30px Nunito, sans-serif';
+            drawWrappedText(ctx, message.trim(), 72, 1060, 940, 42, { maxLines: 5 });
+        }
+
+        return canvasToPngFile(canvas, `moment-graph-${timestamp}.png`);
+    };
+
+    const buildMomentDetailsFile = async ({ brew, snapshot, message, timestamp }) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1350;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas context unavailable.');
+
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const cardX = 44;
+        const cardY = 42;
+        const cardW = 992;
+        const cardH = 1266;
+        ctx.fillStyle = '#292524';
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(cardX, cardY, cardW, cardH, 28);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.roundRect(cardX + 28, cardY + 26, cardW - 56, 216, 18);
+        ctx.fill();
+
+        ctx.fillStyle = '#fafaf9';
+        ctx.font = '700 48px Nunito, sans-serif';
+        ctx.fillText((snapshot?.farmer || '-').toString(), cardX + 54, cardY + 92);
+        ctx.fillStyle = '#d6d3d1';
+        ctx.font = '500 34px Nunito, sans-serif';
+        ctx.fillText((snapshot?.roaster || '-').toString(), cardX + 54, cardY + 140);
+        ctx.fillStyle = '#a8a29e';
+        ctx.font = '500 30px Nunito, sans-serif';
+        ctx.fillText((snapshot?.method || '-').toString(), cardX + 54, cardY + 186);
+
+        const toNumber = (value) => {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        };
+        const hasText = (value) => typeof value === 'string' && value.trim().length > 0;
+        const fmtNumber = (value, digits = 1) => {
+            const n = toNumber(value);
+            if (n === null) return '';
+            return `${Math.round(n * (10 ** digits)) / (10 ** digits)}`;
+        };
+        const steps = Array.isArray(brew?.recipeSteps) ? brew.recipeSteps : [];
+        const derivedPourCount = steps.filter((step) => step?.type === 'pour').length;
+        const derivedSwirlCount = steps.filter((step) => step?.type === 'swirl').length;
+        const inValue = fmtNumber(brew?.weight, 1);
+        const ratioValue = fmtNumber(brew?.ratio, 2);
+        const outDerived = (() => {
+            const w = toNumber(brew?.weight);
+            const r = toNumber(brew?.ratio);
+            if (!Number.isFinite(w) || !Number.isFinite(r)) return '';
+            return fmtNumber(w * r, 1);
+        })();
+        const grinderValue = hasText(brew?.grinder) ? brew.grinder.trim() : '';
+        const grindValue = (() => {
+            if (hasText(brew?.grind)) return brew.grind.toString().trim();
+            const n = toNumber(brew?.grind);
+            return n === null ? '' : fmtNumber(n, 1);
+        })();
+        const timeValue = fmtNumber(brew?.time, 0);
+        const tempValue = hasText(brew?.temp) ? brew.temp.trim() : fmtNumber(brew?.temp, 1);
+        const firstDripValue = fmtNumber(brew?.firstDrip, 0);
+        const maxFlowValue = fmtNumber(brew?.maxFlow, 1);
+        const avgFlowValue = fmtNumber(brew?.avgFlow, 1);
+        const pourCountValue = Number.isFinite(Number(brew?.pourCount))
+            ? `${Math.round(Number(brew.pourCount))}`
+            : (derivedPourCount > 0 ? `${derivedPourCount}` : '');
+        const swirlCountValue = Number.isFinite(Number(brew?.swirlCount))
+            ? `${Math.round(Number(brew.swirlCount))}`
+            : (derivedSwirlCount > 0 ? `${derivedSwirlCount}` : '');
+
+        const metrics = [
+            { label: 'In', value: inValue, suffix: 'g' },
+            { label: 'Ratio', value: ratioValue, suffix: '' },
+            { label: 'Out', value: outDerived, suffix: 'g' },
+            { label: 'Grinder', value: grinderValue, suffix: '' },
+            { label: 'Grind size', value: grindValue, suffix: '' },
+            { label: 'Time', value: timeValue, suffix: 's' },
+            { label: 'Temp', value: tempValue, suffix: 'C' },
+            { label: 'First drip', value: firstDripValue, suffix: 's' },
+            { label: 'Max flow', value: maxFlowValue, suffix: 'g/s' },
+            { label: 'Avg flow', value: avgFlowValue, suffix: 'g/s' },
+            { label: 'Pour count', value: pourCountValue, suffix: '' },
+            { label: 'Swirl count', value: swirlCountValue, suffix: '' }
+        ].filter((metric) => hasText(metric.value));
+
+        const gridX = cardX + 28;
+        const gridY = cardY + 270;
+        const gridW = cardW - 56;
+        const colGap = 14;
+        const rowGap = 14;
+        const cols = 3;
+        const boxW = Math.floor((gridW - (colGap * (cols - 1))) / cols);
+        const boxH = 126;
+
+        metrics.forEach((metric, index) => {
+            const col = index % cols;
+            const row = Math.floor(index / cols);
+            const x = gridX + col * (boxW + colGap);
+            const y = gridY + row * (boxH + rowGap);
+            ctx.fillStyle = '#fafaf9';
+            ctx.beginPath();
+            ctx.roundRect(x, y, boxW, boxH, 12);
+            ctx.fill();
+            ctx.strokeStyle = '#e7e5e4';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = '#78716c';
+            ctx.font = '700 18px Nunito, sans-serif';
+            ctx.fillText(metric.label.toUpperCase(), x + 14, y + 28);
+            ctx.fillStyle = '#1c1917';
+            ctx.font = '700 34px Nunito, sans-serif';
+            const suffix = metric.suffix ? ` ${metric.suffix}` : '';
+            ctx.fillText(`${metric.value}${suffix}`, x + 14, y + 82);
+        });
+
+        const rowsUsed = Math.max(1, Math.ceil(Math.max(1, metrics.length) / cols));
+        let messageY = gridY + rowsUsed * (boxH + rowGap) + 22;
+        if (messageY < 960) messageY = 960;
+
+        if (message?.trim()) {
+            ctx.fillStyle = '#f5f5f4';
+            ctx.font = '600 30px Nunito, sans-serif';
+            ctx.fillText('Message', cardX + 54, messageY);
+            ctx.fillStyle = '#e7e5e4';
+            ctx.font = '400 30px Nunito, sans-serif';
+            drawWrappedText(ctx, message.trim(), cardX + 54, messageY + 48, cardW - 108, 40, { maxLines: 5 });
+        }
+
+        return canvasToPngFile(canvas, `moment-details-${timestamp}.png`);
     };
 
     const formatMomentDate = (isoValue) => {
@@ -530,12 +839,19 @@ export const createGalleryModule = ({
     const openUploadModal = (coffeeId) => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
         setCurrentUploadCoffeeId(coffeeId);
+        currentUploadMomentBrew = getCoffees().find((coffee) => coffee.id === coffeeId) || null;
         document.getElementById('uploadPhotoModal')?.classList.remove('hidden');
         const file = document.getElementById('photoInput');
         const msg = document.getElementById('photoMessage');
         const progress = document.getElementById('uploadProgress');
         if (file) file.value = '';
         if (msg) msg.value = '';
+        const defaultType = document.getElementById('momentTypePhoto');
+        if (defaultType) defaultType.checked = true;
+        const shareOutsideCheckbox = document.getElementById('momentShareOutsideApp');
+        if (shareOutsideCheckbox) shareOutsideCheckbox.checked = false;
+        bindUploadMomentTypeControls();
+        updateUploadMomentTypeUi();
         progress?.classList.add('hidden');
 
         const list = document.getElementById('shareWithList');
@@ -562,6 +878,7 @@ export const createGalleryModule = ({
     };
 
     const closeUploadModal = () => {
+        currentUploadMomentBrew = null;
         document.getElementById('uploadPhotoModal')?.classList.add('hidden');
     };
 
@@ -569,9 +886,11 @@ export const createGalleryModule = ({
         const user = getCurrentUser();
         if (!user) return;
         const fileInput = document.getElementById('photoInput');
-        const file = fileInput?.files?.[0];
+        const momentType = getSelectedMomentType();
+        const selectedPhotoFile = fileInput?.files?.[0];
+        const alsoShareOutsideApp = !!document.getElementById('momentShareOutsideApp')?.checked;
         const message = document.getElementById('photoMessage')?.value || '';
-        if (!file) return alert('Please select a photo.');
+        if (momentType === 'photo' && !selectedPhotoFile) return alert('Please select a photo.');
 
         const uploadCoffeeId = getCurrentUploadCoffeeId();
         if (!uploadCoffeeId) return;
@@ -580,6 +899,9 @@ export const createGalleryModule = ({
         const sharedWith = Array.from(checkboxes).map((cb) => cb.value);
         const coffeeData = getCoffees().find((c) => c.id === uploadCoffeeId);
         if (!coffeeData) return alert('Coffee data not found.');
+        if (momentType === 'graph' && !hasCapturedGraphForBrew(coffeeData)) {
+            return alert('Graph option is only available when this brew has captured weight and flow data.');
+        }
 
         const coffeeSnapshot = resolveCoffeeSnapshot(coffeeData);
 
@@ -587,17 +909,36 @@ export const createGalleryModule = ({
 
         try {
             const timestamp = Date.now();
-            const photoPath = `photos/${user.uid}/${timestamp}_${file.name}_original`;
+            let fileToUpload = selectedPhotoFile;
+            if (momentType === 'graph') {
+                fileToUpload = await buildMomentGraphFile({
+                    brew: coffeeData,
+                    snapshot: coffeeSnapshot,
+                    message,
+                    timestamp
+                });
+            } else if (momentType === 'details') {
+                fileToUpload = await buildMomentDetailsFile({
+                    brew: coffeeData,
+                    snapshot: coffeeSnapshot,
+                    message,
+                    timestamp
+                });
+            }
+
+            if (!fileToUpload) throw new Error('No moment image available.');
+
+            const photoPath = `photos/${user.uid}/${timestamp}_${fileToUpload.name}_original`;
             const storageRef = ref(storage, photoPath);
             const originalOptions = { maxSizeMB: 1.5, maxWidthOrHeight: 1920, useWebWorker: true };
-            const compressedOriginal = await imageCompression(file, originalOptions);
+            const compressedOriginal = await imageCompression(fileToUpload, originalOptions);
             await uploadBytes(storageRef, compressedOriginal);
 
             let thumbPath = null;
             const thumbOptions = { maxSizeMB: 0.1, maxWidthOrHeight: 600, useWebWorker: true };
             try {
-                const thumbFile = await imageCompression(file, thumbOptions);
-                thumbPath = `photos/${user.uid}/${timestamp}_${file.name}_thumb`;
+                const thumbFile = await imageCompression(fileToUpload, thumbOptions);
+                thumbPath = `photos/${user.uid}/${timestamp}_${fileToUpload.name}_thumb`;
                 const thumbRef = ref(storage, thumbPath);
                 await uploadBytes(thumbRef, thumbFile);
             } catch (error) {
@@ -605,7 +946,8 @@ export const createGalleryModule = ({
                 thumbPath = null;
             }
 
-            await addDoc(collection(db, 'photos'), {
+            const createdAtIso = new Date().toISOString();
+            const momentPayload = {
                 uid: user.uid,
                 uploaderName: user.displayName || 'Unknown User',
                 photoPath,
@@ -613,11 +955,38 @@ export const createGalleryModule = ({
                 message,
                 coffeeId: uploadCoffeeId,
                 coffeeSnapshot,
+                momentType,
                 sharedWith,
-                createdAt: new Date().toISOString()
-            });
+                createdAt: createdAtIso
+            };
+            const createdMomentRef = await addDoc(collection(db, 'photos'), momentPayload);
             closeUploadModal();
-            alert('Photo uploaded successfully!');
+
+            let outsideShareError = '';
+            if (alsoShareOutsideApp) {
+                if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+                    outsideShareError = 'Native sharing is not supported on this device.';
+                } else {
+                    try {
+                        await shareMoment({
+                            photoId: createdMomentRef?.id,
+                            data: momentPayload,
+                            cardSnapshot: coffeeSnapshot,
+                            cardElement: null
+                        });
+                    } catch (error) {
+                        if (error?.name !== 'AbortError') {
+                            outsideShareError = error?.message || 'Could not open device share.';
+                        }
+                    }
+                }
+            }
+
+            if (outsideShareError) {
+                alert(`Moment shared in app. Outside app share failed: ${outsideShareError}`);
+            } else {
+                alert('Moment shared successfully!');
+            }
         } catch (error) {
             console.error('Upload failed', error);
             alert(`Upload failed: ${error.message}`);
@@ -717,14 +1086,50 @@ export const createGalleryModule = ({
         const prefetchedThumbUrls = options.prefetchedThumbUrls instanceof Map
             ? options.prefetchedThumbUrls
             : new Map();
+        const getMomentTypeMeta = (type) => {
+            if (type === 'graph') {
+                return {
+                    label: 'Graph',
+                    icon: 'fa-chart-line',
+                    frameClass: 'border-blue-300 dark:border-blue-700',
+                    accentClass: 'bg-blue-500',
+                    badgeClass: 'bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-200',
+                    iconWrapClass: 'bg-blue-600/80 text-white'
+                };
+            }
+            if (type === 'details') {
+                return {
+                    label: 'Brew details',
+                    icon: 'fa-list-check',
+                    frameClass: 'border-emerald-300 dark:border-emerald-700',
+                    accentClass: 'bg-emerald-500',
+                    badgeClass: 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-200',
+                    iconWrapClass: 'bg-emerald-600/80 text-white'
+                };
+            }
+            return {
+                label: 'Photo',
+                icon: 'fa-image',
+                frameClass: 'border-coffee-200 dark:border-[#44403c]',
+                accentClass: 'bg-coffee-400 dark:bg-[#57534e]',
+                badgeClass: 'bg-coffee-100 dark:bg-[#1c1917] border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2]',
+                iconWrapClass: 'bg-black/55 text-white'
+            };
+        };
 
         docsWithData.forEach(({ docItem, data }) => {
             const cardSnapshot = resolveSnapshotForCard(data);
+            const momentType = data?.momentType === 'graph' || data?.momentType === 'details'
+                ? data.momentType
+                : 'photo';
+            const momentTypeMeta = getMomentTypeMeta(momentType);
             const card = document.createElement('div');
             card.id = `moment-card-${docItem.id}`;
-            card.className = 'bg-white dark:bg-[#292524] rounded-lg shadow-md overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col relative group';
+            card.className = `bg-white dark:bg-[#292524] rounded-lg shadow-md overflow-hidden border ${momentTypeMeta.frameClass} flex flex-col relative group`;
+            const accent = document.createElement('div');
+            accent.className = `absolute top-0 left-0 right-0 h-1 z-[1] ${momentTypeMeta.accentClass}`;
+            card.appendChild(accent);
 
-            const ratingHtml = getStarDisplay(cardSnapshot.rating || 0);
             const cachedThumb = getCachedSignedUrl(docItem.id, 'thumb');
             const batchThumb = prefetchedThumbUrls.get(getSignedUrlCacheKey(docItem.id, 'thumb'));
             const displayUrl = cachedThumb || batchThumb || resolveLegacyUrl(data, 'thumb');
@@ -788,12 +1193,17 @@ export const createGalleryModule = ({
             dateBadge.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs';
             dateBadge.textContent = new Date(data.createdAt).toLocaleDateString();
             imageWrap.appendChild(dateBadge);
+
+            const typeIcon = document.createElement('div');
+            typeIcon.className = `absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-[11px] ${momentTypeMeta.iconWrapClass}`;
+            typeIcon.innerHTML = `<i class="fa-solid ${momentTypeMeta.icon}"></i>`;
+            imageWrap.appendChild(typeIcon);
             card.appendChild(imageWrap);
 
             const body = document.createElement('div');
             body.dataset.momentBody = 'true';
             body.className = 'p-3 flex-1 flex flex-col';
-            body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-xs">${ratingHtml}</div></div><p data-moment-message="true" class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div data-moment-info="true" class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
+            body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-[10px] px-1.5 py-0.5 rounded border ${momentTypeMeta.badgeClass} inline-flex items-center gap-1"><i class="fa-solid ${momentTypeMeta.icon} text-[9px]"></i><span>${momentTypeMeta.label}</span></div></div><p data-moment-message="true" class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div data-moment-info="true" class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
             card.appendChild(body);
             grid.appendChild(card);
 
@@ -812,8 +1222,8 @@ export const createGalleryModule = ({
     const deletePhoto = async (photoId, photoRefValue, thumbRefValue, ev) => {
         if (ev) ev.stopPropagation();
         const shouldDelete = await openAppConfirm({
-            title: 'Delete photo?',
-            message: 'This permanently deletes the photo and cannot be undone.',
+            title: 'Delete moment?',
+            message: 'This permanently deletes the moment and cannot be undone.',
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
             danger: true
@@ -833,11 +1243,12 @@ export const createGalleryModule = ({
             signedUrlCache.delete(getSignedUrlCacheKey(photoId, 'thumb'));
             removePersistentSignedUrl(photoId, 'full');
             removePersistentSignedUrl(photoId, 'thumb');
-            alert('Photo deleted successfully.');
-            openGallery();
+            alert('Moment deleted successfully.');
+            const activeTab = getCurrentGalleryMode() || 'shared';
+            await switchGalleryTab(activeTab);
         } catch (err) {
             console.error('Deletion failed', err);
-            alert(`Error deleting photo: ${err.message}`);
+            alert(`Error deleting moment: ${err.message}`);
         }
     };
 

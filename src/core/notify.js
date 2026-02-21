@@ -1,4 +1,6 @@
 let autoPinToastTimer = null;
+const AUTO_TOAST_DURATION_MULTIPLIER = 2;
+const withExtendedDuration = (ms) => Math.round(ms * AUTO_TOAST_DURATION_MULTIPLIER);
 const showToastInStack = (toast) => {
     if (!toast) return;
     const stack = document.getElementById('toastStack');
@@ -24,7 +26,7 @@ export const showAutoPinToast = (message) => {
     if (autoPinToastTimer) clearTimeout(autoPinToastTimer);
     autoPinToastTimer = setTimeout(() => {
         closeAutoPinToast();
-    }, 3000);
+    }, withExtendedDuration(3000));
 };
 
 export const closeAutoPinToast = () => {
@@ -98,7 +100,7 @@ export const createNotificationUxModule = ({
         if (coffeeTypeToastTimer) clearTimeout(coffeeTypeToastTimer);
         coffeeTypeToastTimer = setTimeout(() => {
             closeCoffeeTypeCreatedToast();
-        }, 3500);
+        }, withExtendedDuration(3500));
     };
 
     const closeCoffeeTypeCreatedToast = () => {

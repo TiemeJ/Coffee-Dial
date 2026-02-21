@@ -15,13 +15,35 @@
     <div id="uploadPhotoModal" class="hidden fixed inset-0 z-[10010] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
          <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
-                <h3 class="font-bold text-coffee-900 dark:text-white">Upload Brew Photo</h3>
+                <h3 class="font-bold text-coffee-900 dark:text-white">Share moment</h3>
                 <button data-action-click="closeUploadModal()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Select Photo</label>
-                    <input type="file" id="photoInput" accept="image/*" class="w-full text-sm text-coffee-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-coffee-100 file:text-coffee-700 hover:file:bg-coffee-200 dark:file:bg-[#44403c] dark:file:text-[#d6ccc2]">
+                    <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-2">Moment content</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <label class="flex items-center gap-2 rounded-lg border border-coffee-200 dark:border-[#44403c] px-3 py-2 bg-coffee-50 dark:bg-[#1c1917] cursor-pointer">
+                            <input type="radio" name="momentContentType" id="momentTypePhoto" value="photo" checked>
+                            <span class="text-sm text-coffee-800 dark:text-[#e7e5e4]">Add photo</span>
+                        </label>
+                        <label id="momentTypeGraphWrap" class="flex items-center gap-2 rounded-lg border border-coffee-200 dark:border-[#44403c] px-3 py-2 bg-coffee-50 dark:bg-[#1c1917] cursor-pointer">
+                            <input type="radio" name="momentContentType" id="momentTypeGraph" value="graph">
+                            <span class="text-sm text-coffee-800 dark:text-[#e7e5e4]">Add graph</span>
+                        </label>
+                        <label class="flex items-center gap-2 rounded-lg border border-coffee-200 dark:border-[#44403c] px-3 py-2 bg-coffee-50 dark:bg-[#1c1917] cursor-pointer">
+                            <input type="radio" name="momentContentType" id="momentTypeDetails" value="details">
+                            <span class="text-sm text-coffee-800 dark:text-[#e7e5e4]">Add brew details</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <div id="momentPhotoInputWrap">
+                        <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Select Photo</label>
+                        <input type="file" id="photoInput" accept="image/*" class="w-full text-sm text-coffee-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-coffee-100 file:text-coffee-700 hover:file:bg-coffee-200 dark:file:bg-[#44403c] dark:file:text-[#d6ccc2]">
+                    </div>
+                    <p id="momentAutoGenHint" class="hidden text-xs text-coffee-500 dark:text-[#a8a29e]">
+                        A moment image will be generated from this brew automatically.
+                    </p>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Message</label>
@@ -37,6 +59,10 @@
                     </div>
                     <div id="shareWithList" class="max-h-32 overflow-y-auto space-y-2 border border-coffee-100 dark:border-[#44403c] rounded-lg p-2 bg-coffee-50 dark:bg-[#1c1917]"></div>
                 </div>
+                <label class="flex items-center gap-2 text-sm text-coffee-700 dark:text-[#d6ccc2]">
+                    <input type="checkbox" id="momentShareOutsideApp" class="rounded border-coffee-300 dark:border-[#57534e]">
+                    <span>Also share outside app</span>
+                </label>
                 <div id="uploadProgress" class="hidden w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-4">
                     <div class="bg-blue-600 h-2.5 rounded-full" style="width: 45%"></div>
                 </div>
@@ -44,7 +70,7 @@
             <div class="bg-coffee-50 dark:bg-[#1c1917] px-6 py-3 flex justify-end gap-2">
                 <button data-action-click="closeUploadModal()" class="px-4 py-2 rounded-lg text-sm text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e]">Cancel</button>
                 <button data-action-click="handlePhotoSubmit()" class="bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Share moment
                 </button>
             </div>
         </div>
