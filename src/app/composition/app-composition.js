@@ -938,6 +938,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             html2canvas,
             openLightbox: (...args) => openLightbox?.(...args),
             openAppConfirm,
+            getCoffeeScale: () => coffeeScale,
             openBrewFromMoment: async (brewId, event = null, ownerUid = null) => {
                 const targetId = typeof brewId === 'string' ? brewId.trim() : '';
                 if (!targetId) return;

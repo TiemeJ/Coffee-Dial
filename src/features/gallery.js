@@ -23,7 +23,8 @@ export const createGalleryModule = ({
     html2canvas,
     openLightbox,
     openAppConfirm,
-    openBrewFromMoment
+    openBrewFromMoment,
+    getCoffeeScale
 }) => {
     const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove } = dataService || {};
     const { storage, ref, uploadBytes, deleteObject } = storageService || {};
@@ -341,6 +342,118 @@ export const createGalleryModule = ({
         return hasWeight && hasFlow;
     };
 
+    const buildMomentGraphSnapshot = (brew) => {
+        const normalizeSamples = (samples, valueKey) => {
+            if (!Array.isArray(samples)) return [];
+            return samples
+                .filter((sample) => Number.isFinite(Number(sample?.tMs)) && Number.isFinite(Number(sample?.[valueKey])))
+                .map((sample) => ({
+                    tMs: Number(sample.tMs),
+                    [valueKey]: Number(sample[valueKey])
+                }));
+        };
+
+        const captureSamples = normalizeSamples(brew?.scaleCapture?.samples, 'w');
+        const flowSamples = normalizeSamples(brew?.scaleFlowCapture?.samples, 'flow');
+        const rawSamples = Array.isArray(brew?.scaleRawCapture?.samples)
+            ? brew.scaleRawCapture.samples
+                .filter((sample) => Number.isFinite(Number(sample?.tMs)) && Number.isFinite(Number(sample?.w)))
+                .map((sample) => ({ tMs: Number(sample.tMs), w: Number(sample.w) }))
+            : [];
+
+        return {
+            capture: {
+                startAt: brew?.scaleCapture?.startAt || null,
+                samples: captureSamples
+            },
+            flowCapture: {
+                startAt: brew?.scaleFlowCapture?.startAt || brew?.scaleCapture?.startAt || null,
+                samples: flowSamples
+            },
+            rawCapture: {
+                startAt: brew?.scaleRawCapture?.startAt || brew?.scaleCapture?.startAt || null,
+                samples: rawSamples
+            },
+            firstDrip: Number.isFinite(Number(brew?.firstDrip)) ? Number(brew.firstDrip) : null,
+            elapsedSeconds: Number.isFinite(Number(brew?.time)) ? Number(brew.time) : null,
+            recipeSteps: Array.isArray(brew?.recipeSteps) ? brew.recipeSteps : []
+        };
+    };
+
+    const hasRenderableMomentGraph = (graphSnapshot) => {
+        const weightSamples = Array.isArray(graphSnapshot?.capture?.samples) ? graphSnapshot.capture.samples : [];
+        const flowSamples = Array.isArray(graphSnapshot?.flowCapture?.samples) ? graphSnapshot.flowCapture.samples : [];
+        return weightSamples.length > 0 || flowSamples.length > 0;
+    };
+
+    const renderMomentGraphCanvas = (targetCanvas, graphSnapshot) => {
+        if (!targetCanvas || !hasRenderableMomentGraph(graphSnapshot)) return false;
+        const coffeeScale = typeof getCoffeeScale === 'function' ? getCoffeeScale() : null;
+        if (!coffeeScale?.renderGraphTo) return false;
+        coffeeScale.renderGraphTo(targetCanvas, graphSnapshot);
+        return true;
+    };
+
+    let momentDetailsTooltipEl = null;
+    const ensureMomentDetailsTooltip = () => {
+        if (momentDetailsTooltipEl) return momentDetailsTooltipEl;
+        const el = document.createElement('div');
+        el.style.position = 'fixed';
+        el.style.zIndex = '10050';
+        el.style.background = 'rgba(15, 23, 42, 0.95)';
+        el.style.color = '#e2e8f0';
+        el.style.border = '1px solid rgba(148, 163, 184, 0.4)';
+        el.style.borderRadius = '8px';
+        el.style.padding = '8px 10px';
+        el.style.font = '12px system-ui';
+        el.style.lineHeight = '1.4';
+        el.style.boxShadow = '0 8px 20px rgba(15, 23, 42, 0.35)';
+        el.style.pointerEvents = 'none';
+        el.style.maxWidth = '220px';
+        el.style.display = 'none';
+        document.body.appendChild(el);
+        momentDetailsTooltipEl = el;
+        return el;
+    };
+
+    const showMomentDetailsTooltip = (clientX, clientY, text) => {
+        const content = (text || '').toString().trim();
+        if (!content) return;
+        const el = ensureMomentDetailsTooltip();
+        el.textContent = content;
+        el.style.display = 'block';
+        const offset = 40;
+        let left = clientX - offset;
+        let top = clientY - offset;
+        const rect = el.getBoundingClientRect();
+        if (left - rect.width < 8) left = clientX + offset;
+        else left -= rect.width;
+        if (top - rect.height < 8) top = clientY + offset;
+        else top -= rect.height;
+        el.style.left = `${Math.max(8, left)}px`;
+        el.style.top = `${Math.max(8, top)}px`;
+    };
+
+    const hideMomentDetailsTooltip = () => {
+        if (!momentDetailsTooltipEl) return;
+        momentDetailsTooltipEl.style.display = 'none';
+    };
+
+    const bindMomentDetailsTooltip = (target, text) => {
+        if (!target || target.dataset.detailsTooltipBound === 'true') return;
+        const tooltipText = (text || '').toString().trim();
+        if (!tooltipText) return;
+        target.dataset.detailsTooltipBound = 'true';
+        target.addEventListener('pointerenter', (event) => {
+            showMomentDetailsTooltip(event.clientX, event.clientY, tooltipText);
+        });
+        target.addEventListener('pointermove', (event) => {
+            showMomentDetailsTooltip(event.clientX, event.clientY, tooltipText);
+        });
+        target.addEventListener('pointerleave', hideMomentDetailsTooltip);
+        target.addEventListener('pointercancel', hideMomentDetailsTooltip);
+    };
+
     const updateUploadMomentTypeUi = () => {
         const momentType = getSelectedMomentType();
         const photoWrap = document.getElementById('momentPhotoInputWrap');
@@ -421,12 +534,6 @@ export const createGalleryModule = ({
         }));
     };
 
-    const canvasToPngFile = async (canvas, fileName) => {
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
-        if (!blob) throw new Error('Failed to generate image.');
-        return new File([blob], fileName, { type: 'image/png' });
-    };
-
     const buildMomentBrewDetailsSnapshot = (brew) => {
         const toNumber = (value) => {
             const n = Number(value);
@@ -484,127 +591,6 @@ export const createGalleryModule = ({
         };
     };
 
-    const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, options = {}) => {
-        const normalized = (text || '').toString().trim();
-        if (!normalized) return y;
-        const words = normalized.split(/\s+/);
-        const lines = [];
-        let current = '';
-        words.forEach((word) => {
-            const test = current ? `${current} ${word}` : word;
-            if (ctx.measureText(test).width <= maxWidth) {
-                current = test;
-            } else {
-                if (current) lines.push(current);
-                current = word;
-            }
-        });
-        if (current) lines.push(current);
-
-        const maxLines = Number.isFinite(options.maxLines) ? options.maxLines : lines.length;
-        const displayLines = lines.slice(0, Math.max(1, maxLines));
-        displayLines.forEach((line, index) => {
-            ctx.fillText(line, x, y + index * lineHeight);
-        });
-        return y + displayLines.length * lineHeight;
-    };
-
-    const buildMomentGraphFile = async ({ brew, snapshot, message, timestamp }) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1080;
-        canvas.height = 1350;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Canvas context unavailable.');
-
-        ctx.fillStyle = '#171717';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = '#f5f5f4';
-        ctx.font = '700 54px Nunito, sans-serif';
-        ctx.fillText('Brew Graph', 72, 110);
-
-        ctx.fillStyle = '#a8a29e';
-        ctx.font = '500 30px Nunito, sans-serif';
-        ctx.fillText((snapshot?.roaster || '-').toString(), 72, 160);
-        ctx.fillText((snapshot?.farmer || '-').toString(), 72, 198);
-        ctx.fillText((snapshot?.method || '-').toString(), 72, 236);
-        const weightSamples = (Array.isArray(brew?.scaleCapture?.samples) ? brew.scaleCapture.samples : [])
-            .filter((sample) => Number.isFinite(Number(sample?.tMs)) && Number.isFinite(Number(sample?.w)))
-            .map((sample) => ({ tMs: Number(sample.tMs), w: Number(sample.w) }));
-        const flowSamples = (Array.isArray(brew?.scaleFlowCapture?.samples) ? brew.scaleFlowCapture.samples : [])
-            .filter((sample) => Number.isFinite(Number(sample?.tMs)) && Number.isFinite(Number(sample?.flow)))
-            .map((sample) => ({ tMs: Number(sample.tMs), flow: Number(sample.flow) }));
-
-        if (!weightSamples.length || !flowSamples.length) {
-            throw new Error('No captured weight/flow graph available for this brew.');
-        }
-
-        const times = weightSamples.map((s) => s.tMs).concat(flowSamples.map((s) => s.tMs));
-        const minT = Math.min(...times);
-        const maxT = Math.max(...times);
-        const spanT = Math.max(1, maxT - minT);
-        const maxWeight = Math.max(1, ...weightSamples.map((s) => s.w));
-        const maxFlow = Math.max(0.5, ...flowSamples.map((s) => s.flow));
-
-        const chart = { x: 72, y: 310, w: 936, h: 620 };
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(chart.x, chart.y, chart.w, chart.h);
-        ctx.strokeStyle = '#374151';
-        ctx.lineWidth = 1;
-        for (let i = 0; i <= 5; i += 1) {
-            const y = chart.y + (chart.h / 5) * i;
-            ctx.beginPath();
-            ctx.moveTo(chart.x, y);
-            ctx.lineTo(chart.x + chart.w, y);
-            ctx.stroke();
-        }
-
-        const xFor = (tMs) => chart.x + ((tMs - minT) / spanT) * chart.w;
-        const yWeightFor = (w) => chart.y + chart.h - (Math.max(0, w) / maxWeight) * chart.h;
-        const yFlowFor = (flow) => chart.y + chart.h - (Math.max(0, flow) / maxFlow) * chart.h;
-
-        ctx.strokeStyle = '#60a5fa';
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        weightSamples.forEach((sample, index) => {
-            const x = xFor(sample.tMs);
-            const y = yWeightFor(sample.w);
-            if (index === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        flowSamples.forEach((sample, index) => {
-            const x = xFor(sample.tMs);
-            const y = yFlowFor(sample.flow);
-            if (index === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-
-        ctx.fillStyle = '#93c5fd';
-        ctx.font = '600 24px Nunito, sans-serif';
-        ctx.fillText(`Weight max: ${maxWeight.toFixed(1)} g`, chart.x, chart.y + chart.h + 38);
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillText(`Flow max: ${maxFlow.toFixed(1)} g/s`, chart.x + 340, chart.y + chart.h + 38);
-        ctx.fillStyle = '#d1d5db';
-        ctx.fillText(`Time: ${(spanT / 1000).toFixed(1)} s`, chart.x + 670, chart.y + chart.h + 38);
-
-        if (message?.trim()) {
-            ctx.fillStyle = '#f5f5f4';
-            ctx.font = '600 30px Nunito, sans-serif';
-            ctx.fillText('Note', 72, 1010);
-            ctx.fillStyle = '#e5e7eb';
-            ctx.font = '400 30px Nunito, sans-serif';
-            drawWrappedText(ctx, message.trim(), 72, 1060, 940, 42, { maxLines: 5 });
-        }
-
-        return canvasToPngFile(canvas, `moment-graph-${timestamp}.png`);
-    };
-
     const formatMomentDate = (isoValue) => {
         if (!isoValue) return '';
         const date = new Date(isoValue);
@@ -616,6 +602,8 @@ export const createGalleryModule = ({
         const width = Math.max(280, Math.min(640, widthPx || 560));
         const hasRating = (Number(cardSnapshot?.rating) || 0) > 0;
         const isDetailsMoment = data?.momentType === 'details';
+        const isGraphMoment = data?.momentType === 'graph';
+        const graphSnapshot = data?.graphSnapshot || null;
 
         const card = document.createElement('div');
         card.style.cssText = [
@@ -631,7 +619,15 @@ export const createGalleryModule = ({
 
         const mediaWrap = document.createElement('div');
         mediaWrap.style.cssText = 'position:relative;width:100%;background:#1f1b19;overflow:hidden;';
-        if (!isDetailsMoment && photoUrl) {
+        if (isGraphMoment && hasRenderableMomentGraph(graphSnapshot)) {
+            const graphWrap = document.createElement('div');
+            graphWrap.style.cssText = 'padding:16px;background:#1c1917;border-bottom:1px solid rgba(255,255,255,0.08);';
+            const graphCanvas = document.createElement('canvas');
+            graphCanvas.dataset.momentShareGraph = 'true';
+            graphCanvas.style.cssText = 'width:100%;height:220px;display:block;border-radius:12px;';
+            graphWrap.appendChild(graphCanvas);
+            mediaWrap.appendChild(graphWrap);
+        } else if (!isDetailsMoment && photoUrl) {
             const img = document.createElement('img');
             img.src = photoUrl;
             img.alt = 'Moment photo';
@@ -685,7 +681,7 @@ export const createGalleryModule = ({
             mediaWrap.appendChild(detailsWrap);
         }
         const dateBadge = document.createElement('div');
-        dateBadge.style.cssText = isDetailsMoment
+        dateBadge.style.cssText = (isDetailsMoment || isGraphMoment)
             ? 'padding:0 16px 12px 16px;color:#ffffff;font-size:13px;font-weight:700;line-height:1;text-align:right;'
             : 'position:absolute;left:16px;bottom:14px;color:#ffffff;font-size:18px;font-weight:800;line-height:1;';
         dateBadge.textContent = formatMomentDate(data?.createdAt);
@@ -748,6 +744,10 @@ export const createGalleryModule = ({
 
         let canvas;
         try {
+            const shareGraphCanvas = templateCard.querySelector('canvas[data-moment-share-graph="true"]');
+            if (shareGraphCanvas) {
+                renderMomentGraphCanvas(shareGraphCanvas, data?.graphSnapshot || null);
+            }
             await waitForCardImages(templateCard);
             await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
             canvas = await capture(templateCard, {
@@ -1035,12 +1035,7 @@ export const createGalleryModule = ({
             const timestamp = Date.now();
             let fileToUpload = selectedPhotoFile;
             if (momentType === 'graph') {
-                fileToUpload = await buildMomentGraphFile({
-                    brew: coffeeData,
-                    snapshot: coffeeSnapshot,
-                    message,
-                    timestamp
-                });
+                fileToUpload = null;
             } else if (momentType === 'details') {
                 fileToUpload = null;
             }
@@ -1081,6 +1076,9 @@ export const createGalleryModule = ({
             if (thumbPath) momentPayload.thumbPath = thumbPath;
             if (momentType === 'details') {
                 momentPayload.brewDetailsSnapshot = buildMomentBrewDetailsSnapshot(coffeeData);
+            }
+            if (momentType === 'graph') {
+                momentPayload.graphSnapshot = buildMomentGraphSnapshot(coffeeData);
             }
             const createdMomentRef = await addDoc(collection(db, 'photos'), momentPayload);
             closeUploadModal();
@@ -1258,6 +1256,8 @@ export const createGalleryModule = ({
             const displayUrl = cachedThumb || batchThumb || resolveLegacyUrl(data, 'thumb');
             const primaryInfo = cardSnapshot.farmer || '-';
             const secondaryInfo = cardSnapshot.roaster || cardSnapshot.origin || '-';
+            const graphSnapshot = data?.graphSnapshot || null;
+            const hasGraphSnapshot = hasRenderableMomentGraph(graphSnapshot);
             if (getCurrentGalleryMode() === 'mine') {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
@@ -1274,7 +1274,20 @@ export const createGalleryModule = ({
             }
 
             let img = null;
-            if (momentType === 'details') {
+            if (momentType === 'graph' && hasGraphSnapshot) {
+                const graphWrap = document.createElement('div');
+                graphWrap.className = 'p-3 bg-coffee-50 dark:bg-[#1c1917] border-b border-coffee-100 dark:border-[#44403c]';
+                const graphCanvas = document.createElement('canvas');
+                graphCanvas.className = 'w-full h-52 rounded-lg border border-coffee-200 dark:border-[#57534e]';
+                graphWrap.appendChild(graphCanvas);
+
+                const dateBadge = document.createElement('div');
+                dateBadge.className = 'mt-2 text-right text-[11px] text-coffee-500 dark:text-[#a8a29e]';
+                dateBadge.textContent = new Date(data.createdAt).toLocaleDateString();
+                graphWrap.appendChild(dateBadge);
+                card.appendChild(graphWrap);
+                renderMomentGraphCanvas(graphCanvas, graphSnapshot);
+            } else if (momentType === 'details') {
                 const details = data?.brewDetailsSnapshot || {};
                 const inText = details.weight ? `${details.weight}g` : '-';
                 const ratioText = details.ratio ? `1:${details.ratio}` : '-';
@@ -1284,7 +1297,7 @@ export const createGalleryModule = ({
                     : '-';
                 const timeText = details.time ? `${details.time}s` : '';
                 const timeBlock = timeText
-                    ? `<div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Time</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${timeText}</div></div>`
+                    ? `<div data-details-tip="Total extraction time in seconds."><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Time</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${timeText}</div></div>`
                     : '';
                 const detailsWrap = document.createElement('div');
                 detailsWrap.className = 'p-3 bg-coffee-50 dark:bg-[#1c1917] border-b border-coffee-100 dark:border-[#44403c]';
@@ -1296,16 +1309,19 @@ export const createGalleryModule = ({
                         <span class="text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew stats</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2 text-center mb-2">
-                        <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">In</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${inText}</div></div>
-                        <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Ratio</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${ratioText}</div></div>
-                        <div class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Out</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${outText}</div></div>
+                        <div data-details-tip="Input coffee dose in grams." class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">In</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${inText}</div></div>
+                        <div data-details-tip="Brew ratio as input to output (1:x)." class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Ratio</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${ratioText}</div></div>
+                        <div data-details-tip="Output beverage weight in grams." class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Out</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${outText}</div></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 text-center border-t border-coffee-200 dark:border-[#44403c] pt-2">
-                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase truncate px-1">${details.grinder ? 'Grinder' : 'Grind'}</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${details.grinder || details.grind || '-'}</div></div>
+                        <div data-details-tip="${details.grinder ? 'Grinder model used for this brew.' : 'Grind setting used for this brew.'}"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase truncate px-1">${details.grinder ? 'Grinder' : 'Grind'}</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${details.grinder || details.grind || '-'}</div></div>
                         ${timeBlock}
-                        <div><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Temp</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${tempText}</div></div>
+                        <div data-details-tip="Water temperature used during extraction."><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Temp</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${tempText}</div></div>
                     </div>
                 `;
+                statsCard.querySelectorAll('[data-details-tip]').forEach((el) => {
+                    bindMomentDetailsTooltip(el, el.getAttribute('data-details-tip'));
+                });
 
                 const extraMeta = [
                     { label: 'First drip', value: details.firstDrip ? `${details.firstDrip}s` : '' },
@@ -1321,6 +1337,7 @@ export const createGalleryModule = ({
                         const chip = document.createElement('span');
                         chip.className = 'inline-flex items-center px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-[10px] text-coffee-700 dark:text-[#d6ccc2]';
                         chip.textContent = `${item.label}: ${item.value}`;
+                        bindMomentDetailsTooltip(chip, `${item.label}: ${item.value}`);
                         extraWrap.appendChild(chip);
                     });
                     statsCard.appendChild(extraWrap);
