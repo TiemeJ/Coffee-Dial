@@ -935,7 +935,13 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             imageCompression,
             html2canvas,
             openLightbox: (...args) => openLightbox?.(...args),
-            openAppConfirm
+            openAppConfirm,
+            openBrewFromMoment: (brewId, event = null) =>
+                appCommands?.dispatch?.(
+                    'brews.openCard',
+                    { id: brewId, event, options: {} },
+                    { source: 'gallery.openBrewFromMoment' }
+                )
         });
 
         const {
