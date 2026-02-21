@@ -22,12 +22,12 @@ export const createGalleryModule = ({
     openAppConfirm,
     openBrewFromMoment
 }) => {
-    const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDocs, doc, updateDoc, deleteDoc } = dataService || {};
+    const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc } = dataService || {};
     const { storage, ref, uploadBytes, deleteObject } = storageService || {};
     const { functions, httpsCallable } = functionsService || {};
 
-    if (!db || !addDoc || !collection || !query || !where || !orderBy || !limit || !startAfter || !getDocs || !doc || !updateDoc || !deleteDoc) {
-        throw new Error('createGalleryModule requires dataService { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDocs, doc, updateDoc, deleteDoc }');
+    if (!db || !addDoc || !collection || !query || !where || !orderBy || !limit || !startAfter || !getDoc || !getDocs || !doc || !updateDoc || !deleteDoc) {
+        throw new Error('createGalleryModule requires dataService { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc }');
     }
     if (!storage || !ref || !uploadBytes || !deleteObject) {
         throw new Error('createGalleryModule requires storageService { storage, ref, uploadBytes, deleteObject }');
@@ -40,6 +40,7 @@ export const createGalleryModule = ({
     const getPhotoSignedUrlsBatch = httpsCallable(functions, 'getPhotoSignedUrlsBatch');
     const signedUrlCache = new Map();
     const preparedMomentShares = new Map();
+    const momentBrewAccessCache = new Map();
     let currentUploadMomentBrew = null;
     const DEFAULT_URL_TTL_SECONDS = 180;
     const CACHE_SKEW_MS = 15000;
@@ -80,7 +81,33 @@ export const createGalleryModule = ({
         };
     };
 
+    const checkFriendBrewAccess = async ({ ownerUid, brewId }) => {
+        const normalizedOwner = typeof ownerUid === 'string' ? ownerUid.trim() : '';
+        const normalizedBrewId = typeof brewId === 'string' ? brewId.trim() : '';
+        if (!normalizedOwner || !normalizedBrewId) return false;
+
+        const cacheKey = getMomentBrewAccessKey(normalizedOwner, normalizedBrewId);
+        const cached = momentBrewAccessCache.get(cacheKey);
+        if (typeof cached === 'boolean') return cached;
+        if (cached && typeof cached.then === 'function') return cached;
+
+        const accessPromise = (async () => {
+            try {
+                const snap = await getDoc(doc(db, 'users', normalizedOwner, 'coffees', normalizedBrewId));
+                return !!snap?.exists?.();
+            } catch (_) {
+                return false;
+            }
+        })();
+
+        momentBrewAccessCache.set(cacheKey, accessPromise);
+        const allowed = await accessPromise;
+        momentBrewAccessCache.set(cacheKey, allowed);
+        return allowed;
+    };
+
     const getSignedUrlCacheKey = (photoId, variant) => `${photoId}:${variant}`;
+    const getMomentBrewAccessKey = (ownerUid, brewId) => `${ownerUid}:${brewId}`;
     const getSessionBaseKey = (photoId, variant) => `${SESSION_CACHE_PREFIX}:${photoId}:${variant}`;
     const getSessionIndexKey = (photoId, variant) => `${SESSION_INDEX_PREFIX}:${photoId}:${variant}`;
     const isSessionStorageAvailable = () => {
@@ -1320,15 +1347,27 @@ export const createGalleryModule = ({
             body.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase">${data.uploaderName}</span><div class="text-[10px] px-1.5 py-0.5 rounded border ${momentTypeMeta.badgeClass} inline-flex items-center gap-1"><i class="fa-solid ${momentTypeMeta.icon} text-[9px]"></i><span>${momentTypeMeta.label}</span></div></div><p data-moment-message="true" class="text-sm italic text-gray-700 dark:text-gray-300 mb-3 flex-1">"${data.message || ''}"</p><div data-moment-info="true" class="bg-coffee-50 dark:bg-[#1c1917] rounded p-2 text-xs border border-coffee-100 dark:border-[#44403c]"><div class="font-bold text-coffee-800 dark:text-white truncate">${primaryInfo}</div><div class="text-coffee-600 dark:text-[#a8a29e] truncate">${secondaryInfo}</div><div class="mt-1 inline-block px-1.5 py-0.5 bg-white dark:bg-[#292524] rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] font-mono text-[10px]">${cardSnapshot.method}</div></div>`;
             const momentInfoEl = body.querySelector('[data-moment-info="true"]');
             const linkedBrewId = typeof data?.coffeeId === 'string' ? data.coffeeId.trim() : '';
-            const hasLinkedBrew = !!linkedBrewId && getCoffees().some((coffee) => coffee.id === linkedBrewId);
-            if (momentInfoEl && hasLinkedBrew) {
+            const ownerUid = typeof data?.uid === 'string' ? data.uid.trim() : '';
+            const currentUserUid = typeof getCurrentUser()?.uid === 'string' ? getCurrentUser().uid : '';
+            const isOwnMoment = !!ownerUid && !!currentUserUid && ownerUid === currentUserUid;
+            const wireMomentBrewLink = () => {
+                if (!momentInfoEl || !linkedBrewId || momentInfoEl.dataset.momentBrewLinked === 'true') return;
+                momentInfoEl.dataset.momentBrewLinked = 'true';
                 momentInfoEl.classList.add('cursor-pointer', 'hover:bg-coffee-100', 'dark:hover:bg-[#34302e]', 'transition-colors');
                 momentInfoEl.title = 'Open associated brew';
                 momentInfoEl.addEventListener('click', (event) => {
                     event.stopPropagation();
                     if (typeof openBrewFromMoment === 'function') {
-                        openBrewFromMoment(linkedBrewId, event);
+                        openBrewFromMoment(linkedBrewId, event, ownerUid);
                     }
+                });
+            };
+            if (getCurrentGalleryMode() === 'mine') {
+                if (linkedBrewId && isOwnMoment) wireMomentBrewLink();
+            } else if (momentInfoEl && linkedBrewId && ownerUid) {
+                checkFriendBrewAccess({ ownerUid, brewId: linkedBrewId }).then((allowed) => {
+                    if (!allowed || !momentInfoEl.isConnected) return;
+                    wireMomentBrewLink();
                 });
             }
 

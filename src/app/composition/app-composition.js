@@ -936,12 +936,34 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             html2canvas,
             openLightbox: (...args) => openLightbox?.(...args),
             openAppConfirm,
-            openBrewFromMoment: (brewId, event = null) =>
+            openBrewFromMoment: async (brewId, event = null, ownerUid = null) => {
+                const targetId = typeof brewId === 'string' ? brewId.trim() : '';
+                if (!targetId) return;
+
+                const targetOwnerUid = typeof ownerUid === 'string' ? ownerUid.trim() : '';
+                const currentUserUid = typeof getCurrentUserState()?.uid === 'string' ? getCurrentUserState().uid : '';
+                const targetView = !targetOwnerUid || targetOwnerUid === currentUserUid ? 'mine' : targetOwnerUid;
+                if (getCurrentViewState() !== targetView) {
+                    changeView(targetView);
+                }
+
+                const start = Date.now();
+                const timeoutMs = 3500;
+                while (!getCoffeesState().some((brew) => brew.id === targetId) && Date.now() - start < timeoutMs) {
+                    await new Promise((resolve) => setTimeout(resolve, 80));
+                }
+
+                if (!getCoffeesState().some((brew) => brew.id === targetId)) {
+                    showToast('Could not open brew card. Brew is not available in current view.');
+                    return;
+                }
+
                 appCommands?.dispatch?.(
                     'brews.openCard',
-                    { id: brewId, event, options: {} },
+                    { id: targetId, event, options: { ownerUid: targetOwnerUid || null } },
                     { source: 'gallery.openBrewFromMoment' }
-                )
+                );
+            }
         });
 
         const {
