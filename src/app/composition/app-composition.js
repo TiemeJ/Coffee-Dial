@@ -1319,6 +1319,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             changeView,
             initNotificationListener,
             openHelp,
+            openGallery,
             initLightboxListeners,
             clearNotificationSubscription,
             clearViewSubscriptions

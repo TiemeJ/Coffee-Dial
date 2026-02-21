@@ -827,7 +827,9 @@ export const createGalleryModule = ({
     };
 
     const shareMoment = async ({ photoId, data, cardSnapshot, cardElement }) => {
-        const appLink = typeof window !== 'undefined' ? window.location.origin : '';
+        const appLink = typeof window !== 'undefined'
+            ? `${window.location.origin}${window.location.pathname}${window.location.search}#moments`
+            : '';
         const shareText = buildMomentShareText({ data, cardSnapshot, appLink });
         if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
             alert('Sharing is not supported on this device.');

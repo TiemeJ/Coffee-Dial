@@ -4,6 +4,7 @@ export const createAuthStateChangedHandler = ({
     changeView,
     initNotificationListener,
     openHelp,
+    openGallery,
     initLightboxListeners,
     clearNotificationSubscription,
     clearViewSubscriptions
@@ -41,6 +42,15 @@ export const createAuthStateChangedHandler = ({
             initNotificationListener(user.uid);
             if (shouldShowOnboarding) openHelp();
             initLightboxListeners();
+            if (typeof window !== 'undefined' && window.location.hash === '#moments') {
+                openGallery?.();
+                try {
+                    const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+                    window.history.replaceState(null, '', cleanUrl);
+                } catch (_) {
+                    // no-op
+                }
+            }
             return;
         }
 
