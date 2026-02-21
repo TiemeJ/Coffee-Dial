@@ -1,6 +1,7 @@
 export const createDataService = ({
     db,
     collection,
+    collectionGroup,
     doc,
     setDoc,
     addDoc,
@@ -20,6 +21,7 @@ export const createDataService = ({
 }) => ({
     db,
     collection,
+    collectionGroup,
     doc,
     setDoc,
     addDoc,

@@ -301,7 +301,8 @@ export const createSessionAuthViewModule = ({
 
     const initNotificationListener = (uid) => {
         clearNotificationSubscription();
-        const q = query(collection(db, 'photos'), where('sharedWith', 'array-contains', uid), orderBy('createdAt', 'desc'), limit(1));
+        const sharedPhotosQ = query(collection(db, 'photos'), where('sharedWith', 'array-contains', uid), orderBy('createdAt', 'desc'), limit(200));
+        const ownPhotosQ = query(collection(db, 'photos'), where('uid', '==', uid), orderBy('createdAt', 'desc'), limit(200));
         const friendRequestsQ = query(
             collection(db, 'friendRequests'),
             where('toUid', '==', uid),
@@ -315,6 +316,11 @@ export const createSessionAuthViewModule = ({
             limit(100)
         );
         let latestPhotoDate = null;
+        let hasNewComments = false;
+        let sharedPhotosSnapshot = null;
+        let ownPhotosSnapshot = null;
+        let commentWatchersUnsubs = [];
+        const latestCommentByPhotoId = new Map();
         let pendingFriendRequestsCount = 0;
 
         const syncAvatarBadge = () => {
@@ -329,30 +335,146 @@ export const createSessionAuthViewModule = ({
             avatarBadge.textContent = pendingFriendRequestsCount > 99 ? '99+' : String(pendingFriendRequestsCount);
         };
 
+        const toDate = (value) => {
+            if (!value) return null;
+            const parsed = new Date(value);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        };
+
+        const syncCommentBadges = () => {
+            const baseline = toDate(getLastGalleryVisit());
+            if (!baseline) {
+                hasNewComments = false;
+                return;
+            }
+            const hasUnreadInSnapshot = (snapshot) => {
+                if (!snapshot || snapshot.empty) return false;
+                return snapshot.docs.some((docSnap) => {
+                    const data = docSnap.data() || {};
+                    const commentAt = toDate(data.lastCommentAt);
+                    if (!commentAt || commentAt <= baseline) return false;
+                    if (data.lastCommentByUid && data.lastCommentByUid === uid) return false;
+                    return true;
+                });
+            };
+
+            const unreadFromMetadata = hasUnreadInSnapshot(sharedPhotosSnapshot) || hasUnreadInSnapshot(ownPhotosSnapshot);
+            const unreadFromLiveWatchers = Array.from(latestCommentByPhotoId.values()).some((entry) => {
+                const commentAt = toDate(entry?.createdAt);
+                if (!commentAt || commentAt <= baseline) return false;
+                if (entry?.uid && entry.uid === uid) return false;
+                return true;
+            });
+            hasNewComments = unreadFromMetadata || unreadFromLiveWatchers;
+        };
+
+        const clearCommentWatchers = () => {
+            commentWatchersUnsubs.forEach((unsub) => {
+                try { unsub(); } catch (_) {}
+            });
+            commentWatchersUnsubs = [];
+            latestCommentByPhotoId.clear();
+        };
+
+        const getRecentPhotoIdsForCommentWatchers = (max = 40) => {
+            const docs = [];
+            if (ownPhotosSnapshot && !ownPhotosSnapshot.empty) {
+                ownPhotosSnapshot.docs.forEach((docSnap) => docs.push(docSnap));
+            }
+            if (sharedPhotosSnapshot && !sharedPhotosSnapshot.empty) {
+                sharedPhotosSnapshot.docs.forEach((docSnap) => docs.push(docSnap));
+            }
+            const unique = new Map();
+            docs.forEach((docSnap) => {
+                if (!unique.has(docSnap.id)) unique.set(docSnap.id, docSnap);
+            });
+            return Array.from(unique.values())
+                .sort((a, b) => {
+                    const aDate = toDate(a.data()?.createdAt);
+                    const bDate = toDate(b.data()?.createdAt);
+                    const aTime = aDate ? aDate.getTime() : 0;
+                    const bTime = bDate ? bDate.getTime() : 0;
+                    return bTime - aTime;
+                })
+                .slice(0, Math.max(1, max))
+                .map((docSnap) => docSnap.id);
+        };
+
+        const refreshCommentWatchers = () => {
+            clearCommentWatchers();
+            const ids = getRecentPhotoIdsForCommentWatchers(40);
+            if (!ids.length) {
+                syncCommentBadges();
+                syncGalleryBadge();
+                return;
+            }
+            ids.forEach((photoId) => {
+                const latestCommentQ = query(
+                    collection(db, 'photos', photoId, 'comments'),
+                    orderBy('createdAt', 'desc'),
+                    limit(1)
+                );
+                const unsub = onSnapshot(
+                    latestCommentQ,
+                    (snapshot) => {
+                        if (snapshot.empty) latestCommentByPhotoId.delete(photoId);
+                        else latestCommentByPhotoId.set(photoId, snapshot.docs[0].data() || {});
+                        syncCommentBadges();
+                        syncGalleryBadge();
+                    },
+                    (error) => {
+                        console.error('Comment notification watcher error:', error);
+                        latestCommentByPhotoId.delete(photoId);
+                        syncCommentBadges();
+                        syncGalleryBadge();
+                    }
+                );
+                commentWatchersUnsubs.push(unsub);
+            });
+        };
+
         const syncGalleryBadge = () => {
             const menuBadge = document.getElementById('menuBadge');
             const galleryBadge = document.getElementById('galleryBadge');
             if (!menuBadge || !galleryBadge) return;
-            if (!latestPhotoDate) {
-                menuBadge.classList.add('hidden');
-                galleryBadge.classList.add('hidden');
-                return;
-            }
             const lastVisit = getLastGalleryVisit();
-            const hasNew = !lastVisit || new Date(latestPhotoDate) > new Date(lastVisit);
+            const hasNewPhoto = !!latestPhotoDate && (!lastVisit || new Date(latestPhotoDate) > new Date(lastVisit));
+            const hasNew = hasNewPhoto || hasNewComments;
             menuBadge.classList.toggle('hidden', !hasNew);
             galleryBadge.classList.toggle('hidden', !hasNew);
         };
 
-        const unsubPhotos = onSnapshot(
-            q,
+        const unsubSharedPhotos = onSnapshot(
+            sharedPhotosQ,
             (snapshot) => {
                 latestPhotoDate = snapshot.empty ? null : snapshot.docs[0].data().createdAt;
+                sharedPhotosSnapshot = snapshot;
+                refreshCommentWatchers();
+                syncCommentBadges();
                 syncGalleryBadge();
             },
             (error) => {
                 console.error('Photo notification listener error:', error);
                 latestPhotoDate = null;
+                sharedPhotosSnapshot = null;
+                refreshCommentWatchers();
+                syncCommentBadges();
+                syncGalleryBadge();
+            }
+        );
+        const unsubOwnPhotos = onSnapshot(
+            ownPhotosQ,
+            (snapshot) => {
+                ownPhotosSnapshot = snapshot;
+                refreshCommentWatchers();
+                syncCommentBadges();
+                syncGalleryBadge();
+            },
+            (error) => {
+                console.error('Own photo notification listener error:', error);
+                ownPhotosSnapshot = null;
+                refreshCommentWatchers();
+                syncCommentBadges();
                 syncGalleryBadge();
             }
         );
@@ -361,6 +483,7 @@ export const createSessionAuthViewModule = ({
         const unsubUser = onSnapshot(userDocRef, (snapshot) => {
             const data = snapshot.exists() ? snapshot.data() : {};
             setLastGalleryVisit(data?.lastGalleryVisit || null);
+            syncCommentBadges();
             syncGalleryBadge();
         });
 
@@ -402,7 +525,9 @@ export const createSessionAuthViewModule = ({
         );
 
         setUnsubscribeNotifications(() => {
-            unsubPhotos();
+            clearCommentWatchers();
+            unsubSharedPhotos();
+            unsubOwnPhotos();
             unsubUser();
             unsubFriendRequests();
             unsubAcceptedOutgoing();

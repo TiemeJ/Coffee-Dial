@@ -2,14 +2,16 @@ export const createGalleryCommentsModule = ({
     getCurrentUser,
     db,
     collection,
+    doc,
+    updateDoc,
     query,
     orderBy,
     limit,
     getDocs,
     addDoc
 }) => {
-    if (!db || !collection || !query || !orderBy || !limit || !getDocs || !addDoc) {
-        throw new Error('createGalleryCommentsModule requires { db, collection, query, orderBy, limit, getDocs, addDoc }');
+    if (!db || !collection || !doc || !updateDoc || !query || !orderBy || !limit || !getDocs || !addDoc) {
+        throw new Error('createGalleryCommentsModule requires { db, collection, doc, updateDoc, query, orderBy, limit, getDocs, addDoc }');
     }
 
     const normalizeCommentText = (text) => (text ?? '').toString().trim();
@@ -44,6 +46,14 @@ export const createGalleryCommentsModule = ({
             createdAt: new Date().toISOString()
         };
         await addDoc(collection(db, 'photos', photoId, 'comments'), payload);
+        try {
+            await updateDoc(doc(db, 'photos', photoId), {
+                lastCommentAt: payload.createdAt,
+                lastCommentByUid: user.uid
+            });
+        } catch (error) {
+            console.warn('Could not update moment comment metadata:', error);
+        }
         return payload;
     };
 

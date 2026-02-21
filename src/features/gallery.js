@@ -54,6 +54,8 @@ export const createGalleryModule = ({
         getCurrentUser,
         db,
         collection,
+        doc,
+        updateDoc,
         query,
         orderBy,
         limit,
@@ -63,7 +65,11 @@ export const createGalleryModule = ({
     const signedUrlCache = new Map();
     const preparedMomentShares = new Map();
     const momentBrewAccessCache = new Map();
+    const unreadCommentMomentIds = new Set();
+    const unreadMineCommentMomentIds = new Set();
+    const unreadSharedCommentMomentIds = new Set();
     let currentUploadMomentBrew = null;
+    let galleryNotificationBaseline = null;
     const DEFAULT_URL_TTL_SECONDS = 180;
     const CACHE_SKEW_MS = 15000;
     const SESSION_CACHE_PREFIX = 'gallerySignedUrl:v1';
@@ -313,6 +319,91 @@ export const createGalleryModule = ({
             batchItems.push({ photoId, variant: 'thumb' });
         });
         return batchItems;
+    };
+
+    const toDate = (value) => {
+        if (!value) return null;
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const getNotificationBaselineDate = () => {
+        const candidate = galleryNotificationBaseline || getLastGalleryVisit();
+        return toDate(candidate);
+    };
+
+    const isUnreadCommentForSession = (commentEntry, momentOwnerUid = '') => {
+        const baseline = getNotificationBaselineDate();
+        if (!baseline) return false;
+        const commentDate = toDate(commentEntry?.createdAt);
+        if (!commentDate || commentDate <= baseline) return false;
+        const currentUid = getCurrentUser()?.uid || '';
+        if (commentEntry?.uid && commentEntry.uid === currentUid) return false;
+        if (!momentOwnerUid) return true;
+        return true;
+    };
+
+    const renderGalleryTabCommentBadges = () => {
+        const sharedBadge = document.getElementById('tabGallerySharedBadge');
+        const mineBadge = document.getElementById('tabGalleryMineBadge');
+        if (sharedBadge) sharedBadge.classList.toggle('hidden', unreadSharedCommentMomentIds.size === 0);
+        if (mineBadge) mineBadge.classList.toggle('hidden', unreadMineCommentMomentIds.size === 0);
+    };
+
+    const collectTabMomentIds = async (tab, maxMoments = 60) => {
+        const user = getCurrentUser();
+        if (!user?.uid) return [];
+        const constraints = [orderBy('createdAt', 'desc'), limit(Math.max(1, maxMoments))];
+        const q = tab === 'mine'
+            ? query(collection(db, 'photos'), where('uid', '==', user.uid), ...constraints)
+            : query(collection(db, 'photos'), where('sharedWith', 'array-contains', user.uid), ...constraints);
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map((docItem) => ({ id: docItem.id, data: docItem.data() }));
+    };
+
+    const refreshGalleryCommentIndicators = async () => {
+        const baseline = getNotificationBaselineDate();
+        unreadCommentMomentIds.clear();
+        unreadMineCommentMomentIds.clear();
+        unreadSharedCommentMomentIds.clear();
+        if (!baseline) {
+            renderGalleryTabCommentBadges();
+            return;
+        }
+
+        const evaluateTab = async (tab) => {
+            const moments = await collectTabMomentIds(tab, 60);
+            if (!moments.length) return false;
+            const states = await Promise.all(moments.map(async ({ id, data }) => {
+                try {
+                    const latest = await commentsModule.listComments({ photoId: id, max: 1 });
+                    if (!latest.length) return false;
+                    const unread = isUnreadCommentForSession(latest[0], data?.uid || '');
+                    if (unread) {
+                        unreadCommentMomentIds.add(id);
+                        if (tab === 'mine') unreadMineCommentMomentIds.add(id);
+                        else unreadSharedCommentMomentIds.add(id);
+                    }
+                    return unread;
+                } catch (_) {
+                    return false;
+                }
+            }));
+            return states.some(Boolean);
+        };
+
+        try {
+            await Promise.all([
+                evaluateTab('mine'),
+                evaluateTab('shared')
+            ]);
+        } catch (error) {
+            console.warn('Could not refresh gallery comment indicators:', error);
+            unreadCommentMomentIds.clear();
+            unreadMineCommentMomentIds.clear();
+            unreadSharedCommentMomentIds.clear();
+        }
+        renderGalleryTabCommentBadges();
     };
 
     const openExternalUrl = (url, options = {}) => {
@@ -1116,6 +1207,7 @@ export const createGalleryModule = ({
 
     const openGallery = async () => {
         document.getElementById('galleryModal')?.classList.remove('hidden');
+        galleryNotificationBaseline = getLastGalleryVisit();
         const user = getCurrentUser();
         const nowIso = new Date().toISOString();
         setLastGalleryVisit(nowIso);
@@ -1128,6 +1220,7 @@ export const createGalleryModule = ({
         }
         document.getElementById('menuBadge')?.classList.add('hidden');
         document.getElementById('galleryBadge')?.classList.add('hidden');
+        await refreshGalleryCommentIndicators();
         switchGalleryTab('shared');
         setLastGalleryDoc(null);
         document.getElementById('galleryGrid').innerHTML = '';
@@ -1139,6 +1232,7 @@ export const createGalleryModule = ({
     const switchGalleryTab = async (tab) => {
         const tMine = document.getElementById('tabGalleryMine');
         const tShared = document.getElementById('tabGalleryShared');
+        renderGalleryTabCommentBadges();
         setCurrentGalleryMode(tab);
         setLastGalleryDoc(null);
         document.getElementById('galleryGrid').innerHTML = '';
@@ -1599,9 +1693,15 @@ export const createGalleryModule = ({
 
             let commentsLoaded = false;
             let commentsEntries = [];
-            const setCommentBtnLabel = (count) => {
-                commentBtn.innerHTML = `<i class="fa-regular fa-comment text-[10px]"></i><span>${count} comment${count === 1 ? '' : 's'}</span>`;
+            const commentTabKey = getCurrentGalleryMode() === 'mine' ? 'mine' : 'shared';
+            let hasUnreadComments = unreadCommentMomentIds.has(docItem.id);
+            const setCommentBtnLabel = (count, unread = hasUnreadComments) => {
+                const unreadDot = unread
+                    ? '<span class="inline-block h-2 w-2 rounded-full bg-red-500 ml-1"></span>'
+                    : '';
+                commentBtn.innerHTML = `<i class="fa-regular fa-comment text-[10px]"></i><span>${count} comment${count === 1 ? '' : 's'}</span>${unreadDot}`;
             };
+            setCommentBtnLabel(0, hasUnreadComments);
 
             const formatCommentDate = (value) => {
                 const parsed = new Date(value);
@@ -1657,7 +1757,18 @@ export const createGalleryModule = ({
                 }
 
                 const commentCount = commentsEntries.length;
-                setCommentBtnLabel(commentCount);
+                hasUnreadComments = commentsEntries.some((entry) => isUnreadCommentForSession(entry, data?.uid || ''));
+                if (hasUnreadComments) {
+                    unreadCommentMomentIds.add(docItem.id);
+                    if (commentTabKey === 'mine') unreadMineCommentMomentIds.add(docItem.id);
+                    else unreadSharedCommentMomentIds.add(docItem.id);
+                } else {
+                    unreadCommentMomentIds.delete(docItem.id);
+                    if (commentTabKey === 'mine') unreadMineCommentMomentIds.delete(docItem.id);
+                    else unreadSharedCommentMomentIds.delete(docItem.id);
+                }
+                setCommentBtnLabel(commentCount, hasUnreadComments);
+                renderGalleryTabCommentBadges();
             };
 
             const loadComments = async () => {
@@ -1675,6 +1786,14 @@ export const createGalleryModule = ({
                 event.stopPropagation();
                 const willShow = commentsPanel.classList.contains('hidden');
                 commentsPanel.classList.toggle('hidden', !willShow);
+                if (willShow && hasUnreadComments) {
+                    hasUnreadComments = false;
+                    unreadCommentMomentIds.delete(docItem.id);
+                    if (commentTabKey === 'mine') unreadMineCommentMomentIds.delete(docItem.id);
+                    else unreadSharedCommentMomentIds.delete(docItem.id);
+                    setCommentBtnLabel(commentsEntries.length, false);
+                    renderGalleryTabCommentBadges();
+                }
                 if (!willShow) return;
                 if (commentsLoaded) return;
                 commentsList.innerHTML = '<div class="text-xs italic text-coffee-500 dark:text-[#a8a29e]">Loading comments...</div>';
