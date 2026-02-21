@@ -1382,19 +1382,23 @@ export const createGalleryModule = ({
                 });
             }
 
+            let mineManageRow = null;
             if (getCurrentGalleryMode() === 'mine') {
                 const shareMetaWrap = document.createElement('div');
                 shareMetaWrap.className = 'mt-2 flex items-center justify-between gap-2';
-
-                const sharedCount = document.createElement('div');
-                sharedCount.className = 'text-[11px] text-coffee-500 dark:text-[#a8a29e]';
-                updateSharedCountLabel(sharedCount);
 
                 const manageBtn = document.createElement('button');
                 manageBtn.type = 'button';
                 manageBtn.dataset.momentAction = 'true';
                 manageBtn.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] inline-flex items-center gap-1';
-                manageBtn.innerHTML = '<i class="fa-solid fa-user-gear text-[10px]"></i><span>Manage sharing</span>';
+                const setManageBtnLabel = () => {
+                    const count = getMomentSharedWith(data).length;
+                    const label = count === 0
+                        ? 'Visible only to you'
+                        : `Shared with ${count} friend${count === 1 ? '' : 's'}`;
+                    manageBtn.innerHTML = `<i class="fa-solid fa-user-gear text-[10px]"></i><span>${label}</span>`;
+                };
+                setManageBtnLabel();
                 manageBtn.addEventListener('click', (event) => {
                     event.stopPropagation();
                     const existing = body.querySelector('[data-moment-share-editor="true"]');
@@ -1406,14 +1410,14 @@ export const createGalleryModule = ({
                     const editor = buildMomentShareEditor({
                         photoId: docItem.id,
                         data,
-                        onSaved: () => updateSharedCountLabel(sharedCount)
+                        onSaved: () => setManageBtnLabel()
                     });
                     body.appendChild(editor);
                 });
 
-                shareMetaWrap.appendChild(sharedCount);
                 shareMetaWrap.appendChild(manageBtn);
                 body.appendChild(shareMetaWrap);
+                mineManageRow = shareMetaWrap;
             }
 
             const likesRow = document.createElement('div');
@@ -1475,7 +1479,13 @@ export const createGalleryModule = ({
             likesRow.appendChild(likesCount);
             likesRow.appendChild(likeBtn);
             updateLikesUi();
-            body.appendChild(likesRow);
+            if (getCurrentGalleryMode() === 'mine' && mineManageRow) {
+                likesRow.className = 'flex items-center gap-2';
+                likesRow.classList.remove('mt-2');
+                mineManageRow.insertBefore(likesRow, mineManageRow.firstChild);
+            } else {
+                body.appendChild(likesRow);
+            }
             card.appendChild(body);
             grid.appendChild(card);
 
