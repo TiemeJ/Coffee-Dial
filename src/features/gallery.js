@@ -1,3 +1,5 @@
+import { createGalleryLikesModule } from './gallery-likes.js';
+
 export const createGalleryModule = ({
     getCurrentUser,
     getCurrentUploadCoffeeId,
@@ -22,12 +24,12 @@ export const createGalleryModule = ({
     openAppConfirm,
     openBrewFromMoment
 }) => {
-    const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc } = dataService || {};
+    const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove } = dataService || {};
     const { storage, ref, uploadBytes, deleteObject } = storageService || {};
     const { functions, httpsCallable } = functionsService || {};
 
-    if (!db || !addDoc || !collection || !query || !where || !orderBy || !limit || !startAfter || !getDoc || !getDocs || !doc || !updateDoc || !deleteDoc) {
-        throw new Error('createGalleryModule requires dataService { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc }');
+    if (!db || !addDoc || !collection || !query || !where || !orderBy || !limit || !startAfter || !getDoc || !getDocs || !doc || !updateDoc || !deleteDoc || !arrayUnion || !arrayRemove) {
+        throw new Error('createGalleryModule requires dataService { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove }');
     }
     if (!storage || !ref || !uploadBytes || !deleteObject) {
         throw new Error('createGalleryModule requires storageService { storage, ref, uploadBytes, deleteObject }');
@@ -38,6 +40,14 @@ export const createGalleryModule = ({
 
     const getPhotoSignedUrl = httpsCallable(functions, 'getPhotoSignedUrl');
     const getPhotoSignedUrlsBatch = httpsCallable(functions, 'getPhotoSignedUrlsBatch');
+    const likesModule = createGalleryLikesModule({
+        getCurrentUser,
+        db,
+        doc,
+        updateDoc,
+        arrayUnion,
+        arrayRemove
+    });
     const signedUrlCache = new Map();
     const preparedMomentShares = new Map();
     const momentBrewAccessCache = new Map();
@@ -1091,6 +1101,7 @@ export const createGalleryModule = ({
                 coffeeSnapshot,
                 momentType,
                 sharedWith,
+                likedBy: [],
                 createdAt: createdAtIso
             };
             const createdMomentRef = await addDoc(collection(db, 'photos'), momentPayload);
@@ -1404,6 +1415,67 @@ export const createGalleryModule = ({
                 shareMetaWrap.appendChild(manageBtn);
                 body.appendChild(shareMetaWrap);
             }
+
+            const likesRow = document.createElement('div');
+            likesRow.className = 'mt-2 flex items-center justify-between gap-2';
+            const likesCount = document.createElement('div');
+            likesCount.className = 'text-[11px] text-coffee-500 dark:text-[#a8a29e] inline-flex items-center gap-1';
+            const likesCountIcon = document.createElement('i');
+            likesCountIcon.className = 'fa-solid fa-heart text-red-500 text-[10px]';
+            const likesCountText = document.createElement('span');
+            likesCount.appendChild(likesCountIcon);
+            likesCount.appendChild(likesCountText);
+
+            const likeBtn = document.createElement('button');
+            likeBtn.type = 'button';
+            likeBtn.dataset.momentAction = 'true';
+            likeBtn.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] inline-flex items-center gap-1';
+
+            const updateLikesUi = () => {
+                const count = likesModule.getLikeCount(data);
+                likesCountText.textContent = `${count} like${count === 1 ? '' : 's'}`;
+                likesCount.classList.toggle('hidden', count <= 0);
+
+                const isMineTab = getCurrentGalleryMode() === 'mine';
+                const canLike = !isMineTab && likesModule.canLikeMoment(data);
+                likeBtn.classList.toggle('hidden', !canLike);
+                if (canLike) {
+                    const liked = likesModule.hasLiked(data);
+                    likeBtn.innerHTML = liked
+                        ? '<i class="fa-solid fa-heart text-red-500 text-[10px]"></i><span>Unlike</span>'
+                        : '<i class="fa-regular fa-heart text-[10px]"></i><span>Like</span>';
+                }
+                likesRow.classList.toggle('hidden', isMineTab && count <= 0);
+            };
+
+            likeBtn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                if (!likesModule.canLikeMoment(data)) return;
+                likeBtn.disabled = true;
+                likeBtn.classList.add('opacity-70', 'cursor-wait');
+                try {
+                    const nowLiked = await likesModule.toggleLike({ photoId: docItem.id, data });
+                    const currentLikedBy = Array.isArray(data.likedBy) ? [...data.likedBy] : [];
+                    const uid = getCurrentUser()?.uid;
+                    if (uid) {
+                        data.likedBy = nowLiked
+                            ? Array.from(new Set([...currentLikedBy, uid]))
+                            : currentLikedBy.filter((entryUid) => entryUid !== uid);
+                    }
+                    updateLikesUi();
+                } catch (error) {
+                    console.error('Failed toggling moment like', error);
+                    alert(`Could not update like: ${error?.message || 'Unknown error'}`);
+                } finally {
+                    likeBtn.disabled = false;
+                    likeBtn.classList.remove('opacity-70', 'cursor-wait');
+                }
+            });
+
+            likesRow.appendChild(likesCount);
+            likesRow.appendChild(likeBtn);
+            updateLikesUi();
+            body.appendChild(likesRow);
             card.appendChild(body);
             grid.appendChild(card);
 
