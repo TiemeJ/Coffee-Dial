@@ -1,5 +1,4 @@
 export const DEFAULT_PINNED_BREWS_PREFERENCES = {
-    useLegacyBrewForm: true,
     useLegacyMobileTable: true,
     showCoffeeImageInBrewCard: false,
     animationsEnabled: true,
@@ -28,7 +27,6 @@ export const createBrewsPreferencesModule = ({
         throw new Error('createBrewsPreferencesModule requires dataService { db, doc, updateDoc }');
     }
     const PREF_TOGGLE_IDS = [
-        'useLegacyBrewFormToggle',
         'useLegacyMobileTableToggle',
         'showCoffeeImageInBrewCardToggle',
         'animationsToggle',
@@ -102,7 +100,6 @@ export const createBrewsPreferencesModule = ({
             pinOpenBagsEnabled && !!document.getElementById('pinOpenBagsBestOnlyToggle')?.checked;
         return {
             ...getPinnedBrewsPreferences(),
-            useLegacyBrewForm: !!document.getElementById('useLegacyBrewFormToggle')?.checked,
             useLegacyMobileTable: !!document.getElementById('useLegacyMobileTableToggle')?.checked,
             showCoffeeImageInBrewCard: !!document.getElementById('showCoffeeImageInBrewCardToggle')?.checked,
             animationsEnabled: !!document.getElementById('animationsToggle')?.checked,
@@ -214,7 +211,6 @@ export const createBrewsPreferencesModule = ({
 
         isHydratingPreferences = true;
         document.getElementById('animationsToggle').checked = !!pinnedPrefs.animationsEnabled;
-        document.getElementById('useLegacyBrewFormToggle').checked = pinnedPrefs.useLegacyBrewForm !== false;
         document.getElementById('useLegacyMobileTableToggle').checked = pinnedPrefs.useLegacyMobileTable !== false;
         document.getElementById('showCoffeeImageInBrewCardToggle').checked = !!pinnedPrefs.showCoffeeImageInBrewCard;
         document.getElementById('organizeByBeansToggle').checked = !!pinnedPrefs.organizeByBeans;

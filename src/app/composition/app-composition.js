@@ -250,7 +250,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 { event, options },
                 { source: 'container.brewsOpenForm' }
             );
-        const isLegacyBrewFormEnabled = () => getPinnedBrewsPreferencesState()?.useLegacyBrewForm !== false;
         const dataService = createDataService({
             db,
             collection,
@@ -337,21 +336,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             signInWithPopup,
             signOut
         });
-        const applyBrewFormInlineVisibility = () => {
-            const formMount = document.getElementById('brewsFormMount');
-            const formContainer = document.getElementById('formContainer');
-            if (!formMount) return;
-            const shouldShowInline = getCurrentViewState() === 'mine' && isLegacyBrewFormEnabled();
-            const modal = document.getElementById('brewFormModal');
-            const modalOpen = !!modal && !modal.classList.contains('hidden');
-            formMount.classList.toggle('hidden', !shouldShowInline);
-            if (formContainer) {
-                if (shouldShowInline || modalOpen) formContainer.classList.remove('hidden');
-                else formContainer.classList.add('hidden');
-            }
-            if (!shouldShowInline && !modalOpen) toggleForm?.(false);
-        };
-
         const {
             clearSearch,
             getFilterLabel,
@@ -457,7 +441,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 appCommands?.dispatch?.(commandName, payload, { source: 'preferences' }),
             showAutoPinToast,
             onPinnedBrewsPreferencesChanged: () => {
-                applyBrewFormInlineVisibility?.();
                 refreshManualPinningVisibility?.();
                 const currentCard = getCurrentCardCoffeeState();
                 if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
@@ -579,8 +562,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getCoffeeScale: () => coffeeScale,
             refreshBrewGearSelectors: () => refreshBrewGearSelectors(),
             getLastGalleryVisit: () => getLastGalleryVisitState(),
-            setLastGalleryVisit: (value) => setLastGalleryVisitState(value),
-            applyBrewFormInlineVisibility: (...args) => applyBrewFormInlineVisibility(...args)
+            setLastGalleryVisit: (value) => setLastGalleryVisitState(value)
         });
 
         const {
@@ -1241,7 +1223,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 clearPendingAIBeanImageFile,
                 getCoffeeScale: () => coffeeScale,
                 showToast,
-                shouldUseLegacyBrewForm: () => isLegacyBrewFormEnabled(),
                 openBrewFormModal: dispatchBrewOpenForm
             },
             refreshQuickEditGearFieldVisibility,
@@ -1398,15 +1379,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             toggleForm,
             openAppConfirm
         });
-        applyBrewFormInlineVisibility();
 
         const openAddBrewFromPinned = createOpenAddBrewFromPinned({
-            isLegacyBrewFormEnabled,
-            openBrewFormModal,
-            changeView,
-            resetFormState,
-            toggleForm,
-            getCurrentView: () => getCurrentViewState()
+            openBrewFormModal
         });
 
         registerBrewsFilterCommands({
@@ -1454,20 +1429,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 if (select) select.value = beanId;
                 fillBeanDetails(beanId);
                 toggleForm(true);
-                if (!isLegacyBrewFormEnabled()) {
-                    openBrewFormModal(event, { reset: false, syncTitleFromForm: true });
-                    return;
-                }
-                const formWrapper = document.getElementById('formWrapper');
-                if (!formWrapper) return;
-                const scrollToFormTop = (behavior = 'smooth') => {
-                    const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
-                    const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
-                    window.scrollTo({ top: Math.max(0, top - headerHeight - 8), behavior });
-                };
-                scrollToFormTop('smooth');
-                requestAnimationFrame(() => scrollToFormTop('auto'));
-                setTimeout(() => scrollToFormTop('auto'), 140);
+                openBrewFormModal(event, { reset: false, syncTitleFromForm: true });
             },
             refreshTable: () => {
                 renderTable();
@@ -1794,7 +1756,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 });
             }
 
-            applyBrewFormInlineVisibility?.();
             updateCoffeeTypeSelectors?.();
             updateBeanDropdown?.();
             updateAutocompleteLists?.();

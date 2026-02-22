@@ -43,8 +43,7 @@ export const createSessionAuthViewModule = ({
     getCoffeeScale,
     refreshBrewGearSelectors,
     getLastGalleryVisit,
-    setLastGalleryVisit,
-    applyBrewFormInlineVisibility
+    setLastGalleryVisit
 }) => {
     const { auth, provider, signInWithPopup, signOut } = authService || {};
     const { db, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, limit, onSnapshot } = dataService || {};
@@ -162,7 +161,6 @@ export const createSessionAuthViewModule = ({
         applyAnimationPreference();
         updatePublicToggleUI();
         document.getElementById('myShareId').value = user.uid;
-        applyBrewFormInlineVisibility?.();
         renderTable();
         return { shouldShowOnboarding };
     };
@@ -189,7 +187,6 @@ export const createSessionAuthViewModule = ({
 
         const isMine = uid === 'mine';
         const targetUid = isMine ? user.uid : uid;
-        applyBrewFormInlineVisibility?.();
 
         const brewsRef = collection(db, 'users', targetUid, 'coffees');
         setUnsubscribeData(

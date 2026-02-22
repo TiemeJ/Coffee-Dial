@@ -264,13 +264,13 @@ const runCommandFlowSmoke = async ({ actions = {}, appCommands = null } = {}) =>
             } else {
                 actions.openBrewWithBean(contextual.beanId);
                 const coffeeBrewFormOpened = await waitFor(
-                    () => isVisible('brewFormModal') || isVisible('formContainer'),
+                    () => isVisible('brewFormModal'),
                     3000
                 );
                 addFlow(
                     'coffee -> brew form',
                     coffeeBrewFormOpened ? 'pass' : 'fail',
-                    coffeeBrewFormOpened ? '' : 'Neither brewFormModal nor formContainer became visible'
+                    coffeeBrewFormOpened ? '' : 'brewFormModal did not become visible'
                 );
                 actions.discardBrewFormModal?.();
             }
@@ -289,26 +289,26 @@ const runCommandFlowSmoke = async ({ actions = {}, appCommands = null } = {}) =>
         } else {
             actions.openBrewWithBean(beanId);
             const beanBrewFormOpened = await waitFor(
-                () => isVisible('brewFormModal') || isVisible('formContainer'),
+                () => isVisible('brewFormModal'),
                 3000
             );
             addFlow(
                 'bean -> brew form',
                 beanBrewFormOpened ? 'pass' : 'fail',
-                beanBrewFormOpened ? '' : 'Neither brewFormModal nor formContainer became visible'
+                beanBrewFormOpened ? '' : 'brewFormModal did not become visible'
             );
             actions.discardBrewFormModal?.();
         }
 
         actions.openAddBrewFromPinned(null);
         const pinBrewFormOpened = await waitFor(
-            () => isVisible('brewFormModal') || isVisible('formContainer'),
+            () => isVisible('brewFormModal'),
             3000
         );
         addFlow(
             'pin -> brew form',
             pinBrewFormOpened ? 'pass' : 'fail',
-            pinBrewFormOpened ? '' : 'Neither brewFormModal nor formContainer became visible'
+            pinBrewFormOpened ? '' : 'brewFormModal did not become visible'
         );
         actions.discardBrewFormModal?.();
     } finally {

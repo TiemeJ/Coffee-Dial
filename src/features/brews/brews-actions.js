@@ -37,7 +37,6 @@ export const createBrewsActionsModule = ({
     showToast,
     getSelectedBrewGearIds,
     setSelectedBrewGearIds,
-    shouldUseLegacyBrewForm,
     openBrewFormModal
 }) => {
     const brewsVm = createBrewsVmModule();
@@ -82,24 +81,7 @@ export const createBrewsActionsModule = ({
     const closeAllActionMenus = () => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
     };
-    const scrollBrewFormToTop = () => {
-        const formWrapper = document.getElementById('formWrapper');
-        if (!formWrapper) return;
-        const scrollToFormTop = (behavior = 'smooth') => {
-            const headerHeight = document.getElementById('appHeader')?.offsetHeight || 72;
-            const top = formWrapper.getBoundingClientRect().top + window.pageYOffset;
-            window.scrollTo({ top: Math.max(0, top - headerHeight - 8), behavior });
-        };
-        scrollToFormTop('smooth');
-        requestAnimationFrame(() => scrollToFormTop('auto'));
-        setTimeout(() => scrollToFormTop('auto'), 140);
-    };
-    const isLegacyBrewFormEnabled = () => shouldUseLegacyBrewForm?.() !== false;
     const presentPreparedForm = ({ title = null, syncTitleFromForm = true } = {}) => {
-        if (isLegacyBrewFormEnabled()) {
-            scrollBrewFormToTop();
-            return;
-        }
         openBrewFormModal?.(null, {
             reset: false,
             title,

@@ -10,12 +10,17 @@ const mountView = async (mountId, viewPath) => {
     mount.innerHTML = await response.text();
 };
 
-export const mountBrewsFormView = async () => {
-    await mountView('brewsFormMount', './src/features/brews/brews-form.view.html');
-};
-
 export const mountBrewsFormModalView = async () => {
     await mountView('brewFormModalMount', './src/features/brews/brews-form-modal.view.html');
+    const modalBody = document.getElementById('brewFormModalBody');
+    if (!modalBody) {
+        throw new Error('Missing brew form modal body mount point');
+    }
+    const response = await fetch('./src/features/brews/brews-form.view.html', { cache: 'no-cache' });
+    if (!response.ok) {
+        throw new Error(`Failed to load view ./src/features/brews/brews-form.view.html: ${response.status}`);
+    }
+    modalBody.innerHTML = await response.text();
 };
 
 export const mountBrewsTableView = async () => {
