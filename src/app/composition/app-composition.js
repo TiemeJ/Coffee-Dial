@@ -362,6 +362,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             clearAllFilters,
             renderActiveFilters,
             toggleQuickFilter,
+            setBrewsTableStatePresetApi,
             openQuickFilterValues,
             applyFilterFromQuick,
             getFilteredCoffees,
@@ -390,6 +391,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 getBrewsPerPage: () => BREWS_PER_PAGE,
                 getColumnDefs: () => columnDefs,
                 getColumnPreferences: () => getColumnPreferencesState(),
+                setColumnPreferences: (value) => setColumnPreferencesState(value),
                 getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
                 getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
                 getCoffeeTypeForBrew: (...args) => getCoffeeTypeForBrew(...args),
@@ -414,8 +416,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             toggleBrewsTableStateMenu,
             closeBrewsTableStateMenu,
             saveCurrentBrewsTableState,
+            saveBrewsTableStatePresetByName,
             loadBrewsTableStatePreset,
-            deleteBrewsTableStatePreset
+            deleteBrewsTableStatePreset,
+            listBrewsTableStatePresets
         } = createBrewsTableStatePresetsModule({
             getCurrentUser: () => getCurrentUserState(),
             dataService,
@@ -429,6 +433,12 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             renderTable: (...args) => renderTable(...args),
             renderActiveFilters: (...args) => renderActiveFilters(...args),
             updateBrewSortIcons: (...args) => updateBrewSortIcons(...args)
+        });
+        setBrewsTableStatePresetApi({
+            list: (...args) => listBrewsTableStatePresets(...args),
+            saveByName: (...args) => saveBrewsTableStatePresetByName(...args),
+            load: (...args) => loadBrewsTableStatePreset(...args),
+            remove: (...args) => deleteBrewsTableStatePreset(...args)
         });
 
         const {

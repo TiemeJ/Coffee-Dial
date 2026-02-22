@@ -9,32 +9,18 @@
                             </select>
                     </div>
                     <div class="relative flex-1 sm:flex-initial">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-1.5">
-                            <button
-                                id="brewsStateMenuBtn"
-                                type="button"
-                                data-action-click="toggleBrewsTableStateMenu(event)"
-                                class="w-8 h-8 rounded text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center"
-                                title="Saved table states"
-                            >
-                                <span class="fa-stack">
-                                    <i class="fa-solid fa-magnifying-glass fa-stack-1x"></i>
-                                    <i class="fa-solid fa-caret-down fa-stack-1x" style="margin-left: -5px; margin-top: 10px; font-size: 0.6em;"></i>
-                                </span>
-                            </button>
-                        </div>
-                        <input type="text" id="globalSearch" class="block w-full sm:w-64 p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all" placeholder="Search brews...">
+                        <input type="text" id="globalSearch" class="block w-full sm:w-64 p-2.5 pl-3 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all" placeholder="Search brews...">
                         <div class="absolute inset-y-0 right-0 flex items-center pr-1">
                             <button id="searchClearBtn" data-action-click="clearSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                             <div class="h-6 w-px bg-coffee-200 dark:bg-[#44403c] mx-1"></div>
-                            <button data-action-click="toggleQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors">
+                            <button id="sortFilterBtn" data-action-click="toggleQuickFilter(event)" class="p-2 text-coffee-700 dark:text-[#d6ccc2] hover:text-coffee-900 dark:hover:text-white transition-colors" title="Sort & Filter">
                                 <i class="fa-solid fa-filter"></i>
                             </button>
                         </div>
-                        <div id="quickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
+                        <div id="quickFilterDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
+                            <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Sort &amp; Filter</div>
                         </div>
                         <div id="quickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto">
                         </div>
@@ -149,17 +135,7 @@
                                 </button>
                             </th>
                             <th scope="col" class="px-3 py-1.5 w-10 text-center whitespace-nowrap">
-                                <div class="flex flex-col items-center justify-center gap-0.5">
-                                    <button
-                                        type="button"
-                                        data-action-click="openBrewsTablePrefs()"
-                                        class="w-6 h-6 rounded text-coffee-500 hover:text-coffee-800 dark:text-[#a8a29e] dark:hover:text-white hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center"
-                                        title="Table columns"
-                                    >
-                                        <i class="fa-solid fa-table-columns text-[11px]"></i>
-                                    </button>
-                                    <span class="sr-only">Actions</span>
-                                </div>
+                                <span class="sr-only">Actions</span>
                             </th>
                         </tr>
                     </thead>

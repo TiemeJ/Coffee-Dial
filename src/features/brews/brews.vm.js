@@ -15,7 +15,10 @@ export const createBrewsVmModule = () => {
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return '-';
         const timeText = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-        const dateText = date.toLocaleDateString();
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yy = String(date.getFullYear()).slice(-2);
+        const dateText = `${dd}-${mm}-${yy}`;
         return `<span class="block text-[11px]">${timeText}</span><span class="block">${dateText}</span>`;
     };
 

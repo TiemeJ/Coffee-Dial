@@ -166,7 +166,17 @@ export const createBrewsTableStatePresetsModule = ({
     const saveCurrentBrewsTableState = async () => {
         const nameInput = document.getElementById('brewsStatePresetNameInput');
         const name = nameInput?.value?.trim();
-        if (!name) return;
+        if (!name) return false;
+
+        const saved = await saveBrewsTableStatePresetByName(name);
+        if (!saved) return false;
+        await renderBrewsTableStateMenu();
+        return true;
+    };
+
+    const saveBrewsTableStatePresetByName = async (nameRaw) => {
+        const name = (nameRaw || '').trim();
+        if (!name) return false;
 
         const next = {
             id: `preset-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -179,7 +189,7 @@ export const createBrewsTableStatePresetsModule = ({
         if (existingIndex >= 0) presets.splice(existingIndex, 1);
         presets.unshift(next);
         await writePresets(presets);
-        await renderBrewsTableStateMenu();
+        return true;
     };
 
     const applyBrewTableState = (state) => {
@@ -188,7 +198,10 @@ export const createBrewsTableStatePresetsModule = ({
         if (searchInput) searchInput.value = state.search || '';
         document.getElementById('searchClearBtn')?.classList.toggle('hidden', !(state.search || '').length);
 
-        setCurrentSort(state.sort && typeof state.sort === 'object' ? state.sort : { key: null, direction: 'asc' });
+        const nextSort = Array.isArray(state.sort)
+            ? state.sort
+            : (state.sort && typeof state.sort === 'object' ? state.sort : []);
+        setCurrentSort(nextSort);
         setActiveFilters(state.filters && typeof state.filters === 'object' ? state.filters : {});
         setDisplayedBrewsCount(getBrewsPerPage());
         updateBrewSortIcons();
@@ -211,6 +224,11 @@ export const createBrewsTableStatePresetsModule = ({
         await renderBrewsTableStateMenu();
     };
 
+    const listBrewsTableStatePresets = async () => {
+        const presets = await readPresets();
+        return Array.isArray(presets) ? [...presets] : [];
+    };
+
     document.addEventListener(
         'click',
         (event) => {
@@ -226,7 +244,9 @@ export const createBrewsTableStatePresetsModule = ({
         toggleBrewsTableStateMenu,
         closeBrewsTableStateMenu,
         saveCurrentBrewsTableState,
+        saveBrewsTableStatePresetByName,
         loadBrewsTableStatePreset,
-        deleteBrewsTableStatePreset
+        deleteBrewsTableStatePreset,
+        listBrewsTableStatePresets
     };
 };

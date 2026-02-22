@@ -20,14 +20,62 @@ export const createDefaultActiveFilters = () => ({ ...DEFAULT_ACTIVE_FILTERS });
 
 const normalizeText = (value) => (value || '').toString().toLowerCase();
 
+const normalizeSortChain = (currentSort) => {
+    if (Array.isArray(currentSort)) {
+        return currentSort
+            .map((item) => ({
+                key: item?.key || null,
+                direction: item?.direction === 'desc' ? 'desc' : 'asc'
+            }))
+            .filter((item) => !!item.key);
+    }
+    if (currentSort && typeof currentSort === 'object' && currentSort.key) {
+        return [{
+            key: currentSort.key,
+            direction: currentSort.direction === 'desc' ? 'desc' : 'asc'
+        }];
+    }
+    return [];
+};
+
 const getSortValue = (brew, key, getCoffeeTypeDisplay) => {
-    if (key === 'roaster') return brew.roaster || brew.name;
-    if (key === 'origin') return brew.origin || brew.beanType;
+    if (key === 'date') key = 'createdAt';
+    const typeDisplay = typeof getCoffeeTypeDisplay === 'function' ? getCoffeeTypeDisplay(brew) : null;
+    if (key === 'roaster') return typeDisplay?.roaster || brew.roaster || brew.name;
+    if (key === 'origin') return typeDisplay?.origin || brew.origin || brew.beanType;
+    if (key === 'farmer') return typeDisplay?.farmer || brew.farmer;
+    if (key === 'variety') return typeDisplay?.variety || brew.variety;
+    if (key === 'processing') return typeDisplay?.processing || brew.processing;
+    if (key === 'roastType') return typeDisplay?.roastType || brew.roastType;
+    if (key === 'recipe') return Number(brew.ratio) || 0;
     if (key === 'decaf') {
-        const typeDisplay = typeof getCoffeeTypeDisplay === 'function' ? getCoffeeTypeDisplay(brew) : null;
         return typeDisplay?.decaf || brew?.decaf ? 1 : 0;
     }
     return brew[key];
+};
+
+const NUMERIC_SORT_KEYS = new Set(['rating', 'time', 'temp', 'grind', 'recipe', 'ratio', 'weight']);
+const DATE_SORT_KEYS = new Set(['createdAt', 'date', 'updatedAt', 'openedDate', 'roastDate']);
+const normalizeSortPrimitive = (value, key) => {
+    if (value === null || typeof value === 'undefined') return null;
+    if (typeof value === 'object') {
+        if (typeof value.toDate === 'function') {
+            const date = value.toDate();
+            return Number.isNaN(date?.getTime?.()) ? null : date.getTime();
+        }
+        if (value instanceof Date) {
+            return Number.isNaN(value.getTime()) ? null : value.getTime();
+        }
+    }
+    if (DATE_SORT_KEYS.has(key)) {
+        const parsedDate = new Date(value);
+        if (!Number.isNaN(parsedDate.getTime())) return parsedDate.getTime();
+    }
+    if (NUMERIC_SORT_KEYS.has(key)) {
+        const numeric = Number(value);
+        if (!Number.isNaN(numeric)) return numeric;
+    }
+    return typeof value === 'string' ? value.toLowerCase() : value;
 };
 
 export const selectBrewsUniqueValuesForKey = ({ coffees = [], key }) => {
@@ -98,7 +146,7 @@ export const selectFilteredSortedBrews = ({
     coffees = [],
     searchTerm = '',
     activeFilters = {},
-    currentSort = { key: null, direction: 'asc' },
+    currentSort = [],
     getCoffeeTypeDisplay,
     getCoffeeTypeForBrew
 }) => {
@@ -158,22 +206,17 @@ export const selectFilteredSortedBrews = ({
         return m && t && r && rost && orig && farm && varr && proc && decafMatch && dr && gri && gearMatch && graphMatch && beanMatch && typeMatch;
     });
 
-    if (currentSort?.key) {
+    const sortChain = normalizeSortChain(currentSort);
+    if (sortChain.length) {
         filtered.sort((a, b) => {
-            let va = getSortValue(a, currentSort.key, getCoffeeTypeDisplay);
-            let vb = getSortValue(b, currentSort.key, getCoffeeTypeDisplay);
-            if (currentSort.key === 'temp') {
-                const na = parseFloat(va);
-                const nb = parseFloat(vb);
-                if (!isNaN(na) && !isNaN(nb)) {
-                    va = na;
-                    vb = nb;
-                }
+            for (const sortItem of sortChain) {
+                const va = normalizeSortPrimitive(getSortValue(a, sortItem.key, getCoffeeTypeDisplay), sortItem.key);
+                const vb = normalizeSortPrimitive(getSortValue(b, sortItem.key, getCoffeeTypeDisplay), sortItem.key);
+                if (va === null && vb !== null) return sortItem.direction === 'asc' ? -1 : 1;
+                if (va !== null && vb === null) return sortItem.direction === 'asc' ? 1 : -1;
+                if (va < vb) return sortItem.direction === 'asc' ? -1 : 1;
+                if (va > vb) return sortItem.direction === 'asc' ? 1 : -1;
             }
-            if (typeof va === 'string') va = va.toLowerCase();
-            if (typeof vb === 'string') vb = vb.toLowerCase();
-            if (va < vb) return currentSort.direction === 'asc' ? -1 : 1;
-            if (va > vb) return currentSort.direction === 'asc' ? 1 : -1;
             return 0;
         });
     }
