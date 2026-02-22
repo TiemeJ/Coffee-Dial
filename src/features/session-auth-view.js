@@ -414,7 +414,8 @@ export const createSessionAuthViewModule = ({
                     orderBy('createdAt', 'desc'),
                     limit(1)
                 );
-                const unsub = onSnapshot(
+                let watcherUnsub = () => {};
+                watcherUnsub = onSnapshot(
                     latestCommentQ,
                     (snapshot) => {
                         if (snapshot.empty) latestCommentByPhotoId.delete(photoId);
@@ -423,13 +424,17 @@ export const createSessionAuthViewModule = ({
                         syncGalleryBadge();
                     },
                     (error) => {
-                        console.error('Comment notification watcher error:', error);
+                        if (error?.code !== 'permission-denied') {
+                            console.error('Comment notification watcher error:', error);
+                        }
+                        // Stop this watcher on permission failures for inaccessible comment subcollections.
+                        watcherUnsub();
                         latestCommentByPhotoId.delete(photoId);
                         syncCommentBadges();
                         syncGalleryBadge();
                     }
                 );
-                commentWatchersUnsubs.push(unsub);
+                commentWatchersUnsubs.push(watcherUnsub);
             });
         };
 
