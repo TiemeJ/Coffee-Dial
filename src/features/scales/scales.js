@@ -1787,6 +1787,10 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   }
 
   async function handleResetScaleClick() {
+    if (!isConnected) {
+      openScaleModal?.();
+    }
+
     if (isConnected && writeChar) {
       try {
         await enqueueWrite(scaleType === "GENERIC" ? TARE_GENERIC : TARE_ACAIA);
