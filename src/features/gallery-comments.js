@@ -3,6 +3,7 @@ export const createGalleryCommentsModule = ({
     db,
     collection,
     doc,
+    deleteDoc,
     updateDoc,
     query,
     orderBy,
@@ -10,8 +11,8 @@ export const createGalleryCommentsModule = ({
     getDocs,
     addDoc
 }) => {
-    if (!db || !collection || !doc || !updateDoc || !query || !orderBy || !limit || !getDocs || !addDoc) {
-        throw new Error('createGalleryCommentsModule requires { db, collection, doc, updateDoc, query, orderBy, limit, getDocs, addDoc }');
+    if (!db || !collection || !doc || !deleteDoc || !updateDoc || !query || !orderBy || !limit || !getDocs || !addDoc) {
+        throw new Error('createGalleryCommentsModule requires { db, collection, doc, deleteDoc, updateDoc, query, orderBy, limit, getDocs, addDoc }');
     }
 
     const normalizeCommentText = (text) => (text ?? '').toString().trim();
@@ -45,7 +46,7 @@ export const createGalleryCommentsModule = ({
             text: normalizedText,
             createdAt: new Date().toISOString()
         };
-        await addDoc(collection(db, 'photos', photoId, 'comments'), payload);
+        const createdRef = await addDoc(collection(db, 'photos', photoId, 'comments'), payload);
         try {
             await updateDoc(doc(db, 'photos', photoId), {
                 lastCommentAt: payload.createdAt,
@@ -54,11 +55,34 @@ export const createGalleryCommentsModule = ({
         } catch (error) {
             console.warn('Could not update moment comment metadata:', error);
         }
-        return payload;
+        return {
+            id: createdRef.id,
+            ...payload
+        };
+    };
+
+    const deleteComment = async ({ photoId, commentId, commentUid }) => {
+        const user = getCurrentUser?.();
+        if (!user?.uid) throw new Error('Please sign in first.');
+        if (!photoId || !commentId) throw new Error('Comment not found.');
+        if (commentUid && commentUid !== user.uid) throw new Error('You can only delete your own comments.');
+
+        await deleteDoc(doc(db, 'photos', photoId, 'comments', commentId));
+        try {
+            const latest = await listComments({ photoId, max: 1 });
+            const latestComment = latest[0] || null;
+            await updateDoc(doc(db, 'photos', photoId), {
+                lastCommentAt: latestComment?.createdAt || null,
+                lastCommentByUid: latestComment?.uid || null
+            });
+        } catch (error) {
+            console.warn('Could not refresh moment comment metadata after delete:', error);
+        }
     };
 
     return {
         listComments,
-        addComment
+        addComment,
+        deleteComment
     };
 };

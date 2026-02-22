@@ -26,12 +26,12 @@ export const createGalleryModule = ({
     openBrewFromMoment,
     getCoffeeScale
 }) => {
-    const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove } = dataService || {};
+    const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot } = dataService || {};
     const { storage, ref, uploadBytes, deleteObject } = storageService || {};
     const { functions, httpsCallable } = functionsService || {};
 
-    if (!db || !addDoc || !collection || !query || !where || !orderBy || !limit || !startAfter || !getDoc || !getDocs || !doc || !updateDoc || !deleteDoc || !arrayUnion || !arrayRemove) {
-        throw new Error('createGalleryModule requires dataService { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove }');
+    if (!db || !addDoc || !collection || !query || !where || !orderBy || !limit || !startAfter || !getDoc || !getDocs || !doc || !updateDoc || !deleteDoc || !arrayUnion || !arrayRemove || !onSnapshot) {
+        throw new Error('createGalleryModule requires dataService { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot }');
     }
     if (!storage || !ref || !uploadBytes || !deleteObject) {
         throw new Error('createGalleryModule requires storageService { storage, ref, uploadBytes, deleteObject }');
@@ -55,6 +55,7 @@ export const createGalleryModule = ({
         db,
         collection,
         doc,
+        deleteDoc,
         updateDoc,
         query,
         orderBy,
@@ -65,6 +66,7 @@ export const createGalleryModule = ({
     const signedUrlCache = new Map();
     const preparedMomentShares = new Map();
     const momentBrewAccessCache = new Map();
+    const liveCommentUnsubs = new Set();
     const unreadCommentMomentIds = new Set();
     const unreadMineCommentMomentIds = new Set();
     const unreadSharedCommentMomentIds = new Set();
@@ -300,6 +302,17 @@ export const createGalleryModule = ({
             console.warn('Batch signed URL retrieval failed:', error);
             return new Map();
         }
+    };
+
+    const clearLiveCommentListeners = () => {
+        liveCommentUnsubs.forEach((unsub) => {
+            try {
+                unsub();
+            } catch (_) {
+                // Ignore unsubscribe errors.
+            }
+        });
+        liveCommentUnsubs.clear();
     };
 
     const toDocsWithData = (docs) => docs.map((docItem) => ({
@@ -1224,6 +1237,7 @@ export const createGalleryModule = ({
     };
 
     const openGallery = async () => {
+        clearLiveCommentListeners();
         document.getElementById('galleryModal')?.classList.remove('hidden');
         galleryNotificationBaseline = getLastGalleryVisit();
         const user = getCurrentUser();
@@ -1248,6 +1262,7 @@ export const createGalleryModule = ({
     };
 
     const switchGalleryTab = async (tab) => {
+        clearLiveCommentListeners();
         const tMine = document.getElementById('tabGalleryMine');
         const tShared = document.getElementById('tabGalleryShared');
         renderGalleryTabCommentBadges();
@@ -1713,6 +1728,14 @@ export const createGalleryModule = ({
             let commentsEntries = [];
             const commentTabKey = getCurrentGalleryMode() === 'mine' ? 'mine' : 'shared';
             let hasUnreadComments = unreadCommentMomentIds.has(docItem.id);
+            let commentsLiveUnsub = null;
+            const stopCommentsLive = () => {
+                if (typeof commentsLiveUnsub === 'function') {
+                    commentsLiveUnsub();
+                    liveCommentUnsubs.delete(commentsLiveUnsub);
+                    commentsLiveUnsub = null;
+                }
+            };
             const setCommentBtnLabel = (count, unread = hasUnreadComments) => {
                 const unreadDot = unread
                     ? '<span class="inline-block h-2 w-2 rounded-full bg-red-500 ml-1"></span>'
@@ -1754,13 +1777,59 @@ export const createGalleryModule = ({
                     date.textContent = formatCommentDate(entry?.createdAt);
                     date.dataset.momentAction = 'true';
 
+                    const metaRight = document.createElement('div');
+                    metaRight.className = 'flex items-center gap-2';
+                    metaRight.dataset.momentAction = 'true';
+                    metaRight.appendChild(date);
+
+                    const currentUid = getCurrentUser()?.uid || '';
+                    const canDeleteComment = !!entry?.id && !!currentUid && entry?.uid === currentUid;
+                    if (canDeleteComment) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.type = 'button';
+                        deleteBtn.className = 'text-[10px] text-red-500 hover:text-red-600';
+                        deleteBtn.title = 'Delete comment';
+                        deleteBtn.dataset.momentAction = 'true';
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+                        deleteBtn.addEventListener('click', async (event) => {
+                            event.stopPropagation();
+                            const shouldDelete = await openAppConfirm({
+                                title: 'Delete comment?',
+                                message: 'This permanently deletes your comment.',
+                                confirmLabel: 'Delete',
+                                cancelLabel: 'Cancel',
+                                danger: true
+                            });
+                            if (!shouldDelete) return;
+                            deleteBtn.disabled = true;
+                            deleteBtn.classList.add('opacity-70', 'cursor-wait');
+                            try {
+                                await commentsModule.deleteComment({
+                                    photoId: docItem.id,
+                                    commentId: entry.id,
+                                    commentUid: entry.uid
+                                });
+                                commentsEntries = commentsEntries.filter((item) => item.id !== entry.id);
+                                commentsLoaded = true;
+                                renderComments();
+                            } catch (error) {
+                                console.error('Failed deleting comment', error);
+                                alert(`Could not delete comment: ${error?.message || 'Unknown error'}`);
+                            } finally {
+                                deleteBtn.disabled = false;
+                                deleteBtn.classList.remove('opacity-70', 'cursor-wait');
+                            }
+                        });
+                        metaRight.appendChild(deleteBtn);
+                    }
+
                     const text = document.createElement('p');
                     text.className = 'text-xs text-coffee-800 dark:text-[#e7e5e4] whitespace-pre-wrap break-words';
                     text.textContent = (entry?.text || '').toString();
                     text.dataset.momentAction = 'true';
 
                     meta.appendChild(author);
-                    meta.appendChild(date);
+                    meta.appendChild(metaRight);
                     row.appendChild(meta);
                     row.appendChild(text);
                     commentsList.appendChild(row);
@@ -1795,6 +1864,30 @@ export const createGalleryModule = ({
                 renderComments();
             };
 
+            const startCommentsLive = () => {
+                if (typeof commentsLiveUnsub === 'function') return;
+                const liveQuery = query(
+                    collection(db, 'photos', docItem.id, 'comments'),
+                    orderBy('createdAt', 'desc'),
+                    limit(30)
+                );
+                commentsLiveUnsub = onSnapshot(
+                    liveQuery,
+                    (snapshot) => {
+                        commentsEntries = snapshot.docs.map((item) => ({
+                            id: item.id,
+                            ...item.data()
+                        }));
+                        commentsLoaded = true;
+                        renderComments();
+                    },
+                    (error) => {
+                        console.error('Live moment comments listener failed', error);
+                    }
+                );
+                liveCommentUnsubs.add(commentsLiveUnsub);
+            };
+
             // Prime comment count during card render so button label is correct before first click.
             loadComments().catch(() => {
                 // Keep default 0 comments label if prefetch fails.
@@ -1813,6 +1906,7 @@ export const createGalleryModule = ({
                     renderGalleryTabCommentBadges();
                 }
                 if (!willShow) return;
+                startCommentsLive();
                 if (commentsLoaded) return;
                 commentsList.innerHTML = '<div class="text-xs italic text-coffee-500 dark:text-[#a8a29e]">Loading comments...</div>';
                 try {
@@ -1842,6 +1936,10 @@ export const createGalleryModule = ({
                     commentPostBtn.disabled = false;
                     commentPostBtn.classList.remove('opacity-70', 'cursor-wait');
                 }
+            });
+
+            card.addEventListener('remove', () => {
+                stopCommentsLive();
             });
 
             card.appendChild(body);
