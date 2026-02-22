@@ -52,6 +52,7 @@ export const createActionAssemblies = (deps = {}) => {
             'fastDuplicateFromCard',
             'fillBeanDetails',
             'followUser',
+            // TODO: remove legacy Share brew code
             'generateShareImage',
             'getFilteredCoffees',
             'googleLogin',
@@ -115,6 +116,7 @@ export const createActionAssemblies = (deps = {}) => {
             'setNotesMode',
             'setRating',
             'setTempMode',
+            // TODO: remove legacy Share brew code
             'shareCoffeeCard',
             'startLabResultBrewLongPress',
             'sortBy',
@@ -386,6 +388,7 @@ export const createActionAssemblies = (deps = {}) => {
                 'fastDuplicateFromCard',
                 'fastRepeatCoffee',
                 'fillBeanDetails',
+                // TODO: remove legacy Share brew code
                 'generateShareImage',
                 'handleAIFile',
                 'handleCardPhoto',
@@ -420,6 +423,7 @@ export const createActionAssemblies = (deps = {}) => {
                 'setNotesMode',
                 'setRating',
                 'setTempMode',
+                // TODO: remove legacy Share brew code
                 'shareCoffeeCard',
                 'startLabResultBrewLongPress',
                 'showBeanForBrew',

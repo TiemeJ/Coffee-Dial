@@ -35,6 +35,7 @@ export const createBrewsCardShareModule = ({
         }
     };
 
+    // TODO: remove legacy Share brew code
     const shareCoffeeCard = (id, e) => {
         if (e) e.stopPropagation();
         const c = getCoffees().find((x) => x.id === id);
@@ -51,6 +52,7 @@ export const createBrewsCardShareModule = ({
         updateCoffeeCardNav();
     };
 
+    // TODO: remove legacy Share brew code
     const generateShareImage = async () => {
         const c = getCurrentCardCoffee();
         const content = document.getElementById('coffeeCardContent');

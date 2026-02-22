@@ -1137,6 +1137,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             resetCardPhotoState: (...args) => resetCardPhotoState(...args),
             toggleCardMode: (...args) => toggleCardMode(...args)
         });
+        // TODO: remove legacy Share brew code
         const { toggleCardMode, shareCoffeeCard, generateShareImage } = createBrewsCardShareModule({
             getCoffees: () => getCoffeesState(),
             setCurrentCoffeeCardId: (value) => setCurrentCoffeeCardIdState(value),
@@ -1524,6 +1525,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             fillBeanDetails,
             followUser,
             gasToggleActionMenu: toggleActionMenu,
+            // TODO: remove legacy Share brew code
             generateShareImage,
             getFilteredCoffees,
             googleLogin,
@@ -1645,6 +1647,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setNotesMode,
             setRating,
             setTempMode,
+            // TODO: remove legacy Share brew code
             shareCoffeeCard,
             startLabResultBrewLongPress,
             showBeanForBrew,
