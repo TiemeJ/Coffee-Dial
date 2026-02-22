@@ -694,6 +694,16 @@ export const createGalleryModule = ({
         picker.dataset.momentAction = 'true';
         const row = document.createElement('div');
         row.className = 'flex items-center gap-1';
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'w-8 h-8 rounded-lg border border-coffee-200 dark:border-[#57534e] hover:bg-coffee-100 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] text-sm';
+        clearBtn.innerHTML = '<i class="fa-solid fa-ban"></i>';
+        clearBtn.title = 'Remove reaction';
+        clearBtn.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            await applyReactionPickerSelection('');
+        });
+        row.appendChild(clearBtn);
         QUICK_REACTION_EMOJIS.forEach((emoji) => {
             const btn = document.createElement('button');
             btn.type = 'button';
