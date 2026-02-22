@@ -77,7 +77,8 @@ export const createBrewsCardUiModule = ({
         document.getElementById('cardTemp').innerHTML = getTempBadge(c.temp);
         document.getElementById('cardDrink').textContent = cardVm.drink;
 
-        const showCoffeeImageInCard = !!getPinnedBrewsPreferences?.()?.showCoffeeImageInBrewCard;
+        const hideCoffeeImageInCard = !!getPinnedBrewsPreferences?.()?.hideCoffeeImageInBrewCard;
+        const showCoffeeImageInCard = !hideCoffeeImageInCard;
         const cardOriginField = document.getElementById('cardOriginField');
         const cardProcessField = document.getElementById('cardProcessField');
         const cardRoastField = document.getElementById('cardRoastField');

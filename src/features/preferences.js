@@ -1,6 +1,6 @@
 export const DEFAULT_PINNED_BREWS_PREFERENCES = {
     useLegacyMobileTable: true,
-    showCoffeeImageInBrewCard: false,
+    hideCoffeeImageInBrewCard: false,
     animationsEnabled: true,
     organizeByBeans: true,
     coffeeArtEnabled: false,
@@ -28,7 +28,7 @@ export const createBrewsPreferencesModule = ({
     }
     const PREF_TOGGLE_IDS = [
         'useLegacyMobileTableToggle',
-        'showCoffeeImageInBrewCardToggle',
+        'hideCoffeeImageInBrewCardToggle',
         'animationsToggle',
         'organizeByBeansToggle',
         'coffeeArtToggle',
@@ -101,7 +101,7 @@ export const createBrewsPreferencesModule = ({
         return {
             ...getPinnedBrewsPreferences(),
             useLegacyMobileTable: !!document.getElementById('useLegacyMobileTableToggle')?.checked,
-            showCoffeeImageInBrewCard: !!document.getElementById('showCoffeeImageInBrewCardToggle')?.checked,
+            hideCoffeeImageInBrewCard: !!document.getElementById('hideCoffeeImageInBrewCardToggle')?.checked,
             animationsEnabled: !!document.getElementById('animationsToggle')?.checked,
             organizeByBeans: organizeByBeansEnabled,
             coffeeArtEnabled: organizeByBeansEnabled && !!document.getElementById('coffeeArtToggle')?.checked,
@@ -212,7 +212,7 @@ export const createBrewsPreferencesModule = ({
         isHydratingPreferences = true;
         document.getElementById('animationsToggle').checked = !!pinnedPrefs.animationsEnabled;
         document.getElementById('useLegacyMobileTableToggle').checked = pinnedPrefs.useLegacyMobileTable !== false;
-        document.getElementById('showCoffeeImageInBrewCardToggle').checked = !!pinnedPrefs.showCoffeeImageInBrewCard;
+        document.getElementById('hideCoffeeImageInBrewCardToggle').checked = !!pinnedPrefs.hideCoffeeImageInBrewCard;
         document.getElementById('organizeByBeansToggle').checked = !!pinnedPrefs.organizeByBeans;
         document.getElementById('coffeeArtToggle').checked = !!pinnedPrefs.organizeByBeans && !!pinnedPrefs.coffeeArtEnabled;
         document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;
