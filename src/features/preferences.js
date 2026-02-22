@@ -1,5 +1,5 @@
 export const DEFAULT_PINNED_BREWS_PREFERENCES = {
-    useLegacyMobileTable: true,
+    useLegacyMobileTable: false,
     hideCoffeeImageInBrewCard: false,
     animationsEnabled: true,
     showTilesInsteadOfCoffeeArt: false,
@@ -142,7 +142,7 @@ export const createBrewsPreferencesModule = ({
 
         isHydratingPreferences = true;
         document.getElementById('animationsToggle').checked = !!pinnedPrefs.animationsEnabled;
-        document.getElementById('useLegacyMobileTableToggle').checked = pinnedPrefs.useLegacyMobileTable !== false;
+        document.getElementById('useLegacyMobileTableToggle').checked = !!pinnedPrefs.useLegacyMobileTable;
         document.getElementById('hideCoffeeImageInBrewCardToggle').checked = !!pinnedPrefs.hideCoffeeImageInBrewCard;
         document.getElementById('showTilesInsteadOfCoffeeArtToggle').checked = !!pinnedPrefs.showTilesInsteadOfCoffeeArt;
         document.getElementById('pinBestPerMethodDrinkToggle').checked = pinnedPrefs.pinBestPerMethodDrink !== false;

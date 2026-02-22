@@ -846,7 +846,7 @@ export const createBrewsTableModule = ({
     };
 
     const isCompactMobileTableMode = () => {
-        const prefersLegacyMobile = getPinnedBrewsPreferences?.()?.useLegacyMobileTable !== false;
+        const prefersLegacyMobile = getPinnedBrewsPreferences?.()?.useLegacyMobileTable === true;
         const isMobileViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
         return !prefersLegacyMobile && isMobileViewport;
     };
