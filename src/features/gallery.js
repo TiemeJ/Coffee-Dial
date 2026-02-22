@@ -558,6 +558,168 @@ export const createGalleryModule = ({
         target.addEventListener('pointercancel', hideMomentDetailsTooltip);
     };
 
+    const QUICK_REACTION_EMOJIS = ['❤️', '👍', '🔥', '😍', '☕', '😂'];
+    const FULL_REACTION_EMOJIS = [
+        '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😍', '🥰', '😘', '😗', '😙', '😚',
+        '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥳', '🤩', '😏', '😌', '😴', '🤤', '😪', '😵', '🤯', '🤗',
+        '🤔', '🫡', '🫠', '😶', '🫥', '😐', '🫤', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😳', '🥺', '🥹',
+        '😢', '😭', '😤', '😠', '😡', '🤬', '🤐', '🤢', '🤮', '🤒', '🤕', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓',
+        '🤠', '😈', '👿', '💀', '☠️', '🤡', '👻', '👽', '🤖', '💩', '👋', '🤚', '🖐️', '✋', '🖖', '🫱', '🫲', '🫳', '🫴',
+        '👌', '🤌', '🤏', '✌️', '🤞', '🫰', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '🫵', '👍', '👎',
+        '👏', '🙌', '🫶', '👐', '🤲', '🙏', '💪', '🫂', '🫀', '🧠', '👀', '👁️', '🧡', '💛', '💚', '💙', '💜', '🖤',
+        '🤍', '🤎', '❤️', '🩷', '🩵', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '🔥', '✨', '⭐', '🌟',
+        '💫', '⚡', '💥', '☕', '🍵', '🥤', '🍺', '🍻', '🍷', '🥂', '🍾', '🍕', '🍔', '🍟', '🌮', '🍩', '🍪', '🍫', '🎂',
+        '🍰', '🍓', '🍒', '🍇', '🍉', '🍋', '🍍', '🥑', '🥕', '🌶️', '🥐', '🥨', '🥯', '🧀', '🍳', '🥓', '🎉', '🎊', '🎈',
+        '🎁', '🏆', '🥇', '🥈', '🥉', '⚽', '🏀', '🏐', '🎾', '🎯', '🎮', '🎵', '🎶', '🚀', '🌈', '🌞', '🌙', '⭐', '🌍',
+        '🌊', '🍀', '🌸', '🌹', '🌻', '🫶', '🫰'
+    ];
+    let reactionPickerEl = null;
+    let reactionPickerModalEl = null;
+    let reactionPickerTarget = null;
+    let reactionPickerModalTarget = null;
+
+    const closeReactionPicker = () => {
+        if (reactionPickerEl) reactionPickerEl.classList.add('hidden');
+        reactionPickerTarget = null;
+    };
+
+    const closeReactionPickerModal = () => {
+        if (!reactionPickerModalEl) return;
+        reactionPickerModalEl.classList.add('hidden');
+        reactionPickerModalTarget = null;
+    };
+
+    const applyReactionPickerSelection = async (emoji, useModalTarget = false) => {
+        const target = useModalTarget ? reactionPickerModalTarget : reactionPickerTarget;
+        if (!target || typeof target.onSelect !== 'function') return;
+        await target.onSelect(emoji);
+        if (useModalTarget) closeReactionPickerModal();
+        closeReactionPicker();
+    };
+
+    const ensureReactionPicker = () => {
+        if (reactionPickerEl) return reactionPickerEl;
+        const picker = document.createElement('div');
+        picker.id = 'momentReactionPicker';
+        picker.className = 'hidden fixed z-[10060] bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#57534e] rounded-xl shadow-xl p-2';
+        picker.dataset.momentAction = 'true';
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-1';
+        QUICK_REACTION_EMOJIS.forEach((emoji) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'w-8 h-8 rounded-lg hover:bg-coffee-100 dark:hover:bg-[#34302e] text-lg';
+            btn.textContent = emoji;
+            btn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                await applyReactionPickerSelection(emoji);
+            });
+            row.appendChild(btn);
+        });
+        const plusBtn = document.createElement('button');
+        plusBtn.type = 'button';
+        plusBtn.className = 'w-8 h-8 rounded-lg border border-coffee-200 dark:border-[#57534e] hover:bg-coffee-100 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] text-sm font-bold';
+        plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+        plusBtn.title = 'More emojis';
+        plusBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            openReactionPickerModal();
+        });
+        row.appendChild(plusBtn);
+        picker.appendChild(row);
+        document.body.appendChild(picker);
+        reactionPickerEl = picker;
+        document.addEventListener('click', (event) => {
+            if (picker.classList.contains('hidden')) return;
+            if (picker.contains(event.target)) return;
+            closeReactionPicker();
+        });
+        return picker;
+    };
+
+    const ensureReactionPickerModal = () => {
+        if (reactionPickerModalEl) return reactionPickerModalEl;
+        const overlay = document.createElement('div');
+        overlay.id = 'momentReactionPickerModal';
+        overlay.className = 'hidden fixed inset-0 z-[10070] bg-black/50 backdrop-blur-sm p-4 flex items-center justify-center';
+        overlay.dataset.momentAction = 'true';
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay) closeReactionPickerModal();
+        });
+
+        const panel = document.createElement('div');
+        panel.className = 'w-full max-w-lg bg-white dark:bg-[#292524] rounded-xl border border-coffee-200 dark:border-[#57534e] shadow-2xl overflow-hidden';
+        panel.dataset.momentAction = 'true';
+
+        const header = document.createElement('div');
+        header.className = 'p-3 border-b border-coffee-200 dark:border-[#44403c] flex items-center justify-between gap-2';
+        header.innerHTML = '<span class="text-sm font-bold text-coffee-800 dark:text-white">Choose emoji reaction</span>';
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'w-8 h-8 rounded-full hover:bg-coffee-100 dark:hover:bg-[#34302e] text-coffee-600 dark:text-[#a8a29e]';
+        closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        closeBtn.addEventListener('click', () => closeReactionPickerModal());
+        header.appendChild(closeBtn);
+
+        const searchWrap = document.createElement('div');
+        searchWrap.className = 'p-3 border-b border-coffee-100 dark:border-[#44403c]';
+        const search = document.createElement('input');
+        search.type = 'text';
+        search.placeholder = 'Search emoji...';
+        search.className = 'w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-3 py-2 text-sm text-coffee-900 dark:text-white';
+        searchWrap.appendChild(search);
+
+        const grid = document.createElement('div');
+        grid.className = 'p-3 max-h-[60vh] overflow-y-auto grid grid-cols-8 sm:grid-cols-10 gap-1';
+
+        const renderGrid = (queryText = '') => {
+            const normalized = queryText.trim().toLowerCase();
+            const byQuery = FULL_REACTION_EMOJIS.filter((emoji) => !normalized || emoji.includes(normalized));
+            const items = byQuery.length ? byQuery : FULL_REACTION_EMOJIS;
+            grid.innerHTML = '';
+            items.forEach((emoji) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'h-9 rounded hover:bg-coffee-100 dark:hover:bg-[#34302e] text-xl';
+                btn.textContent = emoji;
+                btn.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    await applyReactionPickerSelection(emoji, true);
+                });
+                grid.appendChild(btn);
+            });
+        };
+        renderGrid('');
+        search.addEventListener('input', () => renderGrid(search.value));
+
+        panel.appendChild(header);
+        panel.appendChild(searchWrap);
+        panel.appendChild(grid);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+        reactionPickerModalEl = overlay;
+        return overlay;
+    };
+
+    const openReactionPicker = ({ anchorElement, onSelect }) => {
+        if (!anchorElement || typeof onSelect !== 'function') return;
+        const picker = ensureReactionPicker();
+        const rect = anchorElement.getBoundingClientRect();
+        reactionPickerTarget = { onSelect };
+        picker.classList.remove('hidden');
+        const top = Math.max(8, rect.top - 52);
+        const left = Math.min(window.innerWidth - 220, Math.max(8, rect.left));
+        picker.style.top = `${top}px`;
+        picker.style.left = `${left}px`;
+    };
+
+    const openReactionPickerModal = () => {
+        if (!reactionPickerTarget) return;
+        reactionPickerModalTarget = reactionPickerTarget;
+        const modal = ensureReactionPickerModal();
+        modal.classList.remove('hidden');
+    };
+
     const updateUploadMomentTypeUi = () => {
         const momentType = getSelectedMomentType();
         const photoWrap = document.getElementById('momentPhotoInputWrap');
@@ -1191,7 +1353,7 @@ export const createGalleryModule = ({
                 coffeeSnapshot,
                 momentType,
                 sharedWith,
-                likedBy: [],
+                reactions: {},
                 createdAt: createdAtIso
             };
             if (photoPath) momentPayload.photoPath = photoPath;
@@ -1614,14 +1776,16 @@ export const createGalleryModule = ({
             likeControl.className = 'text-[11px] px-2 py-1 rounded border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] inline-flex items-center gap-1';
 
             const updateLikesUi = () => {
-                const count = likesModule.getLikeCount(data);
+                const count = likesModule.getReactionCount(data);
+                const activeEmoji = likesModule.getUserReaction(data);
+                const topEmoji = likesModule.getTopReactionEmoji(data);
+                const displayEmoji = activeEmoji || topEmoji;
 
                 const isMineTab = getCurrentGalleryMode() === 'mine';
                 const canLike = !isMineTab && likesModule.canLikeMoment(data);
-                const liked = likesModule.hasLiked(data);
-                const showFilledIcon = liked || (isMineTab && count > 0);
-                const iconClass = showFilledIcon ? 'fa-solid text-red-500' : 'fa-regular text-coffee-500 dark:text-[#a8a29e]';
-                likeControl.innerHTML = `<i class="${iconClass} fa-heart text-[10px]"></i><span>${count}</span>`;
+                likeControl.innerHTML = displayEmoji
+                    ? `<span class="text-base leading-none">${displayEmoji}</span><span>${count}</span><i class="fa-solid fa-plus text-[9px] opacity-70"></i>`
+                    : `<i class="fa-regular fa-heart text-[12px]"></i><span>${count}</span><i class="fa-solid fa-plus text-[9px] opacity-70"></i>`;
                 likeControl.disabled = !canLike;
                 likeControl.classList.toggle('cursor-pointer', canLike);
                 likeControl.classList.toggle('hover:bg-coffee-100', canLike);
@@ -1633,25 +1797,35 @@ export const createGalleryModule = ({
             likeControl.addEventListener('click', async (event) => {
                 event.stopPropagation();
                 if (!likesModule.canLikeMoment(data)) return;
-                likeControl.disabled = true;
-                likeControl.classList.add('opacity-70', 'cursor-wait');
-                try {
-                    const nowLiked = await likesModule.toggleLike({ photoId: docItem.id, data });
-                    const currentLikedBy = Array.isArray(data.likedBy) ? [...data.likedBy] : [];
-                    const uid = getCurrentUser()?.uid;
-                    if (uid) {
-                        data.likedBy = nowLiked
-                            ? Array.from(new Set([...currentLikedBy, uid]))
-                            : currentLikedBy.filter((entryUid) => entryUid !== uid);
+                openReactionPicker({
+                    anchorElement: likeControl,
+                    onSelect: async (emoji) => {
+                        likeControl.disabled = true;
+                        likeControl.classList.add('opacity-70', 'cursor-wait');
+                        try {
+                            const selected = await likesModule.setReaction({ photoId: docItem.id, data, emoji });
+                            const reactions = likesModule.getReactions(data);
+                            const uid = getCurrentUser()?.uid;
+                            if (uid) {
+                                Object.keys(reactions).forEach((key) => {
+                                    reactions[key] = (reactions[key] || []).filter((entryUid) => entryUid !== uid);
+                                });
+                                if (selected) {
+                                    const bucket = Array.isArray(reactions[selected]) ? reactions[selected] : [];
+                                    reactions[selected] = Array.from(new Set([...bucket, uid]));
+                                }
+                                data.reactions = reactions;
+                            }
+                            updateLikesUi();
+                        } catch (error) {
+                            console.error('Failed toggling moment reaction', error);
+                            alert(`Could not update reaction: ${error?.message || 'Unknown error'}`);
+                        } finally {
+                            likeControl.disabled = false;
+                            likeControl.classList.remove('opacity-70', 'cursor-wait');
+                        }
                     }
-                    updateLikesUi();
-                } catch (error) {
-                    console.error('Failed toggling moment like', error);
-                    alert(`Could not update like: ${error?.message || 'Unknown error'}`);
-                } finally {
-                    likeControl.disabled = false;
-                    likeControl.classList.remove('opacity-70', 'cursor-wait');
-                }
+                });
             });
 
             likesRow.appendChild(likeControl);
