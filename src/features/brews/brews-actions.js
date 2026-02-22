@@ -29,7 +29,6 @@ export const createBrewsActionsModule = ({
     closeCoffeeCardMenu,
     handleQuickEditRecipeInput,
     dispatchCommand,
-    getPinnedBrewsPreferences,
     getFirstBrewDateForBean,
     uploadPendingCoffeeTypeImage,
     clearPendingAIBeanImageFile,
@@ -71,12 +70,6 @@ export const createBrewsActionsModule = ({
             el.classList.toggle('cursor-not-allowed', !!locked);
             el.classList.toggle('opacity-70', !!locked);
         });
-    };
-    const refreshManualPinningVisibility = () => {
-        const isActiveRow = document.getElementById('isActiveRow');
-        if (!isActiveRow) return;
-        const hideManualPinning = !!getPinnedBrewsPreferences?.()?.pinOpenBags;
-        isActiveRow.classList.toggle('hidden', hideManualPinning);
     };
     const closeAllActionMenus = () => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
@@ -169,7 +162,6 @@ export const createBrewsActionsModule = ({
     const buildDuplicateBrewData = (brew) => {
         const d = stripBrewGraphFields(brew);
         delete d.id;
-        d.isActive = false;
         d.createdAt = new Date().toISOString();
         d.updatedAt = d.createdAt;
         let newOrder = 0;
@@ -265,7 +257,6 @@ export const createBrewsActionsModule = ({
         document.getElementById('formContainer').classList.remove('editing-mode');
         document.getElementById('formTitle').innerHTML = `<span>${title}</span>`;
         document.getElementById('submitBtn').innerHTML = '<span>Save copy</span>';
-        refreshManualPinningVisibility();
         setAiAddVisibility(false);
         presentPreparedForm({ title, syncTitleFromForm: true });
     };
@@ -306,7 +297,6 @@ export const createBrewsActionsModule = ({
         document.getElementById('formContainer').classList.remove('editing-mode');
         document.getElementById('formTitle').innerHTML = `<span>${title}</span>`;
         document.getElementById('submitBtn').innerHTML = '<span>Save copy</span>';
-        refreshManualPinningVisibility();
         setAiAddVisibility(false);
         presentPreparedForm({ title, syncTitleFromForm: true });
     };
@@ -324,8 +314,6 @@ export const createBrewsActionsModule = ({
         document.getElementById('submitBtn').innerHTML = '<span>Save brew</span>';
         document.getElementById('submitBtn').className =
             'bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] dark:hover:bg-[#44403c] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
-        document.getElementById('isActiveToggle').checked = false;
-        refreshManualPinningVisibility();
         updateBeanDropdown();
         setCoffeeTypeFieldsLocked(false);
         const beanSelect = document.getElementById('savedBeanSelect');
@@ -361,7 +349,6 @@ export const createBrewsActionsModule = ({
         const tMode = f.get('tempMode');
         const finalTemp = tMode === 'profile' ? f.get('tempProfile') : f.get('tempNumeric') || 'M';
         const finalNotes = f.get('notes') || '';
-        const isActiveChecked = f.get('isActive') === 'on';
         const rawDrinkType = f.get('drinkType');
         const rawDrinkOther = f.get('drinkOther');
         const finalDrink = rawDrinkType === 'Other' ? rawDrinkOther || 'Other' : rawDrinkType;
@@ -395,7 +382,6 @@ export const createBrewsActionsModule = ({
             notes: finalNotes,
             improve: f.get('improve') || '',
             rating: parseInt(f.get('rating'), 10) || 0,
-            isActive: isActiveChecked,
             gearIds: getSelectedBrewGearIds(),
             updatedAt: new Date().toISOString()
         };
@@ -647,30 +633,9 @@ export const createBrewsActionsModule = ({
         }
     };
 
-    const toggleActive = async (id, ev) => {
-        if (ev) ev.stopPropagation();
-        if (getCurrentView() !== 'mine') return;
-        const user = getCurrentUser();
-        if (!user) return;
-        const c = getCoffees().find((x) => x.id === id);
-        if (!c) return;
-        try {
-            await updateCoffee(id, { isActive: !c.isActive });
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
     const getBeanLabelForBrew = (bean) => {
         const display = getBeanCoffeeTypeDisplay ? getBeanCoffeeTypeDisplay(bean) : bean;
         return brewsVm.buildBeanLabel(bean, display);
-    };
-
-    const refreshQuickEditManualPinningVisibility = () => {
-        const pinRow = document.getElementById('quickEditIsActiveRow');
-        if (!pinRow) return;
-        const hideManualPinning = !!getPinnedBrewsPreferences?.()?.pinOpenBags;
-        pinRow.classList.toggle('hidden', hideManualPinning);
     };
 
     const populateBrewQuickEditBeanOptions = (selectedBeanId = '') => {
@@ -723,8 +688,6 @@ export const createBrewsActionsModule = ({
         document.getElementById('quickEditRating').value = String(parseInt(brew.rating, 10) || 0);
         document.getElementById('quickEditNotes').value = brew.notes || '';
         document.getElementById('quickEditImprove').value = brew.improve || '';
-        document.getElementById('quickEditIsActive').checked = !!brew.isActive;
-        refreshQuickEditManualPinningVisibility();
         handleQuickEditRecipeInput('yield');
 
         document.getElementById('coffeeCardView').classList.add('hidden');
@@ -776,7 +739,6 @@ export const createBrewsActionsModule = ({
             rating: parseInt(document.getElementById('quickEditRating').value, 10) || 0,
             notes: document.getElementById('quickEditNotes').value || '',
             improve: document.getElementById('quickEditImprove').value || '',
-            isActive: !!document.getElementById('quickEditIsActive').checked,
             gearIds: Array.isArray(brew.gearIds) ? [...new Set(brew.gearIds.filter(Boolean))] : [],
             beanId: selectedBeanId,
             updatedAt: nowIso
@@ -856,7 +818,6 @@ export const createBrewsActionsModule = ({
             document.getElementById('submitBtn').innerHTML = '<span>Update</span>';
             document.getElementById('submitBtn').className =
                 'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
-            refreshManualPinningVisibility();
             setAiAddVisibility(false);
             presentPreparedForm({ title: 'Edit brew', syncTitleFromForm: true });
         }, 0);
@@ -996,7 +957,6 @@ export const createBrewsActionsModule = ({
     return {
         handleFormSubmit,
         discardForm,
-        toggleActive,
         getBeanLabelForBrew,
         populateBrewQuickEditBeanOptions,
         enterBrewQuickEditMode,
@@ -1010,7 +970,6 @@ export const createBrewsActionsModule = ({
         duplicateCoffee,
         cloneBrew,
         deleteCoffee,
-        resetFormState,
-        refreshManualPinningVisibility
+        resetFormState
     };
 };

@@ -22,16 +22,11 @@ const sortByPinnedOrder = (a, b) => {
 
 export const selectVisiblePinnedBrewOrderIds = ({
     coffees = [],
-    beans = [],
-    organizeByBeans = false
+    beans = []
 } = {}) => {
     const activeBrewsSorted = [...(Array.isArray(coffees) ? coffees : [])]
         .filter((brew) => brew?.isActive)
         .sort(sortByPinnedOrder);
-
-    if (!organizeByBeans) {
-        return activeBrewsSorted.map((brew) => brew.id);
-    }
 
     const grouped = new Map();
     activeBrewsSorted.forEach((brew) => {

@@ -92,15 +92,12 @@ export const createBrewsVmModule = () => {
         };
     };
 
-    const buildTableRowDisplayModel = ({ brew, typeDisplay, showManualPinning }) => {
+    const buildTableRowDisplayModel = ({ brew, typeDisplay }) => {
         const outWeight = formatOutWeight(brew.weight, brew.ratio);
         const displayDate = brew.createdAt ? new Date(brew.createdAt).toLocaleDateString() : '-';
         const displayTime = brew.createdAt
             ? new Date(brew.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
             : '-';
-        const gripIconClass = brew.isActive
-            ? 'fa-thumbtack text-green-600'
-            : 'fa-thumbtack text-stone-300 dark:text-stone-600 opacity-40';
         const recipeColHtml =
             `<div class="whitespace-nowrap text-xs">` +
             `<span class="font-semibold text-coffee-700 dark:text-[#a8a29e]">${brew.weight || '-'}g</span>` +
@@ -113,9 +110,7 @@ export const createBrewsVmModule = () => {
             displayOrigin: typeDisplay.origin,
             displayDate,
             displayTime,
-            gripIconClass,
-            recipeColHtml,
-            showManualPinning
+            recipeColHtml
         };
     };
 
@@ -130,9 +125,6 @@ export const createBrewsVmModule = () => {
         actionsHtml
     }) => {
         let rowHtml = '';
-        if (rowDisplay.showManualPinning) {
-            rowHtml += `<td class="px-3 py-1 text-center"><i class="fa-solid ${rowDisplay.gripIconClass}"></i></td>`;
-        }
         if (columnPreferences.roaster !== false) rowHtml += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${rowDisplay.displayRoaster}</td>`;
         if (columnPreferences.origin !== false) rowHtml += `<td class="px-3 py-1 text-sm">${rowDisplay.displayOrigin}</td>`;
         if (columnPreferences.farmer !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.farmer}</td>`;

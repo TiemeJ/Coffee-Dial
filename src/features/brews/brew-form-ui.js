@@ -2,7 +2,6 @@ export const createBrewFormUiModule = ({
     getScaData,
     getScaState,
     setScaState,
-    getRefreshManualPinningVisibility,
     getCoffeeScale
 }) => {
     const setNotesMode = (mode) => {
@@ -229,7 +228,6 @@ export const createBrewFormUiModule = ({
         c.setAttribute('aria-expanded', s ? 'true' : 'false');
         if (s) {
             o.classList.remove('hidden');
-            getRefreshManualPinningVisibility()?.();
             if (document.getElementById('notesMode')?.value === 'sca') renderScaWheel();
             const coffeeScale = getCoffeeScale();
             if (coffeeScale?.autoConnect) coffeeScale.autoConnect();

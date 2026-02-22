@@ -96,9 +96,8 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         const typeDisplay = getCoffeeTypeDisplay(brew);
         const roaster = typeDisplay.roaster || brew.name || 'Unknown Roaster';
         const farmer = typeDisplay.farmer || '-';
-        const swapTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
-        const titleText = swapTitle ? (farmer && farmer !== '-' ? farmer : roaster) : roaster;
-        const subtitleText = swapTitle ? roaster : farmer;
+        const titleText = farmer && farmer !== '-' ? farmer : roaster;
+        const subtitleText = roaster;
 
         const isDecaf = !!typeDisplay.decaf;
         const decafIcon = isDecaf ? `<img src="${decafIconSrc}" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` : '';
@@ -110,11 +109,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
 
         let menu = '';
         if (currentView === 'mine') {
-            const showManualPinning = !pinnedBrewsPreferences?.pinOpenBags;
-            const pinAction = showManualPinning
-                ? `<button data-action-click="toggleActive('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-thumbtack text-green-600 w-4"></i> Unpin</button>`
-                : '';
-            menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] overflow-hidden" style="z-index: 9999;"><button data-action-click="openCoffeeCardQuickEdit('${brew.id}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 w-4"></i> Quick edit</button><button data-action-click="editCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button data-action-click="fastRepeatCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button data-action-click="duplicateCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button>${pinAction}<button data-action-click="openUploadModal('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Share moment</button><button data-action-click="showBeanForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button data-action-click="showCoffeeForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button data-action-click="shareCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button data-action-click="deleteCoffee('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
+            menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] overflow-hidden" style="z-index: 9999;"><button data-action-click="openCoffeeCardQuickEdit('${brew.id}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 w-4"></i> Quick edit</button><button data-action-click="editCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button data-action-click="fastRepeatCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button data-action-click="duplicateCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button><button data-action-click="openUploadModal('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Share moment</button><button data-action-click="showBeanForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button data-action-click="showCoffeeForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button data-action-click="shareCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button data-action-click="deleteCoffee('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
         }
 
         const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
@@ -144,17 +139,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
             return { hasTiles: false, beanKeys: [] };
         }
 
-        const organizeByBeans = !!pinnedBrewsPreferences.organizeByBeans;
         const beanKeys = [];
-
-        if (!organizeByBeans) {
-            allActiveBrews.sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
-            allActiveBrews.forEach((brew) =>
-                renderBrewTile({ brew, container: pinnedGrid, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard })
-            );
-            pinnedSection.classList.remove('hidden');
-            return { hasTiles: true, beanKeys: [] };
-        }
 
         const beanGroups = new Map();
         allActiveBrews.forEach((brew) => {
@@ -187,9 +172,8 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
                     const typeDisplay = previewBrew
                         ? getCoffeeTypeDisplay(previewBrew)
                         : { roaster: bean?.roaster || 'Unknown', farmer: bean?.farmer || '-', decaf: false };
-                    const swapTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
-                    const titleText = swapTitle ? (typeDisplay.farmer !== '-' ? typeDisplay.farmer : typeDisplay.roaster) : typeDisplay.roaster;
-                    const subtitleText = swapTitle ? typeDisplay.roaster : typeDisplay.farmer;
+                    const titleText = typeDisplay.farmer !== '-' ? typeDisplay.farmer : typeDisplay.roaster;
+                    const subtitleText = typeDisplay.roaster;
                     const badge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>${brews.length} brews</span>`;
                     const isDecaf = !!typeDisplay.decaf;
                     const decafIcon = isDecaf
@@ -237,9 +221,8 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
                     const typeDisplay = getCoffeeTypeDisplay(brew);
                     const roaster = typeDisplay.roaster || brew.name || 'Unknown Roaster';
                     const farmer = typeDisplay.farmer || '-';
-                    const swapTitle = !!pinnedBrewsPreferences.swapRoasterFarmer;
-                    const titleText = swapTitle ? (farmer && farmer !== '-' ? farmer : roaster) : roaster;
-                    const subtitleText = swapTitle ? roaster : farmer;
+                    const titleText = farmer && farmer !== '-' ? farmer : roaster;
+                    const subtitleText = roaster;
                     const isDecaf = !!typeDisplay.decaf;
                     const decafIcon = isDecaf ? `<img src="${decafIconSrc || 'img/decaf_dark.png'}" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` : '';
                     const placeholderBadge = '<span class="w-6 h-6"></span>';

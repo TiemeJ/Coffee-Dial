@@ -126,9 +126,8 @@ export const createBrewPinArtModule = ({
                 previewBrew?.farmer ||
                 '-'
             ).trim();
-            const swapTitle = !!pinnedBrewsPreferences?.swapRoasterFarmer;
-            const titleText = swapTitle ? (farmer && farmer !== '-' ? farmer : roaster) : roaster;
-            const subtitleText = swapTitle ? roaster : farmer;
+            const titleText = farmer && farmer !== '-' ? farmer : roaster;
+            const subtitleText = roaster;
             const imageUrl = coffeeType?.imageUrl || coffeeType?.imageURL || '';
             const stockPercent = getStockPercentForBean(bean);
             const isDecaf = !!coffeeType?.decaf;

@@ -226,8 +226,6 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
         if (coffeeScale?.applyGraphTogglePrefsForMethod) coffeeScale.applyGraphTogglePrefsForMethod(mVal);
         setRating(c.rating || 0);
         setNotesMode('manual');
-        document.getElementById('isActiveToggle').checked = c.isActive || false;
-
         if (c.beanId) {
             document.getElementById('savedBeanSelect').value = c.beanId;
             if (fillBeanDetails) fillBeanDetails(c.beanId);

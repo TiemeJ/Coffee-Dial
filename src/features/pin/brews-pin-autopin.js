@@ -24,8 +24,6 @@ export const createBrewsPinAutopinModule = ({
         return parts.join('|');
     };
 
-    const isPinOpenBagsEnabled = () => !!getPinnedBrewsPreferences().pinOpenBags;
-    const isPinOpenBagsBestOnlyEnabled = () => !!getPinnedBrewsPreferences().pinOpenBagsBestOnly;
     const isBestPerMethodDrinkEnabled = () => getPinnedBrewsPreferences().pinBestPerMethodDrink !== false;
 
     const getBrewSortScore = (brew) => {
@@ -67,39 +65,6 @@ export const createBrewsPinAutopinModule = ({
             if (current === undefined || order > current) nextOrderByBean.set(beanId, order);
         });
         return nextOrderByBean;
-    };
-
-    const pinBrewsFromOpenBags = async () => {
-        const user = getCurrentUser();
-        if (!user) return;
-
-        const coffees = getCoffees();
-        const openBeans = getOpenBeansForAutoPin();
-        if (!openBeans.length) return;
-
-        const openBeanIds = new Set(openBeans.map((bean) => bean.id));
-        const brewsToPin = coffees.filter((brew) => !brew.isActive && !!(brew.beanId && openBeanIds.has(brew.beanId)));
-        if (!brewsToPin.length) return;
-
-        const nextOrderByBean = getActiveOrderCeilingByBean(coffees);
-        const batch = writeBatch(db);
-        brewsToPin.forEach((brew) => {
-            const updates = { isActive: true };
-            const beanId = brew.beanId;
-            const hasBeanAnchor = !!beanId && nextOrderByBean.has(beanId);
-            if (hasBeanAnchor) {
-                const nextOrder = (nextOrderByBean.get(beanId) || 0) + 1;
-                nextOrderByBean.set(beanId, nextOrder);
-                updates.customOrder = nextOrder;
-            }
-            batch.update(doc(db, 'users', user.uid, 'coffees', brew.id), updates);
-        });
-
-        try {
-            await batch.commit();
-        } catch (err) {
-            console.error('Pin open bags failed', err);
-        }
     };
 
     const pinBestBrewsForBean = async ({ beanId, brewId = null, brewData = null } = {}) => {
@@ -220,16 +185,11 @@ export const createBrewsPinAutopinModule = ({
     };
 
     const autoPinOpenBagsIfEnabled = async ({ beanId = null, brewId = null, brewData = null } = {}) => {
-        if (!isPinOpenBagsEnabled()) return;
-        if (isPinOpenBagsBestOnlyEnabled() && beanId) {
+        if (beanId) {
             await pinBestBrewsForBean({ beanId, brewId, brewData });
             return;
         }
-        if (isPinOpenBagsBestOnlyEnabled()) {
-            await pinBestBrewsForAllOpenBags();
-            return;
-        }
-        await pinBrewsFromOpenBags();
+        await pinBestBrewsForAllOpenBags();
     };
 
     const unpinBrewsForBeans = async ({ beanIds = [], beanSignatures = [] } = {}) => {
@@ -255,13 +215,11 @@ export const createBrewsPinAutopinModule = ({
     };
 
     const autoUnpinClosedBagsIfEnabled = async ({ beanIds = [], beanSignatures = [] } = {}) => {
-        if (!isPinOpenBagsEnabled()) return;
         await unpinBrewsForBeans({ beanIds, beanSignatures });
     };
 
     return {
         makeBeanSignature,
-        pinBrewsFromOpenBags,
         pinBestBrewsForBean,
         pinBestBrewsForAllOpenBags,
         autoPinOpenBagsIfEnabled,

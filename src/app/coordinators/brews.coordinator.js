@@ -78,7 +78,6 @@ export const createBrewsCoordinator = ({
     const {
         handleFormSubmit,
         discardForm,
-        toggleActive,
         editCoffee,
         fastDuplicateFromCard,
         fastRepeatCoffee,
@@ -86,8 +85,7 @@ export const createBrewsCoordinator = ({
         duplicateCoffee,
         cloneBrew,
         deleteCoffee,
-        resetFormState,
-        refreshManualPinningVisibility
+        resetFormState
     } = createBrewsActionsModule({
         ...actionsDeps,
         populateForm: (...args) => populateForm(...args),
@@ -95,8 +93,6 @@ export const createBrewsCoordinator = ({
         getSelectedBrewGearIds: () => getSelectedBrewGearIds(),
         setSelectedBrewGearIds: (...args) => setSelectedBrewGearIds(...args)
     });
-
-    refreshManualPinningVisibility();
 
     const refreshBrewGearSelectors = () => {
         refreshBrewGearField();
@@ -113,7 +109,6 @@ export const createBrewsCoordinator = ({
         setSelectedBrewGearIds,
         handleFormSubmit,
         discardForm,
-        toggleActive,
         editCoffee,
         fastDuplicateFromCard,
         fastRepeatCoffee,
@@ -121,7 +116,6 @@ export const createBrewsCoordinator = ({
         duplicateCoffee,
         cloneBrew,
         deleteCoffee,
-        resetFormState,
-        refreshManualPinningVisibility
+        resetFormState
     };
 };

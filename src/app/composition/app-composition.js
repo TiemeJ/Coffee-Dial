@@ -427,7 +427,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         const {
             applyAnimationPreference,
-            updateBestOnlyToggleState,
             openPreferences
         } = createBrewsPreferencesModule({
             getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
@@ -441,7 +440,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 appCommands?.dispatch?.(commandName, payload, { source: 'preferences' }),
             showAutoPinToast,
             onPinnedBrewsPreferencesChanged: () => {
-                refreshManualPinningVisibility?.();
                 const currentCard = getCurrentCardCoffeeState();
                 if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
             }
@@ -857,7 +855,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getScaData: () => scaData,
             getScaState: () => getScaStateRuntime(),
             setScaState: (value) => setScaStateRuntime(value),
-            getRefreshManualPinningVisibility: () => refreshManualPinningVisibility,
             getCoffeeScale: () => coffeeScale
         });
 
@@ -1101,7 +1098,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeCoffeeCard: (...args) => closeCoffeeCard(...args),
             getBeanCoffeeTypeDisplay: (...args) => getBeanCoffeeTypeDisplay(...args),
             getFirstBrewDateForBean: (...args) => getFirstBrewDateForBean(...args),
-            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
             showToast
         });
 
@@ -1173,7 +1169,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setSelectedBrewGearIds,
             handleFormSubmit,
             discardForm,
-            toggleActive,
             editCoffee,
             fastDuplicateFromCard,
             fastRepeatCoffee,
@@ -1181,8 +1176,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             duplicateCoffee,
             cloneBrew,
             deleteCoffee,
-            resetFormState,
-            refreshManualPinningVisibility
+            resetFormState
         } = createBrewsCoordinator({
             formDeps: {
                 setTempMode,
@@ -1217,7 +1211,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 handleQuickEditRecipeInput,
                 dispatchCommand: (commandName, payload) =>
                     appCommands?.dispatch?.(commandName, payload, { source: 'brews.actions' }),
-                getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
                 getFirstBrewDateForBean,
                 uploadPendingCoffeeTypeImage,
                 clearPendingAIBeanImageFile,
@@ -1669,7 +1662,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             switchModalTab,
             toggleSocialAccordion,
             toggleActionMenu,
-            toggleActive,
             toggleAiMenu,
             toggleAllFriends,
             toggleBeanArchive,

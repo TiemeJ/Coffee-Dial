@@ -2,12 +2,8 @@ export const DEFAULT_PINNED_BREWS_PREFERENCES = {
     useLegacyMobileTable: true,
     hideCoffeeImageInBrewCard: false,
     animationsEnabled: true,
-    organizeByBeans: true,
-    coffeeArtEnabled: false,
-    pinOpenBags: false,
-    pinOpenBagsBestOnly: false,
-    pinBestPerMethodDrink: true,
-    swapRoasterFarmer: false
+    showTilesInsteadOfCoffeeArt: false,
+    pinBestPerMethodDrink: true
 };
 
 export const createBrewsPreferencesModule = ({
@@ -30,12 +26,8 @@ export const createBrewsPreferencesModule = ({
         'useLegacyMobileTableToggle',
         'hideCoffeeImageInBrewCardToggle',
         'animationsToggle',
-        'organizeByBeansToggle',
-        'coffeeArtToggle',
-        'pinOpenBagsToggle',
-        'pinOpenBagsBestOnlyToggle',
-        'pinBestPerMethodDrinkToggle',
-        'swapRoasterFarmerToggle'
+        'showTilesInsteadOfCoffeeArtToggle',
+        'pinBestPerMethodDrinkToggle'
     ];
     let isHydratingPreferences = false;
     let hasBoundAutoSave = false;
@@ -46,113 +38,58 @@ export const createBrewsPreferencesModule = ({
         applyAnimationClass(!!getPinnedBrewsPreferences().animationsEnabled);
     };
 
-    const updateBestOnlyToggleState = (pinOpenBagsEnabled = null) => {
-        const row = document.getElementById('pinOpenBagsBestOnlyRow');
-        const toggle = document.getElementById('pinOpenBagsBestOnlyToggle');
-        if (!row || !toggle) return;
+    const updateAnimationsToggleState = (showTilesInsteadOfCoffeeArt = null) => {
+        const row = document.getElementById('animationsRow');
+        const toggle = document.getElementById('animationsToggle');
+        if (!toggle) return;
 
-        const enabled =
-            typeof pinOpenBagsEnabled === 'boolean'
-                ? pinOpenBagsEnabled
-                : !!document.getElementById('pinOpenBagsToggle')?.checked;
+        const shouldShowTiles =
+            typeof showTilesInsteadOfCoffeeArt === 'boolean'
+                ? showTilesInsteadOfCoffeeArt
+                : !!document.getElementById('showTilesInsteadOfCoffeeArtToggle')?.checked;
+        const isCoffeeArtEnabled = !shouldShowTiles;
 
-        toggle.disabled = !enabled;
-        if (!enabled) toggle.checked = false;
-        row.classList.toggle('opacity-50', !enabled);
-        row.classList.toggle('cursor-not-allowed', !enabled);
-    };
-
-    const updateBestPerMethodDrinkToggleState = (bestOnlyEnabled = null) => {
-        const row = document.getElementById('pinBestPerMethodDrinkRow');
-        const toggle = document.getElementById('pinBestPerMethodDrinkToggle');
-        if (!row || !toggle) return;
-
-        const enabled =
-            typeof bestOnlyEnabled === 'boolean'
-                ? bestOnlyEnabled
-                : !!document.getElementById('pinOpenBagsBestOnlyToggle')?.checked;
-
-        toggle.disabled = !enabled;
-        row.classList.toggle('opacity-50', !enabled);
-        row.classList.toggle('cursor-not-allowed', !enabled);
-    };
-
-    const updateCoffeeArtToggleState = (organizeByBeansEnabled = null) => {
-        const row = document.getElementById('coffeeArtRow');
-        const toggle = document.getElementById('coffeeArtToggle');
-        if (!row || !toggle) return;
-
-        const enabled =
-            typeof organizeByBeansEnabled === 'boolean'
-                ? organizeByBeansEnabled
-                : !!document.getElementById('organizeByBeansToggle')?.checked;
-
-        toggle.disabled = !enabled;
-        if (!enabled) toggle.checked = false;
-        row.classList.toggle('opacity-50', !enabled);
-        row.classList.toggle('cursor-not-allowed', !enabled);
+        toggle.disabled = isCoffeeArtEnabled;
+        if (isCoffeeArtEnabled) toggle.checked = false;
+        if (row) {
+            row.classList.toggle('opacity-50', isCoffeeArtEnabled);
+            row.classList.toggle('cursor-not-allowed', isCoffeeArtEnabled);
+        }
     };
 
     const collectPinnedBrewsPreferencesFromForm = () => {
-        const organizeByBeansEnabled = !!document.getElementById('organizeByBeansToggle')?.checked;
-        const pinOpenBagsEnabled = !!document.getElementById('pinOpenBagsToggle')?.checked;
-        const pinOpenBagsBestOnlyEnabled =
-            pinOpenBagsEnabled && !!document.getElementById('pinOpenBagsBestOnlyToggle')?.checked;
+        const showTilesInsteadOfCoffeeArt = !!document.getElementById('showTilesInsteadOfCoffeeArtToggle')?.checked;
         return {
             ...getPinnedBrewsPreferences(),
             useLegacyMobileTable: !!document.getElementById('useLegacyMobileTableToggle')?.checked,
             hideCoffeeImageInBrewCard: !!document.getElementById('hideCoffeeImageInBrewCardToggle')?.checked,
-            animationsEnabled: !!document.getElementById('animationsToggle')?.checked,
-            organizeByBeans: organizeByBeansEnabled,
-            coffeeArtEnabled: organizeByBeansEnabled && !!document.getElementById('coffeeArtToggle')?.checked,
-            pinOpenBags: pinOpenBagsEnabled,
-            pinOpenBagsBestOnly: pinOpenBagsBestOnlyEnabled,
-            pinBestPerMethodDrink: !!document.getElementById('pinBestPerMethodDrinkToggle')?.checked,
-            swapRoasterFarmer: !!document.getElementById('swapRoasterFarmerToggle')?.checked
+            animationsEnabled: showTilesInsteadOfCoffeeArt ? !!document.getElementById('animationsToggle')?.checked : false,
+            showTilesInsteadOfCoffeeArt,
+            pinOpenBags: true,
+            pinOpenBagsBestOnly: true,
+            pinBestPerMethodDrink: !!document.getElementById('pinBestPerMethodDrinkToggle')?.checked
         };
     };
 
     const persistPinnedBrewsPreferences = async (nextPinnedPrefs) => {
         const currentPrefs = getPinnedBrewsPreferences();
-        const pinOpenBagsEnabled = !!nextPinnedPrefs.pinOpenBags;
-        const pinOpenBagsBestOnlyEnabled = !!nextPinnedPrefs.pinOpenBagsBestOnly;
-        const pinOpenBagsWasEnabled = !!currentPrefs.pinOpenBags;
-        const pinOpenBagsBestOnlyWasEnabled = !!currentPrefs.pinOpenBagsBestOnly;
         const pinBestPerMethodDrinkEnabled = nextPinnedPrefs.pinBestPerMethodDrink !== false;
         const pinBestPerMethodDrinkWasEnabled = currentPrefs.pinBestPerMethodDrink !== false;
-        const organizeByBeansEnabled = !!nextPinnedPrefs.organizeByBeans;
-
-        if (!organizeByBeansEnabled) {
-            nextPinnedPrefs = {
-                ...nextPinnedPrefs,
-                coffeeArtEnabled: false
-            };
-        }
-
+        nextPinnedPrefs = {
+            ...nextPinnedPrefs,
+            pinOpenBags: true,
+            pinOpenBagsBestOnly: true,
+            showTilesInsteadOfCoffeeArt: !!nextPinnedPrefs.showTilesInsteadOfCoffeeArt,
+            animationsEnabled: !!nextPinnedPrefs.showTilesInsteadOfCoffeeArt
+                ? !!nextPinnedPrefs.animationsEnabled
+                : false
+        };
         setPinnedBrewsPreferences(nextPinnedPrefs);
         applyAnimationPreference();
 
-        if (pinOpenBagsEnabled && !pinOpenBagsWasEnabled) {
-            if (pinOpenBagsBestOnlyEnabled) {
-                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
-                showAutoPinToast('Autopin set to best brews only.');
-            } else {
-                await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
-                showAutoPinToast('Autopin enabled. All brews of all open bags pinned.');
-            }
-        } else if (pinOpenBagsEnabled && pinOpenBagsBestOnlyEnabled && !pinOpenBagsBestOnlyWasEnabled) {
-            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
-            showAutoPinToast('Autopin set to best brews only.');
-        } else if (
-            pinOpenBagsEnabled &&
-            pinOpenBagsBestOnlyEnabled &&
-            pinBestPerMethodDrinkEnabled !== pinBestPerMethodDrinkWasEnabled
-        ) {
+        if (pinBestPerMethodDrinkEnabled !== pinBestPerMethodDrinkWasEnabled) {
             await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
             showAutoPinToast('Autopin best-brew grouping updated.');
-        } else if (pinOpenBagsEnabled && !pinOpenBagsBestOnlyEnabled && pinOpenBagsBestOnlyWasEnabled) {
-            await dispatchCommand?.('pin.autoPinOpenBagsIfEnabled', {});
-            showAutoPinToast('Autopin enabled. All brews of all open bags pinned.');
         }
 
         const user = getCurrentUser();
@@ -194,12 +131,7 @@ export const createBrewsPreferencesModule = ({
             if (!el) return;
             el.addEventListener('change', () => {
                 if (isHydratingPreferences) return;
-                if (id === 'pinOpenBagsToggle') {
-                    updateBestOnlyToggleState();
-                    updateBestPerMethodDrinkToggleState();
-                }
-                if (id === 'pinOpenBagsBestOnlyToggle') updateBestPerMethodDrinkToggleState();
-                if (id === 'organizeByBeansToggle') updateCoffeeArtToggleState();
+                if (id === 'showTilesInsteadOfCoffeeArtToggle') updateAnimationsToggleState();
                 scheduleAutoSavePreferences();
             });
         });
@@ -207,22 +139,15 @@ export const createBrewsPreferencesModule = ({
 
     const openPreferences = () => {
         const pinnedPrefs = getPinnedBrewsPreferences();
-        const pinOpenBagsEnabled = !!pinnedPrefs.pinOpenBags;
 
         isHydratingPreferences = true;
         document.getElementById('animationsToggle').checked = !!pinnedPrefs.animationsEnabled;
         document.getElementById('useLegacyMobileTableToggle').checked = pinnedPrefs.useLegacyMobileTable !== false;
         document.getElementById('hideCoffeeImageInBrewCardToggle').checked = !!pinnedPrefs.hideCoffeeImageInBrewCard;
-        document.getElementById('organizeByBeansToggle').checked = !!pinnedPrefs.organizeByBeans;
-        document.getElementById('coffeeArtToggle').checked = !!pinnedPrefs.organizeByBeans && !!pinnedPrefs.coffeeArtEnabled;
-        document.getElementById('pinOpenBagsToggle').checked = pinOpenBagsEnabled;
-        document.getElementById('pinOpenBagsBestOnlyToggle').checked = !!pinnedPrefs.pinOpenBagsBestOnly;
+        document.getElementById('showTilesInsteadOfCoffeeArtToggle').checked = !!pinnedPrefs.showTilesInsteadOfCoffeeArt;
         document.getElementById('pinBestPerMethodDrinkToggle').checked = pinnedPrefs.pinBestPerMethodDrink !== false;
-        document.getElementById('swapRoasterFarmerToggle').checked = !!pinnedPrefs.swapRoasterFarmer;
+        updateAnimationsToggleState(!!pinnedPrefs.showTilesInsteadOfCoffeeArt);
 
-        updateBestOnlyToggleState(pinOpenBagsEnabled);
-        updateBestPerMethodDrinkToggleState(!!pinnedPrefs.pinOpenBagsBestOnly);
-        updateCoffeeArtToggleState(!!pinnedPrefs.organizeByBeans);
         bindPreferencesAutoSave();
         isHydratingPreferences = false;
 
@@ -231,9 +156,6 @@ export const createBrewsPreferencesModule = ({
 
     return {
         applyAnimationPreference,
-        updateBestOnlyToggleState,
-        updateBestPerMethodDrinkToggleState,
-        updateCoffeeArtToggleState,
         openPreferences
     };
 };

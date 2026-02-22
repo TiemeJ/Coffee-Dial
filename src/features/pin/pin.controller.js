@@ -63,8 +63,7 @@ export const createPinControllerModule = ({
         const prefs = getPinnedBrewsPreferences() || {};
         const visibleOrder = selectVisiblePinnedBrewOrderIds({
             coffees: getCoffees(),
-            beans: getBeans(),
-            organizeByBeans: !!prefs.organizeByBeans
+            beans: getBeans()
         });
         const order = visibleOrder.includes(brewId) ? visibleOrder : getPinnedBrewOrderIds();
         dispatchCommand('brews.openCardWithOrder', {
@@ -86,8 +85,8 @@ export const createPinControllerModule = ({
         return linkedBean ? linkedBean.id : `no-bean-${brew.id}`;
     };
 
-    const updatePinnedHeaderToggleIcon = (beanKeys = [], organizeByBeans = true, coffeeArtEnabled = false) => {
-        lastPinnedBeanKeys = organizeByBeans ? beanKeys : [];
+    const updatePinnedHeaderToggleIcon = (beanKeys = [], coffeeArtEnabled = false) => {
+        lastPinnedBeanKeys = beanKeys;
         const icon = document.getElementById('pinnedToggleIcon');
         const header = document.getElementById('pinnedHeaderToggle');
         if (!icon || !header) return;
@@ -97,7 +96,7 @@ export const createPinControllerModule = ({
             header.classList.remove('cursor-pointer');
             return;
         }
-        if (!organizeByBeans || coffeeArtEnabled || !beanKeys.length) {
+        if (coffeeArtEnabled || !beanKeys.length) {
             icon.classList.add('hidden');
             header.classList.remove('cursor-pointer');
             return;
@@ -178,7 +177,7 @@ export const createPinControllerModule = ({
     const renderPinnedTiles = () => {
         const pinnedPrefs = getPinnedBrewsPreferences();
         const pinnedGrid = document.getElementById('pinnedGrid');
-        const isCoffeeArtEnabled = !!pinnedPrefs.organizeByBeans && !!pinnedPrefs.coffeeArtEnabled;
+        const isCoffeeArtEnabled = pinnedPrefs.showTilesInsteadOfCoffeeArt === false;
 
         if (isCoffeeArtEnabled) {
             destroySortable();
@@ -190,7 +189,7 @@ export const createPinControllerModule = ({
             });
             const section = document.getElementById('pinnedSection');
             if (section) section.classList.toggle('hidden', !result.hasArt);
-            updatePinnedHeaderToggleIcon([], !!pinnedPrefs.organizeByBeans, true);
+            updatePinnedHeaderToggleIcon([], true);
             return;
         }
 
@@ -213,7 +212,7 @@ export const createPinControllerModule = ({
             openPinnedBrewCard: (...args) => openPinnedBrewCard(...args)
         });
 
-        updatePinnedHeaderToggleIcon(result.beanKeys, !!pinnedPrefs.organizeByBeans, false);
+        updatePinnedHeaderToggleIcon(result.beanKeys, false);
         if (result.hasTiles) initSortable();
     };
 

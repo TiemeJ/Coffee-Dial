@@ -17,7 +17,6 @@ export const createBrewsCardActionsModule = ({
     closeCoffeeCard,
     getBeanCoffeeTypeDisplay,
     getFirstBrewDateForBean,
-    getPinnedBrewsPreferences,
     showToast
 }) => {
     const brewsVm = createBrewsVmModule();
@@ -229,13 +228,6 @@ export const createBrewsCardActionsModule = ({
         if (menu) menu.classList.add('hidden');
     };
 
-    const refreshQuickEditManualPinningVisibility = () => {
-        const pinRow = document.getElementById('quickEditIsActiveRow');
-        if (!pinRow) return;
-        const hideManualPinning = !!getPinnedBrewsPreferences?.()?.pinOpenBags;
-        pinRow.classList.toggle('hidden', hideManualPinning);
-    };
-
     const getBeanLabelForBrew = (bean) => {
         const display = getBeanCoffeeTypeDisplay(bean);
         return brewsVm.buildBeanLabel(bean, display);
@@ -343,8 +335,6 @@ export const createBrewsCardActionsModule = ({
         document.getElementById('quickEditRating').value = String(parseInt(brew.rating, 10) || 0);
         document.getElementById('quickEditNotes').value = brew.notes || '';
         document.getElementById('quickEditImprove').value = brew.improve || '';
-        document.getElementById('quickEditIsActive').checked = !!brew.isActive;
-        refreshQuickEditManualPinningVisibility();
         handleQuickEditRecipeInput('yield');
 
         document.getElementById('coffeeCardView').classList.add('hidden');
@@ -399,7 +389,6 @@ export const createBrewsCardActionsModule = ({
             rating: parseInt(document.getElementById('quickEditRating').value, 10) || 0,
             notes: document.getElementById('quickEditNotes').value || '',
             improve: document.getElementById('quickEditImprove').value || '',
-            isActive: !!document.getElementById('quickEditIsActive').checked,
             gearIds: getQuickEditSelectedGearIds(),
             beanId: selectedBeanId,
             updatedAt: nowIso
@@ -464,17 +453,10 @@ export const createBrewsCardActionsModule = ({
         if (!c) return;
 
         if (getCurrentView() === 'mine') {
-            const pinLabel = c.isActive ? 'Unpin' : 'Pin to active';
-            const pinIcon = c.isActive ? 'fa-thumbtack text-green-600' : 'fa-thumbtack text-gray-400';
-            const showManualPinning = !getPinnedBrewsPreferences?.()?.pinOpenBags;
-            const pinAction = showManualPinning
-                ? `<button data-action-click="toggleActive('${c.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid ${pinIcon} w-4"></i> ${pinLabel}</button>`
-                : '';
             menu.innerHTML = `
                 <button data-action-click="closeCoffeeCard(null); editCoffee('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button>
                 <button data-action-click="fastDuplicateFromCard();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button>
                 <button data-action-click="duplicateFromCard();" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button>
-                ${pinAction}
                 <button data-action-click="showBeanForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button>
                 <button data-action-click="showCoffeeForBrew('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button>
                 <button data-action-click="openUploadModal('${c.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Share moment</button>
