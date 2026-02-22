@@ -3,9 +3,9 @@ import { DEFAULT_PINNED_BREWS_PREFERENCES } from '../features/preferences.js';
 export const DEFAULT_BREWS_PER_PAGE = 50;
 
 export const createColumnDefs = () => ([
+    { id: 'farmer', label: 'Blend/Farmer' },
     { id: 'roaster', label: 'Roaster' },
     { id: 'origin', label: 'Origin' },
-    { id: 'farmer', label: 'Blend/Farmer' },
     { id: 'variety', label: 'Variety' },
     { id: 'processing', label: 'Process' },
     { id: 'decaf', label: 'Decaf' },

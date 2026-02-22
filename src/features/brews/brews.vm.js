@@ -125,9 +125,9 @@ export const createBrewsVmModule = () => {
         actionsHtml
     }) => {
         let rowHtml = '';
+        if (columnPreferences.farmer !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.farmer}</td>`;
         if (columnPreferences.roaster !== false) rowHtml += `<td class="px-3 py-1 font-semibold text-coffee-900 dark:text-[#e7e5e4]">${rowDisplay.displayRoaster}</td>`;
         if (columnPreferences.origin !== false) rowHtml += `<td class="px-3 py-1 text-sm">${rowDisplay.displayOrigin}</td>`;
-        if (columnPreferences.farmer !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.farmer}</td>`;
         if (columnPreferences.variety !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.variety}</td>`;
         if (columnPreferences.processing !== false) rowHtml += `<td class="px-3 py-1 text-sm">${typeDisplay.processing}</td>`;
         if (columnPreferences.decaf !== false) {

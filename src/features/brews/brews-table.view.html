@@ -37,6 +37,12 @@
                 <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                     <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                         <tr>
+                            <th id="th-farmer" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap">
+                                <button type="button" data-action-click="sortBy('farmer')" class="w-full flex items-center gap-1 text-left">
+                                    <span>Blend/Farmer</span>
+                                    <span id="brewSortIcon-farmer" class="text-[10px]"></span>
+                                </button>
+                            </th>
                             <th id="th-roaster" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group whitespace-nowrap filterable">
                                 <button type="button" data-action-click="sortBy('roaster')" class="w-full flex items-center gap-1 text-left">
                                     <span>Roaster</span>
@@ -47,12 +53,6 @@
                                 <button type="button" data-action-click="sortBy('origin')" class="w-full flex items-center gap-1 text-left">
                                     <span>Origin</span>
                                     <span id="brewSortIcon-origin" class="text-[10px]"></span>
-                                </button>
-                            </th>
-                            <th id="th-farmer" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap">
-                                <button type="button" data-action-click="sortBy('farmer')" class="w-full flex items-center gap-1 text-left">
-                                    <span>Blend/Farmer</span>
-                                    <span id="brewSortIcon-farmer" class="text-[10px]"></span>
                                 </button>
                             </th>
                             <th id="th-variety" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap">
