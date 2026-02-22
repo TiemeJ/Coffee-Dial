@@ -1992,6 +1992,22 @@ export const createGalleryModule = ({
             const commentTabKey = getCurrentGalleryMode() === 'mine' ? 'mine' : 'shared';
             let hasUnreadComments = unreadCommentMomentIds.has(docItem.id);
             let commentsLiveUnsub = null;
+            const normalizeCommentsEntries = (entries) => {
+                const unique = [];
+                const seen = new Set();
+                (Array.isArray(entries) ? entries : []).forEach((entry) => {
+                    if (!entry || typeof entry !== 'object') return;
+                    const id = typeof entry.id === 'string' ? entry.id : '';
+                    if (!id) {
+                        unique.push(entry);
+                        return;
+                    }
+                    if (seen.has(id)) return;
+                    seen.add(id);
+                    unique.push(entry);
+                });
+                return unique;
+            };
             const stopCommentsLive = () => {
                 if (typeof commentsLiveUnsub === 'function') {
                     commentsLiveUnsub();
@@ -2122,7 +2138,7 @@ export const createGalleryModule = ({
             };
 
             const loadComments = async () => {
-                commentsEntries = await commentsModule.listComments({ photoId: docItem.id, max: 30 });
+                commentsEntries = normalizeCommentsEntries(await commentsModule.listComments({ photoId: docItem.id, max: 30 }));
                 commentsLoaded = true;
                 renderComments();
             };
@@ -2137,10 +2153,10 @@ export const createGalleryModule = ({
                 commentsLiveUnsub = onSnapshot(
                     liveQuery,
                     (snapshot) => {
-                        commentsEntries = snapshot.docs.map((item) => ({
+                        commentsEntries = normalizeCommentsEntries(snapshot.docs.map((item) => ({
                             id: item.id,
                             ...item.data()
-                        }));
+                        })));
                         commentsLoaded = true;
                         renderComments();
                     },
@@ -2188,7 +2204,7 @@ export const createGalleryModule = ({
                 try {
                     const created = await commentsModule.addComment({ photoId: docItem.id, text });
                     commentInput.value = '';
-                    commentsEntries = [created, ...commentsEntries];
+                    commentsEntries = normalizeCommentsEntries([created, ...commentsEntries]);
                     commentsLoaded = true;
                     commentsPanel.classList.remove('hidden');
                     renderComments();
