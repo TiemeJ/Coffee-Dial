@@ -600,6 +600,16 @@ export const createGalleryModule = ({
         return parts.join('\n');
     };
 
+    const copyMomentShareTextToClipboard = (text) => {
+        try {
+            if (typeof navigator !== 'undefined' && navigator?.clipboard?.writeText && text) {
+                navigator.clipboard.writeText(text).catch(() => {});
+            }
+        } catch (_) {
+            // Ignore clipboard failures; sharing can continue.
+        }
+    };
+
     const getHtml2Canvas = () => {
         if (typeof html2canvas === 'function') return html2canvas;
         if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
@@ -895,13 +905,7 @@ export const createGalleryModule = ({
         }
 
         // Best-effort: copy details for apps that only keep the image payload.
-        try {
-            if (navigator?.clipboard?.writeText) {
-                navigator.clipboard.writeText(shareText).catch(() => {});
-            }
-        } catch (error) {
-            console.warn('Clipboard copy failed before sharing moment:', error);
-        }
+        copyMomentShareTextToClipboard(shareText);
 
         let sharePayload = preparedMomentShares.get(photoId);
         if (!sharePayload) {
@@ -1119,6 +1123,20 @@ export const createGalleryModule = ({
         }
 
         const coffeeSnapshot = resolveCoffeeSnapshot(coffeeData);
+        const appLink = typeof window !== 'undefined'
+            ? `${window.location.origin}${window.location.pathname}${window.location.search}#moments`
+            : '';
+        const previewShareText = buildMomentShareText({
+            data: {
+                message
+            },
+            cardSnapshot: coffeeSnapshot,
+            appLink
+        });
+        if (alsoShareOutsideApp) {
+            // Try early clipboard copy while still in direct user action context.
+            copyMomentShareTextToClipboard(previewShareText);
+        }
 
         document.getElementById('uploadProgress')?.classList.remove('hidden');
 
