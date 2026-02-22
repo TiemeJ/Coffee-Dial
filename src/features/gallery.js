@@ -558,6 +558,95 @@ export const createGalleryModule = ({
         target.addEventListener('pointercancel', hideMomentDetailsTooltip);
     };
 
+    const emojiSegmenter = (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function')
+        ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+        : null;
+    const isEmojiGrapheme = (segment) => /[\p{Extended_Pictographic}\uFE0F\u20E3]/u.test(segment || '');
+    const splitToGraphemes = (text) => {
+        const value = (text || '').toString();
+        if (!value) return [];
+        if (emojiSegmenter) {
+            return Array.from(emojiSegmenter.segment(value), (item) => item.segment);
+        }
+        return Array.from(value);
+    };
+    const EMOTICON_PREFIX = '(^|[\\s([{"\'`])';
+    const EMOTICON_SUFFIX = '(?=$|[\\s)\\]}\',"!?.;:])';
+    const EMOTICON_RULES = [
+        { regex: new RegExp(`${EMOTICON_PREFIX}<3${EMOTICON_SUFFIX}`, 'g'), emoji: '❤️' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}</3${EMOTICON_SUFFIX}`, 'g'), emoji: '💔' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\*${EMOTICON_SUFFIX}`, 'g'), emoji: '😘' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\*${EMOTICON_SUFFIX}`, 'g'), emoji: '😘' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\)${EMOTICON_SUFFIX}`, 'g'), emoji: '🙂' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\)${EMOTICON_SUFFIX}`, 'g'), emoji: '🙂' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\]${EMOTICON_SUFFIX}`, 'g'), emoji: '🙂' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\]${EMOTICON_SUFFIX}`, 'g'), emoji: '🙂' },
+        { regex: new RegExp(`${EMOTICON_PREFIX};-\\)${EMOTICON_SUFFIX}`, 'g'), emoji: '😉' },
+        { regex: new RegExp(`${EMOTICON_PREFIX};\\)${EMOTICON_SUFFIX}`, 'g'), emoji: '😉' },
+        { regex: new RegExp(`${EMOTICON_PREFIX};-\\]${EMOTICON_SUFFIX}`, 'g'), emoji: '😉' },
+        { regex: new RegExp(`${EMOTICON_PREFIX};\\]${EMOTICON_SUFFIX}`, 'g'), emoji: '😉' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-D${EMOTICON_SUFFIX}`, 'g'), emoji: '😄' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:D${EMOTICON_SUFFIX}`, 'g'), emoji: '😄' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}XD${EMOTICON_SUFFIX}`, 'gi'), emoji: '😆' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}X-D${EMOTICON_SUFFIX}`, 'gi'), emoji: '😆' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-P${EMOTICON_SUFFIX}`, 'gi'), emoji: '😛' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:P${EMOTICON_SUFFIX}`, 'gi'), emoji: '😛' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-p${EMOTICON_SUFFIX}`, 'g'), emoji: '😛' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:p${EMOTICON_SUFFIX}`, 'g'), emoji: '😛' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\|${EMOTICON_SUFFIX}`, 'g'), emoji: '😐' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\|${EMOTICON_SUFFIX}`, 'g'), emoji: '😐' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-/${EMOTICON_SUFFIX}`, 'g'), emoji: '😕' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:/${EMOTICON_SUFFIX}`, 'g'), emoji: '😕' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\\\${EMOTICON_SUFFIX}`, 'g'), emoji: '😕' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\\\${EMOTICON_SUFFIX}`, 'g'), emoji: '😕' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-O${EMOTICON_SUFFIX}`, 'gi'), emoji: '😮' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:O${EMOTICON_SUFFIX}`, 'gi'), emoji: '😮' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-o${EMOTICON_SUFFIX}`, 'g'), emoji: '😮' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:o${EMOTICON_SUFFIX}`, 'g'), emoji: '😮' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-S${EMOTICON_SUFFIX}`, 'gi'), emoji: '😖' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:S${EMOTICON_SUFFIX}`, 'gi'), emoji: '😖' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-s${EMOTICON_SUFFIX}`, 'g'), emoji: '😖' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:s${EMOTICON_SUFFIX}`, 'g'), emoji: '😖' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}'\\(:${EMOTICON_SUFFIX}`, 'g'), emoji: '😢' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\'\\(${EMOTICON_SUFFIX}`, 'g'), emoji: '😢' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\'\\(${EMOTICON_SUFFIX}`, 'g'), emoji: '😢' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\'\\)${EMOTICON_SUFFIX}`, 'g'), emoji: '😂' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\'\\)${EMOTICON_SUFFIX}`, 'g'), emoji: '😂' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}>:\\(${EMOTICON_SUFFIX}`, 'g'), emoji: '😠' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}>:-\\(${EMOTICON_SUFFIX}`, 'g'), emoji: '😠' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\(${EMOTICON_SUFFIX}`, 'g'), emoji: '🙁' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\(${EMOTICON_SUFFIX}`, 'g'), emoji: '🙁' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\[${EMOTICON_SUFFIX}`, 'g'), emoji: '🙁' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\[${EMOTICON_SUFFIX}`, 'g'), emoji: '🙁' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}D:${EMOTICON_SUFFIX}`, 'g'), emoji: '😱' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:-\\$${EMOTICON_SUFFIX}`, 'g'), emoji: '😳' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}:\\$${EMOTICON_SUFFIX}`, 'g'), emoji: '😳' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}B-\\)${EMOTICON_SUFFIX}`, 'gi'), emoji: '😎' },
+        { regex: new RegExp(`${EMOTICON_PREFIX}B\\)${EMOTICON_SUFFIX}`, 'gi'), emoji: '😎' }
+    ];
+    const parseEmoticonsToEmoji = (text) => {
+        let value = (text || '').toString();
+        EMOTICON_RULES.forEach(({ regex, emoji }) => {
+            value = value.replace(regex, (_, prefix) => `${prefix}${emoji}`);
+        });
+        return value;
+    };
+    const buildEmojiTextFragment = (text) => {
+        const fragment = document.createDocumentFragment();
+        splitToGraphemes(parseEmoticonsToEmoji(text)).forEach((segment) => {
+            if (isEmojiGrapheme(segment)) {
+                const emoji = document.createElement('span');
+                emoji.className = 'inline-block not-italic align-[-0.08em] leading-none';
+                emoji.style.fontFamily = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+                emoji.textContent = segment;
+                fragment.appendChild(emoji);
+                return;
+            }
+            fragment.appendChild(document.createTextNode(segment));
+        });
+        return fragment;
+    };
+
     const QUICK_REACTION_EMOJIS = ['❤️', '👍', '🔥', '😍', '☕', '😂'];
     const FULL_REACTION_EMOJIS = [
         '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😍', '🥰', '😘', '😗', '😙', '😚',
@@ -1999,7 +2088,7 @@ export const createGalleryModule = ({
 
                     const text = document.createElement('p');
                     text.className = 'text-xs text-coffee-800 dark:text-[#e7e5e4] whitespace-pre-wrap break-words';
-                    text.textContent = (entry?.text || '').toString();
+                    text.replaceChildren(buildEmojiTextFragment(entry?.text || ''));
                     text.dataset.momentAction = 'true';
 
                     meta.appendChild(author);
