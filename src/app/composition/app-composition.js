@@ -477,7 +477,11 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 renderGasTable?.();
             },
             onNotificationPreferencesChanged: async () => {
-                await pushNotifications.handlePreferencesChanged();
+                try {
+                    await pushNotifications.handlePreferencesChanged();
+                } catch (error) {
+                    console.error('Failed applying push notification preference change:', error);
+                }
             }
         });
 
@@ -1792,6 +1796,11 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 if (!base) return normalizedRoute;
                 return normalizedRoute === '/' ? `${base}/` : `${base}${normalizedRoute}`;
             };
+            const buildRouteUrl = (routePath = ROUTE_BREWS) => {
+                const fullPath = buildFullPath(routePath);
+                const search = window.location.search || '';
+                return `${fullPath}${search}`;
+            };
 
             const normalizeRoutePath = (value) => {
                 const input = stripBasePath(typeof value === 'string' && value.trim() ? value.trim() : ROUTE_BREWS);
@@ -1818,7 +1827,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 const normalized = normalizeRoutePath(path);
                 const current = normalizeRoutePath(stripBasePath(window.location.pathname || ROUTE_BREWS));
                 if (current === normalized) return;
-                const fullPath = buildFullPath(normalized);
+                const fullPath = buildRouteUrl(normalized);
                 const state = { ...(window.history.state || {}), appRoute: normalized };
                 if (replace) window.history.replaceState(state, document.title, fullPath);
                 else window.history.pushState(state, document.title, fullPath);
@@ -1930,7 +1939,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 const current = normalizeRoutePath(stripBasePath(window.location.pathname || ROUTE_BREWS));
                 if (current !== normalized) {
                     const state = { ...(window.history.state || {}), appRoute: normalized };
-                    window.history.replaceState(state, document.title, buildFullPath(normalized));
+                    window.history.replaceState(state, document.title, buildRouteUrl(normalized));
                 }
                 if (track) trackVirtualPageView(normalized);
             };
@@ -2005,7 +2014,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             const initial = normalizeRoutePath(rawInitialPath || ROUTE_BREWS);
             if (rawInitialPath !== initial) {
                 const state = { ...(window.history.state || {}), appRoute: initial };
-                window.history.replaceState(state, document.title, buildFullPath(initial));
+                window.history.replaceState(state, document.title, buildRouteUrl(initial));
             }
             applyRoute(initial, { track: true });
         };

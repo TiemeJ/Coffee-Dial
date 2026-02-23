@@ -39,7 +39,9 @@ export const createAuthStateChangedHandler = ({
             document.getElementById('signedInContent').classList.remove('hidden');
             setMenuVisibility(true);
             const { shouldShowOnboarding } = await initUserData(user);
-            await initPushNotifications?.(user);
+            Promise.resolve(initPushNotifications?.(user)).catch((error) => {
+                console.error('Push initialization failed:', error);
+            });
             loadFollowingList();
             changeView('mine');
             initNotificationListener(user.uid);

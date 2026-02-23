@@ -20,7 +20,11 @@ export const createAppLifecycleModule = ({
 
     const handleAuthStateChanged = async (user) => {
         setCurrentUser(user);
-        await authStateChangedHandler(user);
+        try {
+            await authStateChangedHandler(user);
+        } catch (error) {
+            console.error('Auth state handling failed:', error);
+        }
     };
 
     const bindGlobalSearchInput = () => {
