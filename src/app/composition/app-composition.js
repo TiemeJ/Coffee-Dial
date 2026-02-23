@@ -442,6 +442,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             onPinnedBrewsPreferencesChanged: () => {
                 const currentCard = getCurrentCardCoffeeState();
                 if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
+                renderCoffeeTypesTable?.();
             }
         });
 
@@ -751,6 +752,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setCurrentCoffeeTypeId: (value) => setCurrentCoffeeTypeIdState(value),
             getCoffees: () => getCoffeesState(),
             getCoffeeTypes: () => getCoffeeTypesState(),
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
             setCoffeeTypesState: (value) => setCoffeeTypesState(value),
             getCoffeeTypesSearch: () => getCoffeeTypesSearchState(),
             setCoffeeTypesSearchState: (value) => setCoffeeTypesSearchRuntimeState(value),

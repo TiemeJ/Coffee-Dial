@@ -36,10 +36,7 @@
                                 <option value="mine">My coffees</option>
                             </select>
                             <div class="relative flex-1">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <i class="fa-solid fa-search text-coffee-400"></i>
-                                </div>
-                                <input id="coffeeTypesSearch" type="text" placeholder="Search coffees..." data-action-input="setCoffeeTypesSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                                <input id="coffeeTypesSearch" type="text" placeholder="Search coffees..." data-action-input="setCoffeeTypesSearch(this.value)" class="block w-full p-2.5 pl-3 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-1">
                                     <button id="coffeeTypesSearchClearBtn" data-action-click="clearCoffeeTypesSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
                                         <i class="fa-solid fa-xmark"></i>
@@ -49,9 +46,7 @@
                                         <i class="fa-solid fa-filter"></i>
                                     </button>
                                 </div>
-                                <div id="coffeeTypesQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                                    <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
-                                </div>
+                                <div id="coffeeTypesQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"></div>
                                 <div id="coffeeTypesQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
                             </div>
                         </div>
