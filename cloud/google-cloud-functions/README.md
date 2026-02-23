@@ -5,8 +5,10 @@ This folder contains Cloud Function source code that is deployed automatically f
 Workflows:
 - `deploy-get-photo-signed-url.yml`
 - `deploy-ai-functions.yml`
+- `deploy-notifications-function.yml`
 - `lint-get-photo-signed-url.yml`
 - `lint-ai-functions.yml`
+- `lint-notifications-function.yml`
 
 For workflow details and required IAM roles, see:
 - `.github/workflows/README.md`

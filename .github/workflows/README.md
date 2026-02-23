@@ -96,3 +96,39 @@ It runs on:
 - Push to `main` for AI function path changes
 - Pull requests targeting `main` for AI function path changes
 - Manual workflow dispatch
+
+## deploy-notifications-function.yml
+
+This workflow deploys push notification functions from:
+- `cloud/google-cloud-functions/notifications-function-source`
+
+It runs on:
+- Pushes to `main` that touch the notifications function folder
+- Manual workflow dispatch
+
+The workflow:
+1. Lints the function package.
+2. Deploys `notifyOnMomentCreated` (Firestore create trigger on `photos/{photoId}`).
+3. Deploys `notifyOnCommentCreated` (Firestore create trigger on `photos/{photoId}/comments/{commentId}`).
+
+Required GitHub repository secrets:
+- `GCP_PROJECT_ID`
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`
+- `GCP_DEPLOYER_SERVICE_ACCOUNT`
+
+Expected deployer permissions:
+- `roles/cloudfunctions.developer`
+- `roles/run.admin`
+- `roles/artifactregistry.writer`
+- `roles/iam.serviceAccountUser` on the function runtime service account
+
+Runtime service account should include:
+- Firestore access (`roles/datastore.user`)
+- FCM send access (`roles/firebasecloudmessaging.admin`)
+
+## lint-notifications-function.yml
+
+This workflow runs lint for notifications functions on:
+- Push to `main` for notifications function path changes
+- Pull requests targeting `main` for notifications function path changes
+- Manual workflow dispatch

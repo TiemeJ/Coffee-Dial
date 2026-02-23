@@ -1,0 +1,36 @@
+name: Lint Notifications Function
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "cloud/google-cloud-functions/notifications-function-source/**"
+      - ".github/workflows/lint-notifications-function.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "cloud/google-cloud-functions/notifications-function-source/**"
+      - ".github/workflows/lint-notifications-function.yml"
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud/google-cloud-functions/notifications-function-source
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run lint
+        run: npm run lint
+
