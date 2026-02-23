@@ -479,9 +479,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             },
             onNotificationPreferencesChanged: async () => {
                 try {
-                    await pushNotifications.handlePreferencesChanged();
+                    return await pushNotifications.handlePreferencesChanged();
                 } catch (error) {
                     console.error('Failed applying push notification preference change:', error);
+                    return { ok: false, reason: 'error', error: error?.message || String(error) };
                 }
             }
         });

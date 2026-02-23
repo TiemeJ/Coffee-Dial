@@ -123,7 +123,7 @@ export const createPushNotificationsModule = ({
 
     const disableForCurrentUser = async () => {
         const user = getCurrentUser?.();
-        if (!user?.uid) return;
+        if (!user?.uid) return { ok: false, reason: 'no-user' };
         const messaging = await resolveMessaging();
         if (messaging && lastKnownToken) {
             try { await deleteToken(messaging); } catch (_) {}
@@ -131,27 +131,28 @@ export const createPushNotificationsModule = ({
         }
         await removeCurrentDevice(user.uid);
         stopForegroundListener();
+        return { ok: true, reason: 'disabled' };
     };
 
     const initForCurrentUser = async () => {
         const user = getCurrentUser?.();
-        if (!user?.uid) return;
+        if (!user?.uid) return { ok: false, reason: 'no-user' };
         const prefs = normalizeNotificationPreferences(getNotificationPreferences?.());
         const permissionBefore = getNotificationPermission();
         if (!prefs.pushEnabled) {
             await removeCurrentDevice(user.uid);
             stopForegroundListener();
-            return;
+            return { ok: false, reason: 'push-disabled' };
         }
         if (!vapidKey) {
             console.warn('Push enabled but no VAPID key configured.');
             if (typeof showToast === 'function') {
                 showToast('Push setup incomplete: missing VAPID key.');
             }
-            return;
+            return { ok: false, reason: 'missing-vapid-key' };
         }
         const messaging = await resolveMessaging();
-        if (!messaging) return;
+        if (!messaging) return { ok: false, reason: 'unsupported' };
 
         let permission = permissionBefore;
         if (permission === 'default' && typeof Notification !== 'undefined' && typeof Notification.requestPermission === 'function') {
@@ -160,7 +161,7 @@ export const createPushNotificationsModule = ({
         if (permission !== 'granted') {
             await removeCurrentDevice(user.uid);
             stopForegroundListener();
-            return;
+            return { ok: false, reason: 'permission-not-granted', permission };
         }
 
         const swRegistration = (typeof navigator !== 'undefined' && navigator.serviceWorker)
@@ -174,7 +175,7 @@ export const createPushNotificationsModule = ({
         if (!token) {
             await removeCurrentDevice(user.uid);
             stopForegroundListener();
-            return;
+            return { ok: false, reason: 'token-empty' };
         }
         await upsertDevice({
             uid: user.uid,
@@ -183,6 +184,7 @@ export const createPushNotificationsModule = ({
             token
         });
         await registerForegroundListener();
+        return { ok: true, reason: 'registered', token };
     };
 
     const handlePreferencesChanged = async () => {

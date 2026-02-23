@@ -347,7 +347,27 @@ export const createBrewsPreferencesModule = ({
         registerCurrentDeviceBtn?.addEventListener('click', async () => {
             updateRegisterCurrentDeviceButton({ show: true, busy: true });
             try {
-                await onNotificationPreferencesChanged?.(normalizeNotificationPreferences(getNotificationPreferences?.()));
+                const result = await onNotificationPreferencesChanged?.(normalizeNotificationPreferences(getNotificationPreferences?.()));
+                if (result && result.ok === false) {
+                    const reason = `${result.reason || ''}`.trim();
+                    if (reason === 'permission-not-granted') {
+                        alert('Push permission is not granted in this browser.');
+                    } else if (reason === 'unsupported') {
+                        alert('This browser environment does not support web push.');
+                    } else if (reason === 'missing-vapid-key') {
+                        alert('Push configuration is missing a VAPID key.');
+                    } else if (reason === 'token-empty') {
+                        alert('Could not obtain a push token for this device.');
+                    } else if (reason === 'push-disabled') {
+                        alert('Enable push notifications first.');
+                    } else if (reason === 'no-user') {
+                        alert('You need to be signed in to register this device.');
+                    } else if (reason === 'error') {
+                        alert(`Device registration failed: ${result.error || 'Unknown error'}`);
+                    } else {
+                        alert(`Device registration did not complete (${reason || 'unknown reason'}).`);
+                    }
+                }
             } catch (error) {
                 alert(`Failed registering current device: ${error?.message || error}`);
             } finally {
