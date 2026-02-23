@@ -38,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FUNCTION_REGION: us-central1
+      FIRESTORE_TRIGGER_LOCATION: eur3
       FUNCTION_RUNTIME: nodejs22
       FUNCTION_SOURCE: cloud/google-cloud-functions/notifications-function-source
       FUNCTION_SERVICE_ACCOUNT: coffee-dial-app-9db38@appspot.gserviceaccount.com
@@ -62,11 +63,13 @@ jobs:
             --gen2 \
             --project="${{ secrets.GCP_PROJECT_ID }}" \
             --region="${FUNCTION_REGION}" \
+            --trigger-location="${FIRESTORE_TRIGGER_LOCATION}" \
             --runtime="${FUNCTION_RUNTIME}" \
             --source="${FUNCTION_SOURCE}" \
             --entry-point="notifyOnMomentCreated" \
             --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
             --trigger-event-filters="type=google.cloud.firestore.document.v1.created" \
+            --trigger-event-filters="database=(default)" \
             --trigger-event-filters-path-pattern="document=photos/{photoId}"
 
       - name: Deploy notifyOnCommentCreated (Gen2 Firestore trigger)
@@ -75,10 +78,11 @@ jobs:
             --gen2 \
             --project="${{ secrets.GCP_PROJECT_ID }}" \
             --region="${FUNCTION_REGION}" \
+            --trigger-location="${FIRESTORE_TRIGGER_LOCATION}" \
             --runtime="${FUNCTION_RUNTIME}" \
             --source="${FUNCTION_SOURCE}" \
             --entry-point="notifyOnCommentCreated" \
             --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
             --trigger-event-filters="type=google.cloud.firestore.document.v1.created" \
+            --trigger-event-filters="database=(default)" \
             --trigger-event-filters-path-pattern="document=photos/{photoId}/comments/{commentId}"
-
