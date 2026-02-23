@@ -1757,6 +1757,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const initializeHistoryRoutes = () => {
             if (typeof window === 'undefined' || !window.history || typeof window.history.pushState !== 'function') return;
 
+            const APP_BASE_PATH = '/Coffee-Dial';
             const ROUTE_BREWS = '/';
             const KNOWN_ROUTES = new Set([
                 ROUTE_BREWS,
@@ -1773,9 +1774,27 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 '/profile',
                 '/brew'
             ]);
+            const shouldUseBasePath = () => {
+                const pathname = window.location.pathname || '/';
+                return pathname.startsWith(`${APP_BASE_PATH}/`) || pathname === APP_BASE_PATH || (window.location.hostname || '').endsWith('github.io');
+            };
+            const getBasePath = () => (shouldUseBasePath() ? APP_BASE_PATH : '');
+            const stripBasePath = (fullPath = '/') => {
+                const base = getBasePath();
+                if (!base) return fullPath || '/';
+                if (fullPath === base) return '/';
+                if (fullPath.startsWith(`${base}/`)) return fullPath.slice(base.length) || '/';
+                return fullPath || '/';
+            };
+            const buildFullPath = (routePath = ROUTE_BREWS) => {
+                const normalizedRoute = routePath === ROUTE_BREWS ? '/' : routePath;
+                const base = getBasePath();
+                if (!base) return normalizedRoute;
+                return normalizedRoute === '/' ? `${base}/` : `${base}${normalizedRoute}`;
+            };
 
             const normalizeRoutePath = (value) => {
-                const input = typeof value === 'string' && value.trim() ? value.trim() : ROUTE_BREWS;
+                const input = stripBasePath(typeof value === 'string' && value.trim() ? value.trim() : ROUTE_BREWS);
                 let path = input.startsWith('/') ? input : `/${input}`;
                 if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
                 return KNOWN_ROUTES.has(path) ? path : ROUTE_BREWS;
@@ -1784,9 +1803,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             const trackVirtualPageView = (path) => {
                 if (typeof window.gtag !== 'function') return;
                 const normalized = normalizeRoutePath(path);
-                const location = `${window.location.origin}${normalized}${window.location.search}`;
+                const fullPath = buildFullPath(normalized);
+                const location = `${window.location.origin}${fullPath}${window.location.search}`;
                 window.gtag('event', 'page_view', {
-                    page_path: normalized,
+                    page_path: fullPath,
                     page_location: location,
                     page_title: document.title
                 });
@@ -1796,11 +1816,12 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
             const setRoute = (path, { replace = false } = {}) => {
                 const normalized = normalizeRoutePath(path);
-                const current = normalizeRoutePath(window.location.pathname || ROUTE_BREWS);
+                const current = normalizeRoutePath(stripBasePath(window.location.pathname || ROUTE_BREWS));
                 if (current === normalized) return;
+                const fullPath = buildFullPath(normalized);
                 const state = { ...(window.history.state || {}), appRoute: normalized };
-                if (replace) window.history.replaceState(state, document.title, normalized);
-                else window.history.pushState(state, document.title, normalized);
+                if (replace) window.history.replaceState(state, document.title, fullPath);
+                else window.history.pushState(state, document.title, fullPath);
                 trackVirtualPageView(normalized);
             };
 
@@ -1819,7 +1840,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 if (typeof original !== 'function') return;
                 obj[actionName] = (...args) => {
                     const result = original(...args);
-                    if (!isApplyingRoute && normalizeRoutePath(window.location.pathname) !== ROUTE_BREWS) {
+                    if (!isApplyingRoute && normalizeRoutePath(stripBasePath(window.location.pathname)) !== ROUTE_BREWS) {
                         setRoute(ROUTE_BREWS);
                     }
                     return result;
@@ -1890,7 +1911,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
             const syncRouteFromModalVisibility = () => {
                 if (isApplyingRoute) return;
-                const current = normalizeRoutePath(window.location.pathname || ROUTE_BREWS);
+                const current = normalizeRoutePath(stripBasePath(window.location.pathname || ROUTE_BREWS));
                 if (current === ROUTE_BREWS) return;
                 const modalId = routeModalIdByPath.get(current);
                 if (!modalId) return;
@@ -1906,10 +1927,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 } finally {
                     isApplyingRoute = false;
                 }
-                const current = normalizeRoutePath(window.location.pathname || ROUTE_BREWS);
+                const current = normalizeRoutePath(stripBasePath(window.location.pathname || ROUTE_BREWS));
                 if (current !== normalized) {
                     const state = { ...(window.history.state || {}), appRoute: normalized };
-                    window.history.replaceState(state, document.title, normalized);
+                    window.history.replaceState(state, document.title, buildFullPath(normalized));
                 }
                 if (track) trackVirtualPageView(normalized);
             };
@@ -1953,7 +1974,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             if (typeof closeModalOriginal === 'function') {
                 const wrappedCloseModal = (...args) => {
                     const result = closeModalOriginal(...args);
-                    if (!isApplyingRoute && normalizeRoutePath(window.location.pathname) === '/profile') {
+                    if (!isApplyingRoute && normalizeRoutePath(stripBasePath(window.location.pathname)) === '/profile') {
                         setRoute(ROUTE_BREWS);
                     }
                     return result;
@@ -1965,7 +1986,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             }
 
             window.addEventListener('popstate', () => {
-                applyRoute(window.location.pathname || ROUTE_BREWS, { track: true });
+                applyRoute(stripBasePath(window.location.pathname || ROUTE_BREWS), { track: true });
             });
 
             const modalObserver = new MutationObserver(() => {
@@ -1980,11 +2001,11 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 });
             });
 
-            const rawInitialPath = typeof window.location.pathname === 'string' ? window.location.pathname : ROUTE_BREWS;
-            const initial = normalizeRoutePath(window.location.pathname || ROUTE_BREWS);
+            const rawInitialPath = stripBasePath(typeof window.location.pathname === 'string' ? window.location.pathname : ROUTE_BREWS);
+            const initial = normalizeRoutePath(rawInitialPath || ROUTE_BREWS);
             if (rawInitialPath !== initial) {
                 const state = { ...(window.history.state || {}), appRoute: initial };
-                window.history.replaceState(state, document.title, initial);
+                window.history.replaceState(state, document.title, buildFullPath(initial));
             }
             applyRoute(initial, { track: true });
         };
