@@ -244,7 +244,7 @@ export const createBrewsPreferencesModule = ({
             if (!listEl) return;
             listEl.innerHTML = '';
             if (!rows.length) {
-                listEl.textContent = 'No device docs found.';
+                listEl.textContent = 'No devices found.';
                 return;
             }
             rows
@@ -347,7 +347,15 @@ export const createBrewsPreferencesModule = ({
         registerCurrentDeviceBtn?.addEventListener('click', async () => {
             updateRegisterCurrentDeviceButton({ show: true, busy: true });
             try {
-                const result = await onNotificationPreferencesChanged?.(normalizeNotificationPreferences(getNotificationPreferences?.()));
+                const registrationResult = await Promise.race([
+                    Promise.resolve(
+                        onNotificationPreferencesChanged?.(
+                            normalizeNotificationPreferences(getNotificationPreferences?.())
+                        )
+                    ),
+                    new Promise((resolve) => setTimeout(() => resolve({ ok: false, reason: 'timeout' }), 20000))
+                ]);
+                const result = registrationResult || { ok: false, reason: 'unknown' };
                 if (result && result.ok === false) {
                     const reason = `${result.reason || ''}`.trim();
                     if (reason === 'permission-not-granted') {
@@ -358,10 +366,16 @@ export const createBrewsPreferencesModule = ({
                         alert('Push configuration is missing a VAPID key.');
                     } else if (reason === 'token-empty') {
                         alert('Could not obtain a push token for this device.');
+                    } else if (reason === 'token-timeout') {
+                        alert('Timed out while obtaining a push token. Please try again.');
+                    } else if (reason === 'token-error') {
+                        alert(`Push token request failed: ${result.error || 'Unknown error'}`);
                     } else if (reason === 'push-disabled') {
                         alert('Enable push notifications first.');
                     } else if (reason === 'no-user') {
                         alert('You need to be signed in to register this device.');
+                    } else if (reason === 'timeout') {
+                        alert('Device registration timed out. Check service worker/network and try again.');
                     } else if (reason === 'error') {
                         alert(`Device registration failed: ${result.error || 'Unknown error'}`);
                     } else {
@@ -371,7 +385,13 @@ export const createBrewsPreferencesModule = ({
             } catch (error) {
                 alert(`Failed registering current device: ${error?.message || error}`);
             } finally {
-                await renderNotificationsDebugPanel();
+                const rendered = await Promise.race([
+                    Promise.resolve(renderNotificationsDebugPanel()).then(() => true).catch(() => false),
+                    new Promise((resolve) => setTimeout(() => resolve(false), 5000))
+                ]);
+                if (!rendered) {
+                    updateRegisterCurrentDeviceButton({ show: true, busy: false });
+                }
             }
         });
         window.addEventListener('focus', () => updatePushPermissionGuard());

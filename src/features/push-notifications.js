@@ -64,6 +64,43 @@ export const createPushNotificationsModule = ({
     let messagingInstance = null;
     let foregroundUnsubscribe = null;
     let lastKnownToken = '';
+    const SERVICE_WORKER_READY_TIMEOUT_MS = 8000;
+    const GET_TOKEN_TIMEOUT_MS = 15000;
+
+    const withTimeout = async (promise, timeoutMs, onTimeoutValue = null) => {
+        let timeoutId = null;
+        try {
+            return await Promise.race([
+                promise,
+                new Promise((resolve) => {
+                    timeoutId = setTimeout(() => resolve(onTimeoutValue), timeoutMs);
+                })
+            ]);
+        } finally {
+            if (timeoutId) clearTimeout(timeoutId);
+        }
+    };
+
+    const resolveSwScriptUrl = () => {
+        if (typeof window === 'undefined') return '/sw.js';
+        const pathname = window.location?.pathname || '/';
+        const basePath = pathname === '/Coffee-Dial' || pathname.startsWith('/Coffee-Dial/')
+            ? '/Coffee-Dial'
+            : '';
+        return `${basePath}/sw.js`;
+    };
+
+    const resolveServiceWorkerRegistration = async () => {
+        if (typeof navigator === 'undefined' || !navigator.serviceWorker) return null;
+        const existing = await navigator.serviceWorker.getRegistration().catch(() => null);
+        if (existing) return existing;
+        try {
+            const swUrl = resolveSwScriptUrl();
+            return await navigator.serviceWorker.register(swUrl).catch(() => null);
+        } catch (_) {
+            return null;
+        }
+    };
 
     const resolveMessaging = async () => {
         if (messagingInstance) return messagingInstance;
@@ -164,13 +201,35 @@ export const createPushNotificationsModule = ({
             return { ok: false, reason: 'permission-not-granted', permission };
         }
 
-        const swRegistration = (typeof navigator !== 'undefined' && navigator.serviceWorker)
-            ? await navigator.serviceWorker.ready.catch(() => null)
+        const swRegistration = await resolveServiceWorkerRegistration();
+        const swReady = (typeof navigator !== 'undefined' && navigator.serviceWorker)
+            ? await withTimeout(
+                navigator.serviceWorker.ready.catch(() => null),
+                SERVICE_WORKER_READY_TIMEOUT_MS,
+                null
+            )
             : null;
-        const token = await getToken(messaging, {
-            vapidKey,
-            serviceWorkerRegistration: swRegistration || undefined
-        });
+        const effectiveSwRegistration = swReady || swRegistration || null;
+        let token = '';
+        try {
+            token = await withTimeout(
+                getToken(messaging, {
+                    vapidKey,
+                    serviceWorkerRegistration: effectiveSwRegistration || undefined
+                }),
+                GET_TOKEN_TIMEOUT_MS,
+                '__TOKEN_TIMEOUT__'
+            );
+        } catch (error) {
+            return {
+                ok: false,
+                reason: 'token-error',
+                error: error?.message || String(error)
+            };
+        }
+        if (token === '__TOKEN_TIMEOUT__') {
+            return { ok: false, reason: 'token-timeout' };
+        }
         lastKnownToken = token || '';
         if (!token) {
             await removeCurrentDevice(user.uid);
