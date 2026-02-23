@@ -110,6 +110,7 @@ The workflow:
 1. Lints the function package.
 2. Deploys `notifyOnMomentCreated` (Firestore create trigger on `photos/{photoId}`).
 3. Deploys `notifyOnCommentCreated` (Firestore create trigger on `photos/{photoId}/comments/{commentId}`).
+4. Uses Firestore trigger location `eur3` with `database=(default)` event filter.
 
 Required GitHub repository secrets:
 - `GCP_PROJECT_ID`
