@@ -118,10 +118,11 @@ async function markTokenInvalid(entries = []) {
 }
 
 async function sendPushToRecipients({recipients, title, body, data}) {
+  const notificationType = data && data.type ? data.type : "";
   if (!recipients.length) {
     if (TEMP_DEBUG_LOGS) {
       logger.info("push.send skipped: no recipients", {
-        notificationType: data?.type || "",
+        notificationType,
       });
     }
     return;
@@ -136,7 +137,7 @@ async function sendPushToRecipients({recipients, title, body, data}) {
   }
   if (TEMP_DEBUG_LOGS) {
     logger.info("push.send recipient token scan", {
-      notificationType: data?.type || "",
+      notificationType,
       recipientCount: recipients.length,
       tokenEntryCount: tokenEntries.length,
       tokenCountByUser,
@@ -144,7 +145,7 @@ async function sendPushToRecipients({recipients, title, body, data}) {
   }
   if (!tokenEntries.length) {
     logger.info("push.send skipped: no enabled tokens", {
-      notificationType: data?.type || "",
+      notificationType,
       recipientCount: recipients.length,
     });
     return;
@@ -183,7 +184,7 @@ async function sendPushToRecipients({recipients, title, body, data}) {
     });
   }
   logger.info("push.send multicast summary", {
-    notificationType: data?.type || "",
+    notificationType,
     recipientCount: recipients.length,
     tokenEntryCount: tokenEntries.length,
     totalSuccess,
