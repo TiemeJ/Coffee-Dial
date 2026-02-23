@@ -36,10 +36,7 @@
                             <option value="mine">My beans</option>
                         </select>
                         <div class="relative flex-1">
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <i class="fa-solid fa-search text-coffee-400"></i>
-                            </div>
-                            <input id="beansSearch" type="text" placeholder="Search beans..." data-action-input="setBeansSearch(this.value)" class="block w-full p-2.5 pl-10 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
+                            <input id="beansSearch" type="text" placeholder="Search beans..." data-action-input="setBeansSearch(this.value)" class="block w-full p-2.5 pl-3 pr-20 text-sm text-coffee-900 border border-coffee-100 rounded-lg bg-white dark:bg-[#292524] dark:border-[#44403c] dark:placeholder-[#57534e] dark:text-white focus:ring-1 focus:ring-coffee-500 focus:border-coffee-500 shadow-sm transition-all">
                             <div class="absolute inset-y-0 right-0 flex items-center pr-1">
                                 <button id="beansSearchClearBtn" data-action-click="clearBeansSearch()" class="hidden p-2 text-coffee-400 hover:text-coffee-600 dark:hover:text-white transition-colors cursor-pointer">
                                     <i class="fa-solid fa-xmark"></i>
@@ -49,9 +46,7 @@
                                     <i class="fa-solid fa-filter"></i>
                                 </button>
                             </div>
-                            <div id="beansQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden">
-                                <div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c]">Filter by</div>
-                            </div>
+                            <div id="beansQuickFilterDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden"></div>
                             <div id="beansQuickFilterValuesDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-50 overflow-hidden max-h-80 overflow-y-auto"></div>
                         </div>
                     </div>
@@ -64,19 +59,84 @@
                     <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
                         <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
                             <tr>
-                                <th class="px-4 py-3">Farmer / Roaster</th>
-                                <th class="px-4 py-3">Origin / Region</th>
-                                <th class="px-4 py-3">Process / Variety</th>
-                                <th class="px-4 py-3 text-center w-16">Decaf</th>
-                                <th class="px-4 py-3 text-center">Roast</th>
-                                <th class="px-4 py-3 text-center w-24">Price (€)</th>
-                                <th class="px-4 py-3 text-center w-24">Weight (g)</th>
-                                <th class="px-4 py-3 text-center w-20">Brews</th>
-                                <th class="px-4 py-3 text-center w-24">Beans left</th>
-                                <th class="px-4 py-3 text-center w-32">Roast date</th>
-                                <th class="px-4 py-3 text-center w-32">Frozen date</th>
-                                <th class="px-4 py-3 text-center w-32">Opened date</th>
-                                <th class="px-4 py-3 text-center w-32">Archived date</th>
+                                <th class="px-4 py-3">
+                                    <button type="button" data-action-click="setBeansSort('farmer')" class="flex items-center gap-2">
+                                        <span>Farmer / Roaster</span>
+                                        <span id="beansSortIcon-farmer" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <button type="button" data-action-click="setBeansSort('origin')" class="flex items-center gap-2">
+                                        <span>Origin / Region</span>
+                                        <span id="beansSortIcon-origin" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3">
+                                    <button type="button" data-action-click="setBeansSort('processing')" class="flex items-center gap-2">
+                                        <span>Process / Variety</span>
+                                        <span id="beansSortIcon-processing" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-16">
+                                    <button type="button" data-action-click="setBeansSort('decaf')" class="flex items-center gap-2 mx-auto">
+                                        <span>Decaf</span>
+                                        <span id="beansSortIcon-decaf" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center">
+                                    <button type="button" data-action-click="setBeansSort('roastType')" class="flex items-center gap-2 mx-auto">
+                                        <span>Roast</span>
+                                        <span id="beansSortIcon-roastType" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-24">
+                                    <button type="button" data-action-click="setBeansSort('price')" class="flex items-center gap-2 mx-auto">
+                                        <span>Price (€)</span>
+                                        <span id="beansSortIcon-price" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-24">
+                                    <button type="button" data-action-click="setBeansSort('stock')" class="flex items-center gap-2 mx-auto">
+                                        <span>Weight (g)</span>
+                                        <span id="beansSortIcon-stock" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-20">
+                                    <button type="button" data-action-click="setBeansSort('brews')" class="flex items-center gap-2 mx-auto">
+                                        <span>Brews</span>
+                                        <span id="beansSortIcon-brews" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-24">
+                                    <button type="button" data-action-click="setBeansSort('beansLeft')" class="flex items-center gap-2 mx-auto">
+                                        <span>Beans left</span>
+                                        <span id="beansSortIcon-beansLeft" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-32">
+                                    <button type="button" data-action-click="setBeansSort('roastDate')" class="flex items-center gap-2 mx-auto">
+                                        <span>Roast date</span>
+                                        <span id="beansSortIcon-roastDate" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-32">
+                                    <button type="button" data-action-click="setBeansSort('frozenDate')" class="flex items-center gap-2 mx-auto">
+                                        <span>Frozen date</span>
+                                        <span id="beansSortIcon-frozenDate" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-32">
+                                    <button type="button" data-action-click="setBeansSort('openedDate')" class="flex items-center gap-2 mx-auto">
+                                        <span>Opened date</span>
+                                        <span id="beansSortIcon-openedDate" class="text-[10px]"></span>
+                                    </button>
+                                </th>
+                                <th class="px-4 py-3 text-center w-32">
+                                    <button type="button" data-action-click="setBeansSort('archivedDate')" class="flex items-center gap-2 mx-auto">
+                                        <span>Archived date</span>
+                                        <span id="beansSortIcon-archivedDate" class="text-[10px]"></span>
+                                    </button>
+                                </th>
                                 <th class="px-4 py-3 text-center w-24">Actions</th>
                             </tr>
                         </thead>

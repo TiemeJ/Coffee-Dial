@@ -86,6 +86,8 @@ export const createInitialAppState = () => {
         currentBeanCardId: null,
         beansSearch: '',
         beansFilters: { coffeeType: null, decaf: null },
+        beansSortKey: 'createdAt',
+        beansSortDir: 'desc',
         currentSort: [{ key: 'createdAt', direction: 'desc' }],
         activeFilters: { bean: null, coffeeType: null, gear: null, hasGraph: null, method: null, temp: null, roastType: null, roaster: null, origin: null, farmer: null, variety: null, processing: null, decaf: null, drink: null, grinder: null }
     };

@@ -100,6 +100,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             lastGalleryVisit: initialState.lastGalleryVisit,
             beansSearch: initialState.beansSearch,
             beansFilters: initialState.beansFilters,
+            beansSortKey: initialState.beansSortKey,
+            beansSortDir: initialState.beansSortDir,
             currentBeanCardId: initialState.currentBeanCardId,
             currentCoffeeTypeId: initialState.currentCoffeeTypeId,
             coffeeTypesSearch: initialState.coffeeTypesSearch,
@@ -185,6 +187,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const setBeansSearchRuntimeState = (value) => setRuntime('beansSearch', value);
         const getBeansFiltersState = () => getRuntime('beansFilters');
         const setBeansFiltersRuntimeState = (value) => setRuntime('beansFilters', value);
+        const getBeansSortKeyState = () => getRuntime('beansSortKey');
+        const setBeansSortKeyRuntimeState = (value) => setRuntime('beansSortKey', value);
+        const getBeansSortDirState = () => getRuntime('beansSortDir');
+        const setBeansSortDirRuntimeState = (value) => setRuntime('beansSortDir', value);
         const getCurrentBeanCardIdState = () => getRuntime('currentBeanCardId');
         const setCurrentBeanCardIdState = (value) => setRuntime('currentBeanCardId', value);
         const getCurrentCoffeeTypeIdState = () => getRuntime('currentCoffeeTypeId');
@@ -666,6 +672,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             applyBeansFilterFromQuick,
             clearBeansFilters,
             renderBeansActiveFilters,
+            setBeansSort,
+            updateBeansSortIcons,
+            getFilteredSortedBeans,
             renderBeansTable,
             createBeanFromModal,
             saveBeanPrice,
@@ -687,12 +696,17 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getCurrentView: () => getCurrentViewState(),
             getCoffees: () => getCoffeesState(),
             getBeans: () => getBeansState(),
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
             setBeansState: (value) => setBeansState(value),
             getCoffeeTypes: () => getCoffeeTypesState(),
             getBeansSearch: () => getBeansSearchState(),
             setBeansSearchState: (value) => setBeansSearchRuntimeState(value),
             getBeansFilters: () => getBeansFiltersState(),
             setBeansFiltersState: (value) => setBeansFiltersRuntimeState(value),
+            getBeansSortKey: () => getBeansSortKeyState(),
+            setBeansSortKeyState: (value) => setBeansSortKeyRuntimeState(value),
+            getBeansSortDir: () => getBeansSortDirState(),
+            setBeansSortDirState: (value) => setBeansSortDirRuntimeState(value),
             getHasLoadedBeans: () => getHasLoadedBeansState(),
             getHasLoadedBrews: () => getHasLoadedBrewsState(),
             getCurrentBeanCardId: () => getCurrentBeanCardIdState(),
@@ -1642,6 +1656,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             sendEmailLinkLogin,
             sendFriendRequest,
             setBeansSearch,
+            setBeansSort,
             setCoffeeTypesSearch,
             setCoffeeTypesSort,
             setGasSearch,
