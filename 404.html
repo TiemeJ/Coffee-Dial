@@ -6,15 +6,18 @@
     <title>Coffee Dial - Brew Log</title>
     <script>
         (function () {
-            try {
-                var redirect = sessionStorage.getItem('spa_redirect');
-                if (!redirect) return;
-                sessionStorage.removeItem('spa_redirect');
-                if (typeof redirect !== 'string' || !redirect.startsWith('/')) return;
-                history.replaceState(history.state || {}, document.title, redirect);
-            } catch (_) {
-                // Ignore sessionStorage/history access errors.
-            }
+            var path = window.location.pathname || '/';
+            var search = window.location.search || '';
+            var hash = window.location.hash || '';
+            var fullPath = path + search + hash;
+
+            var hostname = window.location.hostname || '';
+            var segments = path.split('/').filter(Boolean);
+            var isGithubIo = hostname.endsWith('github.io');
+            var basePath = isGithubIo && segments.length ? '/' + segments[0] : '';
+
+            sessionStorage.setItem('spa_redirect', fullPath);
+            window.location.replace(window.location.origin + basePath + '/');
         })();
     </script>
     
