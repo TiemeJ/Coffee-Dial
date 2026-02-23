@@ -566,7 +566,7 @@ export const createBeansTableModule = ({
             return `${yyyy}-${mm}-${dd}`;
         };
 
-        const createRow = (bean) => {
+        const createRow = (bean, groupKey = 'open') => {
             const coffeeDisplay = getBeanCoffeeTypeDisplay(bean);
 
             let stockLeftDisplay = '-';
@@ -639,6 +639,9 @@ export const createBeansTableModule = ({
                 const openedDateLabel = formatBeanDateLabel(bean.openedDate);
                 const frozenDateLabel = formatBeanDateLabel(bean.frozenDate);
                 const archivedDateLabel = formatBeanDateLabel(bean.archivedDate);
+                const groupDateLabel = groupKey === 'frozen'
+                    ? frozenDateLabel
+                    : (groupKey === 'finished' ? archivedDateLabel : openedDateLabel);
                 const summaryHtml = [
                     roastDateLabel && roastDateLabel !== '-' ? roastDateLabel : null,
                     Number.isFinite(brewCount) ? `${brewCount} brews` : null,
@@ -688,6 +691,7 @@ export const createBeansTableModule = ({
                                     <div class="flex flex-wrap gap-1 min-w-0">
                                         ${summaryHtml || '<span class="text-[11px] text-coffee-500 dark:text-[#a8a29e] italic">Tap to view details</span>'}
                                     </div>
+                                    <div class="text-[10px] leading-tight text-right text-coffee-500 dark:text-[#a8a29e] font-mono whitespace-nowrap">${groupDateLabel}</div>
                                 </div>
                             </div>
                             <div data-mobile-accordion-panel="true" class="hidden px-3 pb-3 pt-1 border-t border-coffee-100 dark:border-[#34302e]">
@@ -772,7 +776,7 @@ export const createBeansTableModule = ({
             headerRow.className = 'bg-green-50 dark:bg-green-900/20';
             headerRow.innerHTML = '<td colspan="99" class="px-4 py-2 text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide"><i class="fa-solid fa-box-open mr-2"></i>Open Bags</td>';
             tbody.appendChild(headerRow);
-            inStockBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
+            inStockBeans.forEach((bean) => tbody.appendChild(createRow(bean, 'open')));
         }
 
         if (frozenBeans.length > 0) {
@@ -780,7 +784,7 @@ export const createBeansTableModule = ({
             headerRow.className = 'bg-blue-50 dark:bg-blue-900/20';
             headerRow.innerHTML = '<td colspan="99" class="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide"><i class="fa-solid fa-snowflake mr-2"></i>Frozen</td>';
             tbody.appendChild(headerRow);
-            frozenBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
+            frozenBeans.forEach((bean) => tbody.appendChild(createRow(bean, 'frozen')));
         }
 
         if (otherBeans.length > 0) {
@@ -788,7 +792,7 @@ export const createBeansTableModule = ({
             headerRow.className = 'bg-gray-50 dark:bg-[#34302e]';
             headerRow.innerHTML = '<td colspan="99" class="px-4 py-2 text-xs font-bold text-gray-500 dark:text-[#a8a29e] uppercase tracking-wide"><i class="fa-solid fa-archive mr-2"></i>Finished / Archive</td>';
             tbody.appendChild(headerRow);
-            otherBeans.forEach((bean) => tbody.appendChild(createRow(bean)));
+            otherBeans.forEach((bean) => tbody.appendChild(createRow(bean, 'finished')));
         }
         updateBeansSortIcons();
     };
