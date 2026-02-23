@@ -1,4 +1,5 @@
 import { DEFAULT_PINNED_BREWS_PREFERENCES } from '../features/preferences.js';
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../features/notification-preferences.js';
 
 export const DEFAULT_BREWS_PER_PAGE = 50;
 
@@ -86,6 +87,7 @@ export const createInitialAppState = () => {
         currentBeanCardId: null,
         beansSearch: '',
         beansFilters: { coffeeType: null, decaf: null },
+        notificationPrefs: { ...DEFAULT_NOTIFICATION_PREFERENCES },
         beansSortKey: 'createdAt',
         beansSortDir: 'desc',
         currentSort: [{ key: 'createdAt', direction: 'desc' }],

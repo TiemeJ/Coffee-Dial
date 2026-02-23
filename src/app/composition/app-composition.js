@@ -1,7 +1,8 @@
-        import { BAG_AI_URL, STATS_AI_URL, auth, db, functions, storage, provider } from '../../config/firebase.js';
+        import { BAG_AI_URL, STATS_AI_URL, WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, functions, storage, provider } from '../../config/firebase.js';
         import { signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { collection, collectionGroup, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, arrayUnion, arrayRemove, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
+        import { getMessaging, getToken, deleteToken, onMessage, isSupported } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
         import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
         import { initCoffeeScale } from '../../features/scales/scales.js';
         import { createScaleModalsModule } from '../../features/scales/scales-modals.js';
@@ -31,6 +32,7 @@
         import { registerBrewsFilterCommands } from '../../features/brews/brews-filter-commands.js';
         import { createBrewsPinAutopinModule } from '../../features/pin/brews-pin-autopin.js';
         import { createBrewsPreferencesModule } from '../../features/preferences.js';
+        import { createPushNotificationsModule } from '../../features/push-notifications.js';
         import { createDataService } from '../services/data.service.js';
         import { createStorageService } from '../services/storage.service.js';
         import { createFunctionsService } from '../services/functions.service.js';
@@ -56,6 +58,7 @@
         import { createGasStore } from '../stores/gas.store.js';
         import { createUiStore } from '../stores/ui.store.js';
         import { createRuntimeStore } from '../stores/runtime.store.js';
+        import { normalizeNotificationPreferences } from '../../features/notification-preferences.js';
         import { selectVisibleBrewOrderIds } from '../stores/brews-table.selectors.js';
         import { createAuthStateChangedHandler } from '../runtime/auth-state.js';
         import { createAppLifecycleModule } from '../runtime/app-lifecycle.js';
@@ -100,6 +103,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             lastGalleryVisit: initialState.lastGalleryVisit,
             beansSearch: initialState.beansSearch,
             beansFilters: initialState.beansFilters,
+            notificationPrefs: initialState.notificationPrefs,
             beansSortKey: initialState.beansSortKey,
             beansSortDir: initialState.beansSortDir,
             currentBeanCardId: initialState.currentBeanCardId,
@@ -187,6 +191,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const setBeansSearchRuntimeState = (value) => setRuntime('beansSearch', value);
         const getBeansFiltersState = () => getRuntime('beansFilters');
         const setBeansFiltersRuntimeState = (value) => setRuntime('beansFilters', value);
+        const getNotificationPreferencesState = () =>
+            normalizeNotificationPreferences(getRuntime('notificationPrefs'));
+        const setNotificationPreferencesState = (value) =>
+            setRuntime('notificationPrefs', normalizeNotificationPreferences(value));
         const getBeansSortKeyState = () => getRuntime('beansSortKey');
         const setBeansSortKeyRuntimeState = (value) => setRuntime('beansSortKey', value);
         const getBeansSortDirState = () => getRuntime('beansSortDir');
@@ -287,6 +295,21 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const functionsService = createFunctionsService({
             functions,
             httpsCallable
+        });
+        const pushNotifications = createPushNotificationsModule({
+            dataService,
+            messagingApi: {
+                app: firebaseApp,
+                getMessaging,
+                getToken,
+                deleteToken,
+                onMessage,
+                isSupported
+            },
+            getCurrentUser: () => getCurrentUserState(),
+            getNotificationPreferences: () => getNotificationPreferencesState(),
+            vapidKey: WEB_PUSH_VAPID_KEY,
+            showToast
         });
         const createE2EBrewsRepo = () => {
             let e2eIdCounter = 1;
@@ -437,6 +460,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         } = createBrewsPreferencesModule({
             getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
             setPinnedBrewsPreferences: (value) => setPinnedBrewsPreferencesState(value),
+            getNotificationPreferences: () => getNotificationPreferencesState(),
+            setNotificationPreferences: (value) => setNotificationPreferencesState(value),
             getCurrentUser: () => getCurrentUserState(),
             dataService,
             applyAnimationClass: (...args) => applyAnimationClass(...args),
@@ -450,6 +475,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
                 renderCoffeeTypesTable?.();
                 renderGasTable?.();
+            },
+            onNotificationPreferencesChanged: async () => {
+                await pushNotifications.handlePreferencesChanged();
             }
         });
 
@@ -568,7 +596,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getCoffeeScale: () => coffeeScale,
             refreshBrewGearSelectors: () => refreshBrewGearSelectors(),
             getLastGalleryVisit: () => getLastGalleryVisitState(),
-            setLastGalleryVisit: (value) => setLastGalleryVisitState(value)
+            setLastGalleryVisit: (value) => setLastGalleryVisitState(value),
+            getNotificationPreferences: () => getNotificationPreferencesState(),
+            setNotificationPreferences: (value) => setNotificationPreferencesState(value)
         });
 
         const {
@@ -1320,12 +1350,14 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         const authStateChangedHandler = createAuthStateChangedHandler({
             initUserData,
+            initPushNotifications: async () => pushNotifications.initForCurrentUser(),
             loadFollowingList,
             changeView,
             initNotificationListener,
             openHelp,
             openGallery,
             initLightboxListeners,
+            clearPushNotifications: async () => pushNotifications.cleanupOnLogout(),
             clearNotificationSubscription,
             clearViewSubscriptions
         });

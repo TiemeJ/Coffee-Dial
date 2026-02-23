@@ -39,6 +39,43 @@
                         </div>
                     </div>
                 </div>
+                <div class="mb-6">
+                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Notifications</h4>
+                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Choose which push notifications you receive for Moments.</p>
+                    <div class="space-y-3">
+                        <div id="notificationsPushEnabledRow" class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-bell text-amber-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Enable push notifications</span></div>
+                            <div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="notificationsPushEnabledToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="notificationsPushEnabledToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>
+                        </div>
+                        <div id="notificationsFriendMomentsRow" class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-images text-indigo-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">New friends moments</span></div>
+                            <div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="notificationsFriendMomentsToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="notificationsFriendMomentsToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>
+                        </div>
+                        <div id="notificationsCommentsMyRow" class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-comment text-rose-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Comments on my moments</span></div>
+                            <div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="notificationsCommentsMyToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="notificationsCommentsMyToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>
+                        </div>
+                        <div id="notificationsCommentsFollowingRow" class="flex items-center justify-between p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-user-group text-teal-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Comments on followed moments</span></div>
+                            <div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" id="notificationsCommentsFollowingToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600"/><label for="notificationsCommentsFollowingToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer"></label></div>
+                        </div>
+                        <div class="p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2"><i class="fa-solid fa-bug text-rose-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">Push debug</span></div>
+                                <button id="notificationsDebugRefreshBtn" type="button" class="px-2 py-1 text-[11px] font-semibold rounded bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2]">Refresh</button>
+                            </div>
+                            <div class="space-y-1.5 text-[11px] text-coffee-700 dark:text-[#d6ccc2]">
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Permission</span><span id="notificationsDebugPermission" class="font-mono">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Push enabled pref</span><span id="notificationsDebugPushEnabled" class="font-mono">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Current device ID</span><span id="notificationsDebugDeviceId" class="font-mono break-all text-right">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Registered devices</span><span id="notificationsDebugDeviceCount" class="font-mono">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Current token</span><span id="notificationsDebugCurrentToken" class="font-mono break-all text-right">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Current updatedAt</span><span id="notificationsDebugCurrentUpdatedAt" class="font-mono text-right">-</span></div>
+                            </div>
+                            <div id="notificationsDebugDevicesList" class="mt-2 space-y-1 text-[10px] text-coffee-600 dark:text-[#a8a29e] max-h-24 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="mt-6">
                     <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Email login</h4>
                     <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Enable passwordless sign-in for browsers that cannot use Google.</p>

@@ -15,6 +15,7 @@ export const firebaseConfig = {
 
 export const BAG_AI_URL = 'https://analyzecoffeebag-p522o3qtpa-uc.a.run.app';
 export const STATS_AI_URL = 'https://analyzebrewprofile-p522o3qtpa-uc.a.run.app';
+export const WEB_PUSH_VAPID_KEY = 'BEyGyjZoS52SNCQedvEPYEWht5Kuk_N2lZbVrtLbWUNX5tA1US6Us2XeE9WhMsTLTW_BEkHAzWKXc9loPkGtoK0';
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

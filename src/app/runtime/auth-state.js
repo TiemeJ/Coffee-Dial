@@ -1,11 +1,13 @@
 export const createAuthStateChangedHandler = ({
     initUserData,
+    initPushNotifications,
     loadFollowingList,
     changeView,
     initNotificationListener,
     openHelp,
     openGallery,
     initLightboxListeners,
+    clearPushNotifications,
     clearNotificationSubscription,
     clearViewSubscriptions
 }) => {
@@ -37,6 +39,7 @@ export const createAuthStateChangedHandler = ({
             document.getElementById('signedInContent').classList.remove('hidden');
             setMenuVisibility(true);
             const { shouldShowOnboarding } = await initUserData(user);
+            await initPushNotifications?.(user);
             loadFollowingList();
             changeView('mine');
             initNotificationListener(user.uid);
@@ -61,6 +64,7 @@ export const createAuthStateChangedHandler = ({
         document.getElementById('signedInContent').classList.add('hidden');
         document.getElementById('signedOutAuthBody').classList.remove('hidden');
         setMenuVisibility(false);
+        await clearPushNotifications?.();
         clearNotificationSubscription();
         clearViewSubscriptions();
     };

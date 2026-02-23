@@ -1,3 +1,20 @@
+const DEFAULT_NOTIFICATION_PREFERENCES = {
+    pushEnabled: false,
+    friendMoments: true,
+    commentsOnMyMoments: true,
+    commentsOnFollowedOrCommentedMoments: true
+};
+
+const normalizeNotificationPreferences = (value = null) => {
+    const source = (value && typeof value === 'object') ? value : {};
+    return {
+        pushEnabled: !!source.pushEnabled,
+        friendMoments: source.friendMoments !== false,
+        commentsOnMyMoments: source.commentsOnMyMoments !== false,
+        commentsOnFollowedOrCommentedMoments: source.commentsOnFollowedOrCommentedMoments !== false
+    };
+};
+
 export const createSessionAuthViewModule = ({
     authService,
     dataService,
@@ -43,7 +60,9 @@ export const createSessionAuthViewModule = ({
     getCoffeeScale,
     refreshBrewGearSelectors,
     getLastGalleryVisit,
-    setLastGalleryVisit
+    setLastGalleryVisit,
+    getNotificationPreferences,
+    setNotificationPreferences
 }) => {
     const { auth, provider, signInWithPopup, signOut } = authService || {};
     const { db, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, limit, onSnapshot } = dataService || {};
@@ -114,12 +133,23 @@ export const createSessionAuthViewModule = ({
             if (data.displayName !== user.displayName) {
                 await updateDoc(userDocRef, { displayName: user.displayName });
             }
+
+            const normalizedPrefs = normalizeNotificationPreferences(data.notificationPrefs || getNotificationPreferences?.());
+            setNotificationPreferences?.(normalizedPrefs);
+            if (!data.notificationPrefs || typeof data.notificationPrefs !== 'object') {
+                try {
+                    await updateDoc(userDocRef, { notificationPrefs: normalizedPrefs });
+                } catch (err) {
+                    console.error('Error saving notification preferences', err);
+                }
+            }
         } else {
             loadColumnPreferencesFromStorage();
             await setDoc(userDocRef, {
                 isPublic: false,
                 displayName: user.displayName,
                 pinnedBrews: getPinnedBrewsPreferences(),
+                notificationPrefs: DEFAULT_NOTIFICATION_PREFERENCES,
                 graphTogglePrefs: {},
                 onboardingSeen: false,
                 lastGalleryVisit: null
@@ -136,6 +166,7 @@ export const createSessionAuthViewModule = ({
             if (coffeeScale?.setGraphTogglePrefs) {
                 coffeeScale.setGraphTogglePrefs({});
             }
+            setNotificationPreferences?.(DEFAULT_NOTIFICATION_PREFERENCES);
         }
 
         const coffeeScale = getCoffeeScale?.();

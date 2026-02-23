@@ -1,5 +1,200 @@
-import { createGalleryLikesModule } from './gallery-likes.js';
-import { createGalleryCommentsModule } from './gallery-comments.js';
+const createGalleryLikesModule = ({
+    getCurrentUser,
+    db,
+    doc,
+    updateDoc
+}) => {
+    if (!db || !doc || !updateDoc) {
+        throw new Error('createGalleryLikesModule requires { db, doc, updateDoc }');
+    }
+    const DEFAULT_REACTION_EMOJI = '❤️';
+
+    const getCurrentUid = () => {
+        const uid = getCurrentUser?.()?.uid;
+        return typeof uid === 'string' ? uid : '';
+    };
+
+    const normalizeUids = (items) =>
+        Array.isArray(items)
+            ? items
+                .map((uid) => (typeof uid === 'string' ? uid.trim() : ''))
+                .filter((uid) => !!uid)
+            : [];
+
+    const getReactions = (data) => {
+        const reactions = (data?.reactions && typeof data.reactions === 'object') ? data.reactions : {};
+        const normalized = {};
+        Object.keys(reactions).forEach((emoji) => {
+            normalized[emoji] = normalizeUids(reactions[emoji]);
+        });
+        return normalized;
+    };
+
+    const getReactionCount = (data) => {
+        const reactions = getReactions(data);
+        const users = new Set();
+        Object.values(reactions).forEach((uids) => {
+            (uids || []).forEach((uid) => users.add(uid));
+        });
+        return users.size;
+    };
+
+    const getTopReactionEmoji = (data) => {
+        const reactions = getReactions(data);
+        let topEmoji = '';
+        let topCount = 0;
+        Object.entries(reactions).forEach(([emoji, uids]) => {
+            const count = Array.isArray(uids) ? uids.length : 0;
+            if (count > topCount) {
+                topCount = count;
+                topEmoji = emoji;
+            }
+        });
+        return topEmoji;
+    };
+
+    const getUserReaction = (data) => {
+        const uid = getCurrentUid();
+        if (!uid) return '';
+        const reactions = getReactions(data);
+        for (const [emoji, uids] of Object.entries(reactions)) {
+            if (uids.includes(uid)) return emoji;
+        }
+        return '';
+    };
+
+    const hasLiked = (data) => {
+        const uid = getCurrentUid();
+        if (!uid) return false;
+        return !!getUserReaction(data);
+    };
+
+    const canLikeMoment = (data) => {
+        const uid = getCurrentUid();
+        const ownerUid = typeof data?.uid === 'string' ? data.uid.trim() : '';
+        if (!uid || !ownerUid) return false;
+        return uid !== ownerUid;
+    };
+
+    const setReaction = async ({ photoId, data, emoji }) => {
+        const uid = getCurrentUid();
+        if (!uid || !photoId || !canLikeMoment(data)) return false;
+        const selectedEmoji = (emoji || '').trim();
+        const reactions = getReactions(data);
+        const currentEmoji = getUserReaction(data);
+        Object.keys(reactions).forEach((key) => {
+            reactions[key] = reactions[key].filter((entryUid) => entryUid !== uid);
+        });
+        if (selectedEmoji && selectedEmoji !== currentEmoji) {
+            const bucket = Array.isArray(reactions[selectedEmoji]) ? reactions[selectedEmoji] : [];
+            reactions[selectedEmoji] = Array.from(new Set([...bucket, uid]));
+        }
+        await updateDoc(doc(db, 'photos', photoId), {
+            reactions
+        });
+        return selectedEmoji && selectedEmoji !== currentEmoji ? selectedEmoji : '';
+    };
+
+    return {
+        DEFAULT_REACTION_EMOJI,
+        getReactions,
+        getReactionCount,
+        getTopReactionEmoji,
+        getUserReaction,
+        hasLiked,
+        canLikeMoment,
+        setReaction
+    };
+};
+
+const createGalleryCommentsModule = ({
+    getCurrentUser,
+    db,
+    collection,
+    doc,
+    deleteDoc,
+    updateDoc,
+    query,
+    orderBy,
+    limit,
+    getDocs,
+    addDoc
+}) => {
+    if (!db || !collection || !doc || !deleteDoc || !updateDoc || !query || !orderBy || !limit || !getDocs || !addDoc) {
+        throw new Error('createGalleryCommentsModule requires { db, collection, doc, deleteDoc, updateDoc, query, orderBy, limit, getDocs, addDoc }');
+    }
+
+    const normalizeCommentText = (text) => (text ?? '').toString().trim();
+
+    const listComments = async ({ photoId, max = 30 }) => {
+        if (!photoId) return [];
+        const commentsQuery = query(
+            collection(db, 'photos', photoId, 'comments'),
+            orderBy('createdAt', 'desc'),
+            limit(Math.max(1, max))
+        );
+        const snapshot = await getDocs(commentsQuery);
+        return snapshot.docs.map((item) => ({
+            id: item.id,
+            ...item.data()
+        }));
+    };
+
+    const addComment = async ({ photoId, text }) => {
+        const user = getCurrentUser?.();
+        if (!user?.uid) throw new Error('Please sign in first.');
+        if (!photoId) throw new Error('Moment not found.');
+
+        const normalizedText = normalizeCommentText(text);
+        if (!normalizedText) throw new Error('Please enter a comment.');
+        if (normalizedText.length > 1000) throw new Error('Comment is too long.');
+
+        const payload = {
+            uid: user.uid,
+            uploaderName: user.displayName || 'Unknown User',
+            text: normalizedText,
+            createdAt: new Date().toISOString()
+        };
+        const createdRef = await addDoc(collection(db, 'photos', photoId, 'comments'), payload);
+        try {
+            await updateDoc(doc(db, 'photos', photoId), {
+                lastCommentAt: payload.createdAt,
+                lastCommentByUid: user.uid
+            });
+        } catch (error) {
+            console.warn('Could not update moment comment metadata:', error);
+        }
+        return {
+            id: createdRef.id,
+            ...payload
+        };
+    };
+
+    const deleteComment = async ({ photoId, commentId, commentUid }) => {
+        const user = getCurrentUser?.();
+        if (!user?.uid) throw new Error('Please sign in first.');
+        if (!photoId || !commentId) throw new Error('Comment not found.');
+        if (commentUid && commentUid !== user.uid) throw new Error('You can only delete your own comments.');
+
+        await deleteDoc(doc(db, 'photos', photoId, 'comments', commentId));
+        try {
+            const latest = await listComments({ photoId, max: 1 });
+            const latestComment = latest[0] || null;
+            await updateDoc(doc(db, 'photos', photoId), {
+                lastCommentAt: latestComment?.createdAt || null,
+                lastCommentByUid: latestComment?.uid || null
+            });
+        } catch (error) {
+            console.warn('Could not refresh moment comment metadata after delete:', error);
+        }
+    };
+
+    return {
+        listComments,
+        addComment,
+        deleteComment
+    };
+};
 
 export const createGalleryModule = ({
     getCurrentUser,
