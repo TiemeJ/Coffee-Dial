@@ -469,6 +469,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             renderPinnedTiles: (...args) => renderPinnedTiles(...args),
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'preferences' }),
+            openAppConfirm,
             showAutoPinToast,
             onPinnedBrewsPreferencesChanged: () => {
                 const currentCard = getCurrentCardCoffeeState();

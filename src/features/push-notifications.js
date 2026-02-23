@@ -45,7 +45,7 @@ export const createPushNotificationsModule = ({
     vapidKey = '',
     showToast
 }) => {
-    const { db, doc, setDoc } = dataService || {};
+    const { db, doc, setDoc, deleteDoc } = dataService || {};
     const {
         getMessaging,
         getToken,
@@ -54,8 +54,8 @@ export const createPushNotificationsModule = ({
         isSupported,
         app
     } = messagingApi || {};
-    if (!db || !doc || !setDoc) {
-        throw new Error('createPushNotificationsModule requires dataService { db, doc, setDoc }');
+    if (!db || !doc || !setDoc || !deleteDoc) {
+        throw new Error('createPushNotificationsModule requires dataService { db, doc, setDoc, deleteDoc }');
     }
     if (!getMessaging || !getToken || !deleteToken || !isSupported || !app) {
         throw new Error('createPushNotificationsModule requires messagingApi { getMessaging, getToken, deleteToken, isSupported, app }');
@@ -79,10 +79,10 @@ export const createPushNotificationsModule = ({
     };
 
     const upsertDevice = async ({ uid, enabled, permission, token = '' }) => {
-        if (!uid) return;
+        if (!uid || !token) return;
         const deviceId = getDeviceId();
         const payload = {
-            token: token || '',
+            token,
             enabled: !!enabled,
             permission: permission || 'default',
             platform: 'web',
@@ -91,6 +91,17 @@ export const createPushNotificationsModule = ({
             lastSeenAt: new Date().toISOString()
         };
         await setDoc(doc(db, 'users', uid, 'devices', deviceId), payload, { merge: true });
+    };
+
+    const removeCurrentDevice = async (uid) => {
+        if (!uid) return;
+        const deviceId = readPushDeviceId() || getDeviceId();
+        if (!deviceId) return;
+        try {
+            await deleteDoc(doc(db, 'users', uid, 'devices', deviceId));
+        } catch (_) {
+            // Ignore missing-doc/permission edge cases.
+        }
     };
 
     const registerForegroundListener = async () => {
@@ -113,18 +124,12 @@ export const createPushNotificationsModule = ({
     const disableForCurrentUser = async () => {
         const user = getCurrentUser?.();
         if (!user?.uid) return;
-        const permission = getNotificationPermission();
         const messaging = await resolveMessaging();
         if (messaging && lastKnownToken) {
             try { await deleteToken(messaging); } catch (_) {}
             lastKnownToken = '';
         }
-        await upsertDevice({
-            uid: user.uid,
-            enabled: false,
-            permission,
-            token: ''
-        });
+        await removeCurrentDevice(user.uid);
         stopForegroundListener();
     };
 
@@ -134,12 +139,7 @@ export const createPushNotificationsModule = ({
         const prefs = normalizeNotificationPreferences(getNotificationPreferences?.());
         const permissionBefore = getNotificationPermission();
         if (!prefs.pushEnabled) {
-            await upsertDevice({
-                uid: user.uid,
-                enabled: false,
-                permission: permissionBefore,
-                token: ''
-            });
+            await removeCurrentDevice(user.uid);
             stopForegroundListener();
             return;
         }
@@ -158,12 +158,7 @@ export const createPushNotificationsModule = ({
             permission = await Notification.requestPermission();
         }
         if (permission !== 'granted') {
-            await upsertDevice({
-                uid: user.uid,
-                enabled: false,
-                permission,
-                token: ''
-            });
+            await removeCurrentDevice(user.uid);
             stopForegroundListener();
             return;
         }
@@ -176,11 +171,16 @@ export const createPushNotificationsModule = ({
             serviceWorkerRegistration: swRegistration || undefined
         });
         lastKnownToken = token || '';
+        if (!token) {
+            await removeCurrentDevice(user.uid);
+            stopForegroundListener();
+            return;
+        }
         await upsertDevice({
             uid: user.uid,
-            enabled: !!token,
+            enabled: true,
             permission,
-            token: token || ''
+            token
         });
         await registerForegroundListener();
     };
