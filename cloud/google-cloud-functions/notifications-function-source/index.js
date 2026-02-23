@@ -200,6 +200,86 @@ function canReadMoment({uid, ownerUid, sharedWith}) {
   return uid === ownerUid || sharedWith.includes(uid);
 }
 
+function getFieldString(fields, key) {
+  const value = fields && fields[key] ? fields[key] : null;
+  if (!value) return "";
+  if (typeof value.stringValue === "string") return value.stringValue;
+  return "";
+}
+
+function getFieldStringArray(fields, key) {
+  const value = fields && fields[key] ? fields[key] : null;
+  const entries = value && value.arrayValue && Array.isArray(value.arrayValue.values) ?
+    value.arrayValue.values : [];
+  return entries
+      .map((item) => (item && typeof item.stringValue === "string" ? item.stringValue.trim() : ""))
+      .filter((item) => !!item);
+}
+
+function getDocumentNameFromEvent(event) {
+  const data = event && event.data ? event.data : null;
+  if (data && data.value && typeof data.value.name === "string") {
+    return data.value.name;
+  }
+  if (data && typeof data.name === "string") return data.name;
+  if (typeof event.subject === "string") return event.subject;
+  return "";
+}
+
+function extractIdsFromDocumentName(documentName) {
+  const normalized = typeof documentName === "string" ? documentName : "";
+  const pathStart = normalized.includes("/documents/") ?
+    normalized.split("/documents/")[1] : normalized;
+  const momentMatch = pathStart.match(/^photos\/([^/]+)$/);
+  if (momentMatch) {
+    return {photoId: momentMatch[1] || "", commentId: ""};
+  }
+  const commentMatch = pathStart.match(/^photos\/([^/]+)\/comments\/([^/]+)$/);
+  if (commentMatch) {
+    return {
+      photoId: commentMatch[1] || "",
+      commentId: commentMatch[2] || "",
+    };
+  }
+  return {photoId: "", commentId: ""};
+}
+
+function readMomentFromEvent(event) {
+  const data = event && event.data ? event.data : null;
+  if (data && typeof data.data === "function") {
+    const snapshotData = data.data() || {};
+    return {
+      uid: typeof snapshotData.uid === "string" ? snapshotData.uid : "",
+      uploaderName: typeof snapshotData.uploaderName === "string" ? snapshotData.uploaderName : "",
+      sharedWith: toStringArray(snapshotData.sharedWith),
+    };
+  }
+  const fields = data && data.value && data.value.fields ? data.value.fields : {};
+  return {
+    uid: getFieldString(fields, "uid"),
+    uploaderName: getFieldString(fields, "uploaderName"),
+    sharedWith: getFieldStringArray(fields, "sharedWith"),
+  };
+}
+
+function readCommentFromEvent(event) {
+  const data = event && event.data ? event.data : null;
+  if (data && typeof data.data === "function") {
+    const snapshotData = data.data() || {};
+    return {
+      uid: typeof snapshotData.uid === "string" ? snapshotData.uid : "",
+      uploaderName: typeof snapshotData.uploaderName === "string" ? snapshotData.uploaderName : "",
+      text: typeof snapshotData.text === "string" ? snapshotData.text : "",
+    };
+  }
+  const fields = data && data.value && data.value.fields ? data.value.fields : {};
+  return {
+    uid: getFieldString(fields, "uid"),
+    uploaderName: getFieldString(fields, "uploaderName"),
+    text: getFieldString(fields, "text"),
+  };
+}
+
 exports.notifyOnMomentCreated = onDocumentCreated(
     {
       region: REGION,
@@ -207,13 +287,20 @@ exports.notifyOnMomentCreated = onDocumentCreated(
     },
     async (event) => {
       const eventId = event && event.id ? event.id : "";
-      const photo = event.data && event.data.data ? event.data.data() : {};
-      const photoId = event.params && event.params.photoId ? event.params.photoId : "";
+      const photo = readMomentFromEvent(event);
+      const documentName = getDocumentNameFromEvent(event);
+      const extractedIds = extractIdsFromDocumentName(documentName);
+      const photoIdFromParams = event && event.params && event.params.photoId ?
+        event.params.photoId : "";
+      const photoId = photoIdFromParams || extractedIds.photoId || "";
       const ownerUid = typeof photo.uid === "string" ? photo.uid : "";
       logger.info("notifyOnMomentCreated start", {
         eventId,
         photoId,
         ownerUid,
+        hasParams: !!(event && event.params),
+        hasSnapshotAccessor: !!(event && event.data && typeof event.data.data === "function"),
+        documentName,
       });
       if (!photoId || !ownerUid) {
         logger.info("notifyOnMomentCreated early return: missing identifiers", {
@@ -226,7 +313,7 @@ exports.notifyOnMomentCreated = onDocumentCreated(
 
       const ownerName = typeof photo.uploaderName === "string" &&
           photo.uploaderName.trim() ? photo.uploaderName.trim() : "A friend";
-      const sharedWith = toStringArray(photo.sharedWith);
+      const sharedWith = toStringArray(photo.sharedWith || []);
       const followers = await getFollowers(ownerUid);
       const candidateSet = new Set([...sharedWith, ...followers]);
       candidateSet.delete(ownerUid);
@@ -278,17 +365,24 @@ exports.notifyOnCommentCreated = onDocumentCreated(
     },
     async (event) => {
       const eventId = event && event.id ? event.id : "";
-      const comment = event.data && event.data.data ? event.data.data() : {};
-      const photoId = event.params &&
-          event.params.photoId ? event.params.photoId : "";
+      const comment = readCommentFromEvent(event);
+      const documentName = getDocumentNameFromEvent(event);
+      const extractedIds = extractIdsFromDocumentName(documentName);
+      const photoIdFromParams = event && event.params && event.params.photoId ?
+        event.params.photoId : "";
+      const commentIdFromParams = event && event.params && event.params.commentId ?
+        event.params.commentId : "";
+      const photoId = photoIdFromParams || extractedIds.photoId || "";
+      const commentId = commentIdFromParams || extractedIds.commentId || "";
       const actorUid = typeof comment.uid === "string" ? comment.uid : "";
-      const commentId = event.params &&
-          event.params.commentId ? event.params.commentId : "";
       logger.info("notifyOnCommentCreated start", {
         eventId,
         photoId,
         commentId,
         actorUid,
+        hasParams: !!(event && event.params),
+        hasSnapshotAccessor: !!(event && event.data && typeof event.data.data === "function"),
+        documentName,
       });
       if (!photoId || !actorUid) {
         logger.info("notifyOnCommentCreated early return: missing identifiers", {
