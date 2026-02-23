@@ -9,6 +9,7 @@ export const createGasCoordinator = ({
     appEvents,
     getCurrentUser,
     getCurrentView,
+    getPinnedBrewsPreferences,
     getCurrentGasId,
     setCurrentGasId,
     getGasItems,
@@ -87,6 +88,7 @@ export const createGasCoordinator = ({
     const gasTable = createGasTableModule({
         getGasItems,
         getCoffees,
+        getPinnedBrewsPreferences,
         getCurrentView,
         getGasSearch,
         setGasSearchState,

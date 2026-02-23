@@ -443,6 +443,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 const currentCard = getCurrentCardCoffeeState();
                 if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
                 renderCoffeeTypesTable?.();
+                renderGasTable?.();
             }
         });
 
@@ -820,6 +821,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             appEvents,
             getCurrentUser: () => getCurrentUserState(),
             getCurrentView: () => getCurrentViewState(),
+            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
             getCurrentGasId: () => getCurrentGasIdState(),
             setCurrentGasId: (value) => setCurrentGasIdState(value),
             getGasItems: () => getGasItemsState(),
