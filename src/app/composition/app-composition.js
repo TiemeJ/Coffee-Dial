@@ -1868,6 +1868,35 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 if (route === '/brew') return actions.openAddBrewFromPinned?.(null);
             };
 
+            const routeModalIdByPath = new Map([
+                ['/moments', 'galleryModal'],
+                ['/beans', 'beansModal'],
+                ['/gear', 'gasModal'],
+                ['/coffees', 'coffeeTypesModal'],
+                ['/statistics', 'statsModal'],
+                ['/preferences', 'preferencesModal'],
+                ['/import-export', 'importExportModal'],
+                ['/help', 'helpModal'],
+                ['/about', 'aboutModal'],
+                ['/lab-results', 'labResultsModal'],
+                ['/profile', 'modalOverlay'],
+                ['/brew', 'brewFormModal']
+            ]);
+
+            const isModalVisible = (modalId) => {
+                const el = document.getElementById(modalId);
+                return !!el && !el.classList.contains('hidden');
+            };
+
+            const syncRouteFromModalVisibility = () => {
+                if (isApplyingRoute) return;
+                const current = normalizeRoutePath(window.location.pathname || ROUTE_BREWS);
+                if (current === ROUTE_BREWS) return;
+                const modalId = routeModalIdByPath.get(current);
+                if (!modalId) return;
+                if (!isModalVisible(modalId)) setRoute(ROUTE_BREWS);
+            };
+
             const applyRoute = (path, { track = true } = {}) => {
                 const normalized = normalizeRoutePath(path);
                 isApplyingRoute = true;
@@ -1937,6 +1966,18 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
             window.addEventListener('popstate', () => {
                 applyRoute(window.location.pathname || ROUTE_BREWS, { track: true });
+            });
+
+            const modalObserver = new MutationObserver(() => {
+                syncRouteFromModalVisibility();
+            });
+            routeModalIdByPath.forEach((modalId) => {
+                const modalEl = document.getElementById(modalId);
+                if (!modalEl) return;
+                modalObserver.observe(modalEl, {
+                    attributes: true,
+                    attributeFilter: ['class', 'style']
+                });
             });
 
             const rawInitialPath = typeof window.location.pathname === 'string' ? window.location.pathname : ROUTE_BREWS;
