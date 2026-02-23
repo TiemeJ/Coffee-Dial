@@ -216,12 +216,46 @@ function getFieldStringArray(fields, key) {
       .filter((item) => !!item);
 }
 
-function getDocumentNameFromEvent(event) {
+function decodePubsubWrappedData(data) {
+  const message = data && data.message ? data.message : null;
+  const encoded = message && typeof message.data === "string" ? message.data : "";
+  if (!encoded) return null;
+  try {
+    const decoded = Buffer.from(encoded, "base64").toString("utf8");
+    return JSON.parse(decoded);
+  } catch (error) {
+    logger.warn("Failed decoding Pub/Sub wrapped event payload", {
+      error: error && error.message ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+function getEventData(event) {
   const data = event && event.data ? event.data : null;
+  if (!data || typeof data !== "object") return null;
+  const decoded = decodePubsubWrappedData(data);
+  if (decoded && typeof decoded === "object") return decoded;
+  return data;
+}
+
+function getCloudEventAttr(event, key) {
+  const data = event && event.data ? event.data : null;
+  const attrs = data && data.message && data.message.attributes ?
+    data.message.attributes : null;
+  if (!attrs) return "";
+  const value = attrs[key];
+  return typeof value === "string" ? value : "";
+}
+
+function getDocumentNameFromEvent(event, eventData) {
+  const data = eventData || getEventData(event);
   if (data && data.value && typeof data.value.name === "string") {
     return data.value.name;
   }
   if (data && typeof data.name === "string") return data.name;
+  const ceSubject = getCloudEventAttr(event, "ce-subject");
+  if (typeof ceSubject === "string" && ceSubject) return ceSubject;
   if (typeof event.subject === "string") return event.subject;
   return "";
 }
@@ -244,8 +278,8 @@ function extractIdsFromDocumentName(documentName) {
   return {photoId: "", commentId: ""};
 }
 
-function readMomentFromEvent(event) {
-  const data = event && event.data ? event.data : null;
+function readMomentFromEvent(event, eventData) {
+  const data = eventData || getEventData(event);
   if (data && typeof data.data === "function") {
     const snapshotData = data.data() || {};
     return {
@@ -263,7 +297,7 @@ function readMomentFromEvent(event) {
 }
 
 function readCommentFromEvent(event) {
-  const data = event && event.data ? event.data : null;
+  const data = getEventData(event);
   if (data && typeof data.data === "function") {
     const snapshotData = data.data() || {};
     return {
@@ -286,9 +320,10 @@ exports.notifyOnMomentCreated = onDocumentCreated(
       document: "photos/{photoId}",
     },
     async (event) => {
-      const eventId = event && event.id ? event.id : "";
-      const photo = readMomentFromEvent(event);
-      const documentName = getDocumentNameFromEvent(event);
+      const eventData = getEventData(event);
+      const eventId = event && event.id ? event.id : getCloudEventAttr(event, "ce-id");
+      const photo = readMomentFromEvent(event, eventData);
+      const documentName = getDocumentNameFromEvent(event, eventData);
       const extractedIds = extractIdsFromDocumentName(documentName);
       const photoIdFromParams = event && event.params && event.params.photoId ?
         event.params.photoId : "";
@@ -300,6 +335,9 @@ exports.notifyOnMomentCreated = onDocumentCreated(
         ownerUid,
         hasParams: !!(event && event.params),
         hasSnapshotAccessor: !!(event && event.data && typeof event.data.data === "function"),
+        dataKeys: eventData && typeof eventData === "object" ? Object.keys(eventData) : [],
+        ceType: event && event.type ? event.type : getCloudEventAttr(event, "ce-type"),
+        ceSubject: getCloudEventAttr(event, "ce-subject"),
         documentName,
       });
       if (!photoId || !ownerUid) {
@@ -364,9 +402,10 @@ exports.notifyOnCommentCreated = onDocumentCreated(
       document: "photos/{photoId}/comments/{commentId}",
     },
     async (event) => {
-      const eventId = event && event.id ? event.id : "";
+      const eventData = getEventData(event);
+      const eventId = event && event.id ? event.id : getCloudEventAttr(event, "ce-id");
       const comment = readCommentFromEvent(event);
-      const documentName = getDocumentNameFromEvent(event);
+      const documentName = getDocumentNameFromEvent(event, eventData);
       const extractedIds = extractIdsFromDocumentName(documentName);
       const photoIdFromParams = event && event.params && event.params.photoId ?
         event.params.photoId : "";
@@ -382,6 +421,9 @@ exports.notifyOnCommentCreated = onDocumentCreated(
         actorUid,
         hasParams: !!(event && event.params),
         hasSnapshotAccessor: !!(event && event.data && typeof event.data.data === "function"),
+        dataKeys: eventData && typeof eventData === "object" ? Object.keys(eventData) : [],
+        ceType: event && event.type ? event.type : getCloudEventAttr(event, "ce-type"),
+        ceSubject: getCloudEventAttr(event, "ce-subject"),
         documentName,
       });
       if (!photoId || !actorUid) {
