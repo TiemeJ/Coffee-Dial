@@ -123,6 +123,32 @@ export const createBrewsPreferencesModule = ({
         });
     };
 
+    const updatePushPermissionGuard = (pushEnabled = null) => {
+        const guard = document.getElementById('notificationsPermissionGuard');
+        const detail = document.getElementById('notificationsPermissionGuardDetail');
+        if (!guard) return;
+
+        const enabled = typeof pushEnabled === 'boolean'
+            ? pushEnabled
+            : !!document.getElementById('notificationsPushEnabledToggle')?.checked;
+        const permission = typeof Notification === 'undefined'
+            ? 'unsupported'
+            : (Notification.permission || 'default');
+        const shouldWarn = enabled && (permission === 'default' || permission === 'denied' || permission === 'unsupported');
+
+        if (detail) {
+            if (permission === 'denied') {
+                detail.textContent = 'Browser permission is blocked. Enable notifications for this site in browser settings.';
+            } else if (permission === 'unsupported') {
+                detail.textContent = 'This browser does not support web push notifications.';
+            } else {
+                detail.textContent = 'Allow notifications in your browser prompt to receive push alerts.';
+            }
+        }
+
+        guard.classList.toggle('hidden', !shouldWarn);
+    };
+
     const setDebugText = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = `${value ?? '-'}`;
@@ -148,6 +174,7 @@ export const createBrewsPreferencesModule = ({
         setDebugText('notificationsDebugDeviceCount', '-');
         setDebugText('notificationsDebugCurrentToken', '-');
         setDebugText('notificationsDebugCurrentUpdatedAt', '-');
+        updatePushPermissionGuard(!!prefs.pushEnabled);
         if (listEl) listEl.textContent = 'Loading...';
 
         if (!user?.uid) {
@@ -193,6 +220,11 @@ export const createBrewsPreferencesModule = ({
         const refreshBtn = document.getElementById('notificationsDebugRefreshBtn');
         refreshBtn?.addEventListener('click', () => {
             renderNotificationsDebugPanel();
+            updatePushPermissionGuard();
+        });
+        window.addEventListener('focus', () => updatePushPermissionGuard());
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) updatePushPermissionGuard();
         });
     };
 
@@ -265,7 +297,10 @@ export const createBrewsPreferencesModule = ({
             el.addEventListener('change', () => {
                 if (isHydratingPreferences) return;
                 if (id === 'showTilesInsteadOfCoffeeArtToggle') updateAnimationsToggleState();
-                if (id === 'notificationsPushEnabledToggle') updateNotificationToggleState();
+                if (id === 'notificationsPushEnabledToggle') {
+                    updateNotificationToggleState();
+                    updatePushPermissionGuard();
+                }
                 scheduleAutoSavePreferences();
             });
         });
@@ -287,6 +322,7 @@ export const createBrewsPreferencesModule = ({
         document.getElementById('notificationsCommentsFollowingToggle').checked = !!notificationPrefs.commentsOnFollowedOrCommentedMoments;
         updateAnimationsToggleState(!!pinnedPrefs.showTilesInsteadOfCoffeeArt);
         updateNotificationToggleState(!!notificationPrefs.pushEnabled);
+        updatePushPermissionGuard(!!notificationPrefs.pushEnabled);
 
         bindPreferencesAutoSave();
         bindNotificationsDebug();
