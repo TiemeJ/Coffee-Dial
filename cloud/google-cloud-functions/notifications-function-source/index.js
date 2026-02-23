@@ -19,6 +19,7 @@ const DEFAULT_PREFS = {
   commentsOnMyMoments: true,
   commentsOnFollowedOrCommentedMoments: true,
 };
+const TEMP_DEBUG_LOGS = true;
 
 function normalizePrefs(value) {
   const source = value && typeof value === "object" ? value : {};
@@ -117,17 +118,43 @@ async function markTokenInvalid(entries = []) {
 }
 
 async function sendPushToRecipients({recipients, title, body, data}) {
-  if (!recipients.length) return;
+  if (!recipients.length) {
+    if (TEMP_DEBUG_LOGS) {
+      logger.info("push.send skipped: no recipients", {
+        notificationType: data?.type || "",
+      });
+    }
+    return;
+  }
   const tokenEntries = [];
+  const tokenCountByUser = {};
   for (const uid of recipients) {
     // Keep it simple and explicit: one user read + one devices query per user.
     const userEntries = await getUserTokenEntries(uid);
     tokenEntries.push(...userEntries);
+    tokenCountByUser[uid] = userEntries.length;
   }
-  if (!tokenEntries.length) return;
+  if (TEMP_DEBUG_LOGS) {
+    logger.info("push.send recipient token scan", {
+      notificationType: data?.type || "",
+      recipientCount: recipients.length,
+      tokenEntryCount: tokenEntries.length,
+      tokenCountByUser,
+    });
+  }
+  if (!tokenEntries.length) {
+    logger.info("push.send skipped: no enabled tokens", {
+      notificationType: data?.type || "",
+      recipientCount: recipients.length,
+    });
+    return;
+  }
 
   const invalidEntries = [];
   const grouped = chunk(tokenEntries, MAX_MULTICAST_TOKENS);
+  let totalSuccess = 0;
+  let totalFailure = 0;
+  const errorCodeCount = {};
   for (const group of grouped) {
     const response = await messaging.sendEachForMulticast({
       tokens: group.map((entry) => entry.token),
@@ -140,8 +167,13 @@ async function sendPushToRecipients({recipients, title, body, data}) {
       },
     });
     response.responses.forEach((item, idx) => {
-      if (item.success) return;
+      if (item.success) {
+        totalSuccess += 1;
+        return;
+      }
+      totalFailure += 1;
       const code = item.error && item.error.code ? item.error.code : "";
+      if (code) errorCodeCount[code] = (errorCodeCount[code] || 0) + 1;
       if (
         code === "messaging/registration-token-not-registered" ||
         code === "messaging/invalid-registration-token"
@@ -150,6 +182,15 @@ async function sendPushToRecipients({recipients, title, body, data}) {
       }
     });
   }
+  logger.info("push.send multicast summary", {
+    notificationType: data?.type || "",
+    recipientCount: recipients.length,
+    tokenEntryCount: tokenEntries.length,
+    totalSuccess,
+    totalFailure,
+    invalidTokenCount: invalidEntries.length,
+    errorCodeCount,
+  });
   if (invalidEntries.length) await markTokenInvalid(invalidEntries);
 }
 
@@ -164,10 +205,23 @@ exports.notifyOnMomentCreated = onDocumentCreated(
       document: "photos/{photoId}",
     },
     async (event) => {
+      const eventId = event && event.id ? event.id : "";
       const photo = event.data && event.data.data ? event.data.data() : {};
       const photoId = event.params && event.params.photoId ? event.params.photoId : "";
       const ownerUid = typeof photo.uid === "string" ? photo.uid : "";
-      if (!photoId || !ownerUid) return;
+      logger.info("notifyOnMomentCreated start", {
+        eventId,
+        photoId,
+        ownerUid,
+      });
+      if (!photoId || !ownerUid) {
+        logger.info("notifyOnMomentCreated early return: missing identifiers", {
+          eventId,
+          photoId,
+          ownerUid,
+        });
+        return;
+      }
 
       const ownerName = typeof photo.uploaderName === "string" &&
           photo.uploaderName.trim() ? photo.uploaderName.trim() : "A friend";
@@ -187,6 +241,15 @@ exports.notifyOnMomentCreated = onDocumentCreated(
         if (!prefs.pushEnabled || !prefs.friendMoments) continue;
         recipients.push(candidateUid);
       }
+      logger.info("notifyOnMomentCreated recipient filtering", {
+        eventId,
+        photoId,
+        ownerUid,
+        sharedWithCount: sharedWith.length,
+        followersCount: followers.length,
+        candidateCount: candidateSet.size,
+        recipientCount: recipients.length,
+      });
 
       await sendPushToRecipients({
         recipients,
@@ -199,6 +262,7 @@ exports.notifyOnMomentCreated = onDocumentCreated(
         },
       });
       logger.info("notifyOnMomentCreated complete", {
+        eventId,
         photoId,
         ownerUid,
         recipientCount: recipients.length,
@@ -212,17 +276,48 @@ exports.notifyOnCommentCreated = onDocumentCreated(
       document: "photos/{photoId}/comments/{commentId}",
     },
     async (event) => {
+      const eventId = event && event.id ? event.id : "";
       const comment = event.data && event.data.data ? event.data.data() : {};
       const photoId = event.params &&
           event.params.photoId ? event.params.photoId : "";
       const actorUid = typeof comment.uid === "string" ? comment.uid : "";
-      if (!photoId || !actorUid) return;
+      const commentId = event.params &&
+          event.params.commentId ? event.params.commentId : "";
+      logger.info("notifyOnCommentCreated start", {
+        eventId,
+        photoId,
+        commentId,
+        actorUid,
+      });
+      if (!photoId || !actorUid) {
+        logger.info("notifyOnCommentCreated early return: missing identifiers", {
+          eventId,
+          photoId,
+          commentId,
+          actorUid,
+        });
+        return;
+      }
 
       const photoSnap = await db.collection("photos").doc(photoId).get();
-      if (!photoSnap.exists) return;
+      if (!photoSnap.exists) {
+        logger.info("notifyOnCommentCreated early return: photo missing", {
+          eventId,
+          photoId,
+          commentId,
+        });
+        return;
+      }
       const photo = photoSnap.data() || {};
       const ownerUid = typeof photo.uid === "string" ? photo.uid : "";
-      if (!ownerUid) return;
+      if (!ownerUid) {
+        logger.info("notifyOnCommentCreated early return: owner missing", {
+          eventId,
+          photoId,
+          commentId,
+        });
+        return;
+      }
       const sharedWith = toStringArray(photo.sharedWith);
       const followers = await getFollowers(ownerUid);
       const commenters = await getRecentCommenters(photoId);
@@ -242,6 +337,18 @@ exports.notifyOnCommentCreated = onDocumentCreated(
         }
         recipients.push(candidateUid);
       }
+      logger.info("notifyOnCommentCreated recipient filtering", {
+        eventId,
+        photoId,
+        commentId,
+        ownerUid,
+        actorUid,
+        sharedWithCount: sharedWith.length,
+        followersCount: followers.length,
+        commentersCount: commenters.length,
+        candidateCount: candidateSet.size,
+        recipientCount: recipients.length,
+      });
 
       const actorName = typeof comment.uploaderName === "string" &&
           comment.uploaderName.trim() ? comment.uploaderName.trim() : "Someone";
@@ -262,7 +369,10 @@ exports.notifyOnCommentCreated = onDocumentCreated(
         },
       });
       logger.info("notifyOnCommentCreated complete", {
+        eventId,
         photoId,
+        commentId,
+        ownerUid,
         actorUid,
         recipientCount: recipients.length,
       });
