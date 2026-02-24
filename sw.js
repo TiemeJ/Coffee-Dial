@@ -19,9 +19,13 @@ try {
 
     const messaging = firebase.messaging();
     messaging.onBackgroundMessage((payload) => {
-        const title = payload?.notification?.title || 'Coffee Dial';
-        const body = payload?.notification?.body || '';
-        const link = payload?.data?.link || '/#moments';
+        // Avoid duplicate notifications:
+        // when FCM includes payload.notification, browsers already show it.
+        if (payload?.notification) return;
+
+        const title = payload?.data?.title || payload?.notification?.title || 'Coffee Dial';
+        const body = payload?.data?.body || payload?.notification?.body || '';
+        const link = payload?.data?.link || '/Coffee-Dial/moments';
         self.registration.showNotification(title, {
             body,
             icon: '/img/icon-192.png',
@@ -33,7 +37,7 @@ try {
 }
 
 self.addEventListener('notificationclick', (event) => {
-    const link = event?.notification?.data?.link || '/#moments';
+    const link = event?.notification?.data?.link || '/Coffee-Dial/moments';
     event.notification.close();
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
