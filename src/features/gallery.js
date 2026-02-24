@@ -1686,13 +1686,15 @@ export const createGalleryModule = ({
             } else {
                 alert('Moment shared successfully!');
             }
+
+            await openGallery('mine');
         } catch (error) {
             console.error('Upload failed', error);
             alert(`Upload failed: ${error.message}`);
         }
     };
 
-    const openGallery = async () => {
+    const openGallery = async (initialTab = 'shared') => {
         clearLiveCommentListeners();
         document.getElementById('galleryModal')?.classList.remove('hidden');
         galleryNotificationBaseline = getLastGalleryVisit();
@@ -1709,7 +1711,7 @@ export const createGalleryModule = ({
         document.getElementById('menuBadge')?.classList.add('hidden');
         document.getElementById('galleryBadge')?.classList.add('hidden');
         await refreshGalleryCommentIndicators();
-        switchGalleryTab('shared');
+        await switchGalleryTab(initialTab === 'mine' ? 'mine' : 'shared');
         setLastGalleryDoc(null);
         document.getElementById('galleryGrid').innerHTML = '';
         document.getElementById('galleryEmpty')?.classList.add('hidden');
