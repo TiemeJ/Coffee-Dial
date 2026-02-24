@@ -121,6 +121,10 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
+      - name: Install notifications function dependencies
+        run: npm ci
+        working-directory: cloud/google-cloud-functions/notifications-function-source
+
       - name: Verify Firebase config file
         run: |
           CONFIG_PATH="$GITHUB_WORKSPACE/firebase.notifications.functions.json"
