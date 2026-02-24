@@ -47,7 +47,7 @@ jobs:
   deploy-gcloud:
     needs: lint
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_mode == 'gcloud' || github.event.inputs.deploy_mode == 'both' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_mode == 'gcloud' || github.event.inputs.deploy_mode == 'both') }}
     env:
       FUNCTION_REGION: us-central1
       FIRESTORE_TRIGGER_LOCATION: eur3
@@ -102,7 +102,7 @@ jobs:
   deploy-firebase:
     needs: lint
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_mode == 'firebase' || github.event.inputs.deploy_mode == 'both' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_mode == 'firebase' || github.event.inputs.deploy_mode == 'both') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

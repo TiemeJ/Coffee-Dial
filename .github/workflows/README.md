@@ -111,8 +111,8 @@ Manual dispatch input:
 
 The workflow:
 1. Lints the function package.
-2. Deploys notification functions with `gcloud functions deploy` (existing path).
-3. Deploys notification functions with `firebase-tools` using `onDocumentCreated` wrapper flow.
+2. On push: stops after lint (no deploy).
+3. On manual dispatch: deploys notification functions with `gcloud functions deploy` and/or `firebase-tools` based on `deploy_mode`.
 4. Uses Firestore trigger location `eur3` with `database=(default)` event filter in the gcloud path.
 5. Firebase deploy uses config: `cloud/firebase-config/firebase.notifications.functions.json`.
 
