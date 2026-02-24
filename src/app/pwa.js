@@ -1,7 +1,7 @@
 // IMPORTANT:
 // Bump this value every time `sw.js` changes.
 // This forces service-worker update pickup across browsers/PWAs.
-const SW_VERSION = '2026-02-24.1';
+const SW_VERSION = '2026-02-24.2';
 
 const resolveSwScriptUrl = () => {
     const pathname = window.location?.pathname || '/';

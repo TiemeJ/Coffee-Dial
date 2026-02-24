@@ -173,6 +173,11 @@ async function sendPushToRecipients({recipients, title, body, data}) {
       },
       data: messageData,
       webpush: {
+        notification: {
+          title: typeof title === "string" ? title : "Coffee Dial",
+          body: typeof body === "string" ? body : "",
+          icon: "/img/icon-192.png",
+        },
         fcmOptions: {
           link: pushLink,
         },
