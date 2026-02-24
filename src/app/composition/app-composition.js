@@ -1352,7 +1352,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 const payload = event?.data && typeof event.data === 'object' ? event.data : null;
                 if (!payload) return;
                 const targetRoute = typeof payload.route === 'string' ? payload.route.trim() : '';
-                if (targetRoute !== '/moments') return;
+                if (targetRoute !== '/moments' && targetRoute !== 'moments') return;
                 try {
                     openGallery?.();
                 } catch (error) {
@@ -1783,22 +1783,21 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             if (typeof window === 'undefined' || !window.history || typeof window.history.pushState !== 'function') return;
 
             const APP_BASE_PATH = '/Coffee-Dial';
-            const ROUTE_BREWS = '/';
-            const KNOWN_ROUTES = new Set([
-                ROUTE_BREWS,
-                '/moments',
-                '/beans',
-                '/gear',
-                '/coffees',
-                '/statistics',
-                '/preferences',
-                '/import-export',
-                '/help',
-                '/about',
-                '/lab-results',
-                '/profile',
-                '/brew'
-            ]);
+            const ROUTE_KEYS = [
+                'moments',
+                'beans',
+                'gear',
+                'coffees',
+                'statistics',
+                'preferences',
+                'import-export',
+                'help',
+                'about',
+                'lab-results',
+                'profile',
+                'brew'
+            ];
+            const ROUTE_KEY_SET = new Set(ROUTE_KEYS);
             const shouldUseBasePath = () => {
                 const pathname = window.location.pathname || '/';
                 return pathname.startsWith(`${APP_BASE_PATH}/`) || pathname === APP_BASE_PATH || (window.location.hostname || '').endsWith('github.io');
@@ -1811,32 +1810,76 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 if (fullPath.startsWith(`${base}/`)) return fullPath.slice(base.length) || '/';
                 return fullPath || '/';
             };
-            const buildFullPath = (routePath = ROUTE_BREWS) => {
-                const normalizedRoute = routePath === ROUTE_BREWS ? '/' : routePath;
+            const buildFullPath = () => {
                 const base = getBasePath();
-                if (!base) return normalizedRoute;
-                return normalizedRoute === '/' ? `${base}/` : `${base}${normalizedRoute}`;
+                if (!base) return '/';
+                return `${base}/`;
             };
-            const buildRouteUrl = (routePath = ROUTE_BREWS) => {
-                const fullPath = buildFullPath(routePath);
-                const search = window.location.search || '';
+
+            const encodeRouteSearch = (routeKeys = [], preserveSearch = window.location.search || '') => {
+                const params = new URLSearchParams(preserveSearch);
+                ROUTE_KEYS.forEach((key) => params.delete(key));
+                const parts = [];
+                params.forEach((value, key) => {
+                    if (value === '') parts.push(encodeURIComponent(key));
+                    else parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+                });
+                routeKeys.forEach((key) => {
+                    if (!ROUTE_KEY_SET.has(key)) return;
+                    parts.push(encodeURIComponent(key));
+                });
+                return parts.length ? `?${parts.join('&')}` : '';
+            };
+
+            const normalizeRouteKey = (value) => {
+                const key = typeof value === 'string' ? value.trim() : '';
+                return ROUTE_KEY_SET.has(key) ? key : '';
+            };
+
+            const normalizeRouteKeys = (values = []) => {
+                const seen = new Set();
+                return values
+                    .map((value) => normalizeRouteKey(value))
+                    .filter((value) => {
+                        if (!value || seen.has(value)) return false;
+                        seen.add(value);
+                        return true;
+                    });
+            };
+
+            const getRouteKeysFromSearch = (search = window.location.search || '') => {
+                const params = new URLSearchParams(search);
+                const keys = [];
+                ROUTE_KEYS.forEach((key) => {
+                    if (params.has(key)) keys.push(key);
+                });
+                return normalizeRouteKeys(keys);
+            };
+
+            const getActiveRouteKeysFromLocation = () => {
+                const keysFromSearch = getRouteKeysFromSearch(window.location.search || '');
+                return keysFromSearch;
+            };
+
+            const routeKeysToStateKey = (routeKeys = []) => {
+                const normalized = normalizeRouteKeys(routeKeys).sort();
+                return normalized.join('|');
+            };
+
+            const buildRouteUrl = (routeKeys = [], preserveSearch = window.location.search || '') => {
+                const fullPath = buildFullPath();
+                const search = encodeRouteSearch(routeKeys, preserveSearch);
                 return `${fullPath}${search}`;
             };
 
-            const normalizeRoutePath = (value) => {
-                const input = stripBasePath(typeof value === 'string' && value.trim() ? value.trim() : ROUTE_BREWS);
-                let path = input.startsWith('/') ? input : `/${input}`;
-                if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
-                return KNOWN_ROUTES.has(path) ? path : ROUTE_BREWS;
-            };
-
-            const trackVirtualPageView = (path) => {
+            const trackVirtualPageView = (routeKeys = []) => {
                 if (typeof window.gtag !== 'function') return;
-                const normalized = normalizeRoutePath(path);
-                const fullPath = buildFullPath(normalized);
-                const location = `${window.location.origin}${fullPath}${window.location.search}`;
+                const normalizedKeys = normalizeRouteKeys(routeKeys);
+                const fullPath = buildFullPath();
+                const search = encodeRouteSearch(normalizedKeys, window.location.search || '');
+                const location = `${window.location.origin}${fullPath}${search}`;
                 window.gtag('event', 'page_view', {
-                    page_path: fullPath,
+                    page_path: `${fullPath}${search}`,
                     page_location: location,
                     page_title: document.title
                 });
@@ -1844,35 +1887,45 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
             let isApplyingRoute = false;
 
-            const setRoute = (path, { replace = false } = {}) => {
-                const normalized = normalizeRoutePath(path);
-                const current = normalizeRoutePath(stripBasePath(window.location.pathname || ROUTE_BREWS));
-                if (current === normalized) return;
-                const fullPath = buildRouteUrl(normalized);
-                const state = { ...(window.history.state || {}), appRoute: normalized };
+            const setRoute = (routeKeys, { replace = false } = {}) => {
+                const normalized = normalizeRouteKeys(routeKeys);
+                const current = getActiveRouteKeysFromLocation();
+                if (routeKeysToStateKey(current) === routeKeysToStateKey(normalized)) return;
+                const fullPath = buildRouteUrl(normalized, window.location.search || '');
+                const state = { ...(window.history.state || {}), appRouteKeys: normalized };
                 if (replace) window.history.replaceState(state, document.title, fullPath);
                 else window.history.pushState(state, document.title, fullPath);
                 trackVirtualPageView(normalized);
             };
 
-            const wrapActionWithRoute = (obj, actionName, routePath) => {
+            const wrapActionWithRoute = (obj, actionName, routeKey) => {
                 const original = obj?.[actionName];
                 if (typeof original !== 'function') return;
                 obj[actionName] = (...args) => {
                     const result = original(...args);
-                    if (!isApplyingRoute) setRoute(routePath);
+                    if (!isApplyingRoute) {
+                        const current = getActiveRouteKeysFromLocation();
+                        const next = normalizeRouteKeys([...current, routeKey]);
+                        setRoute(next);
+                    }
                     return result;
                 };
             };
 
-            const wrapCloseToBrewsRoute = (obj, actionName) => {
+            const removeRouteKeyFromLocation = (routeKey) => {
+                const key = normalizeRouteKey(routeKey);
+                if (!key) return;
+                const current = getActiveRouteKeysFromLocation();
+                if (!current.includes(key)) return;
+                setRoute(current.filter((entry) => entry !== key));
+            };
+
+            const wrapCloseRouteKey = (obj, actionName, routeKey) => {
                 const original = obj?.[actionName];
                 if (typeof original !== 'function') return;
                 obj[actionName] = (...args) => {
                     const result = original(...args);
-                    if (!isApplyingRoute && normalizeRoutePath(stripBasePath(window.location.pathname)) !== ROUTE_BREWS) {
-                        setRoute(ROUTE_BREWS);
-                    }
+                    if (!isApplyingRoute) removeRouteKeyFromLocation(routeKey);
                     return result;
                 };
             };
@@ -1902,36 +1955,44 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 });
             };
 
-            const openRoute = (path) => {
-                const route = normalizeRoutePath(path);
-                if (route === ROUTE_BREWS) return;
-                if (route === '/moments') return actions.openGallery?.();
-                if (route === '/beans') return actions.openBeans?.();
-                if (route === '/gear') return actions.openGasList?.();
-                if (route === '/coffees') return actions.openCoffeeTypes?.();
-                if (route === '/statistics') return actions.openStats?.();
-                if (route === '/preferences') return actions.openPreferences?.();
-                if (route === '/import-export') return actions.openImportExportModal?.('export');
-                if (route === '/help') return actions.openHelp?.();
-                if (route === '/about') return actions.openAbout?.();
-                if (route === '/lab-results') return actions.openLabResultsModal?.();
-                if (route === '/profile') return actions.openFriendsModal?.();
-                if (route === '/brew') return actions.openAddBrewFromPinned?.(null);
+            const authRequiredRouteKeys = new Set(['beans', 'coffees', 'statistics', 'import-export', 'profile', 'brew']);
+            const isAuthDeferredRouteKey = (routeKey) => {
+                const key = normalizeRouteKey(routeKey);
+                if (!key) return false;
+                return authRequiredRouteKeys.has(key) && !getCurrentUserState?.();
             };
 
-            const routeModalIdByPath = new Map([
-                ['/moments', 'galleryModal'],
-                ['/beans', 'beansModal'],
-                ['/gear', 'gasModal'],
-                ['/coffees', 'coffeeTypesModal'],
-                ['/statistics', 'statsModal'],
-                ['/preferences', 'preferencesModal'],
-                ['/import-export', 'importExportModal'],
-                ['/help', 'helpModal'],
-                ['/about', 'aboutModal'],
-                ['/lab-results', 'labResultsModal'],
-                ['/profile', 'modalOverlay'],
-                ['/brew', 'brewFormModal']
+            const openRouteKey = (routeKey) => {
+                const key = normalizeRouteKey(routeKey);
+                if (!key) return;
+                if (isAuthDeferredRouteKey(key)) return;
+                if (key === 'moments') return actions.openGallery?.();
+                if (key === 'beans') return actions.openBeans?.();
+                if (key === 'gear') return actions.openGasList?.();
+                if (key === 'coffees') return actions.openCoffeeTypes?.();
+                if (key === 'statistics') return actions.openStats?.();
+                if (key === 'preferences') return actions.openPreferences?.();
+                if (key === 'import-export') return actions.openImportExportModal?.('export');
+                if (key === 'help') return actions.openHelp?.();
+                if (key === 'about') return actions.openAbout?.();
+                if (key === 'lab-results') return actions.openLabResultsModal?.();
+                if (key === 'profile') return actions.openFriendsModal?.();
+                if (key === 'brew') return actions.openAddBrewFromPinned?.(null);
+            };
+
+            const routeModalIdByKey = new Map([
+                ['moments', 'galleryModal'],
+                ['beans', 'beansModal'],
+                ['gear', 'gasModal'],
+                ['coffees', 'coffeeTypesModal'],
+                ['statistics', 'statsModal'],
+                ['preferences', 'preferencesModal'],
+                ['import-export', 'importExportModal'],
+                ['help', 'helpModal'],
+                ['about', 'aboutModal'],
+                ['lab-results', 'labResultsModal'],
+                ['profile', 'modalOverlay'],
+                ['brew', 'brewFormModal']
             ]);
 
             const isModalVisible = (modalId) => {
@@ -1941,71 +2002,79 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
             const syncRouteFromModalVisibility = () => {
                 if (isApplyingRoute) return;
-                const current = normalizeRoutePath(stripBasePath(window.location.pathname || ROUTE_BREWS));
-                if (current === ROUTE_BREWS) return;
-                const modalId = routeModalIdByPath.get(current);
-                if (!modalId) return;
-                if (!isModalVisible(modalId)) setRoute(ROUTE_BREWS);
+                const current = getActiveRouteKeysFromLocation();
+                if (!current.length) return;
+                const visible = current.filter((key) => {
+                    if (isAuthDeferredRouteKey(key)) return true;
+                    const modalId = routeModalIdByKey.get(key);
+                    if (!modalId) return false;
+                    return isModalVisible(modalId);
+                });
+                if (routeKeysToStateKey(current) !== routeKeysToStateKey(visible)) {
+                    setRoute(visible);
+                }
             };
 
-            const applyRoute = (path, { track = true } = {}) => {
-                const normalized = normalizeRoutePath(path);
+            const applyRoute = (routeKeys, { track = true } = {}) => {
+                const normalized = normalizeRouteKeys(routeKeys);
                 isApplyingRoute = true;
                 try {
                     closeRoutedViews();
-                    openRoute(normalized);
+                    normalized.forEach((key) => {
+                        openRouteKey(key);
+                    });
                 } finally {
                     isApplyingRoute = false;
                 }
-                const current = normalizeRoutePath(stripBasePath(window.location.pathname || ROUTE_BREWS));
-                if (current !== normalized) {
-                    const state = { ...(window.history.state || {}), appRoute: normalized };
-                    window.history.replaceState(state, document.title, buildRouteUrl(normalized));
+                const current = getActiveRouteKeysFromLocation();
+                if (routeKeysToStateKey(current) !== routeKeysToStateKey(normalized)) {
+                    const state = { ...(window.history.state || {}), appRouteKeys: normalized };
+                    window.history.replaceState(state, document.title, buildRouteUrl(normalized, window.location.search || ''));
                 }
                 if (track) trackVirtualPageView(normalized);
             };
 
             [
-                ['openGallery', '/moments'],
-                ['openBeans', '/beans'],
-                ['openGasList', '/gear'],
-                ['openCoffeeTypes', '/coffees'],
-                ['openStats', '/statistics'],
-                ['openPreferences', '/preferences'],
-                ['openImportExportModal', '/import-export'],
-                ['openHelp', '/help'],
-                ['openAbout', '/about'],
-                ['openLabResultsModal', '/lab-results'],
-                ['openFriendsModal', '/profile'],
-                ['openAddBrewFromPinned', '/brew']
-            ].forEach(([actionName, routePath]) => {
-                wrapActionWithRoute(actions, actionName, routePath);
-                wrapActionWithRoute(featureActions, actionName, routePath);
+                ['openGallery', 'moments'],
+                ['openBeans', 'beans'],
+                ['openGasList', 'gear'],
+                ['openCoffeeTypes', 'coffees'],
+                ['openStats', 'statistics'],
+                ['openPreferences', 'preferences'],
+                ['openImportExportModal', 'import-export'],
+                ['openHelp', 'help'],
+                ['openAbout', 'about'],
+                ['openLabResultsModal', 'lab-results'],
+                ['openFriendsModal', 'profile'],
+                ['openAddBrewFromPinned', 'brew']
+            ].forEach(([actionName, routeKey]) => {
+                wrapActionWithRoute(actions, actionName, routeKey);
+                wrapActionWithRoute(featureActions, actionName, routeKey);
             });
 
             [
-                'hideGalleryModal',
-                'hidePreferencesModal',
-                'closeImportExportModal',
-                'closeHelp',
-                'closeAbout',
-                'closeLabResultsModal',
-                'closeStats',
-                'closeBeans',
-                'closeGasList',
-                'closeCoffeeTypes',
-                'closeBrewFormModal'
-            ].forEach((actionName) => {
-                wrapCloseToBrewsRoute(actions, actionName);
-                wrapCloseToBrewsRoute(featureActions, actionName);
+                ['hideGalleryModal', 'moments'],
+                ['hidePreferencesModal', 'preferences'],
+                ['closeImportExportModal', 'import-export'],
+                ['closeHelp', 'help'],
+                ['closeAbout', 'about'],
+                ['closeLabResultsModal', 'lab-results'],
+                ['closeStats', 'statistics'],
+                ['closeBeans', 'beans'],
+                ['closeGasList', 'gear'],
+                ['closeCoffeeTypes', 'coffees'],
+                ['closeBrewFormModal', 'brew']
+            ].forEach(([actionName, routeKey]) => {
+                wrapCloseRouteKey(actions, actionName, routeKey);
+                wrapCloseRouteKey(featureActions, actionName, routeKey);
             });
 
             const closeModalOriginal = actions.closeModal;
             if (typeof closeModalOriginal === 'function') {
                 const wrappedCloseModal = (...args) => {
                     const result = closeModalOriginal(...args);
-                    if (!isApplyingRoute && normalizeRoutePath(stripBasePath(window.location.pathname)) === '/profile') {
-                        setRoute(ROUTE_BREWS);
+                    if (!isApplyingRoute) {
+                        removeRouteKeyFromLocation('profile');
                     }
                     return result;
                 };
@@ -2016,13 +2085,16 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             }
 
             window.addEventListener('popstate', () => {
-                applyRoute(stripBasePath(window.location.pathname || ROUTE_BREWS), { track: true });
+                applyRoute(getActiveRouteKeysFromLocation(), { track: true });
+            });
+            window.addEventListener('coffee-dial-auth-ready', () => {
+                applyRoute(getActiveRouteKeysFromLocation(), { track: false });
             });
 
             const modalObserver = new MutationObserver(() => {
                 syncRouteFromModalVisibility();
             });
-            routeModalIdByPath.forEach((modalId) => {
+            routeModalIdByKey.forEach((modalId) => {
                 const modalEl = document.getElementById(modalId);
                 if (!modalEl) return;
                 modalObserver.observe(modalEl, {
@@ -2031,13 +2103,12 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 });
             });
 
-            const rawInitialPath = stripBasePath(typeof window.location.pathname === 'string' ? window.location.pathname : ROUTE_BREWS);
-            const initial = normalizeRoutePath(rawInitialPath || ROUTE_BREWS);
-            if (rawInitialPath !== initial) {
-                const state = { ...(window.history.state || {}), appRoute: initial };
-                window.history.replaceState(state, document.title, buildRouteUrl(initial));
-            }
-            applyRoute(initial, { track: true });
+            const initialKeys = getActiveRouteKeysFromLocation();
+            const normalizedInitialKeys = normalizeRouteKeys(initialKeys);
+            const initialState = { ...(window.history.state || {}), appRouteKeys: normalizedInitialKeys };
+
+            window.history.replaceState(initialState, document.title, buildRouteUrl(normalizedInitialKeys, window.location.search || ''));
+            applyRoute(normalizedInitialKeys, { track: true });
         };
 
         initializeHistoryRoutes();

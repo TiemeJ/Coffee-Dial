@@ -1365,7 +1365,7 @@ export const createGalleryModule = ({
 
     const shareMoment = async ({ photoId, data, cardSnapshot, cardElement }) => {
         const appLink = typeof window !== 'undefined'
-            ? `${window.location.origin}${window.location.pathname}${window.location.search}#moments`
+            ? `${window.location.origin}${window.location.pathname}${window.location.search ? `${window.location.search}&moments` : '?moments'}`
             : '';
         const shareText = buildMomentShareText({ data, cardSnapshot, appLink });
         if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
@@ -1593,7 +1593,7 @@ export const createGalleryModule = ({
 
         const coffeeSnapshot = resolveCoffeeSnapshot(coffeeData);
         const appLink = typeof window !== 'undefined'
-            ? `${window.location.origin}${window.location.pathname}${window.location.search}#moments`
+            ? `${window.location.origin}${window.location.pathname}${window.location.search ? `${window.location.search}&moments` : '?moments'}`
             : '';
         const previewShareText = buildMomentShareText({
             data: {

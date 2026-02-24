@@ -4,7 +4,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request));
 });
 
-const MOMENTS_FALLBACK_PATH = '/Coffee-Dial/moments';
+const MOMENTS_FALLBACK_PATH = '/Coffee-Dial/?moments';
 const recentlyHandledNotifications = new Map();
 
 const normalizeLink = (value) => {
@@ -52,7 +52,7 @@ const showMomentNotification = async (payload) => {
         tag: normalized.messageKey,
         data: {
             link: normalized.link,
-            route: '/moments'
+            route: 'moments'
         }
     });
 };
@@ -115,7 +115,7 @@ self.addEventListener('notificationclick', (event) => {
                     try {
                         client.postMessage({
                             type: 'coffee-dial-open-route',
-                            route: '/moments',
+                            route: 'moments',
                             url: link
                         });
                     } catch (_) {}

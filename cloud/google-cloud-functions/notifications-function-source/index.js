@@ -12,7 +12,7 @@ const messaging = admin.messaging();
 const REGION = "us-central1";
 const MAX_COMMENTERS_SCAN = 200;
 const MAX_MULTICAST_TOKENS = 500;
-const MOMENTS_PUSH_LINK = "https://tiemej.github.io/Coffee-Dial/moments";
+const MOMENTS_PUSH_LINK = "https://tiemej.github.io/Coffee-Dial/?moments";
 
 const DEFAULT_PREFS = {
   pushEnabled: false,

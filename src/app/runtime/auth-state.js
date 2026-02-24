@@ -47,11 +47,14 @@ export const createAuthStateChangedHandler = ({
             initNotificationListener(user.uid);
             if (shouldShowOnboarding) openHelp();
             initLightboxListeners();
-            if (typeof window !== 'undefined' && window.location.hash === '#moments') {
+            const hasQueryMomentsIntent = typeof window !== 'undefined' &&
+                new URLSearchParams(window.location.search || '').has('moments');
+            if (hasQueryMomentsIntent) {
                 openGallery?.();
+            }
+            if (typeof window !== 'undefined') {
                 try {
-                    const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-                    window.history.replaceState(null, '', cleanUrl);
+                    window.dispatchEvent(new Event('coffee-dial-auth-ready'));
                 } catch (_) {
                     // no-op
                 }
