@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - "cloud/google-cloud-functions/notifications-function-source/**"
-      - ".github/firebase.notifications.functions.json"
+      - "firebase.notifications.functions.json"
       - ".github/workflows/deploy-notifications-function.yml"
   workflow_dispatch:
     inputs:
@@ -123,14 +123,14 @@ jobs:
 
       - name: Verify Firebase config file
         run: |
-          CONFIG_PATH="$GITHUB_WORKSPACE/.github/firebase.notifications.functions.json"
+          CONFIG_PATH="$GITHUB_WORKSPACE/firebase.notifications.functions.json"
           test -f "$CONFIG_PATH"
           echo "Using Firebase config at: $CONFIG_PATH"
           cat "$CONFIG_PATH"
 
       - name: Deploy via Firebase CLI (onDocumentCreated wrapper flow)
         run: |
-          CONFIG_PATH="$GITHUB_WORKSPACE/.github/firebase.notifications.functions.json"
+          CONFIG_PATH="$GITHUB_WORKSPACE/firebase.notifications.functions.json"
           firebase deploy \
             --project="${{ secrets.GCP_PROJECT_ID }}" \
             --config="$CONFIG_PATH" \
