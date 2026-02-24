@@ -160,11 +160,18 @@ async function sendPushToRecipients({recipients, title, body, data}) {
   let totalSuccess = 0;
   let totalFailure = 0;
   const errorCodeCount = {};
+  const messageData = {
+    ...(data || {}),
+    link: pushLink,
+    title: typeof title === "string" ? title : "Coffee Dial",
+    body: typeof body === "string" ? body : "",
+  };
   for (const group of grouped) {
     const response = await messaging.sendEachForMulticast({
       tokens: group.map((entry) => entry.token),
-      notification: {title, body},
-      data: data || {},
+      // Data-only payload to ensure service-worker controlled rendering
+      // across browsers (prevents duplicate auto + manual notifications).
+      data: messageData,
       webpush: {
         fcmOptions: {
           link: pushLink,

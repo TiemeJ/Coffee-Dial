@@ -17,15 +17,20 @@ try {
         appId: '1:513325852224:web:0af5f15c4968a5bfad61a5'
     });
 
+    const normalizeLink = (value) => {
+        const raw = typeof value === 'string' && value.trim() ? value.trim() : '/Coffee-Dial/moments';
+        try {
+            return new URL(raw, self.location.origin).toString();
+        } catch (_) {
+            return `${self.location.origin}/Coffee-Dial/moments`;
+        }
+    };
+
     const messaging = firebase.messaging();
     messaging.onBackgroundMessage((payload) => {
-        // Avoid duplicate notifications:
-        // when FCM includes payload.notification, browsers already show it.
-        if (payload?.notification) return;
-
         const title = payload?.data?.title || payload?.notification?.title || 'Coffee Dial';
         const body = payload?.data?.body || payload?.notification?.body || '';
-        const link = payload?.data?.link || '/Coffee-Dial/moments';
+        const link = normalizeLink(payload?.data?.link || payload?.fcmOptions?.link || '/Coffee-Dial/moments');
         self.registration.showNotification(title, {
             body,
             icon: '/img/icon-192.png',
@@ -37,7 +42,15 @@ try {
 }
 
 self.addEventListener('notificationclick', (event) => {
-    const link = event?.notification?.data?.link || '/Coffee-Dial/moments';
+    const normalizeLink = (value) => {
+        const raw = typeof value === 'string' && value.trim() ? value.trim() : '/Coffee-Dial/moments';
+        try {
+            return new URL(raw, self.location.origin).toString();
+        } catch (_) {
+            return `${self.location.origin}/Coffee-Dial/moments`;
+        }
+    };
+    const link = normalizeLink(event?.notification?.data?.link || '/Coffee-Dial/moments');
     event.notification.close();
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
