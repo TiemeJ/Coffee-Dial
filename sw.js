@@ -24,13 +24,6 @@ const parsePushPayload = (event) => {
     }
 };
 
-const isIOSWebKit = () => {
-    const ua = self.navigator?.userAgent || '';
-    if (!ua) return false;
-    const isAppleMobile = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && /Mobile/i.test(ua));
-    return isAppleMobile && /AppleWebKit/i.test(ua);
-};
-
 self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request));
 });
@@ -38,10 +31,6 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
     const payload = parsePushPayload(event);
     if (!payload) return;
-
-    const hasNotificationPayload = !!payload.notification;
-    const shouldManuallyShow = isIOSWebKit() || !hasNotificationPayload;
-    if (!shouldManuallyShow) return;
 
     const title = payload?.notification?.title || payload?.data?.title || 'Coffee Dial';
     const body = payload?.notification?.body || payload?.data?.body || '';
