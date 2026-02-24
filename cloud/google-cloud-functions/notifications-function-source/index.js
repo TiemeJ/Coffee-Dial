@@ -1,4 +1,5 @@
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
+const {defineSecret} = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const webpush = require("web-push");
@@ -14,12 +15,11 @@ const REGION = "us-central1";
 const MAX_COMMENTERS_SCAN = 200;
 const MAX_MULTICAST_TOKENS = 500;
 const MOMENTS_PUSH_LINK = "https://tiemej.github.io/Coffee-Dial/?moments";
-const WEB_PUSH_SUBJECT = process.env.WEB_PUSH_SUBJECT ||
-  "mailto:noreply@coffee-dial.app";
-const WEB_PUSH_PUBLIC_KEY = process.env.WEB_PUSH_PUBLIC_KEY ||
-  process.env.WEB_PUSH_VAPID_PUBLIC_KEY || "";
-const WEB_PUSH_PRIVATE_KEY = process.env.WEB_PUSH_PRIVATE_KEY ||
-  process.env.WEB_PUSH_VAPID_PRIVATE_KEY || "";
+const WEB_PUSH_VAPID_PUBLIC_KEY_SECRET =
+  defineSecret("WEB_PUSH_VAPID_PUBLIC_KEY");
+const WEB_PUSH_VAPID_PRIVATE_KEY_SECRET =
+  defineSecret("WEB_PUSH_VAPID_PRIVATE_KEY");
+const WEB_PUSH_SUBJECT_SECRET = defineSecret("WEB_PUSH_SUBJECT");
 
 const DEFAULT_PREFS = {
   pushEnabled: false,
@@ -29,20 +29,30 @@ const DEFAULT_PREFS = {
 };
 const TEMP_DEBUG_LOGS = true;
 let webPushConfigured = false;
+let webPushConfigSignature = "";
 
-if (WEB_PUSH_PUBLIC_KEY && WEB_PUSH_PRIVATE_KEY) {
+function ensureWebPushConfigured() {
+  const publicKey = WEB_PUSH_VAPID_PUBLIC_KEY_SECRET.value() || "";
+  const privateKey = WEB_PUSH_VAPID_PRIVATE_KEY_SECRET.value() || "";
+  const subject = WEB_PUSH_SUBJECT_SECRET.value() || "mailto:noreply@coffee-dial.app";
+  const signature = [subject, publicKey, privateKey].join("|");
+  if (signature === webPushConfigSignature) return webPushConfigured;
+
+  webPushConfigSignature = signature;
+  if (!publicKey || !privateKey) {
+    webPushConfigured = false;
+    return false;
+  }
   try {
-    webpush.setVapidDetails(
-        WEB_PUSH_SUBJECT,
-        WEB_PUSH_PUBLIC_KEY,
-        WEB_PUSH_PRIVATE_KEY,
-    );
+    webpush.setVapidDetails(subject, publicKey, privateKey);
     webPushConfigured = true;
+    return true;
   } catch (error) {
     logger.error("webpush vapid configuration failed", {
       error: error && error.message ? error.message : String(error),
     });
     webPushConfigured = false;
+    return false;
   }
 }
 
@@ -219,6 +229,7 @@ async function sendPushToRecipients({recipients, title, body, data}) {
     declarativeEntries.push(...targets.declarativeEntries);
     tokenCountByUser[uid] = targets.fcmEntries.length;
   }
+  const hasWebPushConfig = ensureWebPushConfigured();
   if (TEMP_DEBUG_LOGS) {
     logger.info("push.send recipient token scan", {
       notificationType,
@@ -226,7 +237,7 @@ async function sendPushToRecipients({recipients, title, body, data}) {
       tokenEntryCount: tokenEntries.length,
       declarativeEntryCount: declarativeEntries.length,
       tokenCountByUser,
-      webPushConfigured,
+      webPushConfigured: hasWebPushConfig,
     });
   }
   if (!tokenEntries.length && !declarativeEntries.length) {
@@ -250,7 +261,7 @@ async function sendPushToRecipients({recipients, title, body, data}) {
     ...(data || {}),
     link: pushLink,
   };
-  if (webPushConfigured && declarativeEntries.length) {
+  if (hasWebPushConfig && declarativeEntries.length) {
     const declarativePayload = buildDeclarativeWebPushPayload({
       title,
       body,
@@ -459,6 +470,11 @@ exports.notifyOnMomentCreated = onDocumentCreated(
     {
       region: REGION,
       document: "photos/{photoId}",
+      secrets: [
+        WEB_PUSH_VAPID_PUBLIC_KEY_SECRET,
+        WEB_PUSH_VAPID_PRIVATE_KEY_SECRET,
+        WEB_PUSH_SUBJECT_SECRET,
+      ],
     },
     async (event) => {
       const eventData = getEventData(event);
@@ -541,6 +557,11 @@ exports.notifyOnCommentCreated = onDocumentCreated(
     {
       region: REGION,
       document: "photos/{photoId}/comments/{commentId}",
+      secrets: [
+        WEB_PUSH_VAPID_PUBLIC_KEY_SECRET,
+        WEB_PUSH_VAPID_PRIVATE_KEY_SECRET,
+        WEB_PUSH_SUBJECT_SECRET,
+      ],
     },
     async (event) => {
       const eventData = getEventData(event);
