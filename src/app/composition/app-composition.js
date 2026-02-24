@@ -2090,6 +2090,14 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             window.addEventListener('coffee-dial-auth-ready', () => {
                 applyRoute(getActiveRouteKeysFromLocation(), { track: false });
             });
+            window.addEventListener('pageshow', () => {
+                applyRoute(getActiveRouteKeysFromLocation(), { track: false });
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    applyRoute(getActiveRouteKeysFromLocation(), { track: false });
+                }
+            });
 
             const modalObserver = new MutationObserver(() => {
                 syncRouteFromModalVisibility();

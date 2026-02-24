@@ -43,6 +43,46 @@ const shouldHandleMessage = (messageKey) => {
     return true;
 };
 
+const isIOSWebKit = () => {
+    const ua = (self.navigator && self.navigator.userAgent) ? self.navigator.userAgent : '';
+    if (!ua) return false;
+    const isAppleMobile = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && /Mobile/i.test(ua));
+    return isAppleMobile && /AppleWebKit/i.test(ua);
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isAppScopedClient = (clientUrl) => {
+    if (typeof clientUrl !== 'string' || !clientUrl) return false;
+    try {
+        const url = new URL(clientUrl);
+        return url.origin === self.location.origin && url.pathname.startsWith('/Coffee-Dial/');
+    } catch (_) {
+        return false;
+    }
+};
+
+const postRouteIntentToClients = async ({ link, delays = [] } = {}) => {
+    const allDelays = [0, ...delays];
+    for (const delayMs of allDelays) {
+        if (delayMs > 0) await sleep(delayMs);
+        const clientsList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+        clientsList
+            .filter((client) => isAppScopedClient(client.url))
+            .forEach((client) => {
+                try {
+                    client.postMessage({
+                        type: 'coffee-dial-open-route',
+                        route: 'moments',
+                        url: link
+                    });
+                } catch (_) {
+                    // Ignore transient client messaging failures.
+                }
+            });
+    }
+};
+
 const showMomentNotification = async (payload) => {
     const normalized = normalizePayload(payload);
     if (!shouldHandleMessage(normalized.messageKey)) return;
@@ -108,22 +148,54 @@ self.addEventListener('notificationclick', (event) => {
     const link = normalizeLink(event?.notification?.data?.link || MOMENTS_FALLBACK_PATH);
     event.notification.close();
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (windowClients) => {
-            for (const client of windowClients) {
-                if ('focus' in client) {
-                    try { await client.navigate(link); } catch (_) {}
-                    try {
-                        client.postMessage({
-                            type: 'coffee-dial-open-route',
-                            route: 'moments',
-                            url: link
-                        });
-                    } catch (_) {}
-                    return client.focus();
+        (async () => {
+            const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+            const scopedClients = windowClients.filter((client) => isAppScopedClient(client.url));
+            const matchingClient = scopedClients.find((client) => {
+                try {
+                    return new URL(client.url).toString() === link;
+                } catch (_) {
+                    return false;
+                }
+            });
+            const targetClient = matchingClient || scopedClients[0] || null;
+
+            const tryUseExistingClient = async () => {
+                if (!targetClient) return false;
+                try { await targetClient.navigate(link); } catch (_) {}
+                try { await targetClient.focus(); } catch (_) {}
+                return true;
+            };
+
+            const tryOpenWindow = async () => {
+                if (!clients.openWindow) return null;
+                try {
+                    return await clients.openWindow(link);
+                } catch (_) {
+                    return null;
+                }
+            };
+
+            // WebKit/iOS home-screen PWAs can have inert existing clients right after click.
+            // Prefer openWindow first there, then retry route intent delivery.
+            if (isIOSWebKit()) {
+                const openedClient = await tryOpenWindow();
+                if (openedClient && 'focus' in openedClient) {
+                    try { await openedClient.focus(); } catch (_) {}
+                }
+                await postRouteIntentToClients({ link, delays: [300, 1200] });
+                if (!openedClient) await tryUseExistingClient();
+                return;
+            }
+
+            const usedExisting = await tryUseExistingClient();
+            if (!usedExisting) {
+                const openedClient = await tryOpenWindow();
+                if (openedClient && 'focus' in openedClient) {
+                    try { await openedClient.focus(); } catch (_) {}
                 }
             }
-            if (clients.openWindow) return clients.openWindow(link);
-            return null;
-        })
+            await postRouteIntentToClients({ link, delays: [200] });
+        })()
     );
 });
