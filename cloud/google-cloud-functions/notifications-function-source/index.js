@@ -163,14 +163,14 @@ async function sendPushToRecipients({recipients, title, body, data}) {
   const messageData = {
     ...(data || {}),
     link: pushLink,
-    title: typeof title === "string" ? title : "Coffee Dial",
-    body: typeof body === "string" ? body : "",
   };
   for (const group of grouped) {
     const response = await messaging.sendEachForMulticast({
       tokens: group.map((entry) => entry.token),
-      // Data-only payload to ensure service-worker controlled rendering
-      // across browsers (prevents duplicate auto + manual notifications).
+      notification: {
+        title: typeof title === "string" ? title : "Coffee Dial",
+        body: typeof body === "string" ? body : "",
+      },
       data: messageData,
       webpush: {
         fcmOptions: {
