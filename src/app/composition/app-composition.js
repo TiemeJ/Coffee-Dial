@@ -1343,6 +1343,25 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         };
         initAnimationPreference();
 
+        let hasBoundServiceWorkerRouteMessages = false;
+        const bindServiceWorkerRouteMessages = () => {
+            if (hasBoundServiceWorkerRouteMessages) return;
+            if (typeof navigator === 'undefined' || !navigator.serviceWorker) return;
+            hasBoundServiceWorkerRouteMessages = true;
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                const payload = event?.data && typeof event.data === 'object' ? event.data : null;
+                if (!payload) return;
+                const targetRoute = typeof payload.route === 'string' ? payload.route.trim() : '';
+                if (targetRoute !== '/moments') return;
+                try {
+                    openGallery?.();
+                } catch (error) {
+                    console.error('Failed opening moments from service worker message:', error);
+                }
+            });
+        };
+        bindServiceWorkerRouteMessages();
+
         installCardNavigationHandlers({
             navigateBeanCard,
             navigateCoffeeCard,

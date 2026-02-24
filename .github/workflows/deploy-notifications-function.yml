@@ -8,16 +8,6 @@ on:
       - "firebase.notifications.functions.json"
       - ".github/workflows/deploy-notifications-function.yml"
   workflow_dispatch:
-    inputs:
-      deploy_mode:
-        description: "Deploy mode for notifications functions"
-        required: true
-        default: "gcloud"
-        type: choice
-        options:
-          - gcloud
-          - firebase
-          - both
 
 permissions:
   contents: read
@@ -44,65 +34,9 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-  deploy-gcloud:
-    needs: lint
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_mode == 'gcloud' || github.event.inputs.deploy_mode == 'both') }}
-    env:
-      FUNCTION_REGION: us-central1
-      FIRESTORE_TRIGGER_LOCATION: eur3
-      FUNCTION_RUNTIME: nodejs22
-      FUNCTION_SOURCE: cloud/google-cloud-functions/notifications-function-source
-      FUNCTION_SERVICE_ACCOUNT: coffee-dial-app-9db38@appspot.gserviceaccount.com
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
-
-      - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Deploy notifyOnMomentCreated (Gen2 Firestore trigger)
-        run: |
-          gcloud functions deploy "notifyOnMomentCreated" \
-            --gen2 \
-            --project="${{ secrets.GCP_PROJECT_ID }}" \
-            --region="${FUNCTION_REGION}" \
-            --trigger-location="${FIRESTORE_TRIGGER_LOCATION}" \
-            --runtime="${FUNCTION_RUNTIME}" \
-            --source="${FUNCTION_SOURCE}" \
-            --entry-point="notifyOnMomentCreated" \
-            --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
-            --trigger-event-filters="type=google.cloud.firestore.document.v1.created" \
-            --trigger-event-filters="database=(default)" \
-            --trigger-event-filters-path-pattern="document=photos/{photoId}"
-
-      - name: Deploy notifyOnCommentCreated (Gen2 Firestore trigger)
-        run: |
-          gcloud functions deploy "notifyOnCommentCreated" \
-            --gen2 \
-            --project="${{ secrets.GCP_PROJECT_ID }}" \
-            --region="${FUNCTION_REGION}" \
-            --trigger-location="${FIRESTORE_TRIGGER_LOCATION}" \
-            --runtime="${FUNCTION_RUNTIME}" \
-            --source="${FUNCTION_SOURCE}" \
-            --entry-point="notifyOnCommentCreated" \
-            --service-account="${FUNCTION_SERVICE_ACCOUNT}" \
-            --trigger-event-filters="type=google.cloud.firestore.document.v1.created" \
-            --trigger-event-filters="database=(default)" \
-            --trigger-event-filters-path-pattern="document=photos/{photoId}/comments/{commentId}"
-
   deploy-firebase:
     needs: lint
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_mode == 'firebase' || github.event.inputs.deploy_mode == 'both') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
