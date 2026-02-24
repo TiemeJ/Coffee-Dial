@@ -61,6 +61,7 @@ export const createBrewsPreferencesModule = ({
     let hasBoundNotificationsDebug = false;
     let autoSaveTimer = null;
     let saveQueue = Promise.resolve();
+    let isCurrentDevicePushRegistered = false;
 
     const applyAnimationPreference = () => {
         applyAnimationClass(!!getPinnedBrewsPreferences().animationsEnabled);
@@ -124,10 +125,14 @@ export const createBrewsPreferencesModule = ({
         });
     };
 
-    const updatePushPermissionGuard = (pushEnabled = null) => {
+    const updatePushPermissionGuard = (pushEnabled = null, { currentDeviceRegistered = null } = {}) => {
         const guard = document.getElementById('notificationsPermissionGuard');
         const detail = document.getElementById('notificationsPermissionGuardDetail');
         if (!guard) return;
+
+        if (typeof currentDeviceRegistered === 'boolean') {
+            isCurrentDevicePushRegistered = currentDeviceRegistered;
+        }
 
         const enabled = typeof pushEnabled === 'boolean'
             ? pushEnabled
@@ -135,7 +140,9 @@ export const createBrewsPreferencesModule = ({
         const permission = typeof Notification === 'undefined'
             ? 'unsupported'
             : (Notification.permission || 'default');
-        const shouldWarn = enabled && (permission === 'default' || permission === 'denied' || permission === 'unsupported');
+        const shouldWarn = enabled &&
+            isCurrentDevicePushRegistered &&
+            (permission === 'default' || permission === 'denied' || permission === 'unsupported');
 
         if (detail) {
             if (permission === 'denied') {
@@ -212,7 +219,7 @@ export const createBrewsPreferencesModule = ({
         setDebugText('notificationsDebugDeviceCount', '-');
         setDebugText('notificationsDebugCurrentToken', '-');
         setDebugText('notificationsDebugCurrentUpdatedAt', '-');
-        updatePushPermissionGuard(!!prefs.pushEnabled);
+        updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: false });
         updateRegisterCurrentDeviceButton({ show: false, busy: false });
         if (listEl) listEl.textContent = 'Loading...';
 
@@ -237,6 +244,7 @@ export const createBrewsPreferencesModule = ({
                 isPushEnvironmentSupported() &&
                 !!currentDeviceId &&
                 !current;
+            updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: !!current });
             updateRegisterCurrentDeviceButton({ show: showRegisterCurrentDeviceButton, busy: false });
             setDebugText('notificationsDebugCurrentToken', shortenToken(current?.token || ''));
             setDebugText('notificationsDebugCurrentUpdatedAt', current?.updatedAt || '-');
@@ -273,6 +281,7 @@ export const createBrewsPreferencesModule = ({
                     listEl.appendChild(row);
                 });
         } catch (error) {
+            updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: false });
             updatePushAvailabilityState({ hasRegisteredDevices: false });
             if (listEl) listEl.textContent = `Failed loading devices: ${error?.message || error}`;
         }
@@ -505,7 +514,7 @@ export const createBrewsPreferencesModule = ({
         document.getElementById('notificationsCommentsFollowingToggle').checked = !!notificationPrefs.commentsOnFollowedOrCommentedMoments;
         updateAnimationsToggleState(!!pinnedPrefs.showTilesInsteadOfCoffeeArt);
         updateNotificationToggleState(!!notificationPrefs.pushEnabled);
-        updatePushPermissionGuard(!!notificationPrefs.pushEnabled);
+        updatePushPermissionGuard(!!notificationPrefs.pushEnabled, { currentDeviceRegistered: false });
 
         bindPreferencesAutoSave();
         bindNotificationsDebug();
