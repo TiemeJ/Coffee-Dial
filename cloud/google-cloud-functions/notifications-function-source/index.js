@@ -12,6 +12,7 @@ const messaging = admin.messaging();
 const REGION = "us-central1";
 const MAX_COMMENTERS_SCAN = 200;
 const MAX_MULTICAST_TOKENS = 500;
+const MOMENTS_PUSH_LINK = "https://tiemej.github.io/Coffee-Dial/moments";
 
 const DEFAULT_PREFS = {
   pushEnabled: false,
@@ -119,6 +120,9 @@ async function markTokenInvalid(entries = []) {
 
 async function sendPushToRecipients({recipients, title, body, data}) {
   const notificationType = data && data.type ? data.type : "";
+  const pushLink = data && typeof data.link === "string" && data.link.trim() ?
+    data.link.trim() :
+    MOMENTS_PUSH_LINK;
   if (!recipients.length) {
     if (TEMP_DEBUG_LOGS) {
       logger.info("push.send skipped: no recipients", {
@@ -163,7 +167,7 @@ async function sendPushToRecipients({recipients, title, body, data}) {
       data: data || {},
       webpush: {
         fcmOptions: {
-          link: "/#moments",
+          link: pushLink,
         },
       },
     });
@@ -384,7 +388,7 @@ exports.notifyOnMomentCreated = onDocumentCreated(
         data: {
           type: "friend_moment",
           photoId,
-          link: "/#moments",
+          link: MOMENTS_PUSH_LINK,
         },
       });
       logger.info("notifyOnMomentCreated complete", {
@@ -502,7 +506,7 @@ exports.notifyOnCommentCreated = onDocumentCreated(
         data: {
           type: "moment_comment",
           photoId,
-          link: "/#moments",
+          link: MOMENTS_PUSH_LINK,
         },
       });
       logger.info("notifyOnCommentCreated complete", {
