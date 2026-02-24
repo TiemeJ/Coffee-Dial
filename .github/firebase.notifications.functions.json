@@ -1,7 +1,7 @@
 {
   "functions": [
     {
-      "source": "cloud/google-cloud-functions/notifications-function-source",
+      "source": "../cloud/google-cloud-functions/notifications-function-source",
       "codebase": "notifications"
     }
   ]
