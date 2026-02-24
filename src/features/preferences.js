@@ -259,11 +259,21 @@ export const createBrewsPreferencesModule = ({
                 .sort((a, b) => `${b.updatedAt || ''}`.localeCompare(`${a.updatedAt || ''}`))
                 .forEach((entry) => {
                     const row = document.createElement('div');
-                    const marker = entry.id === currentDeviceId ? ' (current)' : '';
-                    row.className = 'flex items-center justify-between gap-2 rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#292524] px-2 py-1.5';
+                    const isCurrent = entry.id === currentDeviceId;
+                    row.className = isCurrent
+                        ? 'flex items-center justify-between gap-2 rounded border border-sky-400 dark:border-sky-500 bg-white dark:bg-[#292524] px-2 py-1.5'
+                        : 'flex items-center justify-between gap-2 rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#292524] px-2 py-1.5';
                     const meta = document.createElement('div');
-                    meta.className = 'min-w-0 text-[10px] font-mono text-coffee-700 dark:text-[#d6ccc2]';
-                    meta.textContent = `${entry.id}${marker} | enabled=${entry.enabled ? '1' : '0'} | token=${shortenToken(entry.token)} | updated=${entry.updatedAt || '-'}`;
+                    meta.className = 'min-w-0 flex-1 text-[10px] text-coffee-700 dark:text-[#d6ccc2]';
+                    const userAgent = typeof entry.userAgent === 'string' ? entry.userAgent.trim() : '';
+                    const displayName = userAgent || entry.id;
+                    const thisDeviceTag = isCurrent
+                        ? '<span class="text-sky-600 dark:text-sky-400">(this device)</span>'
+                        : '';
+                    meta.innerHTML = `
+                        <div class="min-w-0 text-[11px] font-semibold truncate" title="${displayName.replace(/"/g, '&quot;')}">${displayName}</div>
+                        <div class="font-mono break-all">${entry.id}${thisDeviceTag ? ` ${thisDeviceTag}` : ''} | enabled=${entry.enabled ? '1' : '0'} | token=${shortenToken(entry.token)} | updated=${entry.updatedAt || '-'}</div>
+                    `;
                     row.appendChild(meta);
                     if (typeof deleteDoc === 'function') {
                         const deleteBtn = document.createElement('button');
