@@ -10,4 +10,5 @@ blob-report/
 
 # Others
 cloud/firebase-config/
+.gcloud/
 
