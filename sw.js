@@ -62,6 +62,17 @@ const isAppScopedClient = (clientUrl) => {
     }
 };
 
+const withNavigationNonce = (urlValue) => {
+    const normalized = normalizeLink(urlValue);
+    try {
+        const url = new URL(normalized);
+        url.searchParams.set('_pn', `${Date.now()}`);
+        return url.toString();
+    } catch (_) {
+        return normalized;
+    }
+};
+
 const postRouteIntentToClients = async ({ link, delays = [] } = {}) => {
     const allDelays = [0, ...delays];
     for (const delayMs of allDelays) {
@@ -149,53 +160,79 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
         (async () => {
-            const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-            const scopedClients = windowClients.filter((client) => isAppScopedClient(client.url));
-            const matchingClient = scopedClients.find((client) => {
+            try {
+                const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+                const scopedClients = windowClients.filter((client) => isAppScopedClient(client.url));
+                const matchingClient = scopedClients.find((client) => {
+                    try {
+                        return new URL(client.url).toString() === link;
+                    } catch (_) {
+                        return false;
+                    }
+                });
+                const targetClient = matchingClient || scopedClients[0] || null;
+
+                const navigateAndFocusClient = async (client, targetUrl) => {
+                    if (!client) return false;
+                    let navigated = false;
+                    let focused = false;
+                    try {
+                        const maybeClient = await client.navigate(targetUrl);
+                        navigated = !!maybeClient;
+                    } catch (_) {
+                        // Client may be stale/already gone.
+                    }
+                    try {
+                        await client.focus();
+                        focused = true;
+                    } catch (_) {
+                        // Focus can fail when client was already destroyed.
+                    }
+                    return navigated || focused;
+                };
+
+                const tryUseExistingClient = async () => {
+                    if (!targetClient) return false;
+                    return navigateAndFocusClient(targetClient, link);
+                };
+
+                const tryOpenWindow = async (targetUrl) => {
+                    if (!clients.openWindow) return null;
+                    try {
+                        return await clients.openWindow(targetUrl);
+                    } catch (_) {
+                        return null;
+                    }
+                };
+
+                // WebKit/iOS home-screen PWAs can have inert existing clients right after click.
+                // Prefer openWindow first there, then retry route intent delivery.
+                if (isIOSWebKit()) {
+                    const openedClient = await tryOpenWindow(withNavigationNonce(link));
+                    if (openedClient && 'focus' in openedClient) {
+                        try { await openedClient.focus(); } catch (_) {}
+                    }
+                    await postRouteIntentToClients({ link, delays: [300, 1200] });
+                    if (!openedClient) await tryUseExistingClient();
+                    return;
+                }
+
+                const usedExisting = await tryUseExistingClient();
+                if (!usedExisting) {
+                    const openedClient = await tryOpenWindow(link);
+                    if (openedClient && 'focus' in openedClient) {
+                        try { await openedClient.focus(); } catch (_) {}
+                    }
+                }
+                await postRouteIntentToClients({ link, delays: [200] });
+            } catch (error) {
+                console.warn('Notification click handling failed', error);
                 try {
-                    return new URL(client.url).toString() === link;
+                    await clients.openWindow(withNavigationNonce(link));
                 } catch (_) {
-                    return false;
-                }
-            });
-            const targetClient = matchingClient || scopedClients[0] || null;
-
-            const tryUseExistingClient = async () => {
-                if (!targetClient) return false;
-                try { await targetClient.navigate(link); } catch (_) {}
-                try { await targetClient.focus(); } catch (_) {}
-                return true;
-            };
-
-            const tryOpenWindow = async () => {
-                if (!clients.openWindow) return null;
-                try {
-                    return await clients.openWindow(link);
-                } catch (_) {
-                    return null;
-                }
-            };
-
-            // WebKit/iOS home-screen PWAs can have inert existing clients right after click.
-            // Prefer openWindow first there, then retry route intent delivery.
-            if (isIOSWebKit()) {
-                const openedClient = await tryOpenWindow();
-                if (openedClient && 'focus' in openedClient) {
-                    try { await openedClient.focus(); } catch (_) {}
-                }
-                await postRouteIntentToClients({ link, delays: [300, 1200] });
-                if (!openedClient) await tryUseExistingClient();
-                return;
-            }
-
-            const usedExisting = await tryUseExistingClient();
-            if (!usedExisting) {
-                const openedClient = await tryOpenWindow();
-                if (openedClient && 'focus' in openedClient) {
-                    try { await openedClient.focus(); } catch (_) {}
+                    // no-op
                 }
             }
-            await postRouteIntentToClients({ link, delays: [200] });
         })()
     );
 });
