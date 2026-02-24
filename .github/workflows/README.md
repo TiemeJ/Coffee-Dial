@@ -114,7 +114,7 @@ The workflow:
 2. On push: stops after lint (no deploy).
 3. On manual dispatch: deploys notification functions with `gcloud functions deploy` and/or `firebase-tools` based on `deploy_mode`.
 4. Uses Firestore trigger location `eur3` with `database=(default)` event filter in the gcloud path.
-5. Firebase deploy uses config: `.github/firebase.notifications.functions.json`.
+5. Firebase deploy uses config: `.github/firebase.notifications.functions.json` and deploys `functions:notifications` codebase.
 
 Required GitHub repository secrets:
 - `GCP_PROJECT_ID`

@@ -134,4 +134,4 @@ jobs:
           firebase deploy \
             --project="${{ secrets.GCP_PROJECT_ID }}" \
             --config="$CONFIG_PATH" \
-            --only="functions:notifyOnMomentCreated,functions:notifyOnCommentCreated"
+            --only="functions:notifications"
