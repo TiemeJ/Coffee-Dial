@@ -333,7 +333,7 @@ export const createBrewsPreferencesModule = ({
                     console.error('Failed persisting notification preferences after device delete:', persistError);
                 }
                 try {
-                    await onNotificationPreferencesChanged?.(nextNotificationPrefs);
+                    await onNotificationPreferencesChanged?.(nextNotificationPrefs, { trigger: 'toggle-disable' });
                 } catch (applyError) {
                     console.error('Failed applying notification preferences after device delete:', applyError);
                 }
@@ -359,7 +359,8 @@ export const createBrewsPreferencesModule = ({
                 const registrationResult = await Promise.race([
                     Promise.resolve(
                         onNotificationPreferencesChanged?.(
-                            normalizeNotificationPreferences(getNotificationPreferences?.())
+                            normalizeNotificationPreferences(getNotificationPreferences?.()),
+                            { trigger: 'register-button' }
                         )
                     ),
                     new Promise((resolve) => setTimeout(() => resolve({ ok: false, reason: 'timeout' }), 20000))
@@ -422,6 +423,7 @@ export const createBrewsPreferencesModule = ({
 
     const persistPinnedBrewsPreferences = async (nextState) => {
         let nextPinnedPrefs = { ...(nextState?.pinned || {}) };
+        const prevNotificationPrefs = normalizeNotificationPreferences(getNotificationPreferences?.());
         const nextNotificationPrefs = normalizeNotificationPreferences(nextState?.notificationPrefs || getNotificationPreferences?.());
         const currentPrefs = getPinnedBrewsPreferences();
         const pinBestPerMethodDrinkEnabled = nextPinnedPrefs.pinBestPerMethodDrink !== false;
@@ -458,7 +460,16 @@ export const createBrewsPreferencesModule = ({
         renderTable();
         renderPinnedTiles();
         onPinnedBrewsPreferencesChanged?.(nextPinnedPrefs);
-        onNotificationPreferencesChanged?.(nextNotificationPrefs);
+        const wasPushEnabled = !!prevNotificationPrefs.pushEnabled;
+        const isPushEnabled = !!nextNotificationPrefs.pushEnabled;
+        if (wasPushEnabled !== isPushEnabled) {
+            onNotificationPreferencesChanged?.(
+                nextNotificationPrefs,
+                { trigger: isPushEnabled ? 'toggle-enable' : 'toggle-disable' }
+            );
+        } else {
+            onNotificationPreferencesChanged?.(nextNotificationPrefs, { trigger: 'preferences-save' });
+        }
         renderNotificationsDebugPanel();
 
     };

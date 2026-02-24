@@ -477,9 +477,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 renderCoffeeTypesTable?.();
                 renderGasTable?.();
             },
-            onNotificationPreferencesChanged: async () => {
+            onNotificationPreferencesChanged: async (nextPrefs = null, options = {}) => {
                 try {
-                    return await pushNotifications.handlePreferencesChanged();
+                    return await pushNotifications.handlePreferencesChanged(nextPrefs, options);
                 } catch (error) {
                     console.error('Failed applying push notification preference change:', error);
                     return { ok: false, reason: 'error', error: error?.message || String(error) };
@@ -1356,7 +1356,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         const authStateChangedHandler = createAuthStateChangedHandler({
             initUserData,
-            initPushNotifications: async () => pushNotifications.initForCurrentUser(),
+            initPushNotifications: async () => pushNotifications.handlePreferencesChanged(null, { trigger: 'auth-init' }),
             loadFollowingList,
             changeView,
             initNotificationListener,

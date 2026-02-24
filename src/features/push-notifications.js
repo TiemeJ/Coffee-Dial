@@ -45,7 +45,7 @@ export const createPushNotificationsModule = ({
     vapidKey = '',
     showToast
 }) => {
-    const { db, doc, setDoc, deleteDoc } = dataService || {};
+    const { db, doc, setDoc, deleteDoc, getDoc } = dataService || {};
     const {
         getMessaging,
         getToken,
@@ -141,6 +141,26 @@ export const createPushNotificationsModule = ({
         }
     };
 
+    const getCurrentDeviceRegistration = async (uid) => {
+        if (!uid || typeof getDoc !== 'function') return null;
+        const deviceId = readPushDeviceId();
+        if (!deviceId) return null;
+        try {
+            const snap = await getDoc(doc(db, 'users', uid, 'devices', deviceId));
+            if (!snap?.exists?.()) return null;
+            const data = snap.data?.() || {};
+            const token = typeof data.token === 'string' ? data.token.trim() : '';
+            return {
+                id: deviceId,
+                token,
+                hasToken: !!token,
+                enabled: !!data.enabled
+            };
+        } catch (_) {
+            return null;
+        }
+    };
+
     const registerForegroundListener = async () => {
         if (foregroundUnsubscribe) return;
         const messaging = await resolveMessaging();
@@ -171,7 +191,7 @@ export const createPushNotificationsModule = ({
         return { ok: true, reason: 'disabled' };
     };
 
-    const initForCurrentUser = async () => {
+    const initForCurrentUser = async ({ allowRegistration = true } = {}) => {
         const user = getCurrentUser?.();
         if (!user?.uid) return { ok: false, reason: 'no-user' };
         const prefs = normalizeNotificationPreferences(getNotificationPreferences?.());
@@ -190,6 +210,15 @@ export const createPushNotificationsModule = ({
         }
         const messaging = await resolveMessaging();
         if (!messaging) return { ok: false, reason: 'unsupported' };
+        if (!allowRegistration) {
+            const currentDevice = await getCurrentDeviceRegistration(user.uid);
+            if (currentDevice?.enabled && currentDevice?.hasToken) {
+                await registerForegroundListener();
+                return { ok: true, reason: 'already-registered' };
+            }
+            stopForegroundListener();
+            return { ok: false, reason: 'registration-not-requested' };
+        }
 
         let permission = permissionBefore;
         if (permission === 'default' && typeof Notification !== 'undefined' && typeof Notification.requestPermission === 'function') {
@@ -246,10 +275,27 @@ export const createPushNotificationsModule = ({
         return { ok: true, reason: 'registered', token };
     };
 
-    const handlePreferencesChanged = async () => {
-        const prefs = normalizeNotificationPreferences(getNotificationPreferences?.());
-        if (prefs.pushEnabled) return initForCurrentUser();
-        return disableForCurrentUser();
+    const handlePreferencesChanged = async (nextPrefs = null, options = {}) => {
+        const prefs = normalizeNotificationPreferences(nextPrefs || getNotificationPreferences?.());
+        const trigger = typeof options?.trigger === 'string' ? options.trigger : 'unknown';
+        if (!prefs.pushEnabled || trigger === 'toggle-disable') return disableForCurrentUser();
+
+        if (trigger === 'register-button') {
+            return initForCurrentUser({ allowRegistration: true });
+        }
+
+        if (trigger === 'toggle-enable') {
+            const user = getCurrentUser?.();
+            if (!user?.uid) return { ok: false, reason: 'no-user' };
+            const currentDevice = await getCurrentDeviceRegistration(user.uid);
+            if (currentDevice?.enabled && currentDevice?.hasToken) {
+                await registerForegroundListener();
+                return { ok: true, reason: 'already-registered' };
+            }
+            return initForCurrentUser({ allowRegistration: true });
+        }
+
+        return initForCurrentUser({ allowRegistration: false });
     };
 
     const cleanupOnLogout = async () => {
