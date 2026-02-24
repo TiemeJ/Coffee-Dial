@@ -242,7 +242,6 @@ export const createBrewsPreferencesModule = ({
             const current = rows.find((entry) => entry.id === currentDeviceId) || null;
             const showRegisterCurrentDeviceButton = !!prefs?.pushEnabled &&
                 isPushEnvironmentSupported() &&
-                !!currentDeviceId &&
                 !current;
             updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: !!current });
             updateRegisterCurrentDeviceButton({ show: showRegisterCurrentDeviceButton, busy: false });
