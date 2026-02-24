@@ -106,11 +106,15 @@ It runs on:
 - Pushes to `main` that touch the notifications function folder
 - Manual workflow dispatch
 
+Manual dispatch input:
+- `deploy_mode`: `gcloud` | `firebase` | `both` (default: `gcloud`)
+
 The workflow:
 1. Lints the function package.
-2. Deploys `notifyOnMomentCreated` (Firestore create trigger on `photos/{photoId}`).
-3. Deploys `notifyOnCommentCreated` (Firestore create trigger on `photos/{photoId}/comments/{commentId}`).
-4. Uses Firestore trigger location `eur3` with `database=(default)` event filter.
+2. Deploys notification functions with `gcloud functions deploy` (existing path).
+3. Deploys notification functions with `firebase-tools` using `onDocumentCreated` wrapper flow.
+4. Uses Firestore trigger location `eur3` with `database=(default)` event filter in the gcloud path.
+5. Firebase deploy uses config: `cloud/firebase-config/firebase.notifications.functions.json`.
 
 Required GitHub repository secrets:
 - `GCP_PROJECT_ID`

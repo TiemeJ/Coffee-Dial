@@ -5,8 +5,19 @@ on:
     branches: [ "main" ]
     paths:
       - "cloud/google-cloud-functions/notifications-function-source/**"
+      - "cloud/firebase-config/firebase.notifications.functions.json"
       - ".github/workflows/deploy-notifications-function.yml"
   workflow_dispatch:
+    inputs:
+      deploy_mode:
+        description: "Deploy mode for notifications functions"
+        required: true
+        default: "gcloud"
+        type: choice
+        options:
+          - gcloud
+          - firebase
+          - both
 
 permissions:
   contents: read
@@ -33,9 +44,10 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-  deploy:
+  deploy-gcloud:
     needs: lint
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_mode == 'gcloud' || github.event.inputs.deploy_mode == 'both' }}
     env:
       FUNCTION_REGION: us-central1
       FIRESTORE_TRIGGER_LOCATION: eur3
@@ -86,3 +98,32 @@ jobs:
             --trigger-event-filters="type=google.cloud.firestore.document.v1.created" \
             --trigger-event-filters="database=(default)" \
             --trigger-event-filters-path-pattern="document=photos/{photoId}/comments/{commentId}"
+
+  deploy-firebase:
+    needs: lint
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_mode == 'firebase' || github.event.inputs.deploy_mode == 'both' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy via Firebase CLI (onDocumentCreated wrapper flow)
+        run: |
+          firebase deploy \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --config="cloud/firebase-config/firebase.notifications.functions.json" \
+            --only="functions:notifyOnMomentCreated,functions:notifyOnCommentCreated"
