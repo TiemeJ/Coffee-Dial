@@ -1,6 +1,7 @@
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
+const webpush = require("web-push");
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -13,6 +14,12 @@ const REGION = "us-central1";
 const MAX_COMMENTERS_SCAN = 200;
 const MAX_MULTICAST_TOKENS = 500;
 const MOMENTS_PUSH_LINK = "https://tiemej.github.io/Coffee-Dial/?moments";
+const WEB_PUSH_SUBJECT = process.env.WEB_PUSH_SUBJECT ||
+  "mailto:noreply@coffee-dial.app";
+const WEB_PUSH_PUBLIC_KEY = process.env.WEB_PUSH_PUBLIC_KEY ||
+  process.env.WEB_PUSH_VAPID_PUBLIC_KEY || "";
+const WEB_PUSH_PRIVATE_KEY = process.env.WEB_PUSH_PRIVATE_KEY ||
+  process.env.WEB_PUSH_VAPID_PRIVATE_KEY || "";
 
 const DEFAULT_PREFS = {
   pushEnabled: false,
@@ -21,6 +28,23 @@ const DEFAULT_PREFS = {
   commentsOnFollowedOrCommentedMoments: true,
 };
 const TEMP_DEBUG_LOGS = true;
+let webPushConfigured = false;
+
+if (WEB_PUSH_PUBLIC_KEY && WEB_PUSH_PRIVATE_KEY) {
+  try {
+    webpush.setVapidDetails(
+        WEB_PUSH_SUBJECT,
+        WEB_PUSH_PUBLIC_KEY,
+        WEB_PUSH_PRIVATE_KEY,
+    );
+    webPushConfigured = true;
+  } catch (error) {
+    logger.error("webpush vapid configuration failed", {
+      error: error && error.message ? error.message : String(error),
+    });
+    webPushConfigured = false;
+  }
+}
 
 function normalizePrefs(value) {
   const source = value && typeof value === "object" ? value : {};
@@ -84,25 +108,51 @@ async function getUserPrefs(uid) {
   return normalizePrefs(rawPrefs);
 }
 
-async function getUserTokenEntries(uid) {
-  if (!uid) return [];
+function normalizeWebPushSubscription(value) {
+  if (!value || typeof value !== "object") return null;
+  const endpoint = typeof value.endpoint === "string" ?
+    value.endpoint.trim() : "";
+  const keys = value.keys && typeof value.keys === "object" ? value.keys : {};
+  const p256dh = typeof keys.p256dh === "string" ? keys.p256dh.trim() : "";
+  const auth = typeof keys.auth === "string" ? keys.auth.trim() : "";
+  if (!endpoint || !p256dh || !auth) return null;
+  return {
+    endpoint,
+    expirationTime: value.expirationTime || null,
+    keys: {p256dh, auth},
+  };
+}
+
+async function getUserPushTargetEntries(uid) {
+  if (!uid) return {fcmEntries: [], declarativeEntries: []};
   const snap = await db.collection("users")
       .doc(uid)
       .collection("devices")
       .where("enabled", "==", true)
       .get();
-  return snap.docs
-      .map((item) => {
-        const data = item.data() || {};
-        const token = typeof data.token === "string" ? data.token.trim() : "";
-        if (!token) return null;
-        return {
-          uid,
-          token,
-          ref: item.ref,
-        };
-      })
-      .filter(Boolean);
+  const fcmEntries = [];
+  const declarativeEntries = [];
+  snap.docs.forEach((item) => {
+    const data = item.data() || {};
+    const subscription = normalizeWebPushSubscription(data.webPushSubscription);
+    const token = typeof data.token === "string" ? data.token.trim() : "";
+    if (subscription) {
+      declarativeEntries.push({
+        uid,
+        subscription,
+        ref: item.ref,
+      });
+      return;
+    }
+    if (token) {
+      fcmEntries.push({
+        uid,
+        token,
+        ref: item.ref,
+      });
+    }
+  });
+  return {fcmEntries, declarativeEntries};
 }
 
 async function markTokenInvalid(entries = []) {
@@ -116,6 +166,34 @@ async function markTokenInvalid(entries = []) {
     }, {merge: true});
   });
   await batch.commit();
+}
+
+async function markWebPushSubscriptionInvalid(entries = []) {
+  if (!entries.length) return;
+  const batch = db.batch();
+  entries.forEach((entry) => {
+    batch.set(entry.ref, {
+      enabled: false,
+      webPushSubscription: null,
+      updatedAt: new Date().toISOString(),
+    }, {merge: true});
+  });
+  await batch.commit();
+}
+
+function buildDeclarativeWebPushPayload({title, body, link, data}) {
+  const payload = {
+    web_push: 8030,
+    notification: {
+      title: typeof title === "string" ? title : "Coffee Dial",
+      body: typeof body === "string" ? body : "",
+      icon: "/Coffee-Dial/img/icon-192.png",
+      navigate: typeof link === "string" && link.trim() ?
+        link.trim() : MOMENTS_PUSH_LINK,
+      data: data || {},
+    },
+  };
+  return JSON.stringify(payload);
 }
 
 async function sendPushToRecipients({recipients, title, body, data}) {
@@ -132,22 +210,26 @@ async function sendPushToRecipients({recipients, title, body, data}) {
     return;
   }
   const tokenEntries = [];
+  const declarativeEntries = [];
   const tokenCountByUser = {};
   for (const uid of recipients) {
     // Keep it simple and explicit: one user read + one devices query per user.
-    const userEntries = await getUserTokenEntries(uid);
-    tokenEntries.push(...userEntries);
-    tokenCountByUser[uid] = userEntries.length;
+    const targets = await getUserPushTargetEntries(uid);
+    tokenEntries.push(...targets.fcmEntries);
+    declarativeEntries.push(...targets.declarativeEntries);
+    tokenCountByUser[uid] = targets.fcmEntries.length;
   }
   if (TEMP_DEBUG_LOGS) {
     logger.info("push.send recipient token scan", {
       notificationType,
       recipientCount: recipients.length,
       tokenEntryCount: tokenEntries.length,
+      declarativeEntryCount: declarativeEntries.length,
       tokenCountByUser,
+      webPushConfigured,
     });
   }
-  if (!tokenEntries.length) {
+  if (!tokenEntries.length && !declarativeEntries.length) {
     logger.info("push.send skipped: no enabled tokens", {
       notificationType,
       recipientCount: recipients.length,
@@ -156,6 +238,10 @@ async function sendPushToRecipients({recipients, title, body, data}) {
   }
 
   const invalidEntries = [];
+  const invalidDeclarativeEntries = [];
+  let declarativeSuccess = 0;
+  let declarativeFailure = 0;
+  const declarativeErrorCodeCount = {};
   const grouped = chunk(tokenEntries, MAX_MULTICAST_TOKENS);
   let totalSuccess = 0;
   let totalFailure = 0;
@@ -164,6 +250,37 @@ async function sendPushToRecipients({recipients, title, body, data}) {
     ...(data || {}),
     link: pushLink,
   };
+  if (webPushConfigured && declarativeEntries.length) {
+    const declarativePayload = buildDeclarativeWebPushPayload({
+      title,
+      body,
+      link: pushLink,
+      data: messageData,
+    });
+    for (const entry of declarativeEntries) {
+      try {
+        await webpush.sendNotification(entry.subscription, declarativePayload, {
+          TTL: 60,
+        });
+        declarativeSuccess += 1;
+      } catch (error) {
+        declarativeFailure += 1;
+        const statusCode = error && error.statusCode ? String(error.statusCode) :
+          (error && error.code ? String(error.code) : "unknown");
+        declarativeErrorCodeCount[statusCode] =
+          (declarativeErrorCodeCount[statusCode] || 0) + 1;
+        if (statusCode === "404" || statusCode === "410") {
+          invalidDeclarativeEntries.push(entry);
+        }
+      }
+    }
+  } else if (declarativeEntries.length) {
+    logger.warn("push.send declarative skipped: missing VAPID config", {
+      notificationType,
+      declarativeEntryCount: declarativeEntries.length,
+    });
+  }
+
   for (const group of grouped) {
     const response = await messaging.sendEachForMulticast({
       tokens: group.map((entry) => entry.token),
@@ -203,12 +320,20 @@ async function sendPushToRecipients({recipients, title, body, data}) {
     notificationType,
     recipientCount: recipients.length,
     tokenEntryCount: tokenEntries.length,
+    declarativeEntryCount: declarativeEntries.length,
     totalSuccess,
     totalFailure,
     invalidTokenCount: invalidEntries.length,
     errorCodeCount,
+    declarativeSuccess,
+    declarativeFailure,
+    invalidDeclarativeCount: invalidDeclarativeEntries.length,
+    declarativeErrorCodeCount,
   });
   if (invalidEntries.length) await markTokenInvalid(invalidEntries);
+  if (invalidDeclarativeEntries.length) {
+    await markWebPushSubscriptionInvalid(invalidDeclarativeEntries);
+  }
 }
 
 function canReadMoment({uid, ownerUid, sharedWith}) {

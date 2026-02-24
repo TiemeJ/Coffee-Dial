@@ -9,6 +9,7 @@ const normalizeNotificationPreferences = (value = null) => {
 };
 
 export const PUSH_DEVICE_ID_STORAGE_KEY = 'coffeeDialPushDeviceId:v1';
+const MIN_DECLARATIVE_IOS_VERSION = { major: 18, minor: 4 };
 
 const createStableDeviceId = () => {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -66,6 +67,7 @@ export const createPushNotificationsModule = ({
     let lastKnownToken = '';
     const SERVICE_WORKER_READY_TIMEOUT_MS = 8000;
     const GET_TOKEN_TIMEOUT_MS = 15000;
+    let vapidKeyBytesCache = null;
 
     const withTimeout = async (promise, timeoutMs, onTimeoutValue = null) => {
         let timeoutId = null;
@@ -115,15 +117,119 @@ export const createPushNotificationsModule = ({
         return Notification.permission || 'default';
     };
 
-    const upsertDevice = async ({ uid, enabled, permission, token = '' }) => {
-        if (!uid || !token) return;
+    const parseIosVersionFromUserAgent = (userAgent) => {
+        const ua = (userAgent || '').toString();
+        const match = ua.match(/OS (\d+)[._](\d+)(?:[._](\d+))?/i);
+        if (!match) return null;
+        return {
+            major: parseInt(match[1], 10) || 0,
+            minor: parseInt(match[2], 10) || 0,
+            patch: parseInt(match[3] || '0', 10) || 0
+        };
+    };
+
+    const compareVersions = (left, right) => {
+        if ((left?.major || 0) !== (right?.major || 0)) return (left?.major || 0) - (right?.major || 0);
+        if ((left?.minor || 0) !== (right?.minor || 0)) return (left?.minor || 0) - (right?.minor || 0);
+        return (left?.patch || 0) - (right?.patch || 0);
+    };
+
+    const isDeclarativeWebPushCapableEnvironment = () => {
+        if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+        const ua = (navigator.userAgent || '').toString();
+        const isAppleMobile = /\b(iPhone|iPad|iPod)\b/i.test(ua);
+        if (!isAppleMobile) return false;
+        const iosVersion = parseIosVersionFromUserAgent(ua);
+        if (!iosVersion) return false;
+        return compareVersions(iosVersion, MIN_DECLARATIVE_IOS_VERSION) >= 0;
+    };
+
+    const base64UrlToUint8Array = (value) => {
+        if (vapidKeyBytesCache) return vapidKeyBytesCache;
+        const normalized = (value || '').replace(/-/g, '+').replace(/_/g, '/');
+        const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+        const decoded = atob(padded);
+        const bytes = new Uint8Array(decoded.length);
+        for (let idx = 0; idx < decoded.length; idx += 1) {
+            bytes[idx] = decoded.charCodeAt(idx);
+        }
+        vapidKeyBytesCache = bytes;
+        return bytes;
+    };
+
+    const normalizeSubscription = (subscription = null) => {
+        if (!subscription || typeof subscription !== 'object') return null;
+        const endpoint = typeof subscription.endpoint === 'string' ? subscription.endpoint.trim() : '';
+        if (!endpoint) return null;
+        const keys = {};
+        if (typeof subscription.getKey === 'function') {
+            const p256dhRaw = subscription.getKey('p256dh');
+            const authRaw = subscription.getKey('auth');
+            if (p256dhRaw) {
+                const bytes = new Uint8Array(p256dhRaw);
+                keys.p256dh = btoa(String.fromCharCode(...bytes));
+            }
+            if (authRaw) {
+                const bytes = new Uint8Array(authRaw);
+                keys.auth = btoa(String.fromCharCode(...bytes));
+            }
+        } else if (subscription.keys && typeof subscription.keys === 'object') {
+            if (typeof subscription.keys.p256dh === 'string') keys.p256dh = subscription.keys.p256dh;
+            if (typeof subscription.keys.auth === 'string') keys.auth = subscription.keys.auth;
+        }
+        if (!keys.p256dh || !keys.auth) return null;
+        return {
+            endpoint,
+            expirationTime: typeof subscription.expirationTime === 'number' ? subscription.expirationTime : null,
+            keys
+        };
+    };
+
+    const ensureDeclarativeSubscription = async ({ swRegistration, requestIfMissing = false } = {}) => {
+        if (!swRegistration?.pushManager) return null;
+        let subscription = await swRegistration.pushManager.getSubscription().catch(() => null);
+        if (!subscription && requestIfMissing) {
+            try {
+                subscription = await swRegistration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: base64UrlToUint8Array(vapidKey)
+                });
+            } catch (error) {
+                return {
+                    ok: false,
+                    reason: 'subscription-error',
+                    error: error?.message || String(error),
+                    subscription: null
+                };
+            }
+        }
+        return {
+            ok: true,
+            reason: subscription ? 'subscription-ready' : 'subscription-missing',
+            subscription: normalizeSubscription(subscription)
+        };
+    };
+
+    const upsertDevice = async ({
+        uid,
+        enabled,
+        permission,
+        token = '',
+        webPushSubscription = null,
+        channel = ''
+    }) => {
+        if (!uid) return;
+        if (!token && !webPushSubscription) return;
         const deviceId = getDeviceId();
         const payload = {
-            token,
+            token: token || '',
             enabled: !!enabled,
             permission: permission || 'default',
             platform: 'web',
             userAgent: typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '',
+            webPushSubscription: webPushSubscription || null,
+            pushChannel: channel || (webPushSubscription ? 'declarative-web-push' : 'fcm'),
             updatedAt: new Date().toISOString(),
             lastSeenAt: new Date().toISOString()
         };
@@ -150,10 +256,14 @@ export const createPushNotificationsModule = ({
             if (!snap?.exists?.()) return null;
             const data = snap.data?.() || {};
             const token = typeof data.token === 'string' ? data.token.trim() : '';
+            const sub = data.webPushSubscription && typeof data.webPushSubscription === 'object'
+                ? data.webPushSubscription
+                : null;
             return {
                 id: deviceId,
                 token,
                 hasToken: !!token,
+                hasWebPushSubscription: !!normalizeSubscription(sub),
                 enabled: !!data.enabled
             };
         } catch (_) {
@@ -208,12 +318,13 @@ export const createPushNotificationsModule = ({
             }
             return { ok: false, reason: 'missing-vapid-key' };
         }
+        const declarativeSupported = isDeclarativeWebPushCapableEnvironment();
         const messaging = await resolveMessaging();
-        if (!messaging) return { ok: false, reason: 'unsupported' };
+        if (!declarativeSupported && !messaging) return { ok: false, reason: 'unsupported' };
         if (!allowRegistration) {
             const currentDevice = await getCurrentDeviceRegistration(user.uid);
-            if (currentDevice?.enabled && currentDevice?.hasToken) {
-                await registerForegroundListener();
+            if (currentDevice?.enabled && (currentDevice?.hasToken || currentDevice?.hasWebPushSubscription)) {
+                if (currentDevice?.hasToken) await registerForegroundListener();
                 return { ok: true, reason: 'already-registered' };
             }
             stopForegroundListener();
@@ -239,28 +350,41 @@ export const createPushNotificationsModule = ({
             )
             : null;
         const effectiveSwRegistration = swReady || swRegistration || null;
+        let declarativeSubscription = null;
+        if (declarativeSupported && effectiveSwRegistration) {
+            const declarativeResult = await ensureDeclarativeSubscription({
+                swRegistration: effectiveSwRegistration,
+                requestIfMissing: allowRegistration
+            });
+            if (declarativeResult?.ok && declarativeResult.subscription) {
+                declarativeSubscription = declarativeResult.subscription;
+            }
+        }
+
         let token = '';
-        try {
-            token = await withTimeout(
-                getToken(messaging, {
-                    vapidKey,
-                    serviceWorkerRegistration: effectiveSwRegistration || undefined
-                }),
-                GET_TOKEN_TIMEOUT_MS,
-                '__TOKEN_TIMEOUT__'
-            );
-        } catch (error) {
-            return {
-                ok: false,
-                reason: 'token-error',
-                error: error?.message || String(error)
-            };
+        if (messaging && !declarativeSubscription) {
+            try {
+                token = await withTimeout(
+                    getToken(messaging, {
+                        vapidKey,
+                        serviceWorkerRegistration: effectiveSwRegistration || undefined
+                    }),
+                    GET_TOKEN_TIMEOUT_MS,
+                    '__TOKEN_TIMEOUT__'
+                );
+            } catch (error) {
+                return {
+                    ok: false,
+                    reason: 'token-error',
+                    error: error?.message || String(error)
+                };
+            }
         }
         if (token === '__TOKEN_TIMEOUT__') {
             return { ok: false, reason: 'token-timeout' };
         }
         lastKnownToken = token || '';
-        if (!token) {
+        if (!token && !declarativeSubscription) {
             await removeCurrentDevice(user.uid);
             stopForegroundListener();
             return { ok: false, reason: 'token-empty' };
@@ -269,10 +393,16 @@ export const createPushNotificationsModule = ({
             uid: user.uid,
             enabled: true,
             permission,
-            token
+            token,
+            webPushSubscription: declarativeSubscription,
+            channel: declarativeSubscription ? 'declarative-web-push' : 'fcm'
         });
-        await registerForegroundListener();
-        return { ok: true, reason: 'registered', token };
+        if (token) await registerForegroundListener();
+        return {
+            ok: true,
+            reason: declarativeSubscription ? 'registered-declarative' : 'registered',
+            token
+        };
     };
 
     const handlePreferencesChanged = async (nextPrefs = null, options = {}) => {
