@@ -10,7 +10,7 @@ export const createStatsModule = ({
     getCurrentStatsData,
     setCurrentBeanMeterPeriod,
     getCurrentBeanMeterPeriod,
-    Chart
+    getChart
 }) => {
     const { db, collection, getDocs } = dataService || {};
     if (!db || !collection || !getDocs) {
@@ -18,6 +18,20 @@ export const createStatsModule = ({
     }
     const chartInstances = {};
     let currentStatsUid = 'mine';
+    const getChartCtor = async () => {
+        try {
+            if (typeof getChart === 'function') {
+                const ctor = await getChart();
+                if (typeof ctor === 'function') return ctor;
+            }
+        } catch (error) {
+            console.error('Chart.js lazy-load failed:', error);
+        }
+        if (typeof window !== 'undefined' && typeof window.Chart === 'function') {
+            return window.Chart;
+        }
+        return null;
+    };
     const formatCurrencyEur = (value) => {
         const num = Number(value);
         if (!Number.isFinite(num)) return 'EUR 0.00';
@@ -102,10 +116,12 @@ export const createStatsModule = ({
             const beansSnap = await getDocs(beansQ);
             beansSnap.forEach((d) => beansToUse.push({ id: d.id, ...d.data() }));
         }
-        calculateStats(dataToUse, gearToUse, beansToUse);
+        await calculateStats(dataToUse, gearToUse, beansToUse);
     };
 
-    const renderCharts = (roast, method, drink, stars) => {
+    const renderCharts = async (roast, method, drink, stars) => {
+        const chartCtor = await getChartCtor();
+        if (!chartCtor) return;
         const isDark = document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#e7e5e4' : '#4a3b32';
         const gridColor = isDark ? '#44403c' : '#e5e7eb';
@@ -113,7 +129,7 @@ export const createStatsModule = ({
         const createPie = (ctxId, dataObj, colors) => {
             if (chartInstances[ctxId]) chartInstances[ctxId].destroy();
             const ctx = document.getElementById(ctxId).getContext('2d');
-            chartInstances[ctxId] = new Chart(ctx, {
+            chartInstances[ctxId] = new chartCtor(ctx, {
                 type: 'doughnut',
                 data: { labels: Object.keys(dataObj), datasets: [{ data: Object.values(dataObj), backgroundColor: colors, borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor, font: { size: 10, family: "'Outfit', sans-serif" }, boxWidth: 10 } } } }
@@ -130,14 +146,14 @@ export const createStatsModule = ({
         if (chartInstances.chartStars) chartInstances.chartStars.destroy();
         const ctxStars = document.getElementById('chartStars').getContext('2d');
         const starCounts = [1, 2, 3, 4, 5].map((i) => stars[i] || 0);
-        chartInstances.chartStars = new Chart(ctxStars, {
+        chartInstances.chartStars = new chartCtor(ctxStars, {
             type: 'bar',
             data: { labels: ['1★', '2★', '3★', '4★', '5★'], datasets: [{ label: 'Count', data: starCounts, backgroundColor: '#fbbf24', borderRadius: 4 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: textColor, precision: 0 }, grid: { color: gridColor } }, x: { ticks: { color: textColor }, grid: { display: false } } } }
         });
     };
 
-    const calculateStats = (dataToUse, gearToUse = [], beansToUse = []) => {
+    const calculateStats = async (dataToUse, gearToUse = [], beansToUse = []) => {
         setCurrentStatsData(dataToUse);
         const gasTotalSpent = gearToUse.reduce((sum, item) => {
             const price = Number(item?.price);
@@ -238,7 +254,7 @@ export const createStatsModule = ({
             document.getElementById('topCoffeesList').innerHTML = '<p class="text-sm text-gray-400 italic">No brews found.</p>';
             document.getElementById('uniqueLeaderboardBody').innerHTML = "<tr><td colspan='4' class='text-center py-4 italic text-coffee-400'>No data.</td></tr>";
             document.getElementById('grinderStatsList').innerHTML = '<p class="text-sm text-gray-400 italic">No grinder data.</p>';
-            renderCharts({}, {}, {}, {});
+            await renderCharts({}, {}, {}, {});
             return;
         }
 
@@ -269,8 +285,8 @@ export const createStatsModule = ({
             if (r > 0) acc[r] = (acc[r] || 0) + 1;
             return acc;
         }, {});
-        renderCharts(roastData, methodData, drinkData, ratingData);
-        updateBeanMeterInternal('day');
+        await renderCharts(roastData, methodData, drinkData, ratingData);
+        await updateBeanMeterInternal('day');
 
         const uniqueMap = {};
         dataToUse.forEach((c) => {
@@ -343,7 +359,9 @@ export const createStatsModule = ({
         });
     };
 
-    const updateBeanMeterInternal = (period) => {
+    const updateBeanMeterInternal = async (period) => {
+        const chartCtor = await getChartCtor();
+        if (!chartCtor) return;
         if (period) setCurrentBeanMeterPeriod(period);
         const currentBeanMeterPeriod = getCurrentBeanMeterPeriod();
 
@@ -394,7 +412,7 @@ export const createStatsModule = ({
         const gridColor = isDark ? '#44403c' : '#e5e7eb';
         const barColor = '#8c7365';
 
-        chartInstances.chartBeanMeter = new Chart(ctx, {
+        chartInstances.chartBeanMeter = new chartCtor(ctx, {
             type: 'bar',
             data: { labels, datasets: [{ label: 'Beans Consumed', data: values, backgroundColor: barColor, borderRadius: 4 }] },
             options: {

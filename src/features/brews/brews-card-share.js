@@ -8,8 +8,19 @@ export const createBrewsCardShareModule = ({
     resetCardPhotoState,
     populateCardData,
     updateCoffeeCardNav,
-    html2canvas
+    getHtml2canvas
 }) => {
+    const resolveCapture = async () => {
+        if (typeof getHtml2canvas === 'function') {
+            const capture = await getHtml2canvas();
+            if (typeof capture === 'function') return capture;
+        }
+        if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
+            return window.html2canvas;
+        }
+        return null;
+    };
+
     const toggleCardMode = (mode) => {
         setCurrentShareMode(mode);
         const btnStats = document.getElementById('btnCardStats');
@@ -72,8 +83,12 @@ export const createBrewsCardShareModule = ({
         content.style.transform = 'none';
 
         try {
+            const capture = await resolveCapture();
+            if (!capture) {
+                throw new Error('html2canvas is unavailable');
+            }
             await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-            const canvas = await html2canvas(content, {
+            const canvas = await capture(content, {
                 scale: 2,
                 backgroundColor: getComputedStyle(content).backgroundColor,
                 useCORS: true,

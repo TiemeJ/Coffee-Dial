@@ -61,6 +61,7 @@
         import { createAppLifecycleModule } from '../runtime/app-lifecycle.js';
         import { createOpenAddBrewFromPinned } from '../runtime/open-add-brew.js';
         import { installCardNavigationHandlers } from '../runtime/card-navigation.js';
+        import { ensureChartJs, ensureHtml2Canvas } from '../../core/external-libs.js';
         
 export const createAppComposition = ({ appCommands = null, appEvents = null } = {}) => {
         const isE2ESeedMode =
@@ -663,6 +664,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         });
 
         const parseNum = (v) => (v === '' || v === null || isNaN(v)) ? null : parseFloat(v);
+        const getChart = () => ensureChartJs();
+        const getHtml2canvas = () => ensureHtml2Canvas();
         const {
             bindMethodOtherChangeListener,
             openSelectedBeanForEdit,
@@ -990,7 +993,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             storageService,
             functionsService,
             imageCompression,
-            html2canvas,
+            getHtml2canvas,
             openLightbox: (...args) => openLightbox?.(...args),
             openAppConfirm,
             getCoffeeScale: () => coffeeScale,
@@ -1060,7 +1063,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getCurrentStatsData: () => getCurrentStatsDataState(),
             setCurrentBeanMeterPeriod: (value) => setCurrentBeanMeterPeriodState(value),
             getCurrentBeanMeterPeriod: () => getCurrentBeanMeterPeriodState(),
-            Chart
+            getChart
         });
 
         const setRating = (r) => { const c=document.getElementById('starContainer'); document.getElementById('ratingInput').value=r; for(let i=0;i<c.children.length;i++){ if(i<r)c.children[i].classList.add('active'); else c.children[i].classList.remove('active'); } };
@@ -1129,6 +1132,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         } = createLabResultsModule({
             getFilteredCoffees,
             getCoffeeTypeDisplay,
+            getChart,
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'brews.lab-results' })
         });
@@ -1213,7 +1217,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             resetCardPhotoState: (...args) => resetCardPhotoState(...args),
             populateCardData: (...args) => populateCardData(...args),
             updateCoffeeCardNav: (...args) => updateCoffeeCardNav(...args),
-            html2canvas
+            getHtml2canvas
         });
 
         const { openCardGraphModal, closeCardGraphModal, updateCoffeeGraphNav, navigateCoffeeCardFromGraph } = createBrewsCardGraphModule({

@@ -215,7 +215,7 @@ export const createGalleryModule = ({
     storageService,
     functionsService,
     imageCompression,
-    html2canvas,
+    getHtml2canvas,
     openLightbox,
     openAppConfirm,
     openBrewFromMoment,
@@ -1079,8 +1079,11 @@ export const createGalleryModule = ({
         }
     };
 
-    const getHtml2Canvas = () => {
-        if (typeof html2canvas === 'function') return html2canvas;
+    const getHtml2Canvas = async () => {
+        if (typeof getHtml2canvas === 'function') {
+            const capture = await getHtml2canvas();
+            if (typeof capture === 'function') return capture;
+        }
         if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
             return window.html2canvas;
         }
@@ -1300,7 +1303,7 @@ export const createGalleryModule = ({
     };
 
     const createShareFileFromMomentCard = async ({ photoId, cardElement, data, cardSnapshot, photoUrl }) => {
-        const capture = getHtml2Canvas();
+        const capture = await getHtml2Canvas();
         if (!capture) {
             throw new Error('Screenshot capture is not available.');
         }

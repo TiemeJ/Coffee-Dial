@@ -156,6 +156,7 @@ const formatLabGraphTimeOfDay = (value) => {
 export const createLabResultsModule = ({
     getFilteredCoffees,
     getCoffeeTypeDisplay,
+    getChart,
     dispatchCommand
 } = {}) => {
     if (typeof getFilteredCoffees !== 'function') {
@@ -404,9 +405,24 @@ export const createLabResultsModule = ({
         }
     };
 
-    const renderCaptureGraph = () => {
+    const resolveChartCtor = async () => {
+        if (typeof getChart === 'function') {
+            try {
+                const ctor = await getChart();
+                if (typeof ctor === 'function') return ctor;
+            } catch (error) {
+                console.error('Chart.js lazy-load failed:', error);
+            }
+        }
+        if (typeof window !== 'undefined' && typeof window.Chart === 'function') {
+            return window.Chart;
+        }
+        return null;
+    };
+
+    const renderCaptureGraph = async () => {
         const canvas = document.getElementById('labResultsGraphCanvas');
-        const chartCtor = window.Chart;
+        const chartCtor = await resolveChartCtor();
         if (!canvas || typeof chartCtor !== 'function') return;
 
         if (!selectedGraphKeys.size) {
@@ -648,7 +664,7 @@ export const createLabResultsModule = ({
         renderFieldSelectors();
         renderCustomGraphModeControl();
         renderBrewTiles();
-        renderCaptureGraph();
+        void renderCaptureGraph();
     };
 
     const openLabResultsModal = (event = null) => {
@@ -677,7 +693,7 @@ export const createLabResultsModule = ({
         if (selectedKeys.has(fieldKey)) selectedKeys.delete(fieldKey);
         else selectedKeys.add(fieldKey);
         renderFieldSelectors();
-        renderCaptureGraph();
+        void renderCaptureGraph();
     };
 
     const toggleLabResultXField = (fieldKey) => {
@@ -685,7 +701,7 @@ export const createLabResultsModule = ({
         if (!fieldKey) return;
         selectedXFieldKeys = new Set([fieldKey]);
         renderFieldSelectors();
-        renderCaptureGraph();
+        void renderCaptureGraph();
     };
 
     const toggleLabResultYField = (fieldKey) => {
@@ -707,7 +723,7 @@ export const createLabResultsModule = ({
         renderGraphSelectors();
         renderFieldSelectors();
         renderCustomGraphModeControl();
-        renderCaptureGraph();
+        void renderCaptureGraph();
     };
 
     const toggleLabResultBrewSelection = (brewId) => {
@@ -719,7 +735,7 @@ export const createLabResultsModule = ({
         if (selectedBrewIds.has(brewId)) selectedBrewIds.delete(brewId);
         else selectedBrewIds.add(brewId);
         renderBrewTiles();
-        renderCaptureGraph();
+        void renderCaptureGraph();
     };
 
     const startLabResultBrewLongPress = (brewId, event = null) => {
@@ -742,7 +758,7 @@ export const createLabResultsModule = ({
         customGraphRenderMode = nextMode;
         renderCustomGraphModeControl();
         if (isCustomGraphSelected()) {
-            renderCaptureGraph();
+            void renderCaptureGraph();
         }
     };
 
