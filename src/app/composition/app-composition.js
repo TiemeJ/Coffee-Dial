@@ -13,7 +13,6 @@
         import { createGasController } from '../../features/gas/gas.controller.js';
         import { createBeansController } from '../../features/beans/beans.controller.js';
         import { createSocialCoordinator } from '../coordinators/social.coordinator.js';
-        import { createGalleryModule } from '../../features/gallery.js';
         import { createStatsModule } from '../../features/stats/stats.js';
         import { createImportExportModule } from '../../features/import-export/import-export.js';
         import { createBrewsCardActionsModule } from '../../features/brews/brews-card-actions.js';
@@ -41,7 +40,6 @@
         import { createBrewFormUiModule } from '../../features/brews/brew-form-ui.js';
         import { createBrewFormActionsModule } from '../../features/brews/brew-form-actions.js';
         import { createBrewCsvRecipeModule } from '../../features/brews/brew-csv-recipe.js';
-        import { createLabResultsModule } from '../../features/brews/lab-results.js';
         import { createActionMenuModule } from '../../features/ui/action-menu.js';
         import { createUiShellModule } from '../../features/ui-shell.js';
         import { createMediaModalsModule } from '../../features/media/media-modals.js';
@@ -964,68 +962,77 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         setOutgoingFriendRequestsProcessor?.(() => refreshFriendRequests());
 
-        const {
-            openUploadModal,
-            toggleAllFriends,
-            closeUploadModal,
-            handlePhotoSubmit,
-            openGallery,
-            switchGalleryTab,
-            loadMoreGallery,
-            renderGalleryGrid,
-            deletePhoto
-        } = createGalleryModule({
-            getCurrentUser: () => getCurrentUserState(),
-            getCurrentUploadCoffeeId: () => getCurrentUploadCoffeeIdState(),
-            setCurrentUploadCoffeeId: (value) => setCurrentUploadCoffeeIdState(value),
-            getLastGalleryVisit: () => getLastGalleryVisitState(),
-            setLastGalleryVisit: (value) => setLastGalleryVisitState(value),
-            getCurrentGalleryMode: () => getCurrentGalleryModeState(),
-            setCurrentGalleryMode: (value) => setCurrentGalleryModeState(value),
-            getLastGalleryDoc: () => getLastGalleryDocState(),
-            setLastGalleryDoc: (value) => setLastGalleryDocState(value),
-            getIsGalleryLoading: () => getIsGalleryLoadingState(),
-            setIsGalleryLoading: (value) => setIsGalleryLoadingState(value),
-            getFollowing: () => getFollowingState(),
-            getCoffees: () => getCoffeesState(),
-            getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
-            dataService,
-            storageService,
-            functionsService,
-            imageCompression,
-            getHtml2canvas,
-            openLightbox: (...args) => openLightbox?.(...args),
-            openAppConfirm,
-            getCoffeeScale: () => coffeeScale,
-            openBrewFromMoment: async (brewId, event = null, ownerUid = null) => {
-                const targetId = typeof brewId === 'string' ? brewId.trim() : '';
-                if (!targetId) return;
+        let galleryModulePromise = null;
+        const ensureGalleryModule = async () => {
+            if (!galleryModulePromise) {
+                galleryModulePromise = (async () => {
+                    const { createGalleryModule } = await import('../../features/gallery.js');
+                    return createGalleryModule({
+                        getCurrentUser: () => getCurrentUserState(),
+                        getCurrentUploadCoffeeId: () => getCurrentUploadCoffeeIdState(),
+                        setCurrentUploadCoffeeId: (value) => setCurrentUploadCoffeeIdState(value),
+                        getLastGalleryVisit: () => getLastGalleryVisitState(),
+                        setLastGalleryVisit: (value) => setLastGalleryVisitState(value),
+                        getCurrentGalleryMode: () => getCurrentGalleryModeState(),
+                        setCurrentGalleryMode: (value) => setCurrentGalleryModeState(value),
+                        getLastGalleryDoc: () => getLastGalleryDocState(),
+                        setLastGalleryDoc: (value) => setLastGalleryDocState(value),
+                        getIsGalleryLoading: () => getIsGalleryLoadingState(),
+                        setIsGalleryLoading: (value) => setIsGalleryLoadingState(value),
+                        getFollowing: () => getFollowingState(),
+                        getCoffees: () => getCoffeesState(),
+                        getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
+                        dataService,
+                        storageService,
+                        functionsService,
+                        imageCompression,
+                        getHtml2canvas,
+                        openLightbox: (...args) => openLightbox?.(...args),
+                        openAppConfirm,
+                        getCoffeeScale: () => coffeeScale,
+                        openBrewFromMoment: async (brewId, event = null, ownerUid = null) => {
+                            const targetId = typeof brewId === 'string' ? brewId.trim() : '';
+                            if (!targetId) return;
 
-                const targetOwnerUid = typeof ownerUid === 'string' ? ownerUid.trim() : '';
-                const currentUserUid = typeof getCurrentUserState()?.uid === 'string' ? getCurrentUserState().uid : '';
-                const targetView = !targetOwnerUid || targetOwnerUid === currentUserUid ? 'mine' : targetOwnerUid;
-                if (getCurrentViewState() !== targetView) {
-                    changeView(targetView);
-                }
+                            const targetOwnerUid = typeof ownerUid === 'string' ? ownerUid.trim() : '';
+                            const currentUserUid = typeof getCurrentUserState()?.uid === 'string' ? getCurrentUserState().uid : '';
+                            const targetView = !targetOwnerUid || targetOwnerUid === currentUserUid ? 'mine' : targetOwnerUid;
+                            if (getCurrentViewState() !== targetView) {
+                                changeView(targetView);
+                            }
 
-                const start = Date.now();
-                const timeoutMs = 3500;
-                while (!getCoffeesState().some((brew) => brew.id === targetId) && Date.now() - start < timeoutMs) {
-                    await new Promise((resolve) => setTimeout(resolve, 80));
-                }
+                            const start = Date.now();
+                            const timeoutMs = 3500;
+                            while (!getCoffeesState().some((brew) => brew.id === targetId) && Date.now() - start < timeoutMs) {
+                                await new Promise((resolve) => setTimeout(resolve, 80));
+                            }
 
-                if (!getCoffeesState().some((brew) => brew.id === targetId)) {
-                    showToast('Could not open brew card. Brew is not available in current view.');
-                    return;
-                }
+                            if (!getCoffeesState().some((brew) => brew.id === targetId)) {
+                                showToast('Could not open brew card. Brew is not available in current view.');
+                                return;
+                            }
 
-                appCommands?.dispatch?.(
-                    'brews.openCard',
-                    { id: targetId, event, options: { ownerUid: targetOwnerUid || null } },
-                    { source: 'gallery.openBrewFromMoment' }
-                );
+                            appCommands?.dispatch?.(
+                                'brews.openCard',
+                                { id: targetId, event, options: { ownerUid: targetOwnerUid || null } },
+                                { source: 'gallery.openBrewFromMoment' }
+                            );
+                        }
+                    });
+                })();
             }
-        });
+            return galleryModulePromise;
+        };
+
+        const openUploadModal = (...args) => ensureGalleryModule().then((module) => module.openUploadModal(...args));
+        const toggleAllFriends = (...args) => ensureGalleryModule().then((module) => module.toggleAllFriends(...args));
+        const closeUploadModal = (...args) => ensureGalleryModule().then((module) => module.closeUploadModal(...args));
+        const handlePhotoSubmit = (...args) => ensureGalleryModule().then((module) => module.handlePhotoSubmit(...args));
+        const openGallery = (...args) => ensureGalleryModule().then((module) => module.openGallery(...args));
+        const switchGalleryTab = (...args) => ensureGalleryModule().then((module) => module.switchGalleryTab(...args));
+        const loadMoreGallery = (...args) => ensureGalleryModule().then((module) => module.loadMoreGallery(...args));
+        const renderGalleryGrid = (...args) => ensureGalleryModule().then((module) => module.renderGalleryGrid(...args));
+        const deletePhoto = (...args) => ensureGalleryModule().then((module) => module.deletePhoto(...args));
 
         const {
             openGraphModal,
@@ -1120,22 +1127,33 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getFilteredCoffees,
             getCoffeeTypeDisplay
         });
-        const {
-            openLabResultsModal,
-            closeLabResultsModal,
-            setLabResultCustomGraphRenderMode,
-            startLabResultBrewLongPress,
-            toggleLabResultGraph,
-            toggleLabResultXField,
-            toggleLabResultYField,
-            toggleLabResultBrewSelection
-        } = createLabResultsModule({
-            getFilteredCoffees,
-            getCoffeeTypeDisplay,
-            getChart,
-            dispatchCommand: (commandName, payload) =>
-                appCommands?.dispatch?.(commandName, payload, { source: 'brews.lab-results' })
-        });
+        let labResultsModulePromise = null;
+        const ensureLabResultsModule = async () => {
+            if (!labResultsModulePromise) {
+                labResultsModulePromise = (async () => {
+                    const { createLabResultsModule } = await import('../../features/brews/lab-results.js');
+                    return createLabResultsModule({
+                        getFilteredCoffees,
+                        getCoffeeTypeDisplay,
+                        getChart,
+                        dispatchCommand: (commandName, payload) =>
+                            appCommands?.dispatch?.(commandName, payload, { source: 'brews.lab-results' })
+                    });
+                })();
+            }
+            return labResultsModulePromise;
+        };
+        const openLabResultsModal = (...args) => ensureLabResultsModule().then((module) => module.openLabResultsModal(...args));
+        const closeLabResultsModal = (...args) => ensureLabResultsModule().then((module) => module.closeLabResultsModal(...args));
+        const setLabResultCustomGraphRenderMode = (...args) =>
+            ensureLabResultsModule().then((module) => module.setLabResultCustomGraphRenderMode(...args));
+        const startLabResultBrewLongPress = (...args) =>
+            ensureLabResultsModule().then((module) => module.startLabResultBrewLongPress(...args));
+        const toggleLabResultGraph = (...args) => ensureLabResultsModule().then((module) => module.toggleLabResultGraph(...args));
+        const toggleLabResultXField = (...args) => ensureLabResultsModule().then((module) => module.toggleLabResultXField(...args));
+        const toggleLabResultYField = (...args) => ensureLabResultsModule().then((module) => module.toggleLabResultYField(...args));
+        const toggleLabResultBrewSelection = (...args) =>
+            ensureLabResultsModule().then((module) => module.toggleLabResultBrewSelection(...args));
         initCoffeeDetailsUi();
 
         const {
