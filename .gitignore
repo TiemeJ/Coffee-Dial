@@ -2,6 +2,7 @@
 
 # Dependencies
 node_modules/
+dist/
 
 # Playwright outputs
 test-results/
@@ -11,4 +12,3 @@ blob-report/
 # Others
 cloud/firebase-config/
 .gcloud/
-

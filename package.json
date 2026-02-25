@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "build:css:tailwind": "tailwindcss -c tailwind.config.cjs -i ./src/styles/tailwind.input.css -o ./vendor/css/tailwind.generated.min.css --minify",
+    "build:js": "node scripts/build.mjs",
+    "build": "npm run build:css:tailwind && npm run build:js",
     "backfill:photo-paths:dry": "node scripts/backfill-photo-paths.mjs",
     "backfill:photo-paths:apply": "node scripts/backfill-photo-paths.mjs --apply",
     "migrate:grinder-to-gear:dry": "node scripts/migrate-grinder-to-gear.mjs",
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0",
+    "esbuild": "^0.25.10",
     "tailwindcss": "^3.4.17",
     "ttf2woff2": "^8.0.0"
   }

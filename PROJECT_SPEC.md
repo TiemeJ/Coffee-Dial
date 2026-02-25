@@ -12,7 +12,7 @@ Make coffee dialing practical for beginners and deep enough for advanced brewers
 ## Core Requirements
 
 - Frontend-first app using ES modules and vanilla JavaScript.
-- No npm build step required; app runs directly from static hosting.
+- Uses npm build step (esbuild + Tailwind) for production minification and chunking.
 - Firebase-backed data/auth/storage for signed-in features.
 - Modular feature composition through mount modules and container actions.
 - Mobile-friendly PWA shell with installable manifest and service worker.
@@ -236,7 +236,7 @@ The repository is structured as:
 
 - Keep feature modules isolated and wired through app container actions.
 - Prefer extending existing feature folders over adding broad global scripts.
-- Preserve no-build static-hosting compatibility when introducing changes.
+- Preserve static-hosting compatibility of built `dist/` output when introducing changes.
 - Treat Firebase config, auth flows, and storage operations as security-sensitive.
 - Add regression checks for high-impact flows: auth transitions, brew CRUD, bean stock updates, sharing, and import/export.
 - Use sentence case for user-facing headers and labels (European style): capitalize only the first word unless the text contains proper nouns/acronyms.
