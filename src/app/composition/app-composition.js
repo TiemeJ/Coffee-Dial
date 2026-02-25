@@ -1,8 +1,6 @@
         import { BAG_AI_URL, STATS_AI_URL, WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, provider, getFunctionsInstance, loadFunctionsApi, loadMessagingApi, getStorageInstance, loadStorageApi } from '../../config/firebase.js';
         import { signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { collection, collectionGroup, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, arrayUnion, arrayRemove, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-        import { initCoffeeScale } from '../../features/scales/scales.js';
-        import { createScaleModalsModule } from '../../features/scales/scales-modals.js';
         import { parseBeanconquerorCSV, mapBeanconquerorBrews } from '../../features/import-export/importers/beanconqueror.js';
         import { initEmailLinkAuth } from '../../integrations/email-link-auth.js';
         import { closeAutoPinToast, showAutoPinToast, showToast } from '../../core/notify.js';
@@ -25,14 +23,12 @@
         import { createBrewsRepo } from '../../features/brews/brews.repo.js';
         import { registerBrewsFilterCommands } from '../../features/brews/brews-filter-commands.js';
         import { createBrewsPinAutopinModule } from '../../features/pin/brews-pin-autopin.js';
-        import { createBrewsPreferencesModule } from '../../features/preferences.js';
         import { createPushNotificationsModule } from '../../features/push-notifications.js';
         import { createDataService } from '../services/data.service.js';
         import { createStorageService } from '../services/storage.service.js';
         import { createFunctionsService } from '../services/functions.service.js';
         import { createAuthService } from '../services/auth.service.js';
         import { createSessionAuthViewModule } from '../../features/session-auth-view.js';
-        import { createAiImportModule } from '../../features/ai-import.js';
         import { createStatsAiProfileModule } from '../../features/stats/stats-ai-profile.js';
         import { createBrewFormLookupModule } from '../../features/brews/brew-form-lookup.js';
         import { createBrewFormUiModule } from '../../features/brews/brew-form-ui.js';
@@ -461,42 +457,53 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             remove: (...args) => deleteBrewsTableStatePreset(...args)
         });
 
-        const {
-            applyAnimationPreference,
-            openPreferences
-        } = createBrewsPreferencesModule({
-            getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
-            setPinnedBrewsPreferences: (value) => setPinnedBrewsPreferencesState(value),
-            getNotificationPreferences: () => getNotificationPreferencesState(),
-            setNotificationPreferences: (value) => setNotificationPreferencesState(value),
-            getCurrentUser: () => getCurrentUserState(),
-            dataService,
-            applyAnimationClass: (...args) => applyAnimationClass(...args),
-            renderTable: (...args) => renderTable(...args),
-            renderPinnedTiles: (...args) => renderPinnedTiles(...args),
-            dispatchCommand: (commandName, payload) =>
-                appCommands?.dispatch?.(commandName, payload, { source: 'preferences' }),
-            openAppConfirm,
-            showAutoPinToast,
-            onPinnedBrewsPreferencesChanged: () => {
-                const currentCard = getCurrentCardCoffeeState();
-                if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
-                renderCoffeeTypesTable?.();
-                renderGasTable?.();
-            },
-            onNotificationPreferencesChanged: async (nextPrefs = null, options = {}) => {
-                try {
-                    return await pushNotifications.handlePreferencesChanged(nextPrefs, options);
-                } catch (error) {
-                    console.error('Failed applying push notification preference change:', error);
-                    return { ok: false, reason: 'error', error: error?.message || String(error) };
-                }
-            }
-        });
-
         const applyAnimationClass = (enabled) => {
             document.documentElement.classList.toggle('no-animations', !enabled);
         };
+        const applyAnimationPreference = () => {
+            applyAnimationClass(!!getPinnedBrewsPreferencesState()?.animationsEnabled);
+        };
+
+        let preferencesModulePromise = null;
+        const ensurePreferencesModule = async () => {
+            if (!preferencesModulePromise) {
+                preferencesModulePromise = (async () => {
+                    const { createBrewsPreferencesModule } = await import('../../features/preferences.js');
+                    return createBrewsPreferencesModule({
+                        getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
+                        setPinnedBrewsPreferences: (value) => setPinnedBrewsPreferencesState(value),
+                        getNotificationPreferences: () => getNotificationPreferencesState(),
+                        setNotificationPreferences: (value) => setNotificationPreferencesState(value),
+                        getCurrentUser: () => getCurrentUserState(),
+                        dataService,
+                        applyAnimationClass: (...args) => applyAnimationClass(...args),
+                        renderTable: (...args) => renderTable(...args),
+                        renderPinnedTiles: (...args) => renderPinnedTiles(...args),
+                        dispatchCommand: (commandName, payload) =>
+                            appCommands?.dispatch?.(commandName, payload, { source: 'preferences' }),
+                        openAppConfirm,
+                        showAutoPinToast,
+                        onPinnedBrewsPreferencesChanged: () => {
+                            const currentCard = getCurrentCardCoffeeState();
+                            if (currentCard) updateCoffeeCardActionMenu?.(currentCard);
+                            renderCoffeeTypesTable?.();
+                            renderGasTable?.();
+                        },
+                        onNotificationPreferencesChanged: async (nextPrefs = null, options = {}) => {
+                            try {
+                                return await pushNotifications.handlePreferencesChanged(nextPrefs, options);
+                            } catch (error) {
+                                console.error('Failed applying push notification preference change:', error);
+                                return { ok: false, reason: 'error', error: error?.message || String(error) };
+                            }
+                        }
+                    });
+                })();
+            }
+            return preferencesModulePromise;
+        };
+
+        const openPreferences = (...args) => ensurePreferencesModule().then((module) => module.openPreferences(...args));
 
         const {
             autoPinOpenBagsIfEnabled,
@@ -510,42 +517,95 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             dataService
         });
 
-        const coffeeScale = initCoffeeScale({
-            openScaleModal: () => {
-                const connectModal = document.getElementById('connectScaleModal');
-                if (connectModal) openConnectScaleModal();
-                else openCoffeeScaleModal();
+        let coffeeScale = null;
+        let scalesFeature = null;
+        let scalesFeaturePromise = null;
+        const ensureScalesFeature = async () => {
+            if (scalesFeature) return scalesFeature;
+            if (!scalesFeaturePromise) {
+                scalesFeaturePromise = (async () => {
+                    const [{ initCoffeeScale }, { createScaleModalsModule }] = await Promise.all([
+                        import('../../features/scales/scales.js'),
+                        import('../../features/scales/scales-modals.js')
+                    ]);
+                    const scaleModals = createScaleModalsModule({
+                        getCoffeeScale: () => coffeeScale
+                    });
+                    coffeeScale = initCoffeeScale({
+                        openScaleModal: () => {
+                            const connectModal = document.getElementById('connectScaleModal');
+                            if (connectModal) scaleModals.openConnectScaleModal();
+                            else scaleModals.openCoffeeScaleModal();
+                        }
+                    });
+                    scalesFeature = {
+                        ...scaleModals,
+                        coffeeScale
+                    };
+                    return scalesFeature;
+                })().catch((error) => {
+                    scalesFeaturePromise = null;
+                    throw error;
+                });
             }
-        });
+            return scalesFeaturePromise;
+        };
+        const openCoffeeScaleModal = (...args) =>
+            ensureScalesFeature().then((feature) => feature.openCoffeeScaleModal(...args));
+        const closeCoffeeScaleModal = (...args) => {
+            document.getElementById('coffeeScaleModal')?.classList.add('hidden');
+            if (!scalesFeaturePromise) return;
+            void ensureScalesFeature().then((feature) => feature.closeCoffeeScaleModal(...args));
+        };
+        const openConnectScaleModal = (...args) =>
+            ensureScalesFeature().then((feature) => feature.openConnectScaleModal(...args));
+        const closeConnectScaleModal = (...args) => {
+            document.getElementById('connectScaleModal')?.classList.add('hidden');
+            if (!scalesFeaturePromise) return;
+            void ensureScalesFeature().then((feature) => feature.closeConnectScaleModal(...args));
+        };
 
         // --- Functions ---
         
-        const {
-            triggerAIScan,
-            toggleAiMenu,
-            toggleBeansAiMenu,
-            toggleCoffeeTypesAiMenu,
-            triggerBeansAIScan,
-            triggerCoffeeTypesAIScan,
-            handleAIFile,
-            uploadPendingCoffeeTypeImage,
-            clearPendingAIBeanImageFile,
-            handleBeansAIFile,
-            handleCoffeeTypesAIFile
-        } = createAiImportModule({
-            BAG_AI_URL,
-            imageCompression,
-            getCurrentUser: () => getCurrentUserState(),
-            toggleForm: (...args) => toggleForm(...args),
-            dataService,
-            storageService,
-            dispatchCommand: (commandName, payload) =>
-                appCommands?.dispatch?.(commandName, payload, { source: 'ai-import' }),
-            getCoffeeTypes: () => getCoffeeTypesState(),
-            setCoffeeTypes: (value) => setCoffeeTypesState(value),
-            openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
-            enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args)
-        });
+        let aiImportModulePromise = null;
+        const ensureAiImportModule = async () => {
+            if (!aiImportModulePromise) {
+                aiImportModulePromise = (async () => {
+                    const { createAiImportModule } = await import('../../features/ai-import.js');
+                    return createAiImportModule({
+                        BAG_AI_URL,
+                        imageCompression,
+                        getCurrentUser: () => getCurrentUserState(),
+                        toggleForm: (...args) => toggleForm(...args),
+                        dataService,
+                        storageService,
+                        dispatchCommand: (commandName, payload) =>
+                            appCommands?.dispatch?.(commandName, payload, { source: 'ai-import' }),
+                        getCoffeeTypes: () => getCoffeeTypesState(),
+                        setCoffeeTypes: (value) => setCoffeeTypesState(value),
+                        openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
+                        enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args)
+                    });
+                })();
+            }
+            return aiImportModulePromise;
+        };
+
+        const triggerAIScan = (...args) => ensureAiImportModule().then((module) => module.triggerAIScan(...args));
+        const toggleAiMenu = (...args) => ensureAiImportModule().then((module) => module.toggleAiMenu(...args));
+        const toggleBeansAiMenu = (...args) => ensureAiImportModule().then((module) => module.toggleBeansAiMenu(...args));
+        const toggleCoffeeTypesAiMenu = (...args) => ensureAiImportModule().then((module) => module.toggleCoffeeTypesAiMenu(...args));
+        const triggerBeansAIScan = (...args) => ensureAiImportModule().then((module) => module.triggerBeansAIScan(...args));
+        const triggerCoffeeTypesAIScan = (...args) => ensureAiImportModule().then((module) => module.triggerCoffeeTypesAIScan(...args));
+        const handleAIFile = (...args) => ensureAiImportModule().then((module) => module.handleAIFile(...args));
+        const uploadPendingCoffeeTypeImage = (...args) =>
+            ensureAiImportModule().then((module) => module.uploadPendingCoffeeTypeImage(...args));
+        const clearPendingAIBeanImageFile = (...args) => {
+            void ensureAiImportModule().then((module) => module.clearPendingAIBeanImageFile(...args));
+        };
+        const handleBeansAIFile = (...args) => ensureAiImportModule().then((module) => module.handleBeansAIFile(...args));
+        const handleCoffeeTypesAIFile = (...args) =>
+            ensureAiImportModule().then((module) => module.handleCoffeeTypesAIFile(...args));
 
         const { triggerAIProfile } = createStatsAiProfileModule({
             STATS_AI_URL,
@@ -1082,15 +1142,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         const setRating = (r) => { const c=document.getElementById('starContainer'); document.getElementById('ratingInput').value=r; for(let i=0;i<c.children.length;i++){ if(i<r)c.children[i].classList.add('active'); else c.children[i].classList.remove('active'); } };
 
-        const {
-            openCoffeeScaleModal,
-            closeCoffeeScaleModal,
-            openConnectScaleModal,
-            closeConnectScaleModal
-        } = createScaleModalsModule({
-            getCoffeeScale: () => coffeeScale
-        });
-
         let importExportModulePromise = null;
         const ensureImportExportModule = async () => {
             if (!importExportModulePromise) {
@@ -1491,13 +1542,20 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             window.open(url, '_blank', 'noopener,noreferrer');
         };
 
-        const { openBrewFormModal, closeBrewFormModal, discardBrewFormModal, submitBrewFormModal } = createBrewsFormModalModule({
+        const {
+            openBrewFormModal: openBrewFormModalImpl,
+            closeBrewFormModal,
+            discardBrewFormModal,
+            submitBrewFormModal
+        } = createBrewsFormModalModule({
             getCurrentView: () => getCurrentViewState(),
             changeView,
             resetFormState,
             toggleForm,
             openAppConfirm
         });
+        const openBrewFormModal = (...args) =>
+            ensureScalesFeature().then(() => openBrewFormModalImpl(...args));
 
         const openAddBrewFromPinned = createOpenAddBrewFromPinned({
             openBrewFormModal

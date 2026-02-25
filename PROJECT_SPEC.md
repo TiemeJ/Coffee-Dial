@@ -197,7 +197,7 @@ The repository is structured as:
 
 ## UI/UX Guidelines
 
-- Tailwind utility classes are used through a vendored local Tailwind CDN build (`vendor/js/tailwindcss.cdn.js`).
+- Tailwind utility classes are built ahead-of-time into `vendor/css/tailwind.generated.min.css` (no Tailwind runtime CDN script).
 - Iconography uses local Font Awesome assets under `vendor/`.
 - Dark-mode-first visual style (`<html class="dark">`) with responsive modal/table/card patterns.
 - UX patterns prioritize quick actions: inline row menus, modal workflows, double-click card open, and toast/confirm feedback.
