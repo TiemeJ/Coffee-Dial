@@ -82,6 +82,18 @@ function chunk(items, size) {
   return out;
 }
 
+function buildMomentsPushLink({photoId = "", commentId = "", eventId = ""} = {}) {
+  try {
+    const url = new URL(MOMENTS_PUSH_LINK);
+    const nonceSource = [eventId, photoId, commentId, Date.now()].filter(Boolean).join("_");
+    if (nonceSource) url.searchParams.set("pn", nonceSource);
+    if (photoId) url.searchParams.set("photo", photoId);
+    return url.toString();
+  } catch (_) {
+    return MOMENTS_PUSH_LINK;
+  }
+}
+
 async function getFollowers(ownerUid) {
   if (!ownerUid) return [];
   const snap = await db.collection("users")
@@ -541,7 +553,7 @@ exports.notifyOnMomentCreated = onDocumentCreated(
         data: {
           type: "friend_moment",
           photoId,
-          link: MOMENTS_PUSH_LINK,
+          link: buildMomentsPushLink({photoId, eventId}),
         },
       });
       logger.info("notifyOnMomentCreated complete", {
@@ -664,7 +676,7 @@ exports.notifyOnCommentCreated = onDocumentCreated(
         data: {
           type: "moment_comment",
           photoId,
-          link: MOMENTS_PUSH_LINK,
+          link: buildMomentsPushLink({photoId, commentId, eventId}),
         },
       });
       logger.info("notifyOnCommentCreated complete", {
