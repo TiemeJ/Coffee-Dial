@@ -59,6 +59,8 @@ export const createBrewsPreferencesModule = ({
     let isHydratingPreferences = false;
     let hasBoundAutoSave = false;
     let hasBoundNotificationsDebug = false;
+    let hasBoundReloadButton = false;
+    let reloadInProgress = false;
     let autoSaveTimer = null;
     let saveQueue = Promise.resolve();
     let isCurrentDevicePushRegistered = false;
@@ -588,6 +590,55 @@ export const createBrewsPreferencesModule = ({
         }, true);
     };
 
+    const runMaximumFreshReload = async () => {
+        if (reloadInProgress) return;
+        reloadInProgress = true;
+        const reloadBtn = document.getElementById('preferencesReloadAppBtn');
+        if (reloadBtn) {
+            reloadBtn.disabled = true;
+            reloadBtn.classList.add('opacity-60', 'cursor-not-allowed');
+            reloadBtn.textContent = 'Reloading...';
+        }
+        try {
+            if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+                const registrations = await navigator.serviceWorker.getRegistrations().catch(() => []);
+                await Promise.all(registrations.map(async (registration) => {
+                    try { await registration.update(); } catch (_) {}
+                    try {
+                        if (registration.waiting) {
+                            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                    } catch (_) {}
+                }));
+            }
+            if (typeof caches !== 'undefined' && typeof caches.keys === 'function') {
+                const cacheNames = await caches.keys().catch(() => []);
+                await Promise.all(cacheNames.map((name) => caches.delete(name).catch(() => false)));
+            }
+        } catch (_) {
+            // Continue with reload even if cleanup partly fails.
+        }
+
+        try {
+            const url = new URL(window.location.href);
+            url.search = '';
+            url.hash = '';
+            url.searchParams.set('_r', `${Date.now()}`);
+            window.location.replace(url.toString());
+        } catch (_) {
+            window.location.reload();
+        }
+    };
+
+    const bindReloadButton = () => {
+        if (hasBoundReloadButton) return;
+        hasBoundReloadButton = true;
+        const reloadBtn = document.getElementById('preferencesReloadAppBtn');
+        reloadBtn?.addEventListener('click', () => {
+            runMaximumFreshReload();
+        });
+    };
+
     const persistPinnedBrewsPreferences = async (nextState) => {
         let nextPinnedPrefs = { ...(nextState?.pinned || {}) };
         const prevNotificationPrefs = normalizeNotificationPreferences(getNotificationPreferences?.());
@@ -696,6 +747,7 @@ export const createBrewsPreferencesModule = ({
 
         bindPreferencesAutoSave();
         bindNotificationsDebug();
+        bindReloadButton();
         renderNotificationsDebugPanel();
         renderSwDiagnosticsPanel();
         renderBuildAndVersionInfo();
