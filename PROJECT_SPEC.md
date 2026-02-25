@@ -203,6 +203,25 @@ The repository is structured as:
 - UX patterns prioritize quick actions: inline row menus, modal workflows, double-click card open, and toast/confirm feedback.
 - Accessibility baseline includes semantic controls and touch-friendly interactions; continue improving keyboard focus behavior for modal-heavy flows.
 
+### Accessibility coding guidelines
+
+- Every interactive control must have an accessible name.
+- Buttons must expose readable text or an explicit `aria-label`.
+- Icon-only buttons must include both `aria-label` and `title` (for assistive tech + visual tooltip parity).
+- Do not ship empty button text patterns (`x`, `+`, icon only) without a descriptive label such as `Remove filter`, `Close graph modal`, or `Open actions menu`.
+- Apply the same naming rules to HTML templates and JS-generated template strings (`innerHTML` builders, row renderers, dropdown builders).
+- `select` elements must have an effective label via a visible `<label for="...">` or an `aria-label` when a visible label is not practical (compact controls/modals).
+- Keep viewport zoom enabled for low-vision accessibility.
+- Do not use `user-scalable=no`.
+- Do not cap `maximum-scale` below `5` (prefer omitting the cap).
+- Touch targets must be finger-friendly.
+- Minimum target size: `44x44px` for tappable controls.
+- In Tailwind utility terms, default icon-button size should be `w-11 h-11` (or larger).
+- Apply this to card headers, modal close buttons, accordion header controls, quick-filter controls, and table row action buttons.
+- For tightly packed controls, preserve clear spacing so adjacent actions are not hard to hit.
+- Use semantic interactive elements (`<button>`, `<a>`, `<select>`) for click/tap behavior instead of clickable non-semantic containers.
+- Accessibility regressions are release blockers for these Lighthouse/axe rules: buttons without accessible names, select elements without labels, viewport zoom disabled (`user-scalable=no` or restrictive `maximum-scale`), and insufficient touch target size/spacing.
+
 ## Deliverables
 
 - Static web app source (current repo state) deployable to GitHub Pages.

@@ -16,21 +16,21 @@
 
             <div id="coffeeCardContent" class="bg-white dark:bg-[#292524] w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleCoffeeCardOverlayClick(event)">
                 <div class="bg-coffee-100 dark:bg-[#1c1917] p-5 border-b border-coffee-200 dark:border-[#44403c] relative">
-                    <div class="absolute top-4 right-4 flex items-center gap-4">
-                        <button id="coffeeCardEditBtn" data-action-click="editBrewFromCard()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Quick edit">
+                    <div class="absolute top-3 right-3 flex items-center gap-1">
+                        <button id="coffeeCardEditBtn" data-action-click="editBrewFromCard()" class="w-11 h-11 flex items-center justify-center text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Quick edit">
                             <i class="fa-solid fa-pen-to-square text-lg"></i>
                         </button>
                         <div class="relative">
-                            <button id="coffeeCardMenuBtn" data-action-click="brewsToggleActionMenu('coffeeCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                            <button id="coffeeCardMenuBtn" data-action-click="brewsToggleActionMenu('coffeeCardActionMenu', event)" class="action-menu-toggle w-11 h-11 flex items-center justify-center text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
                                 <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                             </button>
                             <div id="coffeeCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()"></div>
                         </div>
-                        <button id="cardCloseBtn" data-action-click="closeCoffeeCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
+                        <button id="cardCloseBtn" data-action-click="closeCoffeeCard(null)" class="w-11 h-11 flex items-center justify-center text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
                             <i class="fa-solid fa-xmark text-xl"></i>
                         </button>
                     </div>
-                    <div class="pr-24">
+                    <div class="pr-36">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-mug-hot -mt-1 text-coffee-700 dark:text-[#d6ccc2]"></i>
                             <h3 id="cardRoaster" class="text-xl font-bold text-coffee-900 dark:text-white leading-tight mb-1"></h3>
@@ -61,7 +61,7 @@
                     <div id="cardStatsSection" class="bg-coffee-50 dark:bg-[#1c1917] rounded-xl p-4 border border-coffee-100 dark:border-[#44403c]">
                         <div class="flex justify-between items-center mb-3">
                             <span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew Stats</span>
-                            <button id="cardGraphBtn" data-action-click="openCardGraphModal(event)" class="hidden text-coffee-400 hover:text-coffee-700 dark:text-[#78716c] dark:hover:text-white transition-colors" title="View Graph">
+                            <button id="cardGraphBtn" data-action-click="openCardGraphModal(event)" class="hidden w-11 h-11 flex items-center justify-center text-coffee-400 hover:text-coffee-700 dark:text-[#78716c] dark:hover:text-white transition-colors" title="View Graph">
                                 <i class="fa-solid fa-chart-line"></i>
                             </button>
                         </div>
@@ -99,10 +99,10 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button id="coffeeCardPrevBtn" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" data-action-click="navigateCoffeeCard(-1)">
+                            <button id="coffeeCardPrevBtn" class="w-11 h-11 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" data-action-click="navigateCoffeeCard(-1)">
                                 <i class="fa-solid fa-arrow-left"></i>
                             </button>
-                            <button id="coffeeCardNextBtn" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" data-action-click="navigateCoffeeCard(1)">
+                            <button id="coffeeCardNextBtn" class="w-11 h-11 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" data-action-click="navigateCoffeeCard(1)">
                                 <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
@@ -113,13 +113,13 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto ios-scroll p-4">
                         <div class="sm:col-span-2">
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Bean</label>
-                            <select id="quickEditBeanId" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <select id="quickEditBeanId" aria-label="Bean" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                                 <option value="">-- no bean --</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Method</label>
-                            <select id="quickEditMethod" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <select id="quickEditMethod" aria-label="Method" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                                 <option value="">Select Method</option>
                                 <option value="Espresso">Espresso</option>
                                 <option value="V60">V60</option>
@@ -135,7 +135,7 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Drink</label>
-                            <select id="quickEditDrink" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <select id="quickEditDrink" aria-label="Drink" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                                 <option value="">Select Drink</option>
                                 <option value="Espresso">Espresso</option>
                                 <option value="Lungo">Lungo</option>
@@ -193,7 +193,7 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Rating</label>
-                            <select id="quickEditRating" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                            <select id="quickEditRating" aria-label="Rating" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                                 <option value="0">0</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>

@@ -5,7 +5,7 @@
                 <i class="fa-solid fa-flask text-coffee-700 dark:text-[#d6ccc2]"></i>
                 <span>Lab results</span>
             </h3>
-            <button data-action-click="closeLabResultsModal(event)" class="w-8 h-8 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center">
+            <button data-action-click="closeLabResultsModal(event)" class="w-11 h-11 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
@@ -32,6 +32,7 @@
                 <div id="labResultsCustomRenderModeWrap" class="mt-3">
                     <label for="labResultsCustomRenderMode" class="block text-[11px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Custom graph style</label>
                     <select
+                        aria-label="Custom graph style"
                         id="labResultsCustomRenderMode"
                         data-action-change="setLabResultCustomGraphRenderMode(this.value)"
                         class="w-full sm:w-56 bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg p-2 shadow-sm"

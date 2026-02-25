@@ -1,12 +1,12 @@
 <div id="gasCardOverlay" data-feature-root="gas" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeGasCard(event)">
     <div id="gasCardPanel" class="bg-white dark:bg-[#292524] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleGasCardOverlayClick(event)">
         <div class="bg-coffee-100 dark:bg-[#1c1917] p-4 border-b border-coffee-200 dark:border-[#44403c] relative">
-            <div class="absolute top-4 right-4 flex items-center gap-4">
-                <button id="gasCardEditBtn" data-action-click="enterGasEditMode()" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
+            <div class="absolute top-3 right-3 flex items-center gap-1">
+                <button id="gasCardEditBtn" data-action-click="enterGasEditMode()" class="w-11 h-11 flex items-center justify-center text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Edit">
                     <i class="fa-solid fa-pen-to-square text-lg"></i>
                 </button>
                 <div class="relative">
-                    <button id="gasCardMenuBtn" data-action-click="gasToggleActionMenu('gasCardActionMenu', event)" class="action-menu-toggle text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
+                    <button id="gasCardMenuBtn" data-action-click="gasToggleActionMenu('gasCardActionMenu', event)" class="action-menu-toggle w-11 h-11 flex items-center justify-center text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Actions">
                         <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                     </button>
                     <div id="gasCardActionMenu" class="action-menu hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] z-[10000] overflow-hidden" data-action-click="event.stopPropagation()">
@@ -28,11 +28,11 @@
                         </button>
                     </div>
                 </div>
-                <button data-action-click="closeGasCard(null)" class="text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors">
+                <button data-action-click="closeGasCard(null)" class="w-11 h-11 flex items-center justify-center text-coffee-400 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-white transition-colors" title="Close">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
-            <div class="pr-24">
+            <div class="pr-36">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-screwdriver-wrench text-coffee-600 dark:text-[#d6ccc2]"></i>
                     <h3 id="gasCardTitle" class="text-lg font-bold text-coffee-900 dark:text-white leading-tight mb-1"></h3>
@@ -76,10 +76,10 @@
                                 <p class="text-xs font-medium">Add / Change picture</p>
                             </div>
                             <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="triggerGasPhoto(event)" title="Change photo">
+                                <button class="bg-black/50 text-white w-11 h-11 rounded-full flex items-center justify-center" data-action-click="triggerGasPhoto(event)" title="Change photo">
                                     <i class="fa-solid fa-camera"></i>
                                 </button>
-                                <button class="bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center" data-action-click="removeGasPhoto(event)" title="Remove photo">
+                                <button class="bg-black/50 text-white w-11 h-11 rounded-full flex items-center justify-center" data-action-click="removeGasPhoto(event)" title="Remove photo">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -90,10 +90,10 @@
             </div>
             <div class="pt-3 border-t border-coffee-100 dark:border-[#44403c] bg-coffee-50 dark:bg-[#1c1917] px-4 pb-4">
                 <div class="flex justify-end gap-2">
-                    <button id="gasCardPrevBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" data-action-click="navigateGasCard(-1)">
+                    <button id="gasCardPrevBtn" class="w-11 h-11 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Previous" data-action-click="navigateGasCard(-1)">
                         <i class="fa-solid fa-arrow-left"></i>
                     </button>
-                    <button id="gasCardNextBtn" class="w-9 h-9 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" data-action-click="navigateGasCard(1)">
+                    <button id="gasCardNextBtn" class="w-11 h-11 rounded-full border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors flex items-center justify-center" title="Next" data-action-click="navigateGasCard(1)">
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
@@ -116,7 +116,7 @@
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase">Type</label>
-                    <select id="gasEditType" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                    <select id="gasEditType" aria-label="Gear type" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                         <option value="Basket">Basket</option>
                         <option value="Burrs">Burrs</option>
                         <option value="Coffee maker">Coffee maker</option>
@@ -160,13 +160,13 @@
             <p class="text-xs text-coffee-600 dark:text-[#a8a29e]">Add <span id="gasBulkSourceLabel" class="font-semibold text-coffee-800 dark:text-[#d6ccc2]">this gear item</span> to brews that match all selected criteria.</p>
             <div>
                 <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Method</label>
-                <select id="gasBulkMethodSelect" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                <select id="gasBulkMethodSelect" aria-label="Method" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                     <option value="">Any method</option>
                 </select>
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] uppercase mb-1">Drink</label>
-                <select id="gasBulkDrinkSelect" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
+                <select id="gasBulkDrinkSelect" aria-label="Drink" class="w-full text-sm border border-coffee-200 dark:border-[#44403c] rounded p-2 bg-white dark:bg-[#1c1917] text-coffee-900 dark:text-white">
                     <option value="">Any drink</option>
                 </select>
             </div>

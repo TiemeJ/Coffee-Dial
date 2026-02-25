@@ -192,7 +192,7 @@ export const createCoffeeTypesTableModule = ({
         html += '<button type="button" data-quick-tab="sort" class="quick-tab-btn px-2 py-1 rounded text-xs font-semibold bg-white dark:bg-[#292524] text-coffee-800 dark:text-white">Sort</button>';
         html += '<button type="button" data-quick-tab="filter" class="quick-tab-btn px-2 py-1 rounded text-xs font-semibold text-coffee-600 dark:text-[#a8a29e]">Filter</button>';
         html += '</div>';
-        html += '<button type="button" data-action-click="toggleCoffeeTypesQuickFilter(event)" class="w-7 h-7 rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#1c1917] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] flex items-center justify-center" title="Close"><i class="fa-solid fa-xmark text-[11px]"></i></button>';
+        html += '<button type="button" data-action-click="toggleCoffeeTypesQuickFilter(event)" class="w-11 h-11 rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#1c1917] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#34302e] flex items-center justify-center" title="Close"><i class="fa-solid fa-xmark text-[11px]"></i></button>';
         html += '</div>';
 
         html += '<div id="coffeeTypesQuickSortPanel" class="px-3 py-2 grid grid-cols-2 gap-1.5">';
@@ -209,16 +209,16 @@ export const createCoffeeTypesTableModule = ({
                     <span class="text-[10px] w-4 text-center text-coffee-400 dark:text-[#78716c]">${idx + 1}</span>
                     <span class="flex-1 text-xs text-coffee-800 dark:text-[#d6ccc2] truncate">${escapeHtml(label)}</span>
                     <button type="button" data-quick-sort-toggle="${escapeHtml(item.key)}" class="px-1.5 py-0.5 rounded border border-coffee-200 dark:border-[#44403c] text-[10px]">${dirLabel}</button>
-                    <button type="button" data-quick-sort-up="${escapeHtml(item.key)}" class="w-6 h-6 rounded border border-coffee-200 dark:border-[#44403c] text-[10px] ${idx === 0 ? 'opacity-40 cursor-not-allowed' : ''}" ${idx === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button>
-                    <button type="button" data-quick-sort-down="${escapeHtml(item.key)}" class="w-6 h-6 rounded border border-coffee-200 dark:border-[#44403c] text-[10px] ${idx === sortChain.length - 1 ? 'opacity-40 cursor-not-allowed' : ''}" ${idx === sortChain.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button>
-                    <button type="button" data-quick-sort-remove="${escapeHtml(item.key)}" class="w-6 h-6 rounded border border-coffee-200 dark:border-[#44403c] text-red-500 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                    <button type="button" data-quick-sort-up="${escapeHtml(item.key)}" aria-label="Move sort field up" title="Move up" class="w-11 h-11 rounded border border-coffee-200 dark:border-[#44403c] text-[10px] ${idx === 0 ? 'opacity-40 cursor-not-allowed' : ''}" ${idx === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button>
+                    <button type="button" data-quick-sort-down="${escapeHtml(item.key)}" aria-label="Move sort field down" title="Move down" class="w-11 h-11 rounded border border-coffee-200 dark:border-[#44403c] text-[10px] ${idx === sortChain.length - 1 ? 'opacity-40 cursor-not-allowed' : ''}" ${idx === sortChain.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button>
+                    <button type="button" data-quick-sort-remove="${escapeHtml(item.key)}" aria-label="Remove sort field" title="Remove" class="w-11 h-11 rounded border border-coffee-200 dark:border-[#44403c] text-red-500 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
                 </div>`;
             });
         }
         html += '</div>';
         const availableToAdd = sortOptions.filter((option) => !sortChain.some((item) => item.key === option.key));
         html += '<div class="col-span-2 grid grid-cols-[1fr_auto] gap-1.5 pt-1">';
-        html += '<select id="coffeeTypesQuickSortAddSelect" class="w-full px-2 py-1.5 rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#1c1917] text-xs text-coffee-900 dark:text-white">';
+        html += '<select id="coffeeTypesQuickSortAddSelect" aria-label="Add coffee sort field" class="w-full px-2 py-1.5 rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#1c1917] text-xs text-coffee-900 dark:text-white">';
         html += '<option value="">Add field...</option>';
         availableToAdd.forEach((option) => {
             html += `<option value="${escapeHtml(option.key)}">${escapeHtml(option.label)}</option>`;
@@ -358,7 +358,7 @@ export const createCoffeeTypesTableModule = ({
             const filters = getCoffeeTypesFilters();
             let html = `<div class="px-3 py-2 text-xs font-bold text-coffee-400 dark:text-[#78716c] uppercase border-b border-coffee-100 dark:border-[#44403c] flex items-center justify-between">
                 <span>${label}</span>
-                <button data-action-click="toggleCoffeeTypesQuickFilter(event)" class="text-coffee-400 hover:text-coffee-600 dark:hover:text-white">
+                <button data-action-click="toggleCoffeeTypesQuickFilter(event)" class="w-11 h-11 flex items-center justify-center text-coffee-400 hover:text-coffee-600 dark:hover:text-white">
                     <i class="fa-solid fa-arrow-left"></i>
                 </button>
             </div>`;
@@ -421,7 +421,7 @@ export const createCoffeeTypesTableModule = ({
             if (!value) return;
             hasFilters = true;
             const label = labelMap[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
-            list.innerHTML += `<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${label}:</span><b>${value}</b><button data-action-click="applyCoffeeTypesFilterFromQuick('${key}', null)" class="ml-1 hover:text-red-200">x</button></div>`;
+            list.innerHTML += `<div class="flex items-center gap-2 bg-coffee-700 dark:bg-[#57534e] text-white text-xs px-3 py-1 rounded-full shadow-sm"><span>${label}:</span><b>${value}</b><button data-action-click="applyCoffeeTypesFilterFromQuick('${key}', null)" aria-label="Remove filter" title="Remove filter" class="ml-1 hover:text-red-200">x</button></div>`;
         });
         container.classList.toggle('hidden', !hasFilters);
     };

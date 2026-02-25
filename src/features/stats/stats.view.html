@@ -13,7 +13,7 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                        <select id="statsViewSelect" data-action-change="changeStatsView(this.value)" class="flex-1 sm:flex-none bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[140px]">
+                        <select id="statsViewSelect" aria-label="Statistics view" data-action-change="changeStatsView(this.value)" class="flex-1 sm:flex-none bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] text-coffee-900 dark:text-white text-sm rounded-lg block p-2.5 shadow-sm font-bold min-w-[140px]">
                             <option value="mine">My brews</option>
                         </select>
                         <button type="button" data-action-click="triggerAIProfile()" id="statsAIBtn" class="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm whitespace-nowrap">

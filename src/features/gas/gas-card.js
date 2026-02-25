@@ -121,7 +121,7 @@ export const createGasCardModule = ({
 
         const selected = [...gasMethodsSelection];
         pills.innerHTML = selected
-            .map((method) => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${method}<button type="button" data-gas-method-remove="${method}" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`)
+            .map((method) => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${method}<button type="button" data-gas-method-remove="${method}" aria-label="Remove gear" title="Remove gear" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`)
             .join('');
 
         search.placeholder = selected.length ? '' : 'Search methods...';
@@ -342,7 +342,7 @@ export const createGasCardModule = ({
             .filter(Boolean)
             .map(
                 (item) =>
-                    `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${item.name || 'Untitled gear'}<button type="button" data-gas-bulk-gear-remove="${item.id}" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`
+                    `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${item.name || 'Untitled gear'}<button type="button" data-gas-bulk-gear-remove="${item.id}" aria-label="Remove gear" title="Remove gear" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`
             )
             .join('');
         gearSearch.placeholder = selectedIds.length ? '' : 'Search gear...';

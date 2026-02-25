@@ -40,7 +40,7 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
         pills.innerHTML = selectedIds
             .map((id) => {
                 const label = optionMap.get(id) || 'Unknown gear';
-                return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${label}<button type="button" data-brew-gear-remove="${id}" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`;
+                return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 dark:bg-[#34302e] text-coffee-800 dark:text-[#d6ccc2]">${label}<button type="button" data-brew-gear-remove="${id}" aria-label="Remove gear" title="Remove gear" class="text-coffee-500 dark:text-[#a8a29e] hover:text-red-500">&times;</button></span>`;
             })
             .join('');
         search.placeholder = selectedIds.length ? '' : 'Search gear...';

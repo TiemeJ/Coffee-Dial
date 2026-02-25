@@ -40,7 +40,7 @@
                                     </div>
                                     <input type="file" id="aiFileInput" accept="image/*" class="hidden" data-action-change="handleAIFile(event)">
                                 </div>
-                                <button type="button" data-action-click="toggleCoffeeDetails(event)" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse coffee details">
+                                <button type="button" data-action-click="toggleCoffeeDetails(event)" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse coffee details">
                                     <i id="coffeeDetailsToggleIcon" class="fa-solid fa-chevron-up transition-transform"></i>
                                 </button>
                             </div>
@@ -55,7 +55,7 @@
                                          <i class="fa-solid fa-pen-to-square"></i>
                                      </button>
                                  </div>
-                                 <select id="savedBeanSelect" data-action-change="fillBeanDetails(this.value)" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 cursor-pointer shadow-sm">
+                                 <select id="savedBeanSelect" aria-label="Select saved bean" data-action-change="fillBeanDetails(this.value)" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 cursor-pointer shadow-sm">
                                      <option value="">-- create new bean and coffee --</option>
                                  </select>
                              </div>
@@ -78,7 +78,7 @@
                             </div>
                             <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Variety</label><input type="text" id="variety" name="variety" placeholder="e.g. Geisha" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"></div>
                             <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Processing</label><input type="text" id="processing" name="processing" placeholder="e.g. Natural" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors"></div>
-                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roast type</label><select id="roastType" name="roastType" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 cursor-pointer"><option value="" disabled selected>Select roast</option><option value="Light">Light</option><option value="Medium">Medium</option><option value="Medium-Dark">Medium-Dark</option><option value="Dark">Dark</option></select></div>
+                            <div><label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Roast type</label><select id="roastType" aria-label="Roast type" name="roastType" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 cursor-pointer"><option value="" disabled selected>Select roast</option><option value="Light">Light</option><option value="Medium">Medium</option><option value="Medium-Dark">Medium-Dark</option><option value="Dark">Dark</option></select></div>
                             </div>
                         </div>
                     </div>
@@ -90,19 +90,19 @@
                                  <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Extraction
                              </h3>
                              <div data-action-click="event.stopPropagation()" class="flex items-center gap-2">
-                                 <button id="brewGraphBtn" type="button" title="Graph" data-action-click="openGraphModal()" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                 <button id="brewGraphBtn" type="button" title="Graph" data-action-click="openGraphModal()" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
                                      <i class="fa-solid fa-chart-line"></i>
                                  </button>
-                                 <button id="brewWeighBtn" type="button" title="Weigh" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                 <button id="brewWeighBtn" type="button" title="Weigh" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
                                      <i class="fa-solid fa-scale-balanced"></i>
                                  </button>
-                                 <button id="brewTimerBtn" type="button" title="Start timer" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                 <button id="brewTimerBtn" type="button" title="Start timer" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
                                      <i class="fa-solid fa-play"></i>
                                  </button>
-                                 <button id="brewResetScaleBtn" type="button" title="Reset scale" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                 <button id="brewResetScaleBtn" type="button" title="Reset scale" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
                                      <i class="fa-solid fa-rotate-left"></i>
                                  </button>
-                                 <button type="button" data-action-click="toggleExtractionSection(event)" class="w-7 h-7 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse extraction">
+                                 <button type="button" data-action-click="toggleExtractionSection(event)" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse extraction">
                                      <i id="extractionToggleIcon" class="fa-solid fa-chevron-up transition-transform"></i>
                                  </button>
                              </div>
@@ -111,7 +111,7 @@
                         <div id="extractionBody" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Brewing method</label>
-                                <select id="method" name="method" data-action-change="toggleMethodOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                <select id="method" aria-label="Brewing method" name="method" data-action-change="toggleMethodOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
                                     <option value="" disabled selected>Select method</option>
                                     <option value="Espresso">Espresso</option>
                                     <option value="V60">V60</option>
@@ -127,7 +127,7 @@
                             </div>
                              <div>
                                 <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Drink</label>
-                                <select id="drinkType" name="drinkType" data-action-change="toggleDrinkOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                <select id="drinkType" aria-label="Drink" name="drinkType" data-action-change="toggleDrinkOther()" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
                                     <option value="" disabled selected>Select drink</option>
                                     <option value="Espresso">Espresso</option>
                                     <option value="Lungo">Lungo</option>
@@ -174,7 +174,7 @@
                                     <input type="number" step="any" id="tempNumeric" name="tempNumeric" placeholder="e.g. 93" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
                                 </div>
                                 <div id="tempProfileContainer" class="hidden">
-                                    <select id="tempProfile" name="tempProfile" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
+                                    <select id="tempProfile" aria-label="Temperature profile" name="tempProfile" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] cursor-pointer">
                                         <option value="" disabled selected>Select</option>
                                         <option value="L4">L4 (Very Low)</option>
                                         <option value="L3">L3 (Low)</option>
