@@ -1,12 +1,14 @@
 // SERVICE WORKER VERSION MARKER
 // IMPORTANT: bump this when editing this file, and keep it in sync with
 // `SW_VERSION` in `src/app/pwa.js`.
-const SW_VERSION = '2026-02-25.3';
+const SW_VERSION = '2026-02-25.4';
 self.__COFFEE_DIAL_SW_VERSION = SW_VERSION;
 
 const MOMENTS_FALLBACK_LINK = '/Coffee-Dial/?moments';
 const SW_DIAG_MESSAGE_TYPE = 'coffee-dial-sw-diagnostic';
 const SW_DIAG_LOG_PREFIX = '[CoffeeDial SW]';
+const PUSH_INTENT_CACHE = 'coffee-dial-push-intent-v1';
+const PUSH_INTENT_CACHE_KEY = '/__coffee_dial_push_intent__';
 
 const createDiagEntry = (eventType, details = {}) => ({
     ts: new Date().toISOString(),
@@ -33,6 +35,46 @@ const publishDiagnostics = async (entry) => {
 };
 
 const logDiagnostics = (eventType, details = {}) => publishDiagnostics(createDiagEntry(eventType, details));
+
+const savePushIntent = async ({ link = '', source = '' } = {}) => {
+    try {
+        const cache = await caches.open(PUSH_INTENT_CACHE);
+        const payload = {
+            ts: new Date().toISOString(),
+            link,
+            source: source || 'push',
+            consumed: false,
+            swVersion: SW_VERSION
+        };
+        await cache.put(
+            new Request(PUSH_INTENT_CACHE_KEY, { cache: 'no-store' }),
+            new Response(JSON.stringify(payload), {
+                headers: { 'content-type': 'application/json' }
+            })
+        );
+    } catch (_) {}
+};
+
+const markPushIntentConsumed = async () => {
+    try {
+        const cache = await caches.open(PUSH_INTENT_CACHE);
+        const req = new Request(PUSH_INTENT_CACHE_KEY, { cache: 'no-store' });
+        const existing = await cache.match(req);
+        if (!existing) return;
+        const data = await existing.json().catch(() => ({}));
+        const next = {
+            ...(data || {}),
+            consumed: true,
+            consumedAt: new Date().toISOString()
+        };
+        await cache.put(
+            req,
+            new Response(JSON.stringify(next), {
+                headers: { 'content-type': 'application/json' }
+            })
+        );
+    } catch (_) {}
+};
 
 const normalizeLink = (value) => {
     const raw = typeof value === 'string' && value.trim() ? value.trim() : MOMENTS_FALLBACK_LINK;
@@ -100,6 +142,10 @@ self.addEventListener('push', (event) => {
     const link = normalizeLink(payload?.data?.link || payload?.fcmOptions?.link || MOMENTS_FALLBACK_LINK);
 
     event.waitUntil((async () => {
+        await savePushIntent({
+            link,
+            source: payload?.web_push === 8030 ? 'declarative' : 'fcm'
+        });
         await logDiagnostics('push_received', {
             hasNotification: !!payload?.notification,
             hasData: !!payload?.data,
@@ -120,6 +166,7 @@ self.addEventListener('notificationclick', (event) => {
     const link = normalizeLink(event?.notification?.data?.link || MOMENTS_FALLBACK_LINK);
     event.notification.close();
     event.waitUntil((async () => {
+        await markPushIntentConsumed();
         const existingClients = await clients.matchAll({ type: 'window', includeUncontrolled: true }).catch(() => []);
         await logDiagnostics('notification_click', {
             link,
