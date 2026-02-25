@@ -602,14 +602,27 @@ export const createBrewsPreferencesModule = ({
         try {
             if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
                 const registrations = await navigator.serviceWorker.getRegistrations().catch(() => []);
+                const controllerChanged = new Promise((resolve) => {
+                    let done = false;
+                    const finish = () => {
+                        if (done) return;
+                        done = true;
+                        resolve(true);
+                    };
+                    navigator.serviceWorker.addEventListener('controllerchange', finish, { once: true });
+                    setTimeout(() => resolve(false), 3500);
+                });
                 await Promise.all(registrations.map(async (registration) => {
                     try { await registration.update(); } catch (_) {}
+                }));
+                await Promise.all(registrations.map(async (registration) => {
                     try {
                         if (registration.waiting) {
                             registration.waiting.postMessage({ type: 'SKIP_WAITING' });
                         }
                     } catch (_) {}
                 }));
+                await controllerChanged;
             }
             if (typeof caches !== 'undefined' && typeof caches.keys === 'function') {
                 const cacheNames = await caches.keys().catch(() => []);
