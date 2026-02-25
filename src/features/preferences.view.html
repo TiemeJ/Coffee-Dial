@@ -85,9 +85,20 @@
                                 <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Push enabled pref</span><span id="notificationsDebugPushEnabled" class="font-mono">-</span></div>
                                 <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Current device ID</span><span id="notificationsDebugDeviceId" class="font-mono break-all text-right">-</span></div>
                                 <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Registered devices</span><span id="notificationsDebugDeviceCount" class="font-mono">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Current push type</span><span id="notificationsDebugCurrentPushType" class="font-mono text-right">-</span></div>
                                 <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Current token</span><span id="notificationsDebugCurrentToken" class="font-mono break-all text-right">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">DWP endpoint host</span><span id="notificationsDebugCurrentDwpHost" class="font-mono break-all text-right">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">DWP keys</span><span id="notificationsDebugCurrentDwpKeys" class="font-mono text-right">-</span></div>
+                                <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">DWP expiration</span><span id="notificationsDebugCurrentDwpExpiration" class="font-mono break-all text-right">-</span></div>
                                 <div class="flex justify-between gap-2"><span class="text-coffee-500 dark:text-[#a8a29e]">Current updatedAt</span><span id="notificationsDebugCurrentUpdatedAt" class="font-mono text-right">-</span></div>
                             </div>
+                        </div>
+                        <div class="p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2"><i class="fa-solid fa-wave-square text-indigo-500"></i><span class="text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">SW diagnostics</span></div>
+                                <button id="notificationsSwDiagRefreshBtn" type="button" class="px-2 py-1 text-[11px] font-semibold rounded bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] text-coffee-700 dark:text-[#d6ccc2]">Refresh</button>
+                            </div>
+                            <div id="notificationsSwDiagList" class="space-y-1.5 text-[10px] font-mono text-coffee-700 dark:text-[#d6ccc2] break-all">No diagnostics yet.</div>
                         </div>
                     </div>
                 </div>
@@ -107,6 +118,10 @@
                     <button data-action-click="openCoffeeScaleModal(); hidePreferencesModal()" class="w-full text-xs bg-coffee-100 hover:bg-coffee-200 dark:bg-[#34302e] dark:hover:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] px-3 py-2 rounded font-bold transition-colors border border-coffee-200 dark:border-[#57534e]">
                         <i class="fa-solid fa-scale-balanced mr-1"></i> Troubleshoot scale
                     </button>
+                </div>
+                <div class="mt-6 pt-3 border-t border-coffee-200 dark:border-[#44403c] text-[11px] text-coffee-500 dark:text-[#a8a29e]">
+                    <div id="preferencesBuildInfo" class="font-mono">Build: -</div>
+                    <div id="preferencesRuntimeSwInfo" class="font-mono mt-1">pwa.js/sw.js: -</div>
                 </div>
             </div>
         </div>

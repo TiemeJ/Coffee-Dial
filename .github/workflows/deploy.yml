@@ -29,6 +29,18 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Generate build info
+        run: |
+          BUILD_STAMP="$(date -u '+%y-%m-%d %H:%M')"
+          COMMIT_SHA="$(git rev-parse --short HEAD)"
+          cat > src/config/build-info.js <<EOF
+          // Auto-generated in GitHub deploy workflow.
+          window.__coffeeDialBuildInfo = {
+              buildStamp: '${BUILD_STAMP}',
+              commit: '${COMMIT_SHA}'
+          };
+          EOF
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

@@ -199,6 +199,46 @@ export const createBrewsPreferencesModule = ({
         if (el) el.textContent = `${value ?? '-'}`;
     };
 
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = `${value ?? '-'}`;
+    };
+
+    const parseSwVersionFromScriptUrl = (scriptUrl) => {
+        if (!scriptUrl || typeof scriptUrl !== 'string') return '-';
+        try {
+            const url = new URL(scriptUrl, window.location.origin);
+            const version = url.searchParams.get('v');
+            return version || '-';
+        } catch (_) {
+            return '-';
+        }
+    };
+
+    const renderBuildAndVersionInfo = async () => {
+        const info = (typeof window !== 'undefined' && window.__coffeeDialBuildInfo && typeof window.__coffeeDialBuildInfo === 'object')
+            ? window.__coffeeDialBuildInfo
+            : {};
+        const buildStamp = `${info.buildStamp || '-'}`;
+        setText('preferencesBuildInfo', `Build: ${buildStamp}`);
+
+        let configuredVersion = '-';
+        let activeVersion = '-';
+        let waitingVersion = '-';
+        try {
+            if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+                const registration = await navigator.serviceWorker.getRegistration().catch(() => null);
+                configuredVersion = parseSwVersionFromScriptUrl(registration?.active?.scriptURL || registration?.waiting?.scriptURL || registration?.installing?.scriptURL || '');
+                activeVersion = parseSwVersionFromScriptUrl(registration?.active?.scriptURL || '');
+                waitingVersion = parseSwVersionFromScriptUrl(registration?.waiting?.scriptURL || '');
+            }
+        } catch (_) {}
+        setText(
+            'preferencesRuntimeSwInfo',
+            `pwa.js/sw.js: cfg=${configuredVersion} | active=${activeVersion} | waiting=${waitingVersion}`
+        );
+    };
+
     const shortenToken = (value) => {
         const token = (value || '').toString().trim();
         if (!token) return '-';
@@ -240,6 +280,27 @@ export const createBrewsPreferencesModule = ({
         return `host=${endpointHost} | keys=${hasP256 && hasAuth ? 'ok' : 'missing'} | exp=${expirationLabel}`;
     };
 
+    const getDeclarativeDebugDetails = (entry = {}) => {
+        const sub = entry?.webPushSubscription && typeof entry.webPushSubscription === 'object'
+            ? entry.webPushSubscription
+            : null;
+        if (!sub) {
+            return { host: '-', keys: '-', expiration: '-' };
+        }
+        let host = '-';
+        try {
+            host = sub.endpoint ? (new URL(sub.endpoint).host || '-') : '-';
+        } catch (_) {}
+        const hasP256 = !!(`${sub?.keys?.p256dh || ''}`.trim());
+        const hasAuth = !!(`${sub?.keys?.auth || ''}`.trim());
+        const keys = hasP256 && hasAuth ? 'ok' : 'missing';
+        const expirationRaw = sub?.expirationTime ?? null;
+        const expiration = expirationRaw === null || expirationRaw === undefined || expirationRaw === ''
+            ? 'none'
+            : `${expirationRaw}`;
+        return { host, keys, expiration };
+    };
+
     const renderNotificationsDebugPanel = async () => {
         const listEl = document.getElementById('notificationsRegisteredDevicesList');
         const user = getCurrentUser?.();
@@ -251,7 +312,11 @@ export const createBrewsPreferencesModule = ({
         setDebugText('notificationsDebugPushEnabled', prefs.pushEnabled ? 'true' : 'false');
         setDebugText('notificationsDebugDeviceId', currentDeviceId || '-');
         setDebugText('notificationsDebugDeviceCount', '-');
+        setDebugText('notificationsDebugCurrentPushType', '-');
         setDebugText('notificationsDebugCurrentToken', '-');
+        setDebugText('notificationsDebugCurrentDwpHost', '-');
+        setDebugText('notificationsDebugCurrentDwpKeys', '-');
+        setDebugText('notificationsDebugCurrentDwpExpiration', '-');
         setDebugText('notificationsDebugCurrentUpdatedAt', '-');
         updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: false });
         updateRegisterCurrentDeviceButton({ show: false, busy: false });
@@ -279,7 +344,12 @@ export const createBrewsPreferencesModule = ({
                 !current;
             updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: !!current });
             updateRegisterCurrentDeviceButton({ show: showRegisterCurrentDeviceButton, busy: false });
+            setDebugText('notificationsDebugCurrentPushType', formatPushType(current || {}));
             setDebugText('notificationsDebugCurrentToken', shortenToken(current?.token || ''));
+            const dwpDetails = getDeclarativeDebugDetails(current || {});
+            setDebugText('notificationsDebugCurrentDwpHost', dwpDetails.host);
+            setDebugText('notificationsDebugCurrentDwpKeys', dwpDetails.keys);
+            setDebugText('notificationsDebugCurrentDwpExpiration', dwpDetails.expiration);
             setDebugText('notificationsDebugCurrentUpdatedAt', current?.updatedAt || '-');
 
             if (!listEl) return;
@@ -331,6 +401,44 @@ export const createBrewsPreferencesModule = ({
             updatePushAvailabilityState({ hasRegisteredDevices: false });
             if (listEl) listEl.textContent = `Failed loading devices: ${error?.message || error}`;
         }
+    };
+
+    const getSwDiagnostics = () => {
+        if (typeof window === 'undefined') return [];
+        const list = window.__coffeeDialPushDiagnostics;
+        if (!Array.isArray(list)) return [];
+        return list.filter((entry) => entry && typeof entry === 'object');
+    };
+
+    const renderSwDiagnosticsPanel = () => {
+        const listEl = document.getElementById('notificationsSwDiagList');
+        if (!listEl) return;
+        const entries = getSwDiagnostics();
+        if (!entries.length) {
+            listEl.textContent = 'No diagnostics yet.';
+            return;
+        }
+        const latest = entries.slice(-15).reverse();
+        listEl.innerHTML = latest.map((entry) => {
+            const eventType = escapeHtml(`${entry.eventType || '-'}`);
+            const ts = escapeHtml(`${entry.ts || entry.tsClient || '-'}`);
+            const swVersion = escapeHtml(`${entry.swVersion || '-'}`);
+            const link = escapeHtml(`${entry?.details?.link || '-'}`);
+            const clientsCount = escapeHtml(`${entry?.details?.existingClientCount ?? '-'}`);
+            const openedClientUrl = escapeHtml(`${entry?.details?.openedClientUrl || '-'}`);
+            const error = escapeHtml(`${entry?.details?.error || '-'}`);
+            return `
+                <div class="rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#292524] p-1.5">
+                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">event</span>: ${eventType}</div>
+                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">ts</span>: ${ts}</div>
+                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">sw</span>: ${swVersion}</div>
+                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">link</span>: ${link}</div>
+                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">clients</span>: ${clientsCount}</div>
+                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">opened</span>: ${openedClientUrl}</div>
+                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">error</span>: ${error}</div>
+                </div>
+            `;
+        }).join('');
     };
 
     const deleteRegisteredDevice = async (deviceId) => {
@@ -394,10 +502,17 @@ export const createBrewsPreferencesModule = ({
         if (hasBoundNotificationsDebug) return;
         hasBoundNotificationsDebug = true;
         const refreshBtn = document.getElementById('notificationsDebugRefreshBtn');
+        const swDiagRefreshBtn = document.getElementById('notificationsSwDiagRefreshBtn');
         const registerCurrentDeviceBtn = document.getElementById('notificationsRegisterCurrentDeviceBtn');
         refreshBtn?.addEventListener('click', () => {
             renderNotificationsDebugPanel();
+            renderSwDiagnosticsPanel();
+            renderBuildAndVersionInfo();
             updatePushPermissionGuard();
+        });
+        swDiagRefreshBtn?.addEventListener('click', () => {
+            renderSwDiagnosticsPanel();
+            renderBuildAndVersionInfo();
         });
         registerCurrentDeviceBtn?.addEventListener('click', async () => {
             updateRegisterCurrentDeviceButton({ show: true, busy: true });
@@ -445,8 +560,11 @@ export const createBrewsPreferencesModule = ({
                     Promise.resolve(renderNotificationsDebugPanel()).then(() => true).catch(() => false),
                     new Promise((resolve) => setTimeout(() => resolve(false), 5000))
                 ]);
+                renderSwDiagnosticsPanel();
                 setTimeout(() => {
                     renderNotificationsDebugPanel();
+                    renderSwDiagnosticsPanel();
+                    renderBuildAndVersionInfo();
                 }, 1200);
                 if (!rendered) {
                     updateRegisterCurrentDeviceButton({ show: true, busy: false });
@@ -579,6 +697,8 @@ export const createBrewsPreferencesModule = ({
         bindPreferencesAutoSave();
         bindNotificationsDebug();
         renderNotificationsDebugPanel();
+        renderSwDiagnosticsPanel();
+        renderBuildAndVersionInfo();
         isHydratingPreferences = false;
 
         document.getElementById('preferencesModal').classList.remove('hidden');
