@@ -13,8 +13,6 @@
         import { createGasController } from '../../features/gas/gas.controller.js';
         import { createBeansController } from '../../features/beans/beans.controller.js';
         import { createSocialCoordinator } from '../coordinators/social.coordinator.js';
-        import { createStatsModule } from '../../features/stats/stats.js';
-        import { createImportExportModule } from '../../features/import-export/import-export.js';
         import { createBrewsCardActionsModule } from '../../features/brews/brews-card-actions.js';
         import { createBrewsCardUiModule } from '../../features/brews/brews-card-ui.js';
         import { createBrewsCardShareModule } from '../../features/brews/brews-card-share.js';
@@ -1049,29 +1047,38 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         });
 
         // --- Statistics Logic ---
-        const {
-            openStats,
-            closeStats,
-            toggleStatsUniqueTable,
-            changeStatsView,
-            calculateStats,
-            updateBeanMeter,
-            renderCharts
-        } = createStatsModule({
-            getCurrentUser: () => getCurrentUserState(),
-            getCurrentView: () => getCurrentViewState(),
-            getFollowing: () => getFollowingState(),
-            dataService,
-            getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
-            getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
-            dispatchCommand: (commandName, payload) =>
-                appCommands?.dispatch?.(commandName, payload, { source: 'stats' }),
-            setCurrentStatsData: (value) => setCurrentStatsDataState(value),
-            getCurrentStatsData: () => getCurrentStatsDataState(),
-            setCurrentBeanMeterPeriod: (value) => setCurrentBeanMeterPeriodState(value),
-            getCurrentBeanMeterPeriod: () => getCurrentBeanMeterPeriodState(),
-            getChart
-        });
+        let statsModulePromise = null;
+        const ensureStatsModule = async () => {
+            if (!statsModulePromise) {
+                statsModulePromise = (async () => {
+                    const { createStatsModule } = await import('../../features/stats/stats.js');
+                    return createStatsModule({
+                        getCurrentUser: () => getCurrentUserState(),
+                        getCurrentView: () => getCurrentViewState(),
+                        getFollowing: () => getFollowingState(),
+                        dataService,
+                        getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
+                        getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
+                        dispatchCommand: (commandName, payload) =>
+                            appCommands?.dispatch?.(commandName, payload, { source: 'stats' }),
+                        setCurrentStatsData: (value) => setCurrentStatsDataState(value),
+                        getCurrentStatsData: () => getCurrentStatsDataState(),
+                        setCurrentBeanMeterPeriod: (value) => setCurrentBeanMeterPeriodState(value),
+                        getCurrentBeanMeterPeriod: () => getCurrentBeanMeterPeriodState(),
+                        getChart
+                    });
+                })();
+            }
+            return statsModulePromise;
+        };
+
+        const openStats = (...args) => ensureStatsModule().then((module) => module.openStats(...args));
+        const closeStats = (...args) => ensureStatsModule().then((module) => module.closeStats(...args));
+        const toggleStatsUniqueTable = (...args) => ensureStatsModule().then((module) => module.toggleStatsUniqueTable(...args));
+        const changeStatsView = (...args) => ensureStatsModule().then((module) => module.changeStatsView(...args));
+        const calculateStats = (...args) => ensureStatsModule().then((module) => module.calculateStats(...args));
+        const updateBeanMeter = (...args) => ensureStatsModule().then((module) => module.updateBeanMeter(...args));
+        const renderCharts = (...args) => ensureStatsModule().then((module) => module.renderCharts(...args));
 
         const setRating = (r) => { const c=document.getElementById('starContainer'); document.getElementById('ratingInput').value=r; for(let i=0;i<c.children.length;i++){ if(i<r)c.children[i].classList.add('active'); else c.children[i].classList.remove('active'); } };
 
@@ -1084,38 +1091,47 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getCoffeeScale: () => coffeeScale
         });
 
-        const {
-            resetImportState,
-            renderImportPreview,
-            openImportExportModal,
-            closeImportExportModal,
-            setImportExportMode,
-            openImportModal,
-            closeImportModal,
-            handleImportFileChange,
-            performImport,
-            openExportModal,
-            closeExportModal,
-            performExport,
-            exportBrewsAsCSV,
-            exportBrewsAsBeanconquerorCSV,
-            exportAsJSON,
-            exportCoffeesAsCSV,
-            exportCoffeesAsJSON
-        } = createImportExportModule({
-            getCurrentUser: () => getCurrentUserState(),
-            getPendingImportBrews: () => getPendingImportBrewsState(),
-            setPendingImportBrews: (value) => setPendingImportBrewsState(value),
-            parseBeanconquerorCSV,
-            mapBeanconquerorBrews,
-            dataService,
-            getFilteredCoffees: () => getFilteredCoffees(),
-            getBeans: () => getBeansState(),
-            getCoffeeTypes: () => getCoffeeTypesState(),
-            getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
-            getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
-            openAppConfirm
-        });
+        let importExportModulePromise = null;
+        const ensureImportExportModule = async () => {
+            if (!importExportModulePromise) {
+                importExportModulePromise = (async () => {
+                    const { createImportExportModule } = await import('../../features/import-export/import-export.js');
+                    return createImportExportModule({
+                        getCurrentUser: () => getCurrentUserState(),
+                        getPendingImportBrews: () => getPendingImportBrewsState(),
+                        setPendingImportBrews: (value) => setPendingImportBrewsState(value),
+                        parseBeanconquerorCSV,
+                        mapBeanconquerorBrews,
+                        dataService,
+                        getFilteredCoffees: () => getFilteredCoffees(),
+                        getBeans: () => getBeansState(),
+                        getCoffeeTypes: () => getCoffeeTypesState(),
+                        getCoffeeTypeDisplay: (brew) => getCoffeeTypeDisplay(brew),
+                        getCoffeeTypeForBrew: (brew) => getCoffeeTypeForBrew(brew),
+                        openAppConfirm
+                    });
+                })();
+            }
+            return importExportModulePromise;
+        };
+
+        const resetImportState = (...args) => ensureImportExportModule().then((module) => module.resetImportState(...args));
+        const renderImportPreview = (...args) => ensureImportExportModule().then((module) => module.renderImportPreview(...args));
+        const openImportExportModal = (...args) => ensureImportExportModule().then((module) => module.openImportExportModal(...args));
+        const closeImportExportModal = (...args) => ensureImportExportModule().then((module) => module.closeImportExportModal(...args));
+        const setImportExportMode = (...args) => ensureImportExportModule().then((module) => module.setImportExportMode(...args));
+        const openImportModal = (...args) => ensureImportExportModule().then((module) => module.openImportModal(...args));
+        const closeImportModal = (...args) => ensureImportExportModule().then((module) => module.closeImportModal(...args));
+        const handleImportFileChange = (...args) => ensureImportExportModule().then((module) => module.handleImportFileChange(...args));
+        const performImport = (...args) => ensureImportExportModule().then((module) => module.performImport(...args));
+        const openExportModal = (...args) => ensureImportExportModule().then((module) => module.openExportModal(...args));
+        const closeExportModal = (...args) => ensureImportExportModule().then((module) => module.closeExportModal(...args));
+        const performExport = (...args) => ensureImportExportModule().then((module) => module.performExport(...args));
+        const exportBrewsAsCSV = (...args) => ensureImportExportModule().then((module) => module.exportBrewsAsCSV(...args));
+        const exportBrewsAsBeanconquerorCSV = (...args) => ensureImportExportModule().then((module) => module.exportBrewsAsBeanconquerorCSV(...args));
+        const exportAsJSON = (...args) => ensureImportExportModule().then((module) => module.exportAsJSON(...args));
+        const exportCoffeesAsCSV = (...args) => ensureImportExportModule().then((module) => module.exportCoffeesAsCSV(...args));
+        const exportCoffeesAsJSON = (...args) => ensureImportExportModule().then((module) => module.exportCoffeesAsJSON(...args));
 
         const { getCoffeeTypeForBrew, getCoffeeTypeDisplay, getCoffeeTypeForBean, getBeanCoffeeTypeDisplay } =
             createCoffeeDisplayModule({
