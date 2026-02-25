@@ -31,12 +31,40 @@
     <link rel="apple-touch-icon" href="icon.png">
 
     <!-- Google Analytics (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-82NK8RESHL"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-82NK8RESHL', { send_page_view: false });
+        (function () {
+            var GA_ID = 'G-82NK8RESHL';
+            var gaScriptLoaded = false;
+
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', GA_ID, { send_page_view: false });
+
+            var loadGaScript = function () {
+                if (gaScriptLoaded) return;
+                gaScriptLoaded = true;
+                var script = document.createElement('script');
+                script.async = true;
+                script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_ID);
+                document.head.appendChild(script);
+            };
+
+            var attachInteractionLoaders = function () {
+                var interactionEvents = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
+                var onFirstInteraction = function () {
+                    interactionEvents.forEach(function (eventName) {
+                        window.removeEventListener(eventName, onFirstInteraction, { passive: true });
+                    });
+                    loadGaScript();
+                };
+                interactionEvents.forEach(function (eventName) {
+                    window.addEventListener(eventName, onFirstInteraction, { passive: true, once: true });
+                });
+            };
+
+            attachInteractionLoaders();
+        })();
     </script>
 
     <link rel="stylesheet" href="./vendor/css/tailwind.generated.min.css">
