@@ -63,7 +63,7 @@ export const createAuthStateChangedHandler = ({
             return;
         }
 
-        document.getElementById('authContainer').innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2"><button data-action-click="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><i class="fa-brands fa-google"></i> Sign in</button></div>`;
+        document.getElementById('authContainer').innerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2"><button data-action-click="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white"><path d="M21.35 11.1h-9.17v2.92h5.27c-.23 1.5-1.76 4.4-5.27 4.4-3.17 0-5.76-2.62-5.76-5.85s2.59-5.85 5.76-5.85c1.8 0 3 .77 3.69 1.43l2.52-2.43C16.84 4.28 14.7 3.4 12.18 3.4 7.23 3.4 3.2 7.47 3.2 12.57s4.03 9.17 8.98 9.17c5.18 0 8.61-3.64 8.61-8.76 0-.59-.06-1.04-.14-1.48z"></path></svg><span>Sign in</span></button></div>`;
         document.getElementById('viewSelectorContainer').classList.add('hidden');
         document.getElementById('coffeeTableBody').innerHTML = '';
         document.getElementById('emptyState').classList.add('hidden');
