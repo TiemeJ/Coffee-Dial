@@ -1,7 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { getFunctions } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 export const firebaseConfig = {
@@ -21,5 +20,29 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const functions = getFunctions(app, 'us-central1');
 export const provider = new GoogleAuthProvider();
+
+let functionsInstancePromise = null;
+let functionsApiPromise = null;
+let messagingApiPromise = null;
+
+export const loadFunctionsApi = () => {
+    if (!functionsApiPromise) {
+        functionsApiPromise = import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
+    }
+    return functionsApiPromise;
+};
+
+export const getFunctionsInstance = async () => {
+    if (!functionsInstancePromise) {
+        functionsInstancePromise = loadFunctionsApi().then(({ getFunctions }) => getFunctions(app, 'us-central1'));
+    }
+    return functionsInstancePromise;
+};
+
+export const loadMessagingApi = () => {
+    if (!messagingApiPromise) {
+        messagingApiPromise = import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
+    }
+    return messagingApiPromise;
+};

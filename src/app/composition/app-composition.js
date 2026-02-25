@@ -1,8 +1,6 @@
-        import { BAG_AI_URL, STATS_AI_URL, WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, functions, storage, provider } from '../../config/firebase.js';
+        import { BAG_AI_URL, STATS_AI_URL, WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, storage, provider, getFunctionsInstance, loadFunctionsApi, loadMessagingApi } from '../../config/firebase.js';
         import { signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { collection, collectionGroup, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, arrayUnion, arrayRemove, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-        import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-        import { getMessaging, getToken, deleteToken, onMessage, isSupported } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
         import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
         import { initCoffeeScale } from '../../features/scales/scales.js';
         import { createScaleModalsModule } from '../../features/scales/scales-modals.js';
@@ -293,18 +291,34 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             deleteObject
         });
         const functionsService = createFunctionsService({
-            functions,
-            httpsCallable
+            getFunctionsInstance,
+            loadFunctionsApi
         });
+        const resolveMessagingApi = async () => loadMessagingApi();
         const pushNotifications = createPushNotificationsModule({
             dataService,
             messagingApi: {
                 app: firebaseApp,
-                getMessaging,
-                getToken,
-                deleteToken,
-                onMessage,
-                isSupported
+                getMessaging: async (...args) => {
+                    const { getMessaging } = await resolveMessagingApi();
+                    return getMessaging(...args);
+                },
+                getToken: async (...args) => {
+                    const { getToken } = await resolveMessagingApi();
+                    return getToken(...args);
+                },
+                deleteToken: async (...args) => {
+                    const { deleteToken } = await resolveMessagingApi();
+                    return deleteToken(...args);
+                },
+                onMessage: async (...args) => {
+                    const { onMessage } = await resolveMessagingApi();
+                    return onMessage(...args);
+                },
+                isSupported: async (...args) => {
+                    const { isSupported } = await resolveMessagingApi();
+                    return isSupported(...args);
+                }
             },
             getCurrentUser: () => getCurrentUserState(),
             getNotificationPreferences: () => getNotificationPreferencesState(),

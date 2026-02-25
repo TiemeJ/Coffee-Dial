@@ -275,15 +275,19 @@ export const createPushNotificationsModule = ({
         if (foregroundUnsubscribe) return;
         const messaging = await resolveMessaging();
         if (!messaging || typeof onMessage !== 'function') return;
-        foregroundUnsubscribe = onMessage(messaging, (payload) => {
+        const unsubscribe = await onMessage(messaging, (payload) => {
             const title = payload?.notification?.title || 'Coffee Dial';
             const body = payload?.notification?.body || '';
             if (body && typeof showToast === 'function') showToast(`${title}: ${body}`);
         });
+        foregroundUnsubscribe = typeof unsubscribe === 'function' ? unsubscribe : null;
     };
 
     const stopForegroundListener = () => {
-        if (!foregroundUnsubscribe) return;
+        if (typeof foregroundUnsubscribe !== 'function') {
+            foregroundUnsubscribe = null;
+            return;
+        }
         try { foregroundUnsubscribe(); } catch (_) {}
         foregroundUnsubscribe = null;
     };
