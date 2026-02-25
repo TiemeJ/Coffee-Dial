@@ -1,7 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 export const firebaseConfig = {
     apiKey: 'AIzaSyAjKRgCrNuwaAvjOJPzTrmippI2sv5QG6M',
@@ -19,12 +18,13 @@ export const WEB_PUSH_VAPID_KEY = 'BEyGyjZoS52SNCQedvEPYEWht5Kuk_N2lZbVrtLbWUNX5
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
 export const provider = new GoogleAuthProvider();
 
 let functionsInstancePromise = null;
 let functionsApiPromise = null;
 let messagingApiPromise = null;
+let storageInstancePromise = null;
+let storageApiPromise = null;
 
 export const loadFunctionsApi = () => {
     if (!functionsApiPromise) {
@@ -45,4 +45,18 @@ export const loadMessagingApi = () => {
         messagingApiPromise = import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
     }
     return messagingApiPromise;
+};
+
+export const loadStorageApi = () => {
+    if (!storageApiPromise) {
+        storageApiPromise = import('https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js');
+    }
+    return storageApiPromise;
+};
+
+export const getStorageInstance = async () => {
+    if (!storageInstancePromise) {
+        storageInstancePromise = loadStorageApi().then(({ getStorage }) => getStorage(app));
+    }
+    return storageInstancePromise;
 };

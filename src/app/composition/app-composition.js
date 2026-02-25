@@ -1,7 +1,6 @@
-        import { BAG_AI_URL, STATS_AI_URL, WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, storage, provider, getFunctionsInstance, loadFunctionsApi, loadMessagingApi } from '../../config/firebase.js';
+        import { BAG_AI_URL, STATS_AI_URL, WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, provider, getFunctionsInstance, loadFunctionsApi, loadMessagingApi, getStorageInstance, loadStorageApi } from '../../config/firebase.js';
         import { signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { collection, collectionGroup, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, arrayUnion, arrayRemove, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-        import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
         import { initCoffeeScale } from '../../features/scales/scales.js';
         import { createScaleModalsModule } from '../../features/scales/scales-modals.js';
         import { parseBeanconquerorCSV, mapBeanconquerorBrews } from '../../features/import-export/importers/beanconqueror.js';
@@ -284,11 +283,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             writeBatch
         });
         const storageService = createStorageService({
-            storage,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            deleteObject
+            getStorageInstance,
+            loadStorageApi
         });
         const functionsService = createFunctionsService({
             getFunctionsInstance,
