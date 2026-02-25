@@ -1,7 +1,7 @@
 // SERVICE WORKER VERSION MARKER
 // IMPORTANT: bump this when editing this file, and keep it in sync with
 // `SW_VERSION` in `src/app/pwa.js`.
-const SW_VERSION = '2026-02-25.5';
+const SW_VERSION = '2026-02-25.6';
 self.__COFFEE_DIAL_SW_VERSION = SW_VERSION;
 
 const MOMENTS_FALLBACK_LINK = '/Coffee-Dial/?moments';
@@ -9,6 +9,9 @@ const SW_DIAG_MESSAGE_TYPE = 'coffee-dial-sw-diagnostic';
 const SW_DIAG_LOG_PREFIX = '[CoffeeDial SW]';
 const PUSH_INTENT_CACHE = 'coffee-dial-push-intent-v1';
 const PUSH_INTENT_CACHE_KEY = '/__coffee_dial_push_intent__';
+const STATIC_ASSET_CACHE_PREFIX = 'coffee-dial-static-assets-';
+const STATIC_ASSET_CACHE = `${STATIC_ASSET_CACHE_PREFIX}${SW_VERSION}`;
+const STATIC_ASSET_EXTENSIONS = /\.(?:js|css|woff2?|ttf|otf|eot|svg|png|jpe?g|webp|gif|ico|mp4|webm|json)$/i;
 
 const createDiagEntry = (eventType, details = {}) => ({
     ts: new Date().toISOString(),
@@ -94,7 +97,49 @@ const parsePushPayload = (event) => {
     }
 };
 
+const isStaticAssetRequest = (request) => {
+    if (!request || request.method !== 'GET') return false;
+    let url = null;
+    try {
+        url = new URL(request.url);
+    } catch (_) {
+        return false;
+    }
+    if (url.origin !== self.location.origin) return false;
+    if (request.mode === 'navigate') return false;
+    return STATIC_ASSET_EXTENSIONS.test(url.pathname);
+};
+
+const putInStaticCache = async (request, response) => {
+    if (!response || !response.ok || response.type !== 'basic') return;
+    try {
+        const cache = await caches.open(STATIC_ASSET_CACHE);
+        await cache.put(request, response.clone());
+    } catch (_) {}
+};
+
+const serveWithStaticCache = async (event) => {
+    const request = event.request;
+    const cache = await caches.open(STATIC_ASSET_CACHE);
+    const cached = await cache.match(request);
+    if (cached) return cached;
+
+    try {
+        const networkResponse = await fetch(request);
+        await putInStaticCache(request, networkResponse);
+        return networkResponse;
+    } catch (_) {
+        const fallback = await cache.match(request);
+        if (fallback) return fallback;
+        throw _;
+    }
+};
+
 self.addEventListener('fetch', (event) => {
+    if (isStaticAssetRequest(event.request)) {
+        event.respondWith(serveWithStaticCache(event));
+        return;
+    }
     event.respondWith(fetch(event.request));
 });
 
@@ -106,6 +151,14 @@ self.addEventListener('activate', (event) => {
     event.waitUntil((async () => {
         try {
             await self.clients.claim();
+        } catch (_) {}
+        try {
+            const keys = await caches.keys();
+            await Promise.all(
+                keys
+                    .filter((key) => key.startsWith(STATIC_ASSET_CACHE_PREFIX) && key !== STATIC_ASSET_CACHE)
+                    .map((key) => caches.delete(key))
+            );
         } catch (_) {}
         await logDiagnostics('activate', {
             scope: self.registration?.scope || '',
