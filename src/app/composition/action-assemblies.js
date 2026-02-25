@@ -261,7 +261,8 @@ export const createActionAssemblies = (deps = {}) => {
             'closeBeanCardMenu',
             'closeCoffeeCardMenu',
             'closeCoffeeTypeCardMenu',
-            'toggleCoffeeDetails'
+            'toggleCoffeeDetails',
+            'toggleExtractionSection'
         ]),
         systemActions: pick(deps, [
             'closeAppConfirm',
@@ -433,6 +434,7 @@ export const createActionAssemblies = (deps = {}) => {
                 'toggleAiMenu',
                 'toggleCardMode',
                 'toggleCoffeeDetails',
+                'toggleExtractionSection',
                 'toggleBrewsTableStateMenu',
                 'toggleDrinkOther',
                 'toggleForm',

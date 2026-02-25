@@ -179,7 +179,7 @@ export const createBrewFormUiModule = ({
         const roasterEl = document.getElementById('roaster');
         const roasterValue = (roasterEl?.value || '').trim();
         if (isCollapsed && (farmerValue || roasterValue)) titleEl.textContent = farmerValue || roasterValue;
-        else titleEl.textContent = 'Coffee Details';
+        else titleEl.textContent = 'Bean';
     };
 
     const setCoffeeDetailsCollapsed = (collapsed) => {
@@ -209,14 +209,64 @@ export const createBrewFormUiModule = ({
         setCoffeeDetailsCollapsed(!isHidden);
     };
 
+    const setExtractionCollapsed = (collapsed) => {
+        const body = document.getElementById('extractionBody');
+        const icon = document.getElementById('extractionToggleIcon');
+        const header = document.getElementById('extractionHeader');
+        if (!body || !icon) return;
+        body.classList.toggle('hidden', collapsed);
+        icon.classList.toggle('fa-chevron-up', !collapsed);
+        icon.classList.toggle('fa-chevron-down', collapsed);
+        if (header) {
+            header.classList.toggle('mb-4', !collapsed);
+            header.classList.toggle('pb-2', !collapsed);
+            header.classList.toggle('border-b', !collapsed);
+            header.classList.toggle('border-coffee-200', !collapsed);
+            header.classList.toggle('dark:border-[#44403c]', !collapsed);
+            header.classList.toggle('mb-0', collapsed);
+            header.classList.toggle('pb-0', collapsed);
+        }
+    };
+
+    const toggleExtractionSection = (e) => {
+        if (e) e.stopPropagation();
+        const body = document.getElementById('extractionBody');
+        if (!body) return;
+        const isHidden = body.classList.contains('hidden');
+        setExtractionCollapsed(!isHidden);
+    };
+
     const initCoffeeDetailsUi = () => {
         setCoffeeDetailsCollapsed(false);
+        setExtractionCollapsed(false);
         ['farmer', 'roaster'].forEach((id) => {
             const el = document.getElementById(id);
             if (!el) return;
             el.addEventListener('input', updateCoffeeDetailsTitle);
             el.addEventListener('change', updateCoffeeDetailsTitle);
         });
+        const cuppingAccordion = document.getElementById('cuppingNotesAccordion');
+        const cuppingHeader = document.getElementById('cuppingNotesHeader');
+        const cuppingIcon = document.getElementById('cuppingNotesToggleIcon');
+        if (cuppingAccordion && cuppingHeader && cuppingIcon) {
+            const applyCuppingState = () => {
+                const collapsed = !cuppingAccordion.open;
+                cuppingIcon.classList.toggle('fa-chevron-up', !collapsed);
+                cuppingIcon.classList.toggle('fa-chevron-down', collapsed);
+                cuppingHeader.classList.toggle('mb-4', !collapsed);
+                cuppingHeader.classList.toggle('pb-2', !collapsed);
+                cuppingHeader.classList.toggle('border-b', !collapsed);
+                cuppingHeader.classList.toggle('border-coffee-200', !collapsed);
+                cuppingHeader.classList.toggle('dark:border-[#44403c]', !collapsed);
+                cuppingHeader.classList.toggle('mb-0', collapsed);
+                cuppingHeader.classList.toggle('pb-0', collapsed);
+            };
+            applyCuppingState();
+            if (!cuppingAccordion.dataset.boundToggle) {
+                cuppingAccordion.addEventListener('toggle', applyCuppingState);
+                cuppingAccordion.dataset.boundToggle = '1';
+            }
+        }
     };
 
     const toggleForm = (f = null) => {
@@ -234,6 +284,7 @@ export const createBrewFormUiModule = ({
             const isEditing = c.classList.contains('editing-mode') || !!document.getElementById('editId')?.value;
             if (!isEditing) {
                 setCoffeeDetailsCollapsed(false);
+                setExtractionCollapsed(false);
                 if (coffeeScale?.applyGraphTogglePrefsForMethod) coffeeScale.applyGraphTogglePrefsForMethod();
             }
         } else {
@@ -270,6 +321,8 @@ export const createBrewFormUiModule = ({
         updateCoffeeDetailsTitle,
         setCoffeeDetailsCollapsed,
         toggleCoffeeDetails,
+        setExtractionCollapsed,
+        toggleExtractionSection,
         initCoffeeDetailsUi,
         toggleForm,
         handleQuickEditRecipeInput

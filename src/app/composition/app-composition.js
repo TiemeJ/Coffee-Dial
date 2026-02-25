@@ -902,6 +902,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             updateCoffeeDetailsTitle,
             setCoffeeDetailsCollapsed,
             toggleCoffeeDetails,
+            toggleExtractionSection,
             initCoffeeDetailsUi,
             toggleForm,
             handleQuickEditRecipeInput
@@ -1750,6 +1751,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             toggleBeansQuickFilter,
             toggleCardMode,
             toggleCoffeeDetails,
+            toggleExtractionSection,
             toggleCoffeeTypesAiMenu,
             toggleCoffeeTypesQuickFilter,
             toggleDrinkOther,
