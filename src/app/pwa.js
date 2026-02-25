@@ -1,7 +1,7 @@
 // IMPORTANT:
 // Bump this value every time `sw.js` changes.
 // This forces service-worker update pickup across browsers/PWAs.
-const SW_VERSION = '2026-02-25.4';
+const SW_VERSION = '2026-02-25.5';
 const SW_DIAG_MESSAGE_TYPE = 'coffee-dial-sw-diagnostic';
 const SW_DIAG_PREFIX = '[CoffeeDial SW Diag]';
 const PUSH_INTENT_CACHE = 'coffee-dial-push-intent-v1';
@@ -103,6 +103,58 @@ const applyPendingPushIntentIfNeeded = async (reason = 'unknown') => {
     } catch (_) {}
 };
 
+const applyLaunchTargetUrlIfNeeded = async (rawTargetUrl, reason = 'launchQueue') => {
+    const target = `${rawTargetUrl || ''}`.trim();
+    if (!target) {
+        pushSwDiagnosticEntry({
+            eventType: 'client_launch_target_empty',
+            reason
+        });
+        return false;
+    }
+    let targetUrl = null;
+    try {
+        targetUrl = new URL(target, window.location.origin);
+    } catch (_) {
+        pushSwDiagnosticEntry({
+            eventType: 'client_launch_target_invalid',
+            reason,
+            link: target
+        });
+        return false;
+    }
+    if (!targetUrl.searchParams.has('moments')) {
+        pushSwDiagnosticEntry({
+            eventType: 'client_launch_target_ignored',
+            reason,
+            link: targetUrl.toString()
+        });
+        return false;
+    }
+    const targetPath = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (targetPath === current) {
+        pushSwDiagnosticEntry({
+            eventType: 'client_launch_target_already_active',
+            reason,
+            link: targetUrl.toString()
+        });
+        return true;
+    }
+    try {
+        window.history.replaceState(window.history.state || {}, document.title, targetPath);
+        window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state || {} }));
+        pushSwDiagnosticEntry({
+            eventType: 'client_launch_target_applied',
+            reason,
+            link: targetUrl.toString()
+        });
+        return true;
+    } catch (_) {
+        return false;
+    }
+};
+
 const resolveSwScriptUrl = () => {
     const pathname = window.location?.pathname || '/';
     const isGithubPages = (window.location?.hostname || '').endsWith('github.io');
@@ -161,6 +213,29 @@ export const registerServiceWorker = () => {
         });
         if (!document.hidden) applyPendingPushIntentIfNeeded('visibilitychange-visible');
     });
+    if (typeof window !== 'undefined' && 'launchQueue' in window) {
+        try {
+            window.launchQueue.setConsumer((launchParams) => {
+                const targetUrl =
+                    launchParams?.targetURL ||
+                    launchParams?.url ||
+                    launchParams?.targetUrl ||
+                    '';
+                pushSwDiagnosticEntry({
+                    eventType: 'client_launch_queue',
+                    link: targetUrl || '-'
+                });
+                applyLaunchTargetUrlIfNeeded(targetUrl, 'launchQueue');
+            });
+            pushSwDiagnosticEntry({
+                eventType: 'client_launch_queue_registered'
+            });
+        } catch (_) {}
+    } else {
+        pushSwDiagnosticEntry({
+            eventType: 'client_launch_queue_unavailable'
+        });
+    }
 
     if (document.readyState === 'complete') {
         register();
