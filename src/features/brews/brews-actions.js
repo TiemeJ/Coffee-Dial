@@ -34,6 +34,7 @@ export const createBrewsActionsModule = ({
     clearPendingAIBeanImageFile,
     getCoffeeScale,
     showToast,
+    getPinnedBrewsPreferences,
     getSelectedBrewGearIds,
     setSelectedBrewGearIds,
     openBrewFormModal
@@ -52,6 +53,7 @@ export const createBrewsActionsModule = ({
         throw new Error('createBrewsActionsModule requires brewsRepo');
     }
     const clean = (value) => (value || '').toString().toLowerCase().trim();
+    const shouldKeepRepeatCuppingFields = () => getPinnedBrewsPreferences?.()?.keepCuppingNotesWhenRepeatingBrew === true;
     const grinderGearSync = createBrewGrinderGearSyncModule({
         getGasItems,
         addGear
@@ -121,6 +123,7 @@ export const createBrewsActionsModule = ({
         const normalizeValue = (value) => (value === '-' ? '' : value || '');
         const linkedBean = base.beanId ? getBeans().find((item) => item.id === base.beanId) : null;
         const beanDisplay = linkedBean && getBeanCoffeeTypeDisplay ? getBeanCoffeeTypeDisplay(linkedBean) : null;
+        const keepCuppingFields = shouldKeepRepeatCuppingFields();
         return {
             ...base,
             roaster: normalizeValue(base.roaster) || normalizeValue(base.name) || normalizeValue(beanDisplay?.roaster),
@@ -129,9 +132,9 @@ export const createBrewsActionsModule = ({
             variety: normalizeValue(base.variety) || normalizeValue(beanDisplay?.variety),
             processing: normalizeValue(base.processing) || normalizeValue(beanDisplay?.processing),
             roastType: normalizeValue(base.roastType) || normalizeValue(base.roast) || normalizeValue(beanDisplay?.roastType),
-            notes: '',
-            improve: '',
-            rating: 0
+            notes: keepCuppingFields ? (base.notes || '') : '',
+            improve: keepCuppingFields ? (base.improve || '') : '',
+            rating: keepCuppingFields ? (parseInt(base.rating, 10) || 0) : 0
         };
     };
     const isGrinderGear = (item) => (item?.type || '').toString().toLowerCase() === 'grinder';
@@ -161,6 +164,7 @@ export const createBrewsActionsModule = ({
 
     const buildDuplicateBrewData = (brew) => {
         const d = stripBrewGraphFields(brew);
+        const keepCuppingFields = shouldKeepRepeatCuppingFields();
         delete d.id;
         d.createdAt = new Date().toISOString();
         d.updatedAt = d.createdAt;
@@ -171,6 +175,15 @@ export const createBrewsActionsModule = ({
             newOrder = minOrder - 1;
         }
         d.customOrder = newOrder;
+        if (!keepCuppingFields) {
+            d.notes = '';
+            d.improve = '';
+            d.rating = 0;
+        } else {
+            d.notes = d.notes || '';
+            d.improve = d.improve || '';
+            d.rating = parseInt(d.rating, 10) || 0;
+        }
         return d;
     };
 
@@ -228,20 +241,25 @@ export const createBrewsActionsModule = ({
         if (forceCreateNewBeanMode) delete d.beanId;
         const clearRepeatOnlyFields = () => {
             if (title !== 'Repeat brew') return;
+            const keepCuppingFields = shouldKeepRepeatCuppingFields();
             const setValue = (id, value = '') => {
                 const el = document.getElementById(id);
                 if (el) el.value = value;
             };
             setValue('inputYield', '');
             setValue('time', '');
-            setValue('notes', '');
-            setValue('improve', '');
+            if (!keepCuppingFields) {
+                setValue('notes', '');
+                setValue('improve', '');
+            }
             setValue('graphMaxFlow', '');
             setValue('graphAvgFlow', '');
             setValue('graphFirstDrip', '');
-            setRating(0);
-            setNotesMode('manual');
-            resetSca();
+            if (!keepCuppingFields) {
+                setRating(0);
+                setNotesMode('manual');
+                resetSca();
+            }
             const coffeeScale = scale();
             document.getElementById('inputYield')?.dispatchEvent(new Event('input', { bubbles: true }));
             document.getElementById('time')?.dispatchEvent(new Event('input', { bubbles: true }));
@@ -267,20 +285,25 @@ export const createBrewsActionsModule = ({
         const d = stripBrewGraphFields(brew);
         const clearRepeatOnlyFields = () => {
             if (title !== 'Repeat brew') return;
+            const keepCuppingFields = shouldKeepRepeatCuppingFields();
             const setValue = (id, value = '') => {
                 const el = document.getElementById(id);
                 if (el) el.value = value;
             };
             setValue('inputYield', '');
             setValue('time', '');
-            setValue('notes', '');
-            setValue('improve', '');
+            if (!keepCuppingFields) {
+                setValue('notes', '');
+                setValue('improve', '');
+            }
             setValue('graphMaxFlow', '');
             setValue('graphAvgFlow', '');
             setValue('graphFirstDrip', '');
-            setRating(0);
-            setNotesMode('manual');
-            resetSca();
+            if (!keepCuppingFields) {
+                setRating(0);
+                setNotesMode('manual');
+                resetSca();
+            }
             const coffeeScale = scale();
             document.getElementById('inputYield')?.dispatchEvent(new Event('input', { bubbles: true }));
             document.getElementById('time')?.dispatchEvent(new Event('input', { bubbles: true }));

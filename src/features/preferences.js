@@ -22,7 +22,8 @@ export const DEFAULT_PINNED_BREWS_PREFERENCES = {
     hideCoffeeImageInBrewCard: false,
     animationsEnabled: true,
     showTilesInsteadOfCoffeeArt: false,
-    pinBestPerMethodDrink: true
+    pinBestPerMethodDrink: true,
+    keepCuppingNotesWhenRepeatingBrew: false
 };
 
 export const createBrewsPreferencesModule = ({
@@ -51,6 +52,7 @@ export const createBrewsPreferencesModule = ({
         'animationsToggle',
         'showTilesInsteadOfCoffeeArtToggle',
         'pinBestPerMethodDrinkToggle',
+        'keepCuppingNotesWhenRepeatingBrewToggle',
         'notificationsPushEnabledToggle',
         'notificationsFriendMomentsToggle',
         'notificationsCommentsMyToggle',
@@ -105,7 +107,8 @@ export const createBrewsPreferencesModule = ({
                 showTilesInsteadOfCoffeeArt,
                 pinOpenBags: true,
                 pinOpenBagsBestOnly: true,
-                pinBestPerMethodDrink: !!document.getElementById('pinBestPerMethodDrinkToggle')?.checked
+                pinBestPerMethodDrink: !!document.getElementById('pinBestPerMethodDrinkToggle')?.checked,
+                keepCuppingNotesWhenRepeatingBrew: !!document.getElementById('keepCuppingNotesWhenRepeatingBrewToggle')?.checked
             },
             notificationPrefs
         };
@@ -749,6 +752,7 @@ export const createBrewsPreferencesModule = ({
         document.getElementById('hideCoffeeImageInBrewCardToggle').checked = !!pinnedPrefs.hideCoffeeImageInBrewCard;
         document.getElementById('showTilesInsteadOfCoffeeArtToggle').checked = !!pinnedPrefs.showTilesInsteadOfCoffeeArt;
         document.getElementById('pinBestPerMethodDrinkToggle').checked = pinnedPrefs.pinBestPerMethodDrink !== false;
+        document.getElementById('keepCuppingNotesWhenRepeatingBrewToggle').checked = pinnedPrefs.keepCuppingNotesWhenRepeatingBrew === true;
         const notificationPrefs = normalizeNotificationPreferences(getNotificationPreferences?.());
         document.getElementById('notificationsPushEnabledToggle').checked = !!notificationPrefs.pushEnabled;
         document.getElementById('notificationsFriendMomentsToggle').checked = !!notificationPrefs.friendMoments;

@@ -197,36 +197,48 @@
                                 <input type="text" id="drinkOther" name="drinkOther" placeholder="e.g. Cortado" class="hidden mt-2 w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white placeholder-coffee-400 dark:placeholder-[#57534e] focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
                             </div>
                             
-                            <!-- Notes & Ratings -->
+                            <!-- Cupping Notes -->
                             <div class="col-span-1 md:col-span-2 lg:col-span-4">
-                                <div class="flex justify-between items-end mb-1">
-                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Tasting notes</label>
-                                    <button type="button" data-action-click="openScaWheelLightbox()" class="text-xs text-blue-500 hover:underline dark:text-blue-400 mr-auto ml-2"><i class="fa-solid fa-image mr-1"></i>View wheel</button>
-                                    <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
-                                        <button type="button" data-action-click="setNotesMode('manual')" id="btnNotesManual" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">Text</button>
-                                        <button type="button" data-action-click="setNotesMode('sca')" id="btnNotesSCA" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">SCA Wheel</button>
-                                    </div>
-                                </div>
-                                <div id="notesManualContainer">
-                                    <input type="text" id="notes" name="notes" placeholder="e.g. Floral, fruity acidity, clean finish" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
-                                </div>
-                                <div id="notesSCAContainer" class="hidden mt-2 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-3">
-                                    <div id="scaSelectionDisplay" class="text-sm font-bold text-coffee-800 dark:text-white mb-2 min-h-[1.25rem]"></div>
-                                    <div id="scaButtonsContainer" class="flex flex-wrap gap-2"></div>
-                                </div>
-                                <input type="hidden" id="notesMode" name="notesMode" value="manual">
-                            </div>
+                                <details id="cuppingNotesAccordion" open class="bg-coffee-50/50 dark:bg-[#201d1b] border border-coffee-100 dark:border-[#44403c] rounded-lg">
+                                    <summary class="list-none cursor-pointer flex items-center justify-between px-3 py-2 border-b border-coffee-100 dark:border-[#44403c]">
+                                        <span class="text-xs font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                                            <i class="fa-solid fa-mug-hot text-coffee-600 dark:text-[#a8a29e]"></i> Cupping notes
+                                        </span>
+                                        <i class="fa-solid fa-chevron-down text-coffee-500 dark:text-[#a8a29e]"></i>
+                                    </summary>
+                                    <div class="p-3 space-y-4">
+                                        <div>
+                                            <div class="flex justify-between items-end mb-1">
+                                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Tasting notes</label>
+                                                <button type="button" data-action-click="openScaWheelLightbox()" class="text-xs text-blue-500 hover:underline dark:text-blue-400 mr-auto ml-2"><i class="fa-solid fa-image mr-1"></i>View wheel</button>
+                                                <div class="flex bg-coffee-100 dark:bg-[#44403c] rounded p-0.5">
+                                                    <button type="button" data-action-click="setNotesMode('manual')" id="btnNotesManual" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all bg-white dark:bg-[#1c1917] shadow-sm text-coffee-800 dark:text-white">Text</button>
+                                                    <button type="button" data-action-click="setNotesMode('sca')" id="btnNotesSCA" class="px-2 py-0.5 text-[10px] rounded font-bold transition-all text-coffee-500 dark:text-[#a8a29e] hover:text-coffee-700">SCA Wheel</button>
+                                                </div>
+                                            </div>
+                                            <div id="notesManualContainer">
+                                                <input type="text" id="notes" name="notes" placeholder="e.g. Floral, fruity acidity, clean finish" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09]">
+                                            </div>
+                                            <div id="notesSCAContainer" class="hidden mt-2 bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-3">
+                                                <div id="scaSelectionDisplay" class="text-sm font-bold text-coffee-800 dark:text-white mb-2 min-h-[1.25rem]"></div>
+                                                <div id="scaButtonsContainer" class="flex flex-wrap gap-2"></div>
+                                            </div>
+                                            <input type="hidden" id="notesMode" name="notesMode" value="manual">
+                                        </div>
 
-                             <div class="col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="flex flex-col items-start gap-1">
-                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Rating</label>
-                                    <div class="star-rating flex text-2xl text-gray-300 dark:text-gray-600" id="starContainer"><i class="fa-solid fa-star" data-action-click="setRating(1)"></i><i class="fa-solid fa-star" data-action-click="setRating(2)"></i><i class="fa-solid fa-star" data-action-click="setRating(3)"></i><i class="fa-solid fa-star" data-action-click="setRating(4)"></i><i class="fa-solid fa-star" data-action-click="setRating(5)"></i></div>
-                                    <input type="hidden" id="ratingInput" name="rating" value="0">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Improve / next time</label>
-                                    <input type="text" id="improve" name="improve" placeholder="e.g. Grind finer, hotter water" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
-                                </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div class="flex flex-col items-start gap-1">
+                                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Rating</label>
+                                                <div class="star-rating flex text-2xl text-gray-300 dark:text-gray-600" id="starContainer"><i class="fa-solid fa-star" data-action-click="setRating(1)"></i><i class="fa-solid fa-star" data-action-click="setRating(2)"></i><i class="fa-solid fa-star" data-action-click="setRating(3)"></i><i class="fa-solid fa-star" data-action-click="setRating(4)"></i><i class="fa-solid fa-star" data-action-click="setRating(5)"></i></div>
+                                                <input type="hidden" id="ratingInput" name="rating" value="0">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] mb-1 uppercase tracking-wide">Improve / next time</label>
+                                                <input type="text" id="improve" name="improve" placeholder="e.g. Grind finer, hotter water" class="w-full bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:bg-white dark:focus:bg-[#0c0a09] transition-colors">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </details>
                             </div>
                         </div>
                     </div>

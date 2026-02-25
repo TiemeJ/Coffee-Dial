@@ -1271,6 +1271,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 clearPendingAIBeanImageFile,
                 getCoffeeScale: () => coffeeScale,
                 showToast,
+                getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
                 openBrewFormModal: dispatchBrewOpenForm
             },
             refreshQuickEditGearFieldVisibility,
