@@ -122,8 +122,10 @@ export const createPinControllerModule = ({
         if (!isDraggable) return;
         const pinnedGrid = document.getElementById('pinnedGrid');
         if (!pinnedGrid) return;
+        const SortableCtor = typeof window !== 'undefined' ? window.Sortable : null;
+        if (typeof SortableCtor !== 'function') return;
 
-        const sortable = new Sortable(pinnedGrid, {
+        const sortable = new SortableCtor(pinnedGrid, {
             handle: '.drag-handle',
             animation: 200,
             ghostClass: 'sortable-ghost',

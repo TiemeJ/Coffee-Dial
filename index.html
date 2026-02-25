@@ -39,25 +39,26 @@
         gtag('config', 'G-82NK8RESHL', { send_page_view: false });
     </script>
 
-    <!-- Local copy from: https://cdn.tailwindcss.com -->
-    <script src="./vendor/js/tailwindcss.cdn.js"></script>
+    <link rel="stylesheet" href="./vendor/css/tailwind.generated.min.css">
     <!-- Local copy from: https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css -->
-    <link href="./vendor/css/fontawesome-all.min.css" rel="stylesheet">
+    <link rel="preload" href="./vendor/css/fontawesome-all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="./vendor/css/fontawesome-all.min.css" rel="stylesheet"></noscript>
+    <link rel="preload" href="./vendor/css/outfit.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="./vendor/css/outfit.css" rel="stylesheet"></noscript>
     <!-- Image Compression Library -->
     <!-- Local copy from: https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js -->
-    <script type="text/javascript" src="./vendor/js/browser-image-compression.js"></script>
+    <script type="text/javascript" src="./vendor/js/browser-image-compression.js" defer></script>
     <!-- Chart.js for Statistics -->
     <!-- Local copy from: https://cdn.jsdelivr.net/npm/chart.js -->
-    <script src="./vendor/js/chart.js"></script>
+    <script src="./vendor/js/chart.js" defer></script>
     <!-- html2canvas for Sharing Cards -->
     <!-- Local copy from: https://html2canvas.hertzen.com/dist/html2canvas.min.js -->
-    <script src="./vendor/js/html2canvas.min.js"></script>
+    <script src="./vendor/js/html2canvas.min.js" defer></script>
     <!-- SortableJS for Drag and Drop -->
     <!-- Local copy from: https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js -->
-    <script src="./vendor/js/sortable.min.js"></script>
+    <script src="./vendor/js/sortable.min.js" defer></script>
     <link rel="stylesheet" href="./src/styles/app.css">
-    <script src="./src/app/head.js"></script>
-    <script src="./src/config/build-info.js?v=__BUILD_INFO_VERSION__"></script>
+    <script src="./src/config/build-info.js?v=__BUILD_INFO_VERSION__" defer></script>
 </head>
 <body class="bg-[#fcfbf9] text-coffee-900 dark:bg-[#1c1917] dark:text-[#e7e5e4] min-h-screen pb-20">
 

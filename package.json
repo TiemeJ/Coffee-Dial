@@ -2,6 +2,7 @@
   "name": "coffee-dial",
   "private": true,
   "scripts": {
+    "build:css:tailwind": "tailwindcss -c tailwind.config.cjs -i ./src/styles/tailwind.input.css -o ./vendor/css/tailwind.generated.min.css --minify",
     "backfill:photo-paths:dry": "node scripts/backfill-photo-paths.mjs",
     "backfill:photo-paths:apply": "node scripts/backfill-photo-paths.mjs --apply",
     "migrate:grinder-to-gear:dry": "node scripts/migrate-grinder-to-gear.mjs",
@@ -32,6 +33,7 @@
     "firebase-admin": "^13.6.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.51.0"
+    "@playwright/test": "^1.51.0",
+    "tailwindcss": "^3.4.17"
   }
 }

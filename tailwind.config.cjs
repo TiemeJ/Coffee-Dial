@@ -1,5 +1,10 @@
-tailwind.config = {
+module.exports = {
     darkMode: 'class',
+    content: [
+        './index.html',
+        './404.html',
+        './src/**/*.{js,html}'
+    ],
     theme: {
         extend: {
             colors: {
