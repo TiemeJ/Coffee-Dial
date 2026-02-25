@@ -1,7 +1,7 @@
 // IMPORTANT:
 // Bump this value every time `sw.js` changes.
 // This forces service-worker update pickup across browsers/PWAs.
-const SW_VERSION = '2026-02-25.1';
+const SW_VERSION = '2026-02-25.2';
 const SW_DIAG_MESSAGE_TYPE = 'coffee-dial-sw-diagnostic';
 const SW_DIAG_PREFIX = '[CoffeeDial SW Diag]';
 
@@ -52,6 +52,12 @@ export const registerServiceWorker = () => {
         const data = event?.data || null;
         if (!data || data.type !== SW_DIAG_MESSAGE_TYPE) return;
         pushSwDiagnosticEntry(data.payload || {});
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        pushSwDiagnosticEntry({
+            eventType: 'client_controllerchange',
+            visibilityState: document.visibilityState
+        });
     });
 
     window.addEventListener('focus', () => {

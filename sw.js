@@ -1,7 +1,7 @@
 // SERVICE WORKER VERSION MARKER
 // IMPORTANT: bump this when editing this file, and keep it in sync with
 // `SW_VERSION` in `src/app/pwa.js`.
-const SW_VERSION = '2026-02-25.1';
+const SW_VERSION = '2026-02-25.2';
 self.__COFFEE_DIAL_SW_VERSION = SW_VERSION;
 
 const MOMENTS_FALLBACK_LINK = '/Coffee-Dial/?moments';
@@ -61,7 +61,31 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-    event.waitUntil(logDiagnostics('activate', { scope: self.registration?.scope || '' }));
+    event.waitUntil((async () => {
+        try {
+            await self.clients.claim();
+        } catch (_) {}
+        await logDiagnostics('activate', {
+            scope: self.registration?.scope || '',
+            clientsClaimed: true
+        });
+    })());
+});
+
+self.addEventListener('message', (event) => {
+    const type = event?.data?.type || '';
+    if (type !== 'SKIP_WAITING') return;
+    event.waitUntil((async () => {
+        await logDiagnostics('message_skip_waiting_received');
+        try {
+            await self.skipWaiting();
+            await logDiagnostics('message_skip_waiting_ok');
+        } catch (error) {
+            await logDiagnostics('message_skip_waiting_error', {
+                error: error?.message || String(error)
+            });
+        }
+    })());
 });
 
 self.addEventListener('push', (event) => {
