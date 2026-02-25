@@ -206,6 +206,40 @@ export const createBrewsPreferencesModule = ({
         return `${token.slice(0, 10)}...${token.slice(-8)}`;
     };
 
+    const escapeHtml = (value) => `${value ?? ''}`
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const formatPushType = (entry = {}) => {
+        const channel = `${entry?.pushChannel || ''}`.trim().toLowerCase();
+        const hasSubscription = !!(entry?.webPushSubscription && typeof entry.webPushSubscription === 'object');
+        const hasToken = !!(`${entry?.token || ''}`.trim());
+        if (channel === 'declarative-web-push' || hasSubscription) return 'DWP';
+        if (channel === 'fcm' || hasToken) return 'FCM';
+        return '-';
+    };
+
+    const formatDeclarativeInfo = (entry = {}) => {
+        const sub = entry?.webPushSubscription && typeof entry.webPushSubscription === 'object'
+            ? entry.webPushSubscription
+            : null;
+        if (!sub) return '-';
+        let endpointHost = '-';
+        try {
+            endpointHost = sub.endpoint ? new URL(sub.endpoint).host : '-';
+        } catch (_) {}
+        const hasP256 = !!(`${sub?.keys?.p256dh || ''}`.trim());
+        const hasAuth = !!(`${sub?.keys?.auth || ''}`.trim());
+        const expiration = sub?.expirationTime ?? null;
+        const expirationLabel = expiration === null || expiration === undefined || expiration === ''
+            ? 'none'
+            : `${expiration}`;
+        return `host=${endpointHost} | keys=${hasP256 && hasAuth ? 'ok' : 'missing'} | exp=${expirationLabel}`;
+    };
+
     const renderNotificationsDebugPanel = async () => {
         const listEl = document.getElementById('notificationsRegisteredDevicesList');
         const user = getCurrentUser?.();
@@ -266,12 +300,15 @@ export const createBrewsPreferencesModule = ({
                     meta.className = 'min-w-0 flex-1 text-[10px] text-coffee-700 dark:text-[#d6ccc2]';
                     const userAgent = typeof entry.userAgent === 'string' ? entry.userAgent.trim() : '';
                     const displayName = userAgent || entry.id;
+                    const pushType = formatPushType(entry);
+                    const dwpInfo = pushType === 'DWP' ? formatDeclarativeInfo(entry) : '-';
                     const thisDeviceTag = isCurrent
                         ? '<span class="text-sky-600 dark:text-sky-400">(this device)</span>'
                         : '';
                     meta.innerHTML = `
-                        <div class="min-w-0 text-[11px] font-semibold truncate" title="${displayName.replace(/"/g, '&quot;')}">${displayName}</div>
-                        <div class="font-mono break-all">${entry.id}${thisDeviceTag ? ` ${thisDeviceTag}` : ''} | enabled=${entry.enabled ? '1' : '0'} | token=${shortenToken(entry.token)} | updated=${entry.updatedAt || '-'}</div>
+                        <div class="min-w-0 text-[11px] font-semibold break-words overflow-hidden" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
+                        <div class="font-mono break-all">${entry.id}${thisDeviceTag ? ` ${thisDeviceTag}` : ''} | enabled=${entry.enabled ? '1' : '0'} | type=${pushType} | token=${shortenToken(entry.token)} | updated=${entry.updatedAt || '-'}</div>
+                        <div class="font-mono break-all">dwp=${dwpInfo}</div>
                     `;
                     row.appendChild(meta);
                     if (typeof deleteDoc === 'function') {
@@ -408,6 +445,9 @@ export const createBrewsPreferencesModule = ({
                     Promise.resolve(renderNotificationsDebugPanel()).then(() => true).catch(() => false),
                     new Promise((resolve) => setTimeout(() => resolve(false), 5000))
                 ]);
+                setTimeout(() => {
+                    renderNotificationsDebugPanel();
+                }, 1200);
                 if (!rendered) {
                     updateRegisterCurrentDeviceButton({ show: true, busy: false });
                 }
