@@ -21,6 +21,7 @@ export const createAuthStateChangedHandler = ({
             'menuGalleryBtn',
             'menuImportExportBtn',
             'menuPreferencesBtn',
+            'menuHelpBtn',
             'menuHelpDivider'
         ];
         ids.forEach((id) => {

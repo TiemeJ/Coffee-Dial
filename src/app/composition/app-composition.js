@@ -2154,6 +2154,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 'menuGalleryBtn',
                 'menuImportExportBtn',
                 'menuPreferencesBtn',
+                'menuHelpBtn',
                 'menuHelpDivider'
             ].forEach((id) => document.getElementById(id)?.classList.remove('hidden'));
 
