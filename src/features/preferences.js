@@ -267,24 +267,6 @@ export const createBrewsPreferencesModule = ({
         return '-';
     };
 
-    const formatDeclarativeInfo = (entry = {}) => {
-        const sub = entry?.webPushSubscription && typeof entry.webPushSubscription === 'object'
-            ? entry.webPushSubscription
-            : null;
-        if (!sub) return '-';
-        let endpointHost = '-';
-        try {
-            endpointHost = sub.endpoint ? new URL(sub.endpoint).host : '-';
-        } catch (_) {}
-        const hasP256 = !!(`${sub?.keys?.p256dh || ''}`.trim());
-        const hasAuth = !!(`${sub?.keys?.auth || ''}`.trim());
-        const expiration = sub?.expirationTime ?? null;
-        const expirationLabel = expiration === null || expiration === undefined || expiration === ''
-            ? 'none'
-            : `${expiration}`;
-        return `host=${endpointHost} | keys=${hasP256 && hasAuth ? 'ok' : 'missing'} | exp=${expirationLabel}`;
-    };
-
     const getDeclarativeDebugDetails = (entry = {}) => {
         const sub = entry?.webPushSubscription && typeof entry.webPushSubscription === 'object'
             ? entry.webPushSubscription
@@ -372,18 +354,14 @@ export const createBrewsPreferencesModule = ({
                         ? 'flex items-center justify-between gap-2 rounded border border-sky-400 dark:border-sky-500 bg-white dark:bg-[#292524] px-2 py-1.5'
                         : 'flex items-center justify-between gap-2 rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#292524] px-2 py-1.5';
                     const meta = document.createElement('div');
-                    meta.className = 'min-w-0 flex-1 text-[10px] text-coffee-700 dark:text-[#d6ccc2]';
+                    meta.className = 'min-w-0 flex-1 text-[11px] text-coffee-700 dark:text-[#d6ccc2]';
                     const userAgent = typeof entry.userAgent === 'string' ? entry.userAgent.trim() : '';
                     const displayName = userAgent || entry.id;
-                    const pushType = formatPushType(entry);
-                    const dwpInfo = pushType === 'DWP' ? formatDeclarativeInfo(entry) : '-';
                     const thisDeviceTag = isCurrent
                         ? '<span class="text-sky-600 dark:text-sky-400">(this device)</span>'
                         : '';
                     meta.innerHTML = `
-                        <div class="min-w-0 text-[11px] font-semibold break-words overflow-hidden" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
-                        <div class="font-mono break-all">${entry.id}${thisDeviceTag ? ` ${thisDeviceTag}` : ''} | enabled=${entry.enabled ? '1' : '0'} | type=${pushType} | token=${shortenToken(entry.token)} | updated=${entry.updatedAt || '-'}</div>
-                        <div class="font-mono break-all">dwp=${dwpInfo}</div>
+                        <div class="min-w-0 font-semibold break-all" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}${thisDeviceTag ? ` ${thisDeviceTag}` : ''}</div>
                     `;
                     row.appendChild(meta);
                     if (typeof deleteDoc === 'function') {
@@ -444,6 +422,72 @@ export const createBrewsPreferencesModule = ({
                 </div>
             `;
         }).join('');
+    };
+
+    const buildPushDebugText = () => {
+        const read = (id) => `${document.getElementById(id)?.textContent || '-'}`.trim();
+        return [
+            `Permission: ${read('notificationsDebugPermission')}`,
+            `Push enabled pref: ${read('notificationsDebugPushEnabled')}`,
+            `Current device ID: ${read('notificationsDebugDeviceId')}`,
+            `Registered devices: ${read('notificationsDebugDeviceCount')}`,
+            `Current push type: ${read('notificationsDebugCurrentPushType')}`,
+            `Current token: ${read('notificationsDebugCurrentToken')}`,
+            `DWP endpoint host: ${read('notificationsDebugCurrentDwpHost')}`,
+            `DWP keys: ${read('notificationsDebugCurrentDwpKeys')}`,
+            `DWP expiration: ${read('notificationsDebugCurrentDwpExpiration')}`,
+            `Current updatedAt: ${read('notificationsDebugCurrentUpdatedAt')}`
+        ].join('\n');
+    };
+
+    const buildSwDiagnosticsText = () => {
+        const entries = getSwDiagnostics().slice(-50).reverse();
+        if (!entries.length) return 'No diagnostics yet.';
+        return entries.map((entry) => {
+            const eventType = `${entry.eventType || '-'}`;
+            const ts = `${entry.ts || entry.tsClient || '-'}`;
+            const swVersion = `${entry.swVersion || '-'}`;
+            const link = `${entry?.details?.link || '-'}`;
+            const clientsCount = `${entry?.details?.existingClientCount ?? '-'}`;
+            const openedClientUrl = `${entry?.details?.openedClientUrl || '-'}`;
+            const error = `${entry?.details?.error || '-'}`;
+            return [
+                `event: ${eventType}`,
+                `ts: ${ts}`,
+                `sw: ${swVersion}`,
+                `link: ${link}`,
+                `clients: ${clientsCount}`,
+                `opened: ${openedClientUrl}`,
+                `error: ${error}`
+            ].join('\n');
+        }).join('\n\n');
+    };
+
+    const copyTextToClipboard = async (text = '', successMessage = 'Copied') => {
+        const payload = `${text || ''}`.trim();
+        if (!payload) {
+            alert('Nothing to copy.');
+            return;
+        }
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(payload);
+            } else {
+                const area = document.createElement('textarea');
+                area.value = payload;
+                area.setAttribute('readonly', '');
+                area.style.position = 'fixed';
+                area.style.opacity = '0';
+                document.body.appendChild(area);
+                area.focus();
+                area.select();
+                document.execCommand('copy');
+                document.body.removeChild(area);
+            }
+            alert(successMessage);
+        } catch (error) {
+            alert(`Copy failed: ${error?.message || error}`);
+        }
     };
 
     const deleteRegisteredDevice = async (deviceId) => {
@@ -507,7 +551,9 @@ export const createBrewsPreferencesModule = ({
         if (hasBoundNotificationsDebug) return;
         hasBoundNotificationsDebug = true;
         const refreshBtn = document.getElementById('notificationsDebugRefreshBtn');
+        const copyBtn = document.getElementById('notificationsDebugCopyBtn');
         const swDiagRefreshBtn = document.getElementById('notificationsSwDiagRefreshBtn');
+        const swDiagCopyBtn = document.getElementById('notificationsSwDiagCopyBtn');
         const registerCurrentDeviceBtn = document.getElementById('notificationsRegisterCurrentDeviceBtn');
         refreshBtn?.addEventListener('click', () => {
             renderNotificationsDebugPanel();
@@ -518,6 +564,12 @@ export const createBrewsPreferencesModule = ({
         swDiagRefreshBtn?.addEventListener('click', () => {
             renderSwDiagnosticsPanel();
             renderBuildAndVersionInfo();
+        });
+        copyBtn?.addEventListener('click', () => {
+            copyTextToClipboard(buildPushDebugText(), 'Push debug copied.');
+        });
+        swDiagCopyBtn?.addEventListener('click', () => {
+            copyTextToClipboard(buildSwDiagnosticsText(), 'SW diagnostics copied.');
         });
         registerCurrentDeviceBtn?.addEventListener('click', async () => {
             updateRegisterCurrentDeviceButton({ show: true, busy: true });
