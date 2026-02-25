@@ -1,7 +1,7 @@
 // IMPORTANT:
 // Bump this value every time `sw.js` changes.
 // This forces service-worker update pickup across browsers/PWAs.
-const SW_VERSION = '2026-02-25.2';
+const SW_VERSION = '2026-02-25.3';
 const SW_DIAG_MESSAGE_TYPE = 'coffee-dial-sw-diagnostic';
 const SW_DIAG_PREFIX = '[CoffeeDial SW Diag]';
 

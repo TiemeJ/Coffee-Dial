@@ -1,7 +1,7 @@
 // SERVICE WORKER VERSION MARKER
 // IMPORTANT: bump this when editing this file, and keep it in sync with
 // `SW_VERSION` in `src/app/pwa.js`.
-const SW_VERSION = '2026-02-25.2';
+const SW_VERSION = '2026-02-25.3';
 self.__COFFEE_DIAL_SW_VERSION = SW_VERSION;
 
 const MOMENTS_FALLBACK_LINK = '/Coffee-Dial/?moments';
@@ -127,11 +127,28 @@ self.addEventListener('notificationclick', (event) => {
             existingClientUrls: existingClients.map((client) => client.url || '')
         });
         try {
+            const appClient = existingClients.find((client) => {
+                const url = `${client?.url || ''}`;
+                return url.includes('/Coffee-Dial/');
+            }) || null;
+            if (appClient && typeof appClient.navigate === 'function') {
+                let navigated = null;
+                try {
+                    navigated = await appClient.navigate(link);
+                } catch (_) {
+                    navigated = appClient;
+                }
+                try {
+                    await (navigated || appClient).focus();
+                } catch (_) {}
+                await logDiagnostics('notification_navigate_existing_client_ok', {
+                    link,
+                    targetClientUrl: (navigated || appClient)?.url || null
+                });
+                return;
+            }
             const opened = await clients.openWindow(link);
-            await logDiagnostics('notification_open_window_ok', {
-                link,
-                openedClientUrl: opened?.url || null
-            });
+            await logDiagnostics('notification_open_window_ok', { link, openedClientUrl: opened?.url || null });
         } catch (error) {
             await logDiagnostics('notification_open_window_error', {
                 link,
