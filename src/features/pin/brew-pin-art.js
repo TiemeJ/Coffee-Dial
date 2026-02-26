@@ -108,7 +108,7 @@ export const createBrewPinArtModule = ({
         const beanOrder = Array.from(new Set(sortedGroups.map((group) => group.bean?.id).filter(Boolean)));
         grid.innerHTML = '';
 
-        sortedGroups.forEach((group) => {
+        sortedGroups.forEach((group, groupIndex) => {
             const bean = group.bean;
             const sortedBrews = [...group.brews].sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
             const previewBrew = sortedBrews[0] || null;
@@ -152,8 +152,21 @@ export const createBrewPinArtModule = ({
             let longPressHandled = false;
 
             if (imageUrl) {
+                const isPrimaryHeroCard = groupIndex === 0;
+                const fetchPriority = isPrimaryHeroCard ? 'high' : 'auto';
+                const loadingMode = isPrimaryHeroCard ? 'eager' : 'lazy';
                 card.innerHTML = `
-                    <img src="${imageUrl}" alt="${titleText}" class="absolute inset-0 w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-gradient-to-br from-coffee-200 via-coffee-300 to-coffee-400 dark:from-[#34302e] dark:via-[#292524] dark:to-[#1c1917]"></div>
+                    <img
+                        src="${imageUrl}"
+                        alt="${titleText}"
+                        class="absolute inset-0 w-full h-full object-cover"
+                        width="180"
+                        height="240"
+                        fetchpriority="${fetchPriority}"
+                        loading="${loadingMode}"
+                        decoding="async"
+                    />
                     <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                     ${decafMoonBadge}
                     ${stockIndicator}
