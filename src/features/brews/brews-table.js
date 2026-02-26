@@ -997,7 +997,7 @@ export const createBrewsTableModule = ({
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-xs font-bold text-coffee-500 dark:text-[#78716c] uppercase"><i class="fa-solid fa-flask mr-1"></i> Brew Stats</span>
                         ${hasGraph
-                            ? `<button data-action-click="brewsOpenCard('${brew.id}', event); openCardGraphModal(event, true)" class="text-coffee-400 hover:text-coffee-700 dark:text-[#78716c] dark:hover:text-white transition-colors" title="View Graph" aria-label="View brew graph"><i class="fa-solid fa-chart-line"></i></button>`
+                            ? `<button data-action-click="openBrewCardGraph('${brew.id}', event)" class="text-coffee-400 hover:text-coffee-700 dark:text-[#78716c] dark:hover:text-white transition-colors" title="View Graph" aria-label="View brew graph"><i class="fa-solid fa-chart-line"></i></button>`
                             : ''}
                     </div>
                     <div class="grid grid-cols-3 gap-2 text-center mb-3">

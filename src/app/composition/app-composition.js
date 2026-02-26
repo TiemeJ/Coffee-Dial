@@ -1313,7 +1313,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-graph' }),
-            getCoffeeScale: () => coffeeScale
+            getCoffeeScale: () => coffeeScale,
+            ensureScalesFeature: (...args) => ensureScalesFeature(...args)
         });
 
         const {
@@ -1522,6 +1523,26 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 { source: 'container.brewsOpenCard' }
             );
         };
+        const openBrewCardGraph = (brewId, event = null) => {
+            if (event) event.stopPropagation();
+            appCommands?.dispatch?.(
+                'brews.openCard',
+                { id: brewId, event: null, options: {} },
+                { source: 'container.openBrewCardGraph' }
+            );
+            let attempts = 0;
+            const tryOpenGraph = () => {
+                attempts += 1;
+                const isTargetCard = getCurrentCoffeeCardIdState() === brewId;
+                const hasGraphData = !!getCurrentCardGraphDataState();
+                if ((isTargetCard && hasGraphData) || attempts >= 3) {
+                    openCardGraphModal(null, true);
+                    return;
+                }
+                requestAnimationFrame(tryOpenGraph);
+            };
+            requestAnimationFrame(tryOpenGraph);
+        };
         const beansOpenCard = (beanId, event = null) => {
             appCommands?.dispatch?.(
                 'beans.openCard',
@@ -1625,6 +1646,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             beansOpenCard,
             beansOpenCardForEdit,
             brewsOpenCard,
+            openBrewCardGraph,
             bulkAddGearToBrews,
             cancelBeanEditMode,
             cancelBrewQuickEditMode,

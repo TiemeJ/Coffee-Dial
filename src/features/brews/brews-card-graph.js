@@ -5,7 +5,8 @@ export const createBrewsCardGraphModule = ({
     getBrewTableOrder,
     getCoffeeTypeDisplay,
     dispatchCommand,
-    getCoffeeScale
+    getCoffeeScale,
+    ensureScalesFeature
 }) => {
     const updateCoffeeGraphNav = () => {
         const order = getBrewTableOrder();
@@ -21,10 +22,18 @@ export const createBrewsCardGraphModule = ({
         nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
     };
 
-    const openCardGraphModal = (e, forceOpen = false) => {
+    const openCardGraphModal = async (e, forceOpen = false) => {
         if (e) e.stopPropagation();
         const currentGraphData = getCurrentCardGraphData();
         if (!currentGraphData && !forceOpen) return;
+
+        if (typeof ensureScalesFeature === 'function') {
+            try {
+                await ensureScalesFeature();
+            } catch (error) {
+                console.error('Failed to initialize scales feature for card graph modal:', error);
+            }
+        }
 
         const modal = document.getElementById('cardGraphModal');
         if (!modal) return;
@@ -95,13 +104,13 @@ export const createBrewsCardGraphModule = ({
         }
     };
 
-    const navigateCoffeeCardFromGraph = (direction) => {
+    const navigateCoffeeCardFromGraph = async (direction) => {
         const order = getBrewTableOrder();
         const idx = order.indexOf(getCurrentCoffeeCardId());
         const nextIdx = idx + direction;
         if (nextIdx < 0 || nextIdx >= order.length) return;
         dispatchCommand?.('brews.openCard', { id: order[nextIdx], event: null, options: { keepNavigationOrder: true } });
-        openCardGraphModal(null, true);
+        await openCardGraphModal(null, true);
     };
 
     return {
