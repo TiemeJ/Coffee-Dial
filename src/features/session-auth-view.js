@@ -65,19 +65,33 @@ export const createSessionAuthViewModule = ({
     setNotificationPreferences
 }) => {
     const { auth, provider, signInWithPopup, signOut } = authService || {};
-    const { db, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, limit, onSnapshot } = dataService || {};
+    const { db, doc, setDoc, updateDoc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot } = dataService || {};
     if (!auth || !provider || !signInWithPopup || !signOut) {
         throw new Error('createSessionAuthViewModule requires authService { auth, provider, signInWithPopup, signOut }');
     }
-    if (!db || !doc || !setDoc || !updateDoc || !getDoc || !collection || !query || !where || !orderBy || !limit || !onSnapshot) {
-        throw new Error('createSessionAuthViewModule requires dataService { db, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, limit, onSnapshot }');
+    if (!db || !doc || !setDoc || !updateDoc || !getDoc || !getDocs || !collection || !query || !where || !orderBy || !limit || !onSnapshot) {
+        throw new Error('createSessionAuthViewModule requires dataService { db, doc, setDoc, updateDoc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot }');
     }
     let outgoingFriendRequestsProcessor = null;
+    let pendingLiveListenerHandle = null;
+    let currentViewListenerContext = null;
+    let latestViewRequestId = 0;
+    const INITIAL_BREWS_LIMIT = 120;
     const googleLogin = () => signInWithPopup(auth, provider).catch((e) => alert(e.message));
 
     const googleLogout = () => signOut(auth).then(() => location.reload());
 
     const clearViewSubscriptions = () => {
+        currentViewListenerContext = null;
+        if (pendingLiveListenerHandle) {
+            const clearIdle = window.cancelIdleCallback;
+            if (typeof clearIdle === 'function' && pendingLiveListenerHandle.type === 'idle') {
+                clearIdle(pendingLiveListenerHandle.id);
+            } else {
+                clearTimeout(pendingLiveListenerHandle.id);
+            }
+            pendingLiveListenerHandle = null;
+        }
         const unsubData = getUnsubscribeData();
         const unsubBeans = getUnsubscribeBeans();
         const unsubCoffeeTypes = getUnsubscribeCoffeeTypes();
@@ -90,6 +104,152 @@ export const createSessionAuthViewModule = ({
         setUnsubscribeBeans(null);
         setUnsubscribeCoffeeTypes(null);
         setUnsubscribeGas(null);
+    };
+
+    const handleViewPermissionDenied = () => {
+        alert('⚠️ Access Denied: This user\'s profile is private.');
+        syncFriendViewSelectValues('mine');
+        changeView('mine');
+    };
+
+    const getModal = (id) => document.getElementById(id);
+
+    const attachLiveViewListeners = ({ targetUid, isMine, requestId }) => {
+        if (requestId !== latestViewRequestId) return;
+
+        const brewsRef = collection(db, 'users', targetUid, 'coffees');
+        setUnsubscribeData(
+            onSnapshot(
+                brewsRef,
+                (snapshot) => {
+                    if (requestId !== latestViewRequestId) return;
+                    const nextCoffees = [];
+                    snapshot.forEach((docSnap) => nextCoffees.push({ id: docSnap.id, ...docSnap.data() }));
+                    if (!getCurrentSort().key) {
+                        nextCoffees.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    }
+                    setCoffees(nextCoffees);
+                    renderPinnedTiles();
+                    renderTable();
+                    updateAutocompleteLists();
+                    setHasLoadedBrews(true);
+                },
+                (error) => {
+                    console.error(error);
+                    if (error.code === 'permission-denied') {
+                        handleViewPermissionDenied();
+                    }
+                }
+            )
+        );
+
+        const beansRef = collection(db, 'users', targetUid, 'beans');
+        setUnsubscribeBeans(
+            onSnapshot(
+                beansRef,
+                (snapshot) => {
+                    if (requestId !== latestViewRequestId) return;
+                    const nextBeans = [];
+                    snapshot.forEach((docSnap) => nextBeans.push({ id: docSnap.id, ...docSnap.data() }));
+                    setBeans(nextBeans);
+
+                    if (isMine) updateBeanDropdown();
+                    if (!document.getElementById('beansModal').classList.contains('hidden')) {
+                        renderBeansTable();
+                    }
+                    renderPinnedTiles();
+                    renderTable();
+                    setHasLoadedBeans(true);
+                },
+                (error) => {
+                    console.error('Error loading beans:', error);
+                    setBeans([]);
+                    renderPinnedTiles();
+                    renderTable();
+                }
+            )
+        );
+
+        const coffeeTypesRef = collection(db, 'users', targetUid, 'coffeeTypes');
+        setUnsubscribeCoffeeTypes(
+            onSnapshot(
+                coffeeTypesRef,
+                (snapshot) => {
+                    if (requestId !== latestViewRequestId) return;
+                    const nextCoffeeTypes = [];
+                    snapshot.forEach((docSnap) => nextCoffeeTypes.push({ id: docSnap.id, ...docSnap.data() }));
+                    setCoffeeTypes(nextCoffeeTypes);
+                    updateCoffeeTypeSelectors();
+                    if (isMine) updateBeanDropdown();
+                    if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
+                        renderCoffeeTypesTable();
+                    }
+                    renderPinnedTiles();
+                    renderTable();
+                },
+                (error) => {
+                    console.error('Error loading coffees:', error);
+                    setCoffeeTypes([]);
+                    updateCoffeeTypeSelectors();
+                    if (isMine) updateBeanDropdown();
+                    if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
+                        renderCoffeeTypesTable();
+                    }
+                    renderPinnedTiles();
+                    renderTable();
+                }
+            )
+        );
+    };
+
+    const attachGasLiveListener = ({ targetUid, requestId }) => {
+        if (requestId !== latestViewRequestId) return;
+        if (getUnsubscribeGas()) return;
+
+        const gasRef = collection(db, 'users', targetUid, 'gear');
+        setUnsubscribeGas(
+            onSnapshot(
+                gasRef,
+                (snapshot) => {
+                    if (requestId !== latestViewRequestId) return;
+                    const nextGasItems = [];
+                    snapshot.forEach((docSnap) => nextGasItems.push({ id: docSnap.id, ...docSnap.data() }));
+                    setGasItems(nextGasItems);
+                    if (refreshBrewGearSelectors) refreshBrewGearSelectors();
+                    if (!getModal('gasModal')?.classList.contains('hidden')) {
+                        renderGasTable();
+                    }
+                },
+                (error) => {
+                    console.error('Error loading gas list:', error);
+                    setGasItems([]);
+                    if (refreshBrewGearSelectors) refreshBrewGearSelectors();
+                    if (!getModal('gasModal')?.classList.contains('hidden')) {
+                        renderGasTable();
+                    }
+                }
+            )
+        );
+    };
+
+    const ensureGasListenerForCurrentView = () => {
+        if (!currentViewListenerContext) return;
+        attachGasLiveListener(currentViewListenerContext);
+    };
+
+    const scheduleLiveViewListeners = ({ targetUid, isMine, requestId }) => {
+        const run = () => {
+            pendingLiveListenerHandle = null;
+            attachLiveViewListeners({ targetUid, isMine, requestId });
+        };
+        const scheduleIdle = window.requestIdleCallback;
+        if (typeof scheduleIdle === 'function') {
+            const id = scheduleIdle(run, { timeout: 1800 });
+            pendingLiveListenerHandle = { type: 'idle', id };
+            return;
+        }
+        const id = setTimeout(run, 900);
+        pendingLiveListenerHandle = { type: 'timeout', id };
     };
 
     const clearNotificationSubscription = () => {
@@ -206,7 +366,9 @@ export const createSessionAuthViewModule = ({
         }
     };
 
-    const changeView = (uid) => {
+    const changeView = async (uid) => {
+        latestViewRequestId += 1;
+        const requestId = latestViewRequestId;
         setCurrentView(uid);
         syncFriendViewSelectValues(uid);
         clearViewSubscriptions();
@@ -218,113 +380,132 @@ export const createSessionAuthViewModule = ({
 
         const isMine = uid === 'mine';
         const targetUid = isMine ? user.uid : uid;
+        currentViewListenerContext = { targetUid, requestId };
+        try {
+            const brewsInitialQ = query(
+                collection(db, 'users', targetUid, 'coffees'),
+                orderBy('createdAt', 'desc'),
+                limit(INITIAL_BREWS_LIMIT)
+            );
+            const activeBeansInitialQ = query(
+                collection(db, 'users', targetUid, 'beans'),
+                where('archived', '==', false),
+                where('frozen', '==', false)
+            );
+            const [brewsSnap, activeBeansSnap, gasSnap] = await Promise.all([
+                getDocs(brewsInitialQ),
+                getDocs(activeBeansInitialQ),
+                getDocs(collection(db, 'users', targetUid, 'gear'))
+            ]);
 
-        const brewsRef = collection(db, 'users', targetUid, 'coffees');
-        setUnsubscribeData(
-            onSnapshot(
-                brewsRef,
-                (snapshot) => {
-                    const nextCoffees = [];
-                    snapshot.forEach((docSnap) => nextCoffees.push({ id: docSnap.id, ...docSnap.data() }));
-                    if (!getCurrentSort().key) {
-                        nextCoffees.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    }
-                    setCoffees(nextCoffees);
-                    renderPinnedTiles();
-                    renderTable();
-                    updateAutocompleteLists();
-                    setHasLoadedBrews(true);
-                },
-                (error) => {
-                    console.error(error);
-                    if (error.code === 'permission-denied') {
-                        alert('⚠️ Access Denied: This user\'s profile is private.');
-                        syncFriendViewSelectValues('mine');
-                        changeView('mine');
-                    }
-                }
-            )
-        );
+            if (requestId !== latestViewRequestId) return;
 
-        const beansRef = collection(db, 'users', targetUid, 'beans');
-        setUnsubscribeBeans(
-            onSnapshot(
-                beansRef,
-                (snapshot) => {
-                    const nextBeans = [];
-                    snapshot.forEach((docSnap) => nextBeans.push({ id: docSnap.id, ...docSnap.data() }));
-                    setBeans(nextBeans);
+            const nextCoffees = [];
+            brewsSnap.forEach((docSnap) => nextCoffees.push({ id: docSnap.id, ...docSnap.data() }));
+            if (!getCurrentSort().key) {
+                nextCoffees.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+            setCoffees(nextCoffees);
+            updateAutocompleteLists();
+            setHasLoadedBrews(true);
 
-                    if (isMine) updateBeanDropdown();
-                    if (!document.getElementById('beansModal').classList.contains('hidden')) {
-                        renderBeansTable();
-                    }
-                    renderPinnedTiles();
-                    renderTable();
-                    setHasLoadedBeans(true);
-                },
-                (error) => {
-                    console.error('Error loading beans:', error);
-                    setBeans([]);
-                    renderPinnedTiles();
-                    renderTable();
-                }
-            )
-        );
+            const nextBeans = [];
+            const beanMap = new Map();
+            activeBeansSnap.forEach((docSnap) => {
+                const bean = { id: docSnap.id, ...docSnap.data() };
+                beanMap.set(bean.id, bean);
+                nextBeans.push(bean);
+            });
 
-        const coffeeTypesRef = collection(db, 'users', targetUid, 'coffeeTypes');
-        setUnsubscribeCoffeeTypes(
-            onSnapshot(
-                coffeeTypesRef,
-                (snapshot) => {
-                    const nextCoffeeTypes = [];
-                    snapshot.forEach((docSnap) => nextCoffeeTypes.push({ id: docSnap.id, ...docSnap.data() }));
-                    setCoffeeTypes(nextCoffeeTypes);
-                    updateCoffeeTypeSelectors();
-                    if (isMine) updateBeanDropdown();
-                    if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
-                        renderCoffeeTypesTable();
+            const referencedBeanIds = new Set(
+                nextCoffees.map((brew) => brew?.beanId).filter((beanId) => typeof beanId === 'string' && beanId.trim())
+            );
+            const missingReferencedBeanIds = Array.from(referencedBeanIds).filter((beanId) => !beanMap.has(beanId));
+            if (missingReferencedBeanIds.length) {
+                const missingBeanSnaps = await Promise.all(
+                    missingReferencedBeanIds.map((beanId) => getDoc(doc(db, 'users', targetUid, 'beans', beanId)))
+                );
+                if (requestId !== latestViewRequestId) return;
+                missingBeanSnaps.forEach((beanSnap) => {
+                    if (!beanSnap.exists()) return;
+                    const bean = { id: beanSnap.id, ...beanSnap.data() };
+                    if (beanMap.has(bean.id)) return;
+                    beanMap.set(bean.id, bean);
+                    nextBeans.push(bean);
+                });
+            }
+            // Legacy safety: older docs may miss archived/frozen fields and be excluded from the filtered query.
+            if (!nextBeans.length && referencedBeanIds.size) {
+                const legacyBeansSnap = await getDocs(collection(db, 'users', targetUid, 'beans'));
+                if (requestId !== latestViewRequestId) return;
+                legacyBeansSnap.forEach((docSnap) => {
+                    const bean = { id: docSnap.id, ...docSnap.data() };
+                    if (beanMap.has(bean.id)) return;
+                    if (referencedBeanIds.has(bean.id)) {
+                        beanMap.set(bean.id, bean);
+                        nextBeans.push(bean);
                     }
-                    renderPinnedTiles();
-                    renderTable();
-                },
-                (error) => {
-                    console.error('Error loading coffees:', error);
-                    setCoffeeTypes([]);
-                    updateCoffeeTypeSelectors();
-                    if (isMine) updateBeanDropdown();
-                    if (!document.getElementById('coffeeTypesModal').classList.contains('hidden')) {
-                        renderCoffeeTypesTable();
-                    }
-                    renderPinnedTiles();
-                    renderTable();
-                }
-            )
-        );
+                });
+            }
 
-        const gasRef = collection(db, 'users', targetUid, 'gear');
-        setUnsubscribeGas(
-            onSnapshot(
-                gasRef,
-                (snapshot) => {
-                    const nextGasItems = [];
-                    snapshot.forEach((docSnap) => nextGasItems.push({ id: docSnap.id, ...docSnap.data() }));
-                    setGasItems(nextGasItems);
-                    if (refreshBrewGearSelectors) refreshBrewGearSelectors();
-                    if (!document.getElementById('gasModal').classList.contains('hidden')) {
-                        renderGasTable();
-                    }
-                },
-                (error) => {
-                    console.error('Error loading gas list:', error);
-                    setGasItems([]);
-                    if (refreshBrewGearSelectors) refreshBrewGearSelectors();
-                    if (!document.getElementById('gasModal').classList.contains('hidden')) {
-                        renderGasTable();
-                    }
-                }
-            )
-        );
+            setBeans(nextBeans);
+            if (isMine) updateBeanDropdown();
+            if (!getModal('beansModal')?.classList.contains('hidden')) {
+                renderBeansTable();
+            }
+            setHasLoadedBeans(true);
+
+            const referencedCoffeeTypeIds = new Set(
+                nextCoffees
+                    .map((brew) => brew?.coffeeTypeId)
+                    .filter((coffeeTypeId) => typeof coffeeTypeId === 'string' && coffeeTypeId.trim())
+            );
+            nextBeans.forEach((bean) => {
+                const coffeeTypeId = bean?.coffeeTypeId;
+                if (typeof coffeeTypeId !== 'string' || !coffeeTypeId.trim()) return;
+                referencedCoffeeTypeIds.add(coffeeTypeId);
+            });
+
+            const nextCoffeeTypes = [];
+            if (referencedCoffeeTypeIds.size) {
+                const coffeeTypeSnaps = await Promise.all(
+                    Array.from(referencedCoffeeTypeIds).map((coffeeTypeId) =>
+                        getDoc(doc(db, 'users', targetUid, 'coffeeTypes', coffeeTypeId))
+                    )
+                );
+                if (requestId !== latestViewRequestId) return;
+                coffeeTypeSnaps.forEach((coffeeTypeSnap) => {
+                    if (!coffeeTypeSnap.exists()) return;
+                    nextCoffeeTypes.push({ id: coffeeTypeSnap.id, ...coffeeTypeSnap.data() });
+                });
+            }
+            setCoffeeTypes(nextCoffeeTypes);
+            updateCoffeeTypeSelectors();
+            if (isMine) updateBeanDropdown();
+            if (!getModal('coffeeTypesModal')?.classList.contains('hidden')) {
+                renderCoffeeTypesTable();
+            }
+
+            const nextGasItems = [];
+            gasSnap.forEach((docSnap) => nextGasItems.push({ id: docSnap.id, ...docSnap.data() }));
+            setGasItems(nextGasItems);
+            if (refreshBrewGearSelectors) refreshBrewGearSelectors();
+
+            renderPinnedTiles();
+            renderTable();
+            scheduleLiveViewListeners({ targetUid, isMine, requestId });
+            if (!getModal('gasModal')?.classList.contains('hidden')) {
+                ensureGasListenerForCurrentView();
+            }
+        } catch (error) {
+            console.error('Initial view load failed:', error);
+            if (error?.code === 'permission-denied') {
+                handleViewPermissionDenied();
+                return;
+            }
+            // Fallback to immediate live listeners if the bootstrap query path fails.
+            attachLiveViewListeners({ targetUid, isMine, requestId });
+        }
     };
 
     const initNotificationListener = (uid) => {
@@ -577,6 +758,7 @@ export const createSessionAuthViewModule = ({
         initUserData,
         markOnboardingSeen,
         changeView,
+        ensureGasListenerForCurrentView,
         initNotificationListener,
         setOutgoingFriendRequestsProcessor,
         clearViewSubscriptions,

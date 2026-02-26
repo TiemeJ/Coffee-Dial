@@ -26,7 +26,8 @@ export const createGasCoordinator = ({
     setCoffeesState,
     openAppConfirm,
     getRefreshBrewGearSelectors,
-    openLightbox
+    openLightbox,
+    onGasUiOpened
 }) => {
     if (!appCommands?.dispatch) {
         throw new Error('createGasCoordinator requires appCommands.dispatch');
@@ -50,6 +51,10 @@ export const createGasCoordinator = ({
     let getFilteredSortedGasItems = () => [];
     let closeGasCard = () => {};
     let closeGasList = () => {};
+    const notifyGasUiOpened = () => {
+        if (typeof onGasUiOpened !== 'function') return;
+        onGasUiOpened();
+    };
 
     const createGasItemFromModal = async () => {
         const user = getCurrentUser();
@@ -76,6 +81,7 @@ export const createGasCoordinator = ({
                 setGasItemsState([...getGasItems(), newGas]);
             }
             getRefreshBrewGearSelectors()?.();
+            notifyGasUiOpened();
             openGasCard(newGas.id);
             enterGasEditMode();
             publishEvent('gas.created', { gasId: newGas.id });
@@ -125,6 +131,15 @@ export const createGasCoordinator = ({
     enterGasEditMode = gasCard.enterGasEditMode;
     closeGasCard = gasCard.closeGasCard;
 
+    const openGasList = (...args) => {
+        notifyGasUiOpened();
+        return gasTable.openGasList(...args);
+    };
+    const openGasCardWithListener = (...args) => {
+        notifyGasUiOpened();
+        return gasCard.openGasCard(...args);
+    };
+
     const showBrewsForGear = (gearId = null) => {
         const targetId = gearId || getCurrentGasId();
         if (!targetId) return;
@@ -137,7 +152,7 @@ export const createGasCoordinator = ({
 
     return {
         createGasItemFromModal,
-        openGasList: gasTable.openGasList,
+        openGasList,
         closeGasList: gasTable.closeGasList,
         setGasSearch: gasTable.setGasSearch,
         clearGasSearch: gasTable.clearGasSearch,
@@ -151,7 +166,7 @@ export const createGasCoordinator = ({
         getFilteredSortedGasItems: gasTable.getFilteredSortedGasItems,
         renderGasTable: gasTable.renderGasTable,
         updateGasCardNav: gasCard.updateGasCardNav,
-        openGasCard: gasCard.openGasCard,
+        openGasCard: openGasCardWithListener,
         closeGasCard: gasCard.closeGasCard,
         enterGasEditMode: gasCard.enterGasEditMode,
         cancelGasEditMode: gasCard.cancelGasEditMode,
@@ -159,8 +174,14 @@ export const createGasCoordinator = ({
         toggleGasArchive: gasCard.toggleGasArchive,
         deleteGasItem: gasCard.deleteGasItem,
         navigateGasCard: gasCard.navigateGasCard,
-        openGasFromTableEdit: gasCard.openGasFromTableEdit,
-        openGasMergeFromTable: gasCard.openGasMergeFromTable,
+        openGasFromTableEdit: (...args) => {
+            notifyGasUiOpened();
+            return gasCard.openGasFromTableEdit(...args);
+        },
+        openGasMergeFromTable: (...args) => {
+            notifyGasUiOpened();
+            return gasCard.openGasMergeFromTable(...args);
+        },
         toggleGasArchiveFromTable: gasCard.toggleGasArchiveFromTable,
         deleteGasFromTable: gasCard.deleteGasFromTable,
         triggerGasPhoto: gasCard.triggerGasPhoto,
@@ -173,7 +194,10 @@ export const createGasCoordinator = ({
         mergeGasItem: gasCard.mergeGasItem,
         openGasBulkAddModal: gasCard.openGasBulkAddModal,
         closeGasBulkAddModal: gasCard.closeGasBulkAddModal,
-        openGasBulkAddFromTable: gasCard.openGasBulkAddFromTable,
+        openGasBulkAddFromTable: (...args) => {
+            notifyGasUiOpened();
+            return gasCard.openGasBulkAddFromTable(...args);
+        },
         bulkAddGearToBrews: gasCard.bulkAddGearToBrews,
         showBrewsForGear
     };

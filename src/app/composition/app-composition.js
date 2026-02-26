@@ -621,6 +621,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             initUserData,
             markOnboardingSeen,
             changeView,
+            ensureGasListenerForCurrentView,
             initNotificationListener,
             setOutgoingFriendRequestsProcessor,
             clearViewSubscriptions,
@@ -958,7 +959,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setCoffeesState: (value) => setCoffeesState(value),
             openAppConfirm,
             getRefreshBrewGearSelectors: () => refreshBrewGearSelectors,
-            openLightbox: (...args) => openLightbox?.(...args)
+            openLightbox: (...args) => openLightbox?.(...args),
+            onGasUiOpened: () => ensureGasListenerForCurrentView?.()
         });
 
         
