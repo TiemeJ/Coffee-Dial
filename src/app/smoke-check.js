@@ -4,7 +4,6 @@ const REQUIRED_ACTION_IDS = [
     'handleFormSubmit',
     'editCoffee',
     'duplicateCoffee',
-    'togglePinnedTiles',
     'brewsOpenCard',
     'navigateCoffeeCard'
 ];

@@ -54,7 +54,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
     };
 
     const getStockOverlay = ({ bean }) => {
-        if (!bean || !bean.stock) return { stockOverlay: '', dragIconClass: '', menuBtnClass: '', decafIconSrc: 'img/decaf_dark.png' };
+        if (!bean || !bean.stock) return { stockOverlay: '', dragIconClass: '', menuBtnClass: '' };
         const initialStock = parseFloat(bean.stock);
         const currentStockRaw = getBeanCalculatedStock(bean);
         const currentStock = Math.max(0, parseFloat(currentStockRaw));
@@ -65,7 +65,6 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         let stockOverlay = '';
         let dragIconClass = 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]';
         let menuBtnClass = 'text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e]';
-        let decafIconSrc = 'img/decaf_dark.png';
 
         if (stockPercentage < 100) {
             const fullHeight = stockPercentage;
@@ -79,9 +78,8 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
                 dragIconClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
                 menuBtnClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
             }
-            if (fullHeight > 30) decafIconSrc = 'img/decaf_light.png';
         }
-        return { stockOverlay, dragIconClass, menuBtnClass, decafIconSrc };
+        return { stockOverlay, dragIconClass, menuBtnClass };
     };
 
     const renderBrewTile = ({ brew, container, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard }) => {
@@ -91,7 +89,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         tile.ondblclick = (ev) => openPinnedBrewCard(brew.id, ev);
 
         const linkedBean = resolveLinkedBean({ brew, beans });
-        const { stockOverlay, dragIconClass, menuBtnClass, decafIconSrc } = getStockOverlay({ bean: linkedBean });
+        const { stockOverlay, dragIconClass, menuBtnClass } = getStockOverlay({ bean: linkedBean });
 
         const typeDisplay = getCoffeeTypeDisplay(brew);
         const roaster = typeDisplay.roaster || brew.name || 'Unknown Roaster';
@@ -100,7 +98,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         const subtitleText = roaster;
 
         const isDecaf = !!typeDisplay.decaf;
-        const decafIcon = isDecaf ? `<img src="${decafIconSrc}" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` : '';
+        const decafIcon = isDecaf ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e] ml-1" title="Decaf"></i>' : '';
 
         const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some((v) => v !== null);
         const dragIcon = isDraggable ? `<div class="absolute top-1 right-1 ${dragIconClass} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>` : '';
@@ -113,7 +111,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         }
 
         const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
-        tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(brew.method || '-', 'method')}<div class="flex gap-1 items-center">${getTileBadge(brew.drink || '-', 'drink')}${decafIcon}</div></div></div>${menuBtn}${menu}`;
+        tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(brew.method || '-', 'method')}<div class="flex gap-1 items-center">${getTileBadge(brew.drink || '-', 'drink')}${decafIcon}</div></div></div>${menuBtn}${menu}`;
         container.appendChild(tile);
     };
 
@@ -167,17 +165,17 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
                     tile.className = 'w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all';
                     tile.setAttribute('data-bean-key', beanKey);
                     tile.onclick = () => onToggleBeanExpansion(beanKey);
-                    const { stockOverlay, dragIconClass, decafIconSrc } = getStockOverlay({ bean });
+                    const { stockOverlay, dragIconClass } = getStockOverlay({ bean });
                     const previewBrew = brews[0] || null;
                     const typeDisplay = previewBrew
                         ? getCoffeeTypeDisplay(previewBrew)
                         : { roaster: bean?.roaster || 'Unknown', farmer: bean?.farmer || '-', decaf: false };
                     const titleText = typeDisplay.farmer !== '-' ? typeDisplay.farmer : typeDisplay.roaster;
                     const subtitleText = typeDisplay.roaster;
-                    const badge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>${brews.length} brews</span>`;
+                    const badge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-white border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>${brews.length} brews</span>`;
                     const isDecaf = !!typeDisplay.decaf;
                     const decafIcon = isDecaf
-                        ? `<img src="${decafIconSrc || 'img/decaf_dark.png'}" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">`
+                        ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e] ml-1" title="Decaf"></i>'
                         : '';
                     const placeholderBadge = '<span class="w-6 h-6"></span>';
                     const plusBtn = '<div class="absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30"><i class="fa-solid fa-plus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i></div>';
@@ -185,7 +183,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
                         ? `<div class="absolute top-1 right-1 ${dragIconClass || 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]'} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>`
                         : '';
                     const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
-                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${badge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
+                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${badge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
                     pinnedGrid.appendChild(tile);
                 } else {
                     brews.forEach((brew, idx) => {
@@ -217,21 +215,21 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
                     tile.setAttribute('data-bean-key', beanKey);
                     tile.onclick = () => onToggleBeanExpansion(beanKey);
                     const linkedBean = bean || resolveLinkedBean({ brew, beans });
-                    const { stockOverlay, dragIconClass, decafIconSrc } = getStockOverlay({ bean: linkedBean });
+                    const { stockOverlay, dragIconClass } = getStockOverlay({ bean: linkedBean });
                     const typeDisplay = getCoffeeTypeDisplay(brew);
                     const roaster = typeDisplay.roaster || brew.name || 'Unknown Roaster';
                     const farmer = typeDisplay.farmer || '-';
                     const titleText = farmer && farmer !== '-' ? farmer : roaster;
                     const subtitleText = roaster;
                     const isDecaf = !!typeDisplay.decaf;
-                    const decafIcon = isDecaf ? `<img src="${decafIconSrc || 'img/decaf_dark.png'}" alt="Decaf" class="inline-block w-6 h-6 ml-1" title="Decaffeinated">` : '';
+                    const decafIcon = isDecaf ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e] ml-1" title="Decaf"></i>' : '';
                     const placeholderBadge = '<span class="w-6 h-6"></span>';
                     const plusBtn = '<div class="absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30"><i class="fa-solid fa-plus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i></div>';
                     const dragIcon = isPinnedDraggable({ currentView, currentSort, activeFilters })
                         ? `<div class="absolute top-1 right-1 ${dragIconClass || 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]'} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>`
                         : '';
                     const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
-                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#a8a29e] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start"><span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-[#d6ccc2] border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>1 brew</span><div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
+                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start"><span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-white border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>1 brew</span><div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
                     pinnedGrid.appendChild(tile);
                 } else {
                     const wrapper = document.createElement('div');

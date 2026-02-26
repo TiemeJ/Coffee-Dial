@@ -156,8 +156,7 @@ export const createActionAssemblies = (deps = {}) => {
             'toggleLabResultBrewSelection',
             'toggleLabResultGraph',
             'toggleLabResultXField',
-            'toggleLabResultYField',
-            'togglePinnedTiles'
+            'toggleLabResultYField'
         ]),
         beanActions: pick(deps, [
             'applyBeansFilterFromQuick',
@@ -493,8 +492,7 @@ export const createActionAssemblies = (deps = {}) => {
             gasToggleActionMenu: deps.toggleActionMenu
         },
         pin: {
-            pinToggleActionMenu: deps.toggleActionMenu,
-            togglePinnedTiles: deps.togglePinnedTiles
+            pinToggleActionMenu: deps.toggleActionMenu
         },
         social: pick(deps, [
             'acceptFriendRequest',

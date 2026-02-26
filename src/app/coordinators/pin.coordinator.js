@@ -3,13 +3,12 @@ import { selectPinnedBrewOrderIds } from '../stores/brews.selectors.js';
 import { selectVisiblePinnedBrewOrderIds } from '../stores/pin.selectors.js';
 
 export const createPinCoordinator = (deps) => {
-    const { renderPinnedTiles, togglePinnedTiles } = createPinControllerModule({
+    const { renderPinnedTiles } = createPinControllerModule({
         ...deps,
         selectPinnedBrewOrderIds,
         selectVisiblePinnedBrewOrderIds
     });
     return {
-        renderPinnedTiles,
-        togglePinnedTiles
+        renderPinnedTiles
     };
 };

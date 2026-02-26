@@ -1388,7 +1388,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setRefreshBrewGearSelectors: (fn) => { refreshBrewGearSelectors = fn; }
         });
 
-        const { renderPinnedTiles, togglePinnedTiles } = createPinCoordinator({
+        const { renderPinnedTiles } = createPinCoordinator({
             dataService,
             appCommands,
             appEvents,
@@ -1903,7 +1903,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             toggleLabResultYField,
             toggleMainMenu,
             toggleMethodOther,
-            togglePinnedTiles,
             togglePublicProfile,
             toggleQuickFilter,
             toggleStatsUniqueTable,

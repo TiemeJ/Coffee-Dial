@@ -54,7 +54,6 @@ export const createPinControllerModule = ({
     });
 
     let expandedBeans = new Set();
-    let lastPinnedBeanKeys = [];
     let sortableInstances = [];
 
     const getPinnedBrewOrderIds = () => selectPinnedBrewOrderIds(getCoffees());
@@ -83,29 +82,6 @@ export const createPinControllerModule = ({
     const resolveBeanKey = (brew) => {
         const linkedBean = view.resolveLinkedBean({ brew, beans: getBeans() });
         return linkedBean ? linkedBean.id : `no-bean-${brew.id}`;
-    };
-
-    const updatePinnedHeaderToggleIcon = (beanKeys = [], coffeeArtEnabled = false) => {
-        lastPinnedBeanKeys = beanKeys;
-        const icon = document.getElementById('pinnedToggleIcon');
-        const header = document.getElementById('pinnedHeaderToggle');
-        if (!icon || !header) return;
-        header.classList.toggle('hidden', !!coffeeArtEnabled);
-        if (coffeeArtEnabled) {
-            icon.classList.add('hidden');
-            header.classList.remove('cursor-pointer');
-            return;
-        }
-        if (coffeeArtEnabled || !beanKeys.length) {
-            icon.classList.add('hidden');
-            header.classList.remove('cursor-pointer');
-            return;
-        }
-        icon.classList.remove('hidden');
-        header.classList.add('cursor-pointer');
-        const allExpanded = beanKeys.every((key) => expandedBeans.has(key));
-        icon.classList.toggle('fa-plus', !allExpanded);
-        icon.classList.toggle('fa-minus', allExpanded);
     };
 
     const initSortable = () => {
@@ -191,7 +167,6 @@ export const createPinControllerModule = ({
             });
             const section = document.getElementById('pinnedSection');
             if (section) section.classList.toggle('hidden', !result.hasArt);
-            updatePinnedHeaderToggleIcon([], true);
             return;
         }
 
@@ -214,21 +189,12 @@ export const createPinControllerModule = ({
             openPinnedBrewCard: (...args) => openPinnedBrewCard(...args)
         });
 
-        updatePinnedHeaderToggleIcon(result.beanKeys, false);
         if (result.hasTiles) initSortable();
     };
 
     const toggleBeanExpansion = (beanKey) => {
         if (expandedBeans.has(beanKey)) expandedBeans.delete(beanKey);
         else expandedBeans.add(beanKey);
-        renderPinnedTiles();
-    };
-
-    const togglePinnedTiles = () => {
-        if (!lastPinnedBeanKeys.length) return;
-        const allExpanded = lastPinnedBeanKeys.every((key) => expandedBeans.has(key));
-        if (allExpanded) expandedBeans.clear();
-        else expandedBeans = new Set(lastPinnedBeanKeys);
         renderPinnedTiles();
     };
 
@@ -259,7 +225,6 @@ export const createPinControllerModule = ({
 
     return {
         renderPinnedTiles,
-        togglePinnedTiles,
         toggleBeanExpansion
     };
 };
