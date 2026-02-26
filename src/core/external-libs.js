@@ -58,8 +58,38 @@ const loadClassicScript = ({ src, globalName, timeoutMs = 15000 }) => {
     return loadPromise;
 };
 
-const chartJsSrc = new URL('../../vendor/js/chart.js', import.meta.url).href;
-const html2canvasSrc = new URL('../../vendor/js/html2canvas.min.js', import.meta.url).href;
+const resolveAppBasePath = () => {
+    try {
+        const moduleUrl = new URL(import.meta.url);
+        const pathname = moduleUrl.pathname || '/';
+        const markers = ['/assets/', '/src/'];
+        for (const marker of markers) {
+            const markerIndex = pathname.indexOf(marker);
+            if (markerIndex >= 0) {
+                const basePath = pathname.slice(0, markerIndex);
+                return basePath === '/' ? '' : basePath;
+            }
+        }
+    } catch (_) {
+        // Fall through to location-based fallback.
+    }
+
+    const pathname = window.location?.pathname || '/';
+    const isGithubPages = (window.location?.hostname || '').endsWith('github.io');
+    if (pathname === '/Coffee-Dial' || pathname.startsWith('/Coffee-Dial/') || isGithubPages) {
+        return '/Coffee-Dial';
+    }
+    return '';
+};
+
+const resolveVendorScriptUrl = (filename) => {
+    const basePath = resolveAppBasePath();
+    const path = `${basePath}/vendor/js/${filename}`.replace(/\/{2,}/g, '/');
+    return new URL(path, window.location.origin).href;
+};
+
+const chartJsSrc = resolveVendorScriptUrl('chart.js');
+const html2canvasSrc = resolveVendorScriptUrl('html2canvas.min.js');
 
 export const ensureChartJs = async () => loadClassicScript({
     src: chartJsSrc,
@@ -70,4 +100,3 @@ export const ensureHtml2Canvas = async () => loadClassicScript({
     src: html2canvasSrc,
     globalName: 'html2canvas'
 });
-
