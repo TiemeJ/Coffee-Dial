@@ -2276,11 +2276,13 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
             const authContainer = document.getElementById('authContainer');
             if (authContainer) {
+                authContainer.classList.remove('invisible');
                 authContainer.innerHTML = `<div class="flex items-center gap-3"><button data-action-click="openFriendsModal()" class="relative flex-shrink-0 hover:opacity-80 transition-opacity" aria-label="Open friends profile"><img src="${user.photoURL}" alt="${user.displayName || 'User avatar'}" class="w-8 h-8 flex-shrink-0 rounded-full border border-coffee-200 dark:border-[#44403c]" title="${user.displayName}"></button></div>`;
             }
             document.getElementById('viewSelectorContainer')?.classList.remove('hidden');
             document.getElementById('signedOutAuthBody')?.classList.add('hidden');
             document.getElementById('signedInContent')?.classList.remove('hidden');
+            document.getElementById('appBootstrapLoading')?.classList.add('hidden');
 
             [
                 'menuAddBrewBtn',

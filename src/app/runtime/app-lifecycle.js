@@ -24,6 +24,7 @@ export const createAppLifecycleModule = ({
             await authStateChangedHandler(user);
         } catch (error) {
             console.error('Auth state handling failed:', error);
+            document.getElementById('appBootstrapLoading')?.classList.add('hidden');
         }
     };
 

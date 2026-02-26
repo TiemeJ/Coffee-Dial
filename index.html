@@ -89,7 +89,13 @@
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
         <div id="authCardMount"></div>
-        <div id="signedInContent">
+        <div id="appBootstrapLoading" class="py-10 flex items-center justify-center" role="status" aria-live="polite" aria-busy="true">
+            <div class="inline-flex items-center gap-2 rounded-full border border-coffee-200 dark:border-[#44403c] bg-white/90 dark:bg-[#292524]/90 px-4 py-2 text-sm font-medium text-coffee-700 dark:text-[#d6ccc2] shadow-sm">
+                <i class="fa-solid fa-spinner fa-spin text-coffee-600 dark:text-[#a8a29e]"></i>
+                <span>Loading your brews...</span>
+            </div>
+        </div>
+        <div id="signedInContent" class="hidden">
         <div id="pinnedSectionMount"></div>
 
         <div id="brewsTableMount"></div>

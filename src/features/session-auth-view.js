@@ -352,7 +352,6 @@ export const createSessionAuthViewModule = ({
         applyAnimationPreference();
         updatePublicToggleUI();
         document.getElementById('myShareId').value = user.uid;
-        renderTable();
         return { shouldShowOnboarding };
     };
 
