@@ -1,39 +1,68 @@
 export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDisplay }) => {
+    const LONG_PRESS_MS = 420;
+    let chooserOpenFor = null;
+
     const isPinnedDraggable = ({ currentView, currentSort, activeFilters }) =>
         currentView === 'mine' &&
         currentSort?.key === null &&
         !activeFilters?.method &&
         !Object.values(activeFilters || {}).some((v) => v !== null);
 
-    const getTileBadge = (text, kind) => {
-        if (!text) {
-            return '<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded-full border bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 truncate">-</span>';
-        }
-        const maps = {
-            method: {
-                Espresso: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-200',
-                V60: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-200',
-                'Hario Switch': 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-200',
-                'Clever Dripper': 'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/40 dark:text-teal-200',
-                Aeropress: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/40 dark:text-purple-200',
-                'OXO Rapid Brewer': 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/40 dark:text-pink-200',
-                'French Press': 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-200',
-                Chemex: 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/40 dark:text-sky-200',
-                Other: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200'
-            },
-            drink: {
-                Espresso: 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-900/30 dark:text-amber-200',
-                Americano: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-200',
-                Cappuccino: 'bg-pink-50 text-pink-800 border-pink-100 dark:bg-pink-900/30 dark:text-pink-200',
-                'Flat White': 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-900/30 dark:text-rose-200',
-                'Latte Macchiato': 'bg-yellow-50 text-yellow-800 border-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-200',
-                'Filter Coffee': 'bg-blue-50 text-blue-800 border-blue-100 dark:bg-blue-900/30 dark:text-blue-200',
-                Macchiato: 'bg-purple-50 text-purple-800 border-purple-100 dark:bg-purple-900/30 dark:text-purple-200',
-                Other: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200'
+    const buildBrewLabel = (brew, includeDrink = true) => {
+        const method = (brew?.method || 'Unknown method').toString().trim();
+        if (!includeDrink) return method;
+        const drink = (brew?.drink || 'Unknown drink').toString().trim();
+        return `${method} (${drink})`;
+    };
+
+    const closeChooser = () => {
+        chooserOpenFor = null;
+        const chooser = document.getElementById('brewPinArtChooser');
+        if (chooser) chooser.classList.add('hidden');
+        const list = document.getElementById('brewPinArtChooserList');
+        if (list) list.innerHTML = '';
+    };
+
+    const openChooser = ({ beanName, brews, includeDrinkInLabel = true, openPinnedBrewCard }) => {
+        const chooser = document.getElementById('brewPinArtChooser');
+        const title = document.getElementById('brewPinArtChooserTitle');
+        const list = document.getElementById('brewPinArtChooserList');
+        if (!chooser || !title || !list) return;
+
+        chooserOpenFor = beanName || 'coffee';
+        title.textContent = `Choose brew for ${chooserOpenFor}`;
+        list.innerHTML = '';
+
+        brews.forEach((brew) => {
+            const btn = document.createElement('button');
+            btn.className =
+                'w-full text-left px-3 py-2 rounded-lg border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#292524] text-sm text-coffee-800 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e] transition-colors';
+            btn.textContent = buildBrewLabel(brew, includeDrinkInLabel);
+            btn.addEventListener('click', () => {
+                closeChooser();
+                openPinnedBrewCard(brew.id);
+            });
+            list.appendChild(btn);
+        });
+
+        chooser.classList.remove('hidden');
+    };
+
+    const ensureChooserWiring = () => {
+        const chooser = document.getElementById('brewPinArtChooser');
+        const chooserCard = document.getElementById('brewPinArtChooserCard');
+        const closeBtn = document.getElementById('brewPinArtChooserClose');
+        if (!chooser || !chooserCard || !closeBtn) return;
+        if (chooser.dataset.bound === 'true') return;
+
+        chooser.dataset.bound = 'true';
+        closeBtn.addEventListener('click', closeChooser);
+        chooser.addEventListener('click', (event) => {
+            if (!chooserOpenFor) return;
+            if (event.target === chooser && !chooserCard.contains(event.target)) {
+                closeChooser();
             }
-        };
-        const map = maps[kind]?.[text] || 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200';
-        return `<span class="min-w-[64px] inline-flex items-center justify-center ${map} text-xs font-medium px-2.5 py-0.5 rounded border pointer-events-none select-none truncate">${text}</span>`;
+        });
     };
 
     const resolveLinkedBean = ({ brew, beans }) => {
@@ -64,8 +93,6 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
 
         let stockOverlay = '';
         let dragIconClass = 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]';
-        let menuBtnClass = 'text-coffee-300 hover:text-coffee-800 dark:text-[#57534e] dark:hover:text-[#a8a29e]';
-
         if (stockPercentage < 100) {
             const fullHeight = stockPercentage;
             const waveSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20 L0 10 Q 25 0 50 10 T 100 10 L 100 20 Z' fill='%2357534e'/%3E%3C/svg%3E";
@@ -76,43 +103,9 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
             stockOverlay = `<div class="absolute bottom-0 left-0 w-full z-0 pointer-events-none hidden dark:flex flex-col justify-start transition-all duration-500" style="height: ${fullHeight}%;"><div class="w-full h-3 bg-repeat-x wave-animate relative" style="background-image: url(&quot;${waveSvg}&quot;); background-size: 50% 100%;">${boatElement}</div><div class="w-full flex-1 bg-[#57534e]"></div></div>`;
             if (fullHeight > 25) {
                 dragIconClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
-                menuBtnClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
             }
         }
-        return { stockOverlay, dragIconClass, menuBtnClass };
-    };
-
-    const renderBrewTile = ({ brew, container, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard }) => {
-        const tile = document.createElement('div');
-        tile.className = 'w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all';
-        tile.setAttribute('data-id', brew.id);
-        tile.ondblclick = (ev) => openPinnedBrewCard(brew.id, ev);
-
-        const linkedBean = resolveLinkedBean({ brew, beans });
-        const { stockOverlay, dragIconClass, menuBtnClass } = getStockOverlay({ bean: linkedBean });
-
-        const typeDisplay = getCoffeeTypeDisplay(brew);
-        const roaster = typeDisplay.roaster || brew.name || 'Unknown Roaster';
-        const farmer = typeDisplay.farmer || '-';
-        const titleText = farmer && farmer !== '-' ? farmer : roaster;
-        const subtitleText = roaster;
-
-        const isDecaf = !!typeDisplay.decaf;
-        const decafIcon = isDecaf ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e] ml-1" title="Decaf"></i>' : '';
-
-        const isDraggable = currentView === 'mine' && currentSort.key === null && !activeFilters.method && !Object.values(activeFilters).some((v) => v !== null);
-        const dragIcon = isDraggable ? `<div class="absolute top-1 right-1 ${dragIconClass} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>` : '';
-        const menuId = `tile-menu-${brew.id}`;
-        const menuBtn = currentView === 'mine' ? `<button data-action-click="pinToggleActionMenu('${menuId}', event)" class="absolute bottom-1 right-1 p-2 ${menuBtnClass} transition-colors z-20 duration-200" aria-label="Open pinned brew actions" title="Actions"><i class="fa-solid fa-ellipsis-vertical text-base"></i></button>` : '';
-
-        let menu = '';
-        if (currentView === 'mine') {
-            menu = `<div id="${menuId}" class="action-menu hidden absolute right-2 bottom-8 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] overflow-hidden" style="z-index: 9999;"><button data-action-click="openCoffeeCardQuickEdit('${brew.id}', null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 w-4"></i> Quick edit</button><button data-action-click="editCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-pencil text-blue-500 w-4"></i> Edit</button><button data-action-click="fastRepeatCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-500 w-4"></i> Fast repeat</button><button data-action-click="duplicateCoffee('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-regular fa-copy text-green-500 w-4"></i> Repeat</button><button data-action-click="openUploadModal('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-camera text-purple-500 w-4"></i> Share moment</button><button data-action-click="showBeanForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-seedling text-green-600 w-4"></i> Go to bean</button><button data-action-click="showCoffeeForBrew('${brew.id}');" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-layer-group text-coffee-600 w-4"></i> Go to coffee</button><button data-action-click="shareCoffeeCard('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#34302e] text-coffee-700 dark:text-[#d6ccc2] flex items-center gap-3"><i class="fa-solid fa-share-nodes text-purple-500 w-4"></i> Share card</button><hr class="border-coffee-100 dark:border-[#44403c]"><button data-action-click="deleteCoffee('${brew.id}', event);" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3"><i class="fa-solid fa-trash w-4"></i> Delete</button></div>`;
-        }
-
-        const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
-        tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${getTileBadge(brew.method || '-', 'method')}<div class="flex gap-1 items-center">${getTileBadge(brew.drink || '-', 'drink')}${decafIcon}</div></div></div>${menuBtn}${menu}`;
-        container.appendChild(tile);
+        return { stockOverlay, dragIconClass };
     };
 
     const renderPinnedTilesView = ({
@@ -122,10 +115,11 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         currentView,
         currentSort,
         activeFilters,
-        expandedBeans,
-        onToggleBeanExpansion,
-        openPinnedBrewCard
+        openPinnedBrewCard,
+        openPinnedBeanCardWithOrder
     }) => {
+        ensureChooserWiring();
+        closeChooser();
         const pinnedSection = document.getElementById('pinnedSection');
         const pinnedGrid = document.getElementById('pinnedGrid');
         if (!pinnedSection || !pinnedGrid) return { hasTiles: false, beanKeys: [] };
@@ -152,104 +146,83 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         });
 
         const sortedGroups = Array.from(beanGroups.entries()).sort((a, b) => a[1].minOrder - b[1].minOrder);
+        const beanOrder = Array.from(new Set(sortedGroups.map(([, group]) => group.bean?.id).filter(Boolean)));
         sortedGroups.forEach(([beanKey]) => beanKeys.push(beanKey));
 
         sortedGroups.forEach(([beanKey, group]) => {
-            const isExpanded = expandedBeans.has(beanKey);
             const { bean } = group;
             const brews = [...group.brews].sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
+            const previewBrew = brews[0] || null;
+            if (!previewBrew) return;
 
-            if (bean && brews.length > 1) {
-                if (!isExpanded) {
-                    const tile = document.createElement('div');
-                    tile.className = 'w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all';
-                    tile.setAttribute('data-bean-key', beanKey);
-                    tile.onclick = () => onToggleBeanExpansion(beanKey);
-                    const { stockOverlay, dragIconClass } = getStockOverlay({ bean });
-                    const previewBrew = brews[0] || null;
-                    const typeDisplay = previewBrew
-                        ? getCoffeeTypeDisplay(previewBrew)
-                        : { roaster: bean?.roaster || 'Unknown', farmer: bean?.farmer || '-', decaf: false };
-                    const titleText = typeDisplay.farmer !== '-' ? typeDisplay.farmer : typeDisplay.roaster;
-                    const subtitleText = typeDisplay.roaster;
-                    const badge = `<span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-white border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>${brews.length} brews</span>`;
-                    const isDecaf = !!typeDisplay.decaf;
-                    const decafIcon = isDecaf
-                        ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e] ml-1" title="Decaf"></i>'
-                        : '';
-                    const placeholderBadge = '<span class="w-6 h-6"></span>';
-                    const plusBtn = '<div class="absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30"><i class="fa-solid fa-plus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i></div>';
-                    const dragIcon = isPinnedDraggable({ currentView, currentSort, activeFilters })
-                        ? `<div class="absolute top-1 right-1 ${dragIconClass || 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]'} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>`
-                        : '';
-                    const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
-                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start">${badge}<div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
-                    pinnedGrid.appendChild(tile);
-                } else {
-                    brews.forEach((brew, idx) => {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'relative h-full';
-                        wrapper.setAttribute('data-id', brew.id);
-                        const bg = document.createElement('div');
-                        bg.className = 'absolute inset-0 bg-coffee-100/30 dark:bg-[#1c1917]/40 rounded-lg -z-10';
-                        wrapper.appendChild(bg);
-                        renderBrewTile({ brew, container: wrapper, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard });
-                        if (idx === brews.length - 1) {
-                            const collapseBtn = document.createElement('div');
-                            collapseBtn.className = 'absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30';
-                            collapseBtn.onclick = (e) => {
-                                e.stopPropagation();
-                                onToggleBeanExpansion(beanKey);
-                            };
-                            collapseBtn.innerHTML = '<i class="fa-solid fa-minus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i>';
-                            wrapper.appendChild(collapseBtn);
-                        }
-                        pinnedGrid.appendChild(wrapper);
-                    });
+            const tile = document.createElement('div');
+            tile.className =
+                'w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative overflow-hidden group select-none cursor-pointer hover:shadow-md transition-all';
+            tile.style.height = '112px';
+            tile.style.minHeight = '112px';
+            tile.style.maxHeight = '112px';
+            tile.setAttribute('data-bean-key', beanKey);
+
+            const linkedBean = bean || resolveLinkedBean({ brew: previewBrew, beans });
+            const { stockOverlay, dragIconClass } = getStockOverlay({ bean: linkedBean });
+            const typeDisplay = getCoffeeTypeDisplay(previewBrew);
+            const roaster = typeDisplay.roaster || previewBrew.name || 'Unknown Roaster';
+            const farmer = typeDisplay.farmer || '-';
+            const titleText = farmer && farmer !== '-' ? farmer : roaster;
+            const subtitleText = roaster;
+            const imageUrl = typeDisplay.imageUrl || typeDisplay.imageURL || '';
+            const isDecaf = !!typeDisplay.decaf;
+            const decafIcon = isDecaf ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e] ml-1" title="Decaf"></i>' : '';
+            const dragIcon = isPinnedDraggable({ currentView, currentSort, activeFilters })
+                ? `<div class="absolute top-1 right-1 ${dragIconClass || 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]'} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>`
+                : '';
+            const imagePreview = imageUrl
+                ? `<div class="absolute w-12 h-16 rounded-lg overflow-hidden border border-coffee-200 dark:border-[#57534e] bg-coffee-100 dark:bg-[#1c1917]" style="position:absolute; right:0.5rem; bottom:0.5rem; z-index:20;"><img src="${imageUrl}" alt="${titleText}" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>`
+                : '';
+            const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
+            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium mb-2">${subtitleText}</p><div class="flex items-center">${decafIcon}</div></div>${imagePreview}`;
+
+            let pressTimer = null;
+            let longPressHandled = false;
+            const clearPressTimer = () => {
+                if (pressTimer) clearTimeout(pressTimer);
+                pressTimer = null;
+            };
+
+            tile.addEventListener('pointerdown', () => {
+                clearPressTimer();
+                longPressHandled = false;
+                pressTimer = setTimeout(() => {
+                    if (!bean?.id || typeof openPinnedBeanCardWithOrder !== 'function') return;
+                    longPressHandled = true;
+                    closeChooser();
+                    openPinnedBeanCardWithOrder(bean.id, beanOrder);
+                }, LONG_PRESS_MS);
+            });
+            tile.addEventListener('pointerup', clearPressTimer);
+            tile.addEventListener('pointerleave', clearPressTimer);
+            tile.addEventListener('pointercancel', clearPressTimer);
+            tile.addEventListener('contextmenu', (event) => event.preventDefault());
+            tile.addEventListener('click', () => {
+                clearPressTimer();
+                if (longPressHandled) {
+                    longPressHandled = false;
+                    return;
                 }
-            } else {
-                const brew = brews[0];
-                if (!isExpanded) {
-                    const tile = document.createElement('div');
-                    tile.className = 'w-full h-full bg-white dark:bg-[#292524] p-3 rounded-lg shadow-sm border border-coffee-200 dark:border-[#44403c] relative group select-none cursor-pointer hover:shadow-md transition-all';
-                    tile.setAttribute('data-bean-key', beanKey);
-                    tile.onclick = () => onToggleBeanExpansion(beanKey);
-                    const linkedBean = bean || resolveLinkedBean({ brew, beans });
-                    const { stockOverlay, dragIconClass } = getStockOverlay({ bean: linkedBean });
-                    const typeDisplay = getCoffeeTypeDisplay(brew);
-                    const roaster = typeDisplay.roaster || brew.name || 'Unknown Roaster';
-                    const farmer = typeDisplay.farmer || '-';
-                    const titleText = farmer && farmer !== '-' ? farmer : roaster;
-                    const subtitleText = roaster;
-                    const isDecaf = !!typeDisplay.decaf;
-                    const decafIcon = isDecaf ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e] ml-1" title="Decaf"></i>' : '';
-                    const placeholderBadge = '<span class="w-6 h-6"></span>';
-                    const plusBtn = '<div class="absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30"><i class="fa-solid fa-plus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i></div>';
-                    const dragIcon = isPinnedDraggable({ currentView, currentSort, activeFilters })
-                        ? `<div class="absolute top-1 right-1 ${dragIconClass || 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]'} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>`
-                        : '';
-                    const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
-                    tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium mb-2">${subtitleText}</p><div class="flex flex-col gap-1 items-start"><span class="min-w-[64px] inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded border bg-coffee-100 dark:bg-[#44403c] text-coffee-700 dark:text-white border-coffee-200 dark:border-[#57534e]"><i class="fa-solid fa-layer-group mr-1"></i>1 brew</span><div class="flex gap-1 items-center">${decafIcon || placeholderBadge}</div></div></div>${plusBtn}`;
-                    pinnedGrid.appendChild(tile);
-                } else {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'relative h-full';
-                    wrapper.setAttribute('data-id', brew.id);
-                    const bg = document.createElement('div');
-                    bg.className = 'absolute inset-0 bg-coffee-100/30 dark:bg-[#1c1917]/40 rounded-lg -z-10';
-                    wrapper.appendChild(bg);
-                    renderBrewTile({ brew, container: wrapper, beans, currentView, currentSort, activeFilters, pinnedBrewsPreferences, openPinnedBrewCard });
-                    const collapseBtn = document.createElement('div');
-                    collapseBtn.className = 'absolute -bottom-2 -right-2 w-5 h-5 bg-coffee-200 dark:bg-[#292524] border border-coffee-300/60 dark:border-[#57534e]/80 rounded-full flex items-center justify-center cursor-pointer hover:bg-coffee-300 dark:hover:bg-[#34302e] transition-all shadow-sm z-30';
-                    collapseBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        onToggleBeanExpansion(beanKey);
-                    };
-                    collapseBtn.innerHTML = '<i class="fa-solid fa-minus text-[10px] text-coffee-600 dark:text-[#a8a29e]"></i>';
-                    wrapper.appendChild(collapseBtn);
-                    pinnedGrid.appendChild(wrapper);
+                if (brews.length === 1) {
+                    closeChooser();
+                    openPinnedBrewCard(previewBrew.id);
+                    return;
                 }
-            }
+                openChooser({
+                    beanName: titleText,
+                    brews,
+                    includeDrinkInLabel: pinnedBrewsPreferences?.pinBestPerMethodDrink !== false,
+                    openPinnedBrewCard
+                });
+            });
+
+            pinnedGrid.appendChild(tile);
         });
 
         pinnedSection.classList.remove('hidden');

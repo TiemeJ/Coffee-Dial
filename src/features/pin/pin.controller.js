@@ -53,7 +53,6 @@ export const createPinControllerModule = ({
         }
     });
 
-    let expandedBeans = new Set();
     let sortableInstances = [];
 
     const getPinnedBrewOrderIds = () => selectPinnedBrewOrderIds(getCoffees());
@@ -182,20 +181,14 @@ export const createPinControllerModule = ({
             currentView: getCurrentView(),
             currentSort: getCurrentSort(),
             activeFilters: getActiveFilters(),
-            expandedBeans,
-            onToggleBeanExpansion: (beanKey) => {
-                toggleBeanExpansion(beanKey);
-            },
-            openPinnedBrewCard: (...args) => openPinnedBrewCard(...args)
+            openPinnedBrewCard: (...args) => openPinnedBrewCard(...args),
+            openPinnedBeanCardWithOrder: (beanId, order = [], event = null) => {
+                dispatchCommand('beans.openCardWithOrder', { beanId, order, event });
+                publishEvent('pin.beanCardOpened', { beanId, order });
+            }
         });
 
         if (result.hasTiles) initSortable();
-    };
-
-    const toggleBeanExpansion = (beanKey) => {
-        if (expandedBeans.has(beanKey)) expandedBeans.delete(beanKey);
-        else expandedBeans.add(beanKey);
-        renderPinnedTiles();
     };
 
     appCommands.registerCommand(
@@ -224,7 +217,6 @@ export const createPinControllerModule = ({
     );
 
     return {
-        renderPinnedTiles,
-        toggleBeanExpansion
+        renderPinnedTiles
     };
 };

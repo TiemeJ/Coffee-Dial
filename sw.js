@@ -1,7 +1,7 @@
 // SERVICE WORKER VERSION MARKER
 // IMPORTANT: bump this when editing this file, and keep it in sync with
 // `SW_VERSION` in `src/app/pwa.js`.
-const SW_VERSION = '2026-02-26.1';
+const SW_VERSION = '2026-02-26.2';
 self.__COFFEE_DIAL_SW_VERSION = SW_VERSION;
 
 const MOMENTS_FALLBACK_LINK = '/Coffee-Dial/?moments';
@@ -121,9 +121,6 @@ const putInStaticCache = async (request, response) => {
 const serveWithStaticCache = async (event) => {
     const request = event.request;
     const cache = await caches.open(STATIC_ASSET_CACHE);
-    const cached = await cache.match(request);
-    if (cached) return cached;
-
     try {
         const networkResponse = await fetch(request);
         await putInStaticCache(request, networkResponse);
