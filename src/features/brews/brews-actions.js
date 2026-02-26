@@ -829,20 +829,22 @@ export const createBrewsActionsModule = ({
         closeAllActionMenus();
         const c = getCoffees().find((x) => x.id === id);
         if (!c) return;
-        setTimeout(() => {
+        setTimeout(async () => {
+            await openBrewFormModal?.(null, {
+                reset: false,
+                syncTitleFromForm: false
+            });
             updateBeanDropdown({ includeAll: true });
             setBrewGearScope({ includeAll: true });
             document.getElementById('editId').value = c.id;
             populateForm(c);
             document.getElementById('formContainer').classList.add('editing-mode');
-            toggleForm(true);
             setCoffeeDetailsCollapsed(true);
             document.getElementById('formTitle').innerHTML = '<span class="text-orange-500">Edit brew</span>';
             document.getElementById('submitBtn').innerHTML = '<span>Update</span>';
             document.getElementById('submitBtn').className =
                 'bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2';
             setAiAddVisibility(false);
-            presentPreparedForm({ title: 'Edit brew', syncTitleFromForm: true });
         }, 0);
     };
 

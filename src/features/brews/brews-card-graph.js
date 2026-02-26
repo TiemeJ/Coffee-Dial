@@ -4,9 +4,7 @@ export const createBrewsCardGraphModule = ({
     getCurrentCoffeeCardId,
     getBrewTableOrder,
     getCoffeeTypeDisplay,
-    dispatchCommand,
-    getCoffeeScale,
-    ensureScalesFeature
+    dispatchCommand
 }) => {
     const updateCoffeeGraphNav = () => {
         const order = getBrewTableOrder();
@@ -26,14 +24,6 @@ export const createBrewsCardGraphModule = ({
         if (e) e.stopPropagation();
         const currentGraphData = getCurrentCardGraphData();
         if (!currentGraphData && !forceOpen) return;
-
-        if (typeof ensureScalesFeature === 'function') {
-            try {
-                await ensureScalesFeature();
-            } catch (error) {
-                console.error('Failed to initialize scales feature for card graph modal:', error);
-            }
-        }
 
         const modal = document.getElementById('cardGraphModal');
         if (!modal) return;
@@ -84,10 +74,20 @@ export const createBrewsCardGraphModule = ({
         if (maxFlowEl) maxFlowEl.value = c.maxFlow ?? '';
         if (avgFlowEl) avgFlowEl.value = c.avgFlow ?? '';
 
-        const coffeeScale = getCoffeeScale?.();
-        if (coffeeScale?.renderGraphTo && currentGraphData) {
+        let rendered = false;
+        if (currentGraphData) {
+            try {
+                rendered = !!(await dispatchCommand?.('scales.renderGraph', {
+                    canvasId: 'cardGraphCanvas',
+                    graphData: currentGraphData
+                }));
+            } catch (error) {
+                console.error('Card graph render command failed:', error);
+            }
+        }
+
+        if (rendered) {
             if (emptyEl) emptyEl.classList.add('hidden');
-            coffeeScale.renderGraphTo(canvas, currentGraphData);
         } else {
             if (emptyEl) emptyEl.classList.remove('hidden');
             const ctx = canvas?.getContext?.('2d');

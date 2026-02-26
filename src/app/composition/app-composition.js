@@ -10,6 +10,7 @@
         import { createCoffeesController } from '../../features/coffees/coffees.controller.js';
         import { createGasController } from '../../features/gas/gas.controller.js';
         import { createBeansController } from '../../features/beans/beans.controller.js';
+        import { createScalesController } from '../../features/scales/scales.controller.js';
         import { createSocialCoordinator } from '../coordinators/social.coordinator.js';
         import { createBrewsCardActionsModule } from '../../features/brews/brews-card-actions.js';
         import { createBrewsCardUiModule } from '../../features/brews/brews-card-ui.js';
@@ -1047,7 +1048,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                         getHtml2canvas,
                         openLightbox: (...args) => openLightbox?.(...args),
                         openAppConfirm,
-                        getCoffeeScale: () => coffeeScale,
+                        dispatchCommand: (commandName, payload) =>
+                            appCommands?.dispatch?.(commandName, payload, { source: 'gallery' }),
                         openBrewFromMoment: async (brewId, event = null, ownerUid = null) => {
                             const targetId = typeof brewId === 'string' ? brewId.trim() : '';
                             if (!targetId) return;
@@ -1103,7 +1105,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             resetLightboxZoom,
             initLightboxListeners
         } = createMediaModalsModule({
-            getCoffeeScale: () => coffeeScale
+            dispatchCommand: (commandName, payload) =>
+                appCommands?.dispatch?.(commandName, payload, { source: 'media.modals' })
         });
 
         // --- Statistics Logic ---
@@ -1312,9 +1315,13 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getBrewTableOrder: (...args) => getBrewTableOrder(...args),
             getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
             dispatchCommand: (commandName, payload) =>
-                appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-graph' }),
-            getCoffeeScale: () => coffeeScale,
-            ensureScalesFeature: (...args) => ensureScalesFeature(...args)
+                appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-graph' })
+        });
+
+        createScalesController({
+            appCommands,
+            ensureScalesFeature: (...args) => ensureScalesFeature(...args),
+            getCoffeeScale: () => coffeeScale
         });
 
         const {

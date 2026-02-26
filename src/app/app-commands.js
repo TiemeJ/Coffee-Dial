@@ -1,5 +1,5 @@
 const TRACE_LIMIT = 300;
-const TRACKED_FEATURE_NAMESPACES = ['beans', 'brews', 'coffees', 'gas', 'pin'];
+const TRACKED_FEATURE_NAMESPACES = ['beans', 'brews', 'coffees', 'gas', 'pin', 'scales'];
 
 const parseSchemaType = (rawType = '') => {
     const token = String(rawType || '').trim();

@@ -219,7 +219,7 @@ export const createGalleryModule = ({
     openLightbox,
     openAppConfirm,
     openBrewFromMoment,
-    getCoffeeScale
+    dispatchCommand
 }) => {
     const { db, addDoc, collection, query, where, orderBy, limit, startAfter, getDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot } = dataService || {};
     const { storage, ref, uploadBytes, deleteObject } = storageService || {};
@@ -685,12 +685,20 @@ export const createGalleryModule = ({
         return weightSamples.length > 0 || flowSamples.length > 0;
     };
 
-    const renderMomentGraphCanvas = (targetCanvas, graphSnapshot) => {
+    const renderMomentGraphCanvas = async (targetCanvas, graphSnapshot) => {
         if (!targetCanvas || !hasRenderableMomentGraph(graphSnapshot)) return false;
-        const coffeeScale = typeof getCoffeeScale === 'function' ? getCoffeeScale() : null;
-        if (!coffeeScale?.renderGraphTo) return false;
-        coffeeScale.renderGraphTo(targetCanvas, graphSnapshot);
-        return true;
+        if (!targetCanvas.id) {
+            targetCanvas.id = `momentGraph-${Math.random().toString(36).slice(2, 10)}`;
+        }
+        try {
+            return !!(await dispatchCommand?.('scales.renderGraph', {
+                canvasId: targetCanvas.id,
+                graphData: graphSnapshot
+            }));
+        } catch (error) {
+            console.error('Moment graph render command failed:', error);
+            return false;
+        }
     };
 
     let momentDetailsTooltipEl = null;
@@ -1319,7 +1327,7 @@ export const createGalleryModule = ({
         try {
             const shareGraphCanvas = templateCard.querySelector('canvas[data-moment-share-graph="true"]');
             if (shareGraphCanvas) {
-                renderMomentGraphCanvas(shareGraphCanvas, data?.graphSnapshot || null);
+                await renderMomentGraphCanvas(shareGraphCanvas, data?.graphSnapshot || null);
             }
             await waitForCardImages(templateCard);
             await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -1874,7 +1882,7 @@ export const createGalleryModule = ({
                 dateBadge.textContent = new Date(data.createdAt).toLocaleDateString();
                 graphWrap.appendChild(dateBadge);
                 card.appendChild(graphWrap);
-                renderMomentGraphCanvas(graphCanvas, graphSnapshot);
+                void renderMomentGraphCanvas(graphCanvas, graphSnapshot);
             } else if (momentType === 'details') {
                 const details = data?.brewDetailsSnapshot || {};
                 const inText = details.weight ? `${details.weight}g` : '-';

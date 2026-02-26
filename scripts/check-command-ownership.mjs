@@ -5,7 +5,7 @@ import process from 'node:process';
 
 const ROOT = process.cwd();
 const TARGET_DIRS = [path.join(ROOT, 'src', 'app'), path.join(ROOT, 'src', 'features')];
-const COMMAND_NAMESPACES = ['beans.', 'brews.', 'coffees.', 'gas.', 'pin.'];
+const COMMAND_NAMESPACES = ['beans.', 'brews.', 'coffees.', 'gas.', 'pin.', 'scales.'];
 
 const REGISTER_COMMAND_RE = /registerCommand\s*\(\s*['"]([^'"]+)['"]/g;
 const REGISTER_COMPAT_USAGE_RE = /\bregisterCompatCommand\b/g;

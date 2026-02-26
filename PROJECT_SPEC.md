@@ -160,7 +160,7 @@ The repository is structured as:
 **Architecture guardrails**
 
 - Cross-feature interactions must go through typed app commands/events, not direct feature-to-feature callbacks.
-- Command ownership is feature-local: `beans.*`, `brews.*`, `coffees.*`, `gas.*`, and `pin.*` commands are registered by their own feature controllers.
+- Command ownership is feature-local: `beans.*`, `brews.*`, `coffees.*`, `gas.*`, `pin.*`, and `scales.*` commands are registered by their own feature controllers.
 - `src/features/*` may depend on `src/core/*`, shared app services, and feature-local modules; importing other feature internals is not allowed.
 - `src/app/composition/app-composition.js` is the composition/wiring root only; local runtime behaviors should live in dedicated `src/app/runtime/*` modules.
 - Transitional shim helpers (`registerCompatCommand`, `dispatchCompatCommand`, `dispatchWithFallback`) are not allowed in app/feature code.

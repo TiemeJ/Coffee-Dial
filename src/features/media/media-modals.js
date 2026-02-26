@@ -1,4 +1,4 @@
-export const createMediaModalsModule = ({ getCoffeeScale }) => {
+export const createMediaModalsModule = ({ dispatchCommand }) => {
     let lightboxListenersInitialized = false;
     let lightboxItems = [];
     let lightboxIndex = 0;
@@ -25,10 +25,11 @@ export const createMediaModalsModule = ({ getCoffeeScale }) => {
         const modal = document.getElementById('graphModal');
         if (!modal) return;
         modal.classList.remove('hidden');
-        requestAnimationFrame(() => {
-            const coffeeScale = getCoffeeScale?.();
-            if (coffeeScale?.renderGraphTo) {
-                coffeeScale.renderGraphTo(document.getElementById('graph'));
+        requestAnimationFrame(async () => {
+            try {
+                await dispatchCommand?.('scales.renderGraph', { canvasId: 'graph' });
+            } catch (error) {
+                console.error('Graph modal render command failed:', error);
             }
         });
     };
