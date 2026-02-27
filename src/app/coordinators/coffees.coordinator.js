@@ -6,6 +6,8 @@ import { withDetectedDecaf } from '../../core/coffee-decaf.js';
 export const createCoffeesCoordinator = ({
     dataService,
     storageService,
+    imageCompression,
+    removeCoffeeImageBackground,
     getCurrentUser,
     getCurrentView,
     getCurrentCoffeeTypeId,
@@ -225,6 +227,8 @@ export const createCoffeesCoordinator = ({
     const coffeeTypeCard = createCoffeeTypeCardModule({
         dataService,
         storageService,
+        imageCompression,
+        removeCoffeeImageBackground,
         getCurrentUser,
         getCurrentView,
         getCurrentCoffeeTypeId,

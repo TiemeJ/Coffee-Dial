@@ -49,6 +49,7 @@
         import { createUiStore } from '../stores/ui.store.js';
         import { createRuntimeStore } from '../stores/runtime.store.js';
         import { normalizeNotificationPreferences } from '../../features/notification-preferences/notification-preferences.js';
+        import { normalizeIntegrationPreferences } from '../../core/integration-preferences.js';
         import { selectVisibleBrewOrderIds } from '../stores/brews-table.selectors.js';
         import { createAuthStateChangedHandler } from '../runtime/auth-state.js';
         import { createAppLifecycleModule } from '../runtime/app-lifecycle.js';
@@ -95,6 +96,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             beansSearch: initialState.beansSearch,
             beansFilters: initialState.beansFilters,
             notificationPrefs: initialState.notificationPrefs,
+            integrationPrefs: initialState.integrationPrefs,
             beansSortKey: initialState.beansSortKey,
             beansSortDir: initialState.beansSortDir,
             currentBeanCardId: initialState.currentBeanCardId,
@@ -186,6 +188,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             normalizeNotificationPreferences(getRuntime('notificationPrefs'));
         const setNotificationPreferencesState = (value) =>
             setRuntime('notificationPrefs', normalizeNotificationPreferences(value));
+        const getIntegrationPreferencesState = () =>
+            normalizeIntegrationPreferences(getRuntime('integrationPrefs'));
+        const setIntegrationPreferencesState = (value) =>
+            setRuntime('integrationPrefs', normalizeIntegrationPreferences(value));
         const getBeansSortKeyState = () => getRuntime('beansSortKey');
         const setBeansSortKeyRuntimeState = (value) => setRuntime('beansSortKey', value);
         const getBeansSortDirState = () => getRuntime('beansSortDir');
@@ -475,6 +481,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                         setPinnedBrewsPreferences: (value) => setPinnedBrewsPreferencesState(value),
                         getNotificationPreferences: () => getNotificationPreferencesState(),
                         setNotificationPreferences: (value) => setNotificationPreferencesState(value),
+                        getIntegrationPreferences: () => getIntegrationPreferencesState(),
+                        setIntegrationPreferences: (value) => setIntegrationPreferencesState(value),
                         getCurrentUser: () => getCurrentUserState(),
                         dataService,
                         applyAnimationClass: (...args) => applyAnimationClass(...args),
@@ -567,7 +575,22 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         };
 
         // --- Functions ---
-        
+
+        let bgRemovalModulePromise = null;
+        const ensureBgRemovalModule = async () => {
+            if (!bgRemovalModulePromise) {
+                bgRemovalModulePromise = (async () => {
+                    const { createBgRemovalModule } = await import('../../features/ai-import/bg-removal.js');
+                    return createBgRemovalModule({
+                        getIntegrationPreferences: () => getIntegrationPreferencesState()
+                    });
+                })();
+            }
+            return bgRemovalModulePromise;
+        };
+        const removeCoffeeImageBackground = (...args) =>
+            ensureBgRemovalModule().then((module) => module.removeCoffeeImageBackground(...args));
+
         let aiImportModulePromise = null;
         const ensureAiImportModule = async () => {
             if (!aiImportModulePromise) {
@@ -584,6 +607,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                             appCommands?.dispatch?.(commandName, payload, { source: 'ai-import' }),
                         getCoffeeTypes: () => getCoffeeTypesState(),
                         setCoffeeTypes: (value) => setCoffeeTypesState(value),
+                        removeCoffeeImageBackground: (...args) => removeCoffeeImageBackground(...args),
                         openCoffeeTypeCard: (...args) => openCoffeeTypeCard(...args),
                         enterCoffeeTypeEditMode: (...args) => enterCoffeeTypeEditMode(...args)
                     });
@@ -673,7 +697,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getLastGalleryVisit: () => getLastGalleryVisitState(),
             setLastGalleryVisit: (value) => setLastGalleryVisitState(value),
             getNotificationPreferences: () => getNotificationPreferencesState(),
-            setNotificationPreferences: (value) => setNotificationPreferencesState(value)
+            setNotificationPreferences: (value) => setNotificationPreferencesState(value),
+            getIntegrationPreferences: () => getIntegrationPreferencesState(),
+            setIntegrationPreferences: (value) => setIntegrationPreferencesState(value)
         });
 
         const {
@@ -866,6 +892,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         } = createCoffeesController({
             dataService,
             storageService,
+            imageCompression,
+            removeCoffeeImageBackground: (...args) => removeCoffeeImageBackground(...args),
             appCommands,
             appEvents,
             getCurrentUser: () => getCurrentUserState(),
@@ -2308,6 +2336,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                     ...getPinnedBrewsPreferencesState(),
                     ...seed.pinnedBrewsPreferences
                 });
+            }
+            if (seed.integrationPrefs && typeof seed.integrationPrefs === 'object') {
+                setIntegrationPreferencesState(seed.integrationPrefs);
             }
 
             updateCoffeeTypeSelectors?.();

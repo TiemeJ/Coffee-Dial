@@ -1,3 +1,8 @@
+import {
+    DEFAULT_INTEGRATION_PREFERENCES,
+    normalizeIntegrationPreferences
+} from '../../core/integration-preferences.js';
+
 const DEFAULT_NOTIFICATION_PREFERENCES = {
     pushEnabled: false,
     friendMoments: true,
@@ -62,7 +67,9 @@ export const createSessionAuthViewModule = ({
     getLastGalleryVisit,
     setLastGalleryVisit,
     getNotificationPreferences,
-    setNotificationPreferences
+    setNotificationPreferences,
+    getIntegrationPreferences,
+    setIntegrationPreferences
 }) => {
     const { auth, provider, signInWithPopup, signOut } = authService || {};
     const { db, doc, setDoc, updateDoc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot } = dataService || {};
@@ -303,6 +310,18 @@ export const createSessionAuthViewModule = ({
                     console.error('Error saving notification preferences', err);
                 }
             }
+
+            const normalizedIntegrationPrefs = normalizeIntegrationPreferences(
+                data.integrationPrefs || getIntegrationPreferences?.()
+            );
+            setIntegrationPreferences?.(normalizedIntegrationPrefs);
+            if (!data.integrationPrefs || typeof data.integrationPrefs !== 'object') {
+                try {
+                    await updateDoc(userDocRef, { integrationPrefs: normalizedIntegrationPrefs });
+                } catch (err) {
+                    console.error('Error saving integration preferences', err);
+                }
+            }
         } else {
             loadColumnPreferencesFromStorage();
             await setDoc(userDocRef, {
@@ -310,6 +329,7 @@ export const createSessionAuthViewModule = ({
                 displayName: user.displayName,
                 pinnedBrews: getPinnedBrewsPreferences(),
                 notificationPrefs: DEFAULT_NOTIFICATION_PREFERENCES,
+                integrationPrefs: DEFAULT_INTEGRATION_PREFERENCES,
                 graphTogglePrefs: {},
                 onboardingSeen: false,
                 lastGalleryVisit: null
@@ -327,6 +347,7 @@ export const createSessionAuthViewModule = ({
                 coffeeScale.setGraphTogglePrefs({});
             }
             setNotificationPreferences?.(DEFAULT_NOTIFICATION_PREFERENCES);
+            setIntegrationPreferences?.(DEFAULT_INTEGRATION_PREFERENCES);
         }
 
         const coffeeScale = getCoffeeScale?.();

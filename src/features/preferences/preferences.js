@@ -1,3 +1,5 @@
+import { normalizeIntegrationPreferences } from '../../core/integration-preferences.js';
+
 const normalizeNotificationPreferences = (value = null) => {
     const source = (value && typeof value === 'object') ? value : {};
     return {
@@ -31,6 +33,8 @@ export const createBrewsPreferencesModule = ({
     setPinnedBrewsPreferences,
     getNotificationPreferences,
     setNotificationPreferences,
+    getIntegrationPreferences,
+    setIntegrationPreferences,
     getCurrentUser,
     dataService,
     applyAnimationClass,
@@ -56,8 +60,10 @@ export const createBrewsPreferencesModule = ({
         'notificationsPushEnabledToggle',
         'notificationsFriendMomentsToggle',
         'notificationsCommentsMyToggle',
-        'notificationsCommentsFollowingToggle'
+        'notificationsCommentsFollowingToggle',
+        'integrationsRemoveBgEnabledToggle'
     ];
+    const PREF_INPUT_IDS = ['integrationsRemoveBgApiKey'];
     let isHydratingPreferences = false;
     let hasBoundAutoSave = false;
     let hasBoundNotificationsDebug = false;
@@ -98,6 +104,13 @@ export const createBrewsPreferencesModule = ({
             commentsOnMyMoments: !!document.getElementById('notificationsCommentsMyToggle')?.checked,
             commentsOnFollowedOrCommentedMoments: !!document.getElementById('notificationsCommentsFollowingToggle')?.checked
         });
+        const integrationPrefs = normalizeIntegrationPreferences({
+            ...getIntegrationPreferences?.(),
+            removeBg: {
+                enabled: !!document.getElementById('integrationsRemoveBgEnabledToggle')?.checked,
+                apiKey: document.getElementById('integrationsRemoveBgApiKey')?.value || ''
+            }
+        });
         return {
             pinned: {
                 ...getPinnedBrewsPreferences(),
@@ -110,7 +123,8 @@ export const createBrewsPreferencesModule = ({
                 pinBestPerMethodDrink: !!document.getElementById('pinBestPerMethodDrinkToggle')?.checked,
                 keepCuppingNotesWhenRepeatingBrew: !!document.getElementById('keepCuppingNotesWhenRepeatingBrewToggle')?.checked
             },
-            notificationPrefs
+            notificationPrefs,
+            integrationPrefs
         };
     };
 
@@ -711,6 +725,7 @@ export const createBrewsPreferencesModule = ({
         let nextPinnedPrefs = { ...(nextState?.pinned || {}) };
         const prevNotificationPrefs = normalizeNotificationPreferences(getNotificationPreferences?.());
         const nextNotificationPrefs = normalizeNotificationPreferences(nextState?.notificationPrefs || getNotificationPreferences?.());
+        const nextIntegrationPrefs = normalizeIntegrationPreferences(nextState?.integrationPrefs || getIntegrationPreferences?.());
         const currentPrefs = getPinnedBrewsPreferences();
         const pinBestPerMethodDrinkEnabled = nextPinnedPrefs.pinBestPerMethodDrink !== false;
         const pinBestPerMethodDrinkWasEnabled = currentPrefs.pinBestPerMethodDrink !== false;
@@ -725,6 +740,7 @@ export const createBrewsPreferencesModule = ({
         };
         setPinnedBrewsPreferences(nextPinnedPrefs);
         setNotificationPreferences?.(nextNotificationPrefs);
+        setIntegrationPreferences?.(nextIntegrationPrefs);
         applyAnimationPreference();
 
         if (pinBestPerMethodDrinkEnabled !== pinBestPerMethodDrinkWasEnabled) {
@@ -737,7 +753,8 @@ export const createBrewsPreferencesModule = ({
             try {
                 await updateDoc(doc(db, 'users', user.uid), {
                     pinnedBrews: nextPinnedPrefs,
-                    notificationPrefs: nextNotificationPrefs
+                    notificationPrefs: nextNotificationPrefs,
+                    integrationPrefs: nextIntegrationPrefs
                 });
             } catch (e) {
                 console.error('Error saving pinned prefs', e);
@@ -793,6 +810,14 @@ export const createBrewsPreferencesModule = ({
                 scheduleAutoSavePreferences();
             });
         });
+        PREF_INPUT_IDS.forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', () => {
+                if (isHydratingPreferences) return;
+                scheduleAutoSavePreferences();
+            });
+        });
     };
 
     const openPreferences = () => {
@@ -810,6 +835,9 @@ export const createBrewsPreferencesModule = ({
         document.getElementById('notificationsFriendMomentsToggle').checked = !!notificationPrefs.friendMoments;
         document.getElementById('notificationsCommentsMyToggle').checked = !!notificationPrefs.commentsOnMyMoments;
         document.getElementById('notificationsCommentsFollowingToggle').checked = !!notificationPrefs.commentsOnFollowedOrCommentedMoments;
+        const integrationPrefs = normalizeIntegrationPreferences(getIntegrationPreferences?.());
+        document.getElementById('integrationsRemoveBgEnabledToggle').checked = !!integrationPrefs.removeBg.enabled;
+        document.getElementById('integrationsRemoveBgApiKey').value = integrationPrefs.removeBg.apiKey || '';
         updateAnimationsToggleState(!!pinnedPrefs.showTilesInsteadOfCoffeeArt);
         updateNotificationToggleState(!!notificationPrefs.pushEnabled);
         updatePushPermissionGuard(!!notificationPrefs.pushEnabled, { currentDeviceRegistered: false });

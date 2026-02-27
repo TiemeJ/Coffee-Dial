@@ -11,6 +11,8 @@ export const createCoffeeTypeCardModule = ({
     setBeansState,
     dataService,
     storageService,
+    imageCompression,
+    removeCoffeeImageBackground,
     openAppConfirm,
     getStarDisplay,
     renderCoffeeTypesTable,
@@ -29,6 +31,9 @@ export const createCoffeeTypeCardModule = ({
     }
     if (!storage || !ref || !uploadBytes || !getDownloadURL || !deleteObject) {
         throw new Error('createCoffeeTypeCardModule requires storageService { storage, ref, uploadBytes, getDownloadURL, deleteObject }');
+    }
+    if (typeof imageCompression !== 'function') {
+        throw new Error('createCoffeeTypeCardModule requires imageCompression(file, options)');
     }
     const coffeesVm = createCoffeesVmModule();
     const getCurrentType = () => getCoffeeTypes().find((ct) => ct.id === getCurrentCoffeeTypeId());
@@ -172,9 +177,12 @@ export const createCoffeeTypeCardModule = ({
             if (targetEl) targetEl.classList.add('ai-loading-pulse');
             const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: true };
             const compressedFile = await imageCompression(file, options);
+            const uploadFile = typeof removeCoffeeImageBackground === 'function'
+                ? await removeCoffeeImageBackground(compressedFile, { source: 'coffees.handleCoffeeTypePhoto' })
+                : compressedFile;
             const timestamp = Date.now();
             const storageRef = ref(storage, `photos/${user.uid}/coffee_type_${typeId}_${timestamp}`);
-            const snapshot = await uploadBytes(storageRef, compressedFile);
+            const snapshot = await uploadBytes(storageRef, uploadFile);
             const downloadURL = await getDownloadURL(snapshot.ref);
             await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', typeId), {
                 imageUrl: downloadURL,
@@ -186,7 +194,7 @@ export const createCoffeeTypeCardModule = ({
             openCoffeeTypeCard(typeId);
         } catch (err) {
             console.error('Coffee photo upload failed:', err);
-            alert('Failed to upload image.');
+            alert(`Failed to upload image: ${err?.message || err}`);
         } finally {
             if (targetEl && originalClasses) targetEl.className = originalClasses;
             event.target.value = '';

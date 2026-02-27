@@ -10,6 +10,7 @@ export const createAiImportModule = ({
     dispatchCommand,
     getCoffeeTypes,
     setCoffeeTypes,
+    removeCoffeeImageBackground,
     openCoffeeTypeCard,
     enterCoffeeTypeEditMode
 }) => {
@@ -22,6 +23,10 @@ export const createAiImportModule = ({
         throw new Error('createAiImportModule requires storageService { storage, ref, uploadBytes, getDownloadURL }');
     }
     let pendingAIBeanImageFile = null;
+    const maybeRemoveCoffeeImageBackground = async (file, context = 'unknown') => {
+        if (typeof removeCoffeeImageBackground !== 'function') return file;
+        return removeCoffeeImageBackground(file, { source: context });
+    };
 
     const callBagAi = async (file) => {
         const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true };
@@ -126,8 +131,12 @@ export const createAiImportModule = ({
         const user = getCurrentUser();
         if (!pendingAIBeanImageFile || !coffeeTypeId || !user) return null;
 
+        const processedFile = await maybeRemoveCoffeeImageBackground(
+            pendingAIBeanImageFile,
+            'ai-import.uploadPendingCoffeeTypeImage'
+        );
         const storageRef = ref(storage, `photos/${user.uid}/coffee_type_${coffeeTypeId}_${Date.now()}`);
-        const snapshot = await uploadBytes(storageRef, pendingAIBeanImageFile);
+        const snapshot = await uploadBytes(storageRef, processedFile);
         const imageURL = await getDownloadURL(snapshot.ref);
         await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', coffeeTypeId), {
             imageUrl: imageURL,
@@ -162,11 +171,15 @@ export const createAiImportModule = ({
             btn.classList.add('ai-loading-pulse');
 
             const { compressedFile, data } = await callBagAi(file);
+            const uploadFile = await maybeRemoveCoffeeImageBackground(
+                compressedFile,
+                'ai-import.handleBeansAIFile'
+            );
             const nowIso = new Date().toISOString();
             const beanRef = doc(collection(db, 'users', user.uid, 'beans'));
             const typeRef = doc(collection(db, 'users', user.uid, 'coffeeTypes'));
             const storageRef = ref(storage, `photos/${user.uid}/coffee_type_${typeRef.id}_${Date.now()}`);
-            const snapshot = await uploadBytes(storageRef, compressedFile);
+            const snapshot = await uploadBytes(storageRef, uploadFile);
             const imageURL = await getDownloadURL(snapshot.ref);
 
             const typeData = withDetectedDecaf({
@@ -234,10 +247,14 @@ export const createAiImportModule = ({
             btn.classList.add('ai-loading-pulse');
 
             const { compressedFile, data } = await callBagAi(file);
+            const uploadFile = await maybeRemoveCoffeeImageBackground(
+                compressedFile,
+                'ai-import.handleCoffeeTypesAIFile'
+            );
             const nowIso = new Date().toISOString();
             const typeRef = doc(collection(db, 'users', user.uid, 'coffeeTypes'));
             const storageRef = ref(storage, `photos/${user.uid}/coffee_type_${typeRef.id}_${Date.now()}`);
-            const snapshot = await uploadBytes(storageRef, compressedFile);
+            const snapshot = await uploadBytes(storageRef, uploadFile);
             const imageURL = await getDownloadURL(snapshot.ref);
 
             const typeData = withDetectedDecaf({
