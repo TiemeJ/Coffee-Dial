@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 400,
+    "message": "Image editing failed with the following error: Product image editing is not supported on Imagen 3 Capability Preview.",
+    "status": "INVALID_ARGUMENT"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "contents": [
+    {
+      "parts": [
+        {
+          "text": "__TEXT_PROMPT__"
+        },
+        {
+          "inline_data": {
+            "mime_type": "__MIME_TYPE__",
+            "data": "__B64_BASE_IMAGE__"
+          }
+        }
+      ]
+    }
+  ],
+  "generationConfig": {
+    "responseModalities": [
+      "IMAGE"
+    ]
+  }
+}

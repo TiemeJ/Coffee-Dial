@@ -1,4 +1,4 @@
-import { withDetectedDecaf } from '../core/coffee-decaf.js';
+import { withDetectedDecaf } from '../../core/coffee-decaf.js';
 
 export const createAiImportModule = ({
     BAG_AI_URL,

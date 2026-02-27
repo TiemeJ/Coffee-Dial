@@ -1,0 +1,31 @@
+{
+  "instances": [
+    {
+      "prompt": "Keep the coffee bag exactly as-is in the foreground. Remove the background completely and make it fully transparent (alpha channel), like a transparent PNG cutout. No replacement background, no texture, no gradient, no scene, no floor, no props, no shadows.",
+      "referenceImages": [
+        {
+          "referenceType": "REFERENCE_TYPE_RAW",
+          "referenceId": 1,
+          "referenceImage": {
+            "bytesBase64Encoded": "__B64_BASE_IMAGE__"
+          }
+        },
+        {
+          "referenceType": "REFERENCE_TYPE_MASK",
+          "referenceId": 2,
+          "maskImageConfig": {
+            "maskMode": "MASK_MODE_BACKGROUND",
+            "dilation": 0.0
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": {
+    "editConfig": {
+      "baseSteps": 75
+    },
+    "editMode": "EDIT_MODE_PRODUCT_IMAGE",
+    "sampleCount": 1
+  }
+}

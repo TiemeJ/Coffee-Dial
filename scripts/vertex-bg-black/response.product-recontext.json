@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 404,
+    "message": "Image editing failed with the following error: imagen-product-recontext-preview-06-30 is unavailable.",
+    "status": "NOT_FOUND"
+  }
+}

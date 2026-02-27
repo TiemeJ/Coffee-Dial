@@ -1,0 +1,21 @@
+{
+  "instances": [
+    {
+      "prompt": "__TEXT_PROMPT__",
+      "productImages": [
+        {
+          "image": {
+            "bytesBase64Encoded": "__B64_BASE_IMAGE__"
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": {
+    "addWatermark": false,
+    "enhancePrompt": false,
+    "sampleCount": 1,
+    "personGeneration": "dont_allow",
+    "safetySetting": "block_medium_and_above"
+  }
+}

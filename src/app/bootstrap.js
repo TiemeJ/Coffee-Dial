@@ -1,6 +1,6 @@
 import { mountShellHeader } from '../features/shell/shell.controller.js';
 import { mountSignedOutAuth } from '../features/auth/auth.controller.js';
-import { mountUiShellView } from '../features/ui-shell.mount.js';
+import { mountUiShellView } from '../features/ui-shell/ui-shell.mount.js';
 
 const shouldAutoLoadFullAppByUrl = () => {
     if (typeof window === 'undefined') return false;

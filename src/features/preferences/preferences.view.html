@@ -79,6 +79,28 @@
                                 Register this device for push
                             </button>
                         </div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Coffee scale</h4>
+                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Troubleshoot your bluetooth coffee scale</p>
+                    <button data-action-click="openCoffeeScaleModal(); hidePreferencesModal()" class="w-full text-xs bg-coffee-100 hover:bg-coffee-200 dark:bg-[#34302e] dark:hover:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] px-3 py-2 rounded font-bold transition-colors border border-coffee-200 dark:border-[#57534e]">
+                        <i class="fa-solid fa-scale-balanced mr-1"></i> Troubleshoot scale
+                    </button>
+                </div>
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Email login</h4>
+                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Enable passwordless sign-in for browsers that cannot use Google.</p>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Email</label>
+                        <input id="emailLinkActivationEmail" type="email" placeholder="you@example.com" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors" />
+                        <button id="emailLinkActivationBtn" data-action-click="sendEmailLinkActivation()" class="w-full bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Send login link</button>
+                        <div id="emailLinkActivationStatus" class="hidden text-xs text-coffee-600 dark:text-[#a8a29e]"></div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Advanced</h4>
+                    <div class="space-y-3">
                         <details class="p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c]">
                             <summary class="flex items-center gap-2 cursor-pointer text-sm font-medium text-coffee-800 dark:text-[#d6ccc2]">
                                 <i class="fa-solid fa-bug text-rose-500"></i><span>Push debug</span>
@@ -114,29 +136,10 @@
                                 <div id="notificationsSwDiagList" class="space-y-1.5 text-[10px] font-mono text-coffee-700 dark:text-[#d6ccc2] break-all">No diagnostics yet.</div>
                             </div>
                         </details>
+                        <button id="preferencesReloadAppBtn" type="button" class="w-full text-xs bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/30 dark:hover:bg-sky-900/40 text-sky-800 dark:text-sky-300 px-3 py-2 rounded font-bold transition-colors border border-sky-200 dark:border-sky-900/40">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> Reload app
+                        </button>
                     </div>
-                </div>
-                <div class="mt-6">
-                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Email login</h4>
-                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Enable passwordless sign-in for browsers that cannot use Google.</p>
-                    <div class="space-y-2">
-                        <label class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide">Email</label>
-                        <input id="emailLinkActivationEmail" type="email" placeholder="you@example.com" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors" />
-                        <button id="emailLinkActivationBtn" data-action-click="sendEmailLinkActivation()" class="w-full bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Send login link</button>
-                        <div id="emailLinkActivationStatus" class="hidden text-xs text-coffee-600 dark:text-[#a8a29e]"></div>
-                    </div>
-                </div>
-                <div class="mt-6">
-                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Coffee scale</h4>
-                    <p class="text-xs text-coffee-500 dark:text-[#78716c] mb-3">Troubleshoot your bluetooth coffee scale</p>
-                    <button data-action-click="openCoffeeScaleModal(); hidePreferencesModal()" class="w-full text-xs bg-coffee-100 hover:bg-coffee-200 dark:bg-[#34302e] dark:hover:bg-[#44403c] text-coffee-800 dark:text-[#d6ccc2] px-3 py-2 rounded font-bold transition-colors border border-coffee-200 dark:border-[#57534e]">
-                        <i class="fa-solid fa-scale-balanced mr-1"></i> Troubleshoot scale
-                    </button>
-                </div>
-                <div class="mt-4">
-                    <button id="preferencesReloadAppBtn" type="button" class="w-full text-xs bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/30 dark:hover:bg-sky-900/40 text-sky-800 dark:text-sky-300 px-3 py-2 rounded font-bold transition-colors border border-sky-200 dark:border-sky-900/40">
-                        <i class="fa-solid fa-rotate-right mr-1"></i> Reload app
-                    </button>
                 </div>
                 <div class="mt-6 pt-3 border-t border-coffee-200 dark:border-[#44403c] text-[11px] text-coffee-500 dark:text-[#a8a29e]">
                     <div id="preferencesBuildInfo" class="font-mono">Build: -</div>

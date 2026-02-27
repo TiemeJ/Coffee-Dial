@@ -1,5 +1,5 @@
-import { DEFAULT_PINNED_BREWS_PREFERENCES } from '../features/preferences.js';
-import { DEFAULT_NOTIFICATION_PREFERENCES } from '../features/notification-preferences.js';
+import { DEFAULT_PINNED_BREWS_PREFERENCES } from '../features/preferences/preferences.js';
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../features/notification-preferences/notification-preferences.js';
 
 export const DEFAULT_BREWS_PER_PAGE = 50;
 

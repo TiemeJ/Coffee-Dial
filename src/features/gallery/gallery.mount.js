@@ -11,5 +11,5 @@ const mountView = async (mountId, viewPath) => {
 };
 
 export const mountGalleryView = async () => {
-    await mountView('galleryModalMount', './src/features/gallery.view.html');
+    await mountView('galleryModalMount', './src/features/gallery/gallery.view.html');
 };

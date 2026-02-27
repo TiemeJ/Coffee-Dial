@@ -11,5 +11,5 @@ const mountView = async (mountId, viewPath) => {
 };
 
 export const mountUiShellView = async () => {
-    await mountView('uiShellModalMount', './src/features/ui-shell.view.html');
+    await mountView('uiShellModalMount', './src/features/ui-shell/ui-shell.view.html');
 };

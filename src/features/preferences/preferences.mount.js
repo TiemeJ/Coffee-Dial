@@ -11,5 +11,5 @@ const mountView = async (mountId, viewPath) => {
 };
 
 export const mountPreferencesView = async () => {
-    await mountView('preferencesModalMount', './src/features/preferences.view.html');
+    await mountView('preferencesModalMount', './src/features/preferences/preferences.view.html');
 };

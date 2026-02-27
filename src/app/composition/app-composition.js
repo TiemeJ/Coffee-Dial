@@ -24,19 +24,19 @@
         import { createBrewsRepo } from '../../features/brews/brews.repo.js';
         import { registerBrewsFilterCommands } from '../../features/brews/brews-filter-commands.js';
         import { createBrewsPinAutopinModule } from '../../features/pin/brews-pin-autopin.js';
-        import { createPushNotificationsModule } from '../../features/push-notifications.js';
+        import { createPushNotificationsModule } from '../../features/push-notifications/push-notifications.js';
         import { createDataService } from '../services/data.service.js';
         import { createStorageService } from '../services/storage.service.js';
         import { createFunctionsService } from '../services/functions.service.js';
         import { createAuthService } from '../services/auth.service.js';
-        import { createSessionAuthViewModule } from '../../features/session-auth-view.js';
+        import { createSessionAuthViewModule } from '../../features/session-auth-view/session-auth-view.js';
         import { createStatsAiProfileModule } from '../../features/stats/stats-ai-profile.js';
         import { createBrewFormLookupModule } from '../../features/brews/brew-form-lookup.js';
         import { createBrewFormUiModule } from '../../features/brews/brew-form-ui.js';
         import { createBrewFormActionsModule } from '../../features/brews/brew-form-actions.js';
         import { createBrewCsvRecipeModule } from '../../features/brews/brew-csv-recipe.js';
         import { createActionMenuModule } from '../../features/ui/action-menu.js';
-        import { createUiShellModule } from '../../features/ui-shell.js';
+        import { createUiShellModule } from '../../features/ui-shell/ui-shell.js';
         import { createMediaModalsModule } from '../../features/media/media-modals.js';
         import { createPinCoordinator } from '../coordinators/pin.coordinator.js';
         import { createActionAssemblies } from './action-assemblies.js';
@@ -48,7 +48,7 @@
         import { createGasStore } from '../stores/gas.store.js';
         import { createUiStore } from '../stores/ui.store.js';
         import { createRuntimeStore } from '../stores/runtime.store.js';
-        import { normalizeNotificationPreferences } from '../../features/notification-preferences.js';
+        import { normalizeNotificationPreferences } from '../../features/notification-preferences/notification-preferences.js';
         import { selectVisibleBrewOrderIds } from '../stores/brews-table.selectors.js';
         import { createAuthStateChangedHandler } from '../runtime/auth-state.js';
         import { createAppLifecycleModule } from '../runtime/app-lifecycle.js';
@@ -469,7 +469,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const ensurePreferencesModule = async () => {
             if (!preferencesModulePromise) {
                 preferencesModulePromise = (async () => {
-                    const { createBrewsPreferencesModule } = await import('../../features/preferences.js');
+                    const { createBrewsPreferencesModule } = await import('../../features/preferences/preferences.js');
                     return createBrewsPreferencesModule({
                         getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
                         setPinnedBrewsPreferences: (value) => setPinnedBrewsPreferencesState(value),
@@ -572,7 +572,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const ensureAiImportModule = async () => {
             if (!aiImportModulePromise) {
                 aiImportModulePromise = (async () => {
-                    const { createAiImportModule } = await import('../../features/ai-import.js');
+                    const { createAiImportModule } = await import('../../features/ai-import/ai-import.js');
                     return createAiImportModule({
                         BAG_AI_URL,
                         imageCompression,
@@ -1027,7 +1027,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const ensureGalleryModule = async () => {
             if (!galleryModulePromise) {
                 galleryModulePromise = (async () => {
-                    const { createGalleryModule } = await import('../../features/gallery.js');
+                    const { createGalleryModule } = await import('../../features/gallery/gallery.js');
                     return createGalleryModule({
                         getCurrentUser: () => getCurrentUserState(),
                         getCurrentUploadCoffeeId: () => getCurrentUploadCoffeeIdState(),
