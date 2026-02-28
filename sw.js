@@ -1,43 +1,17 @@
 // SERVICE WORKER VERSION MARKER
 // IMPORTANT: bump this when editing this file, and keep it in sync with
 // `SW_VERSION` in `src/app/pwa.js`.
-const SW_VERSION = '2026-02-26.2';
+const SW_VERSION = '2026-02-28.3';
 self.__COFFEE_DIAL_SW_VERSION = SW_VERSION;
 
 const MOMENTS_FALLBACK_LINK = '/Coffee-Dial/?moments';
-const SW_DIAG_MESSAGE_TYPE = 'coffee-dial-sw-diagnostic';
-const SW_DIAG_LOG_PREFIX = '[CoffeeDial SW]';
 const PUSH_INTENT_CACHE = 'coffee-dial-push-intent-v1';
 const PUSH_INTENT_CACHE_KEY = '/__coffee_dial_push_intent__';
 const STATIC_ASSET_CACHE_PREFIX = 'coffee-dial-static-assets-';
 const STATIC_ASSET_CACHE = `${STATIC_ASSET_CACHE_PREFIX}${SW_VERSION}`;
 const STATIC_ASSET_EXTENSIONS = /\.(?:js|css|woff2?|ttf|otf|eot|svg|png|jpe?g|webp|gif|ico|mp4|webm|json)$/i;
 
-const createDiagEntry = (eventType, details = {}) => ({
-    ts: new Date().toISOString(),
-    swVersion: SW_VERSION,
-    eventType,
-    details
-});
-
-const publishDiagnostics = async (entry) => {
-    try {
-        console.info(`${SW_DIAG_LOG_PREFIX} ${entry.eventType}`, entry);
-    } catch (_) {}
-    try {
-        const targets = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-        targets.forEach((client) => {
-            try {
-                client.postMessage({
-                    type: SW_DIAG_MESSAGE_TYPE,
-                    payload: entry
-                });
-            } catch (_) {}
-        });
-    } catch (_) {}
-};
-
-const logDiagnostics = (eventType, details = {}) => publishDiagnostics(createDiagEntry(eventType, details));
+const logDiagnostics = async () => {};
 
 const savePushIntent = async ({ link = '', source = '' } = {}) => {
     try {

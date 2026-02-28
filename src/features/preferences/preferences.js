@@ -66,7 +66,7 @@ export const createBrewsPreferencesModule = ({
     const PREF_INPUT_IDS = ['integrationsRemoveBgApiKey'];
     let isHydratingPreferences = false;
     let hasBoundAutoSave = false;
-    let hasBoundNotificationsDebug = false;
+    let hasBoundNotificationsDeviceActions = false;
     let hasBoundReloadButton = false;
     let reloadInProgress = false;
     let autoSaveTimer = null;
@@ -213,11 +213,6 @@ export const createBrewsPreferencesModule = ({
         }
     };
 
-    const setDebugText = (id, value) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = `${value ?? '-'}`;
-    };
-
     const setText = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = `${value ?? '-'}`;
@@ -258,13 +253,6 @@ export const createBrewsPreferencesModule = ({
         );
     };
 
-    const shortenToken = (value) => {
-        const token = (value || '').toString().trim();
-        if (!token) return '-';
-        if (token.length <= 20) return token;
-        return `${token.slice(0, 10)}...${token.slice(-8)}`;
-    };
-
     const escapeHtml = (value) => `${value ?? ''}`
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -272,53 +260,11 @@ export const createBrewsPreferencesModule = ({
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
-    const formatPushType = (entry = {}) => {
-        const channel = `${entry?.pushChannel || ''}`.trim().toLowerCase();
-        const hasSubscription = !!(entry?.webPushSubscription && typeof entry.webPushSubscription === 'object');
-        const hasToken = !!(`${entry?.token || ''}`.trim());
-        if (channel === 'declarative-web-push' || hasSubscription) return 'DWP';
-        if (channel === 'fcm' || hasToken) return 'FCM';
-        return '-';
-    };
-
-    const getDeclarativeDebugDetails = (entry = {}) => {
-        const sub = entry?.webPushSubscription && typeof entry.webPushSubscription === 'object'
-            ? entry.webPushSubscription
-            : null;
-        if (!sub) {
-            return { host: '-', keys: '-', expiration: '-' };
-        }
-        let host = '-';
-        try {
-            host = sub.endpoint ? (new URL(sub.endpoint).host || '-') : '-';
-        } catch (_) {}
-        const hasP256 = !!(`${sub?.keys?.p256dh || ''}`.trim());
-        const hasAuth = !!(`${sub?.keys?.auth || ''}`.trim());
-        const keys = hasP256 && hasAuth ? 'ok' : 'missing';
-        const expirationRaw = sub?.expirationTime ?? null;
-        const expiration = expirationRaw === null || expirationRaw === undefined || expirationRaw === ''
-            ? 'none'
-            : `${expirationRaw}`;
-        return { host, keys, expiration };
-    };
-
     const renderNotificationsDebugPanel = async () => {
         const listEl = document.getElementById('notificationsRegisteredDevicesList');
         const user = getCurrentUser?.();
         const prefs = normalizeNotificationPreferences(getNotificationPreferences?.());
-        const permission = typeof Notification === 'undefined' ? 'unsupported' : (Notification.permission || 'default');
         const currentDeviceId = readPushDeviceId();
-
-        setDebugText('notificationsDebugPermission', permission);
-        setDebugText('notificationsDebugPushEnabled', prefs.pushEnabled ? 'true' : 'false');
-        setDebugText('notificationsDebugDeviceId', currentDeviceId || '-');
-        setDebugText('notificationsDebugDeviceCount', '-');
-        setDebugText('notificationsDebugCurrentPushType', '-');
-        setDebugText('notificationsDebugCurrentToken', '-');
-        setDebugText('notificationsDebugCurrentDwpHost', '-');
-        setDebugText('notificationsDebugCurrentDwpKeys', '-');
-        setDebugText('notificationsDebugCurrentDwpExpiration', '-');
-        setDebugText('notificationsDebugCurrentUpdatedAt', '-');
         updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: false });
         updateRegisterCurrentDeviceButton({ show: false, busy: false });
         if (listEl) listEl.textContent = 'Loading...';
@@ -338,20 +284,12 @@ export const createBrewsPreferencesModule = ({
             const snap = await getDocs(collection(db, 'users', user.uid, 'devices'));
             const rows = snap.docs.map((item) => ({ id: item.id, ...(item.data() || {}) }));
             updatePushAvailabilityState({ hasRegisteredDevices: rows.length > 0 });
-            setDebugText('notificationsDebugDeviceCount', rows.length);
             const current = rows.find((entry) => entry.id === currentDeviceId) || null;
             const showRegisterCurrentDeviceButton = !!prefs?.pushEnabled &&
                 isPushEnvironmentSupported() &&
                 !current;
             updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: !!current });
             updateRegisterCurrentDeviceButton({ show: showRegisterCurrentDeviceButton, busy: false });
-            setDebugText('notificationsDebugCurrentPushType', formatPushType(current || {}));
-            setDebugText('notificationsDebugCurrentToken', shortenToken(current?.token || ''));
-            const dwpDetails = getDeclarativeDebugDetails(current || {});
-            setDebugText('notificationsDebugCurrentDwpHost', dwpDetails.host);
-            setDebugText('notificationsDebugCurrentDwpKeys', dwpDetails.keys);
-            setDebugText('notificationsDebugCurrentDwpExpiration', dwpDetails.expiration);
-            setDebugText('notificationsDebugCurrentUpdatedAt', current?.updatedAt || '-');
 
             if (!listEl) return;
             listEl.innerHTML = '';
@@ -397,110 +335,6 @@ export const createBrewsPreferencesModule = ({
             updatePushPermissionGuard(!!prefs.pushEnabled, { currentDeviceRegistered: false });
             updatePushAvailabilityState({ hasRegisteredDevices: false });
             if (listEl) listEl.textContent = `Failed loading devices: ${error?.message || error}`;
-        }
-    };
-
-    const getSwDiagnostics = () => {
-        if (typeof window === 'undefined') return [];
-        const list = window.__coffeeDialPushDiagnostics;
-        if (!Array.isArray(list)) return [];
-        return list.filter((entry) => entry && typeof entry === 'object');
-    };
-
-    const renderSwDiagnosticsPanel = () => {
-        const listEl = document.getElementById('notificationsSwDiagList');
-        if (!listEl) return;
-        const entries = getSwDiagnostics();
-        if (!entries.length) {
-            listEl.textContent = 'No diagnostics yet.';
-            return;
-        }
-        const latest = entries.slice(-15).reverse();
-        listEl.innerHTML = latest.map((entry) => {
-            const eventType = escapeHtml(`${entry.eventType || '-'}`);
-            const ts = escapeHtml(`${entry.ts || entry.tsClient || '-'}`);
-            const swVersion = escapeHtml(`${entry.swVersion || '-'}`);
-            const link = escapeHtml(`${entry?.details?.link || '-'}`);
-            const clientsCount = escapeHtml(`${entry?.details?.existingClientCount ?? '-'}`);
-            const openedClientUrl = escapeHtml(`${entry?.details?.openedClientUrl || '-'}`);
-            const error = escapeHtml(`${entry?.details?.error || '-'}`);
-            return `
-                <div class="rounded border border-coffee-200 dark:border-[#44403c] bg-white dark:bg-[#292524] p-1.5">
-                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">event</span>: ${eventType}</div>
-                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">ts</span>: ${ts}</div>
-                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">sw</span>: ${swVersion}</div>
-                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">link</span>: ${link}</div>
-                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">clients</span>: ${clientsCount}</div>
-                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">opened</span>: ${openedClientUrl}</div>
-                    <div><span class="text-coffee-500 dark:text-[#a8a29e]">error</span>: ${error}</div>
-                </div>
-            `;
-        }).join('');
-    };
-
-    const buildPushDebugText = () => {
-        const read = (id) => `${document.getElementById(id)?.textContent || '-'}`.trim();
-        return [
-            `Permission: ${read('notificationsDebugPermission')}`,
-            `Push enabled pref: ${read('notificationsDebugPushEnabled')}`,
-            `Current device ID: ${read('notificationsDebugDeviceId')}`,
-            `Registered devices: ${read('notificationsDebugDeviceCount')}`,
-            `Current push type: ${read('notificationsDebugCurrentPushType')}`,
-            `Current token: ${read('notificationsDebugCurrentToken')}`,
-            `DWP endpoint host: ${read('notificationsDebugCurrentDwpHost')}`,
-            `DWP keys: ${read('notificationsDebugCurrentDwpKeys')}`,
-            `DWP expiration: ${read('notificationsDebugCurrentDwpExpiration')}`,
-            `Current updatedAt: ${read('notificationsDebugCurrentUpdatedAt')}`
-        ].join('\n');
-    };
-
-    const buildSwDiagnosticsText = () => {
-        const entries = getSwDiagnostics().slice(-50).reverse();
-        if (!entries.length) return 'No diagnostics yet.';
-        return entries.map((entry) => {
-            const eventType = `${entry.eventType || '-'}`;
-            const ts = `${entry.ts || entry.tsClient || '-'}`;
-            const swVersion = `${entry.swVersion || '-'}`;
-            const link = `${entry?.details?.link || '-'}`;
-            const clientsCount = `${entry?.details?.existingClientCount ?? '-'}`;
-            const openedClientUrl = `${entry?.details?.openedClientUrl || '-'}`;
-            const error = `${entry?.details?.error || '-'}`;
-            return [
-                `event: ${eventType}`,
-                `ts: ${ts}`,
-                `sw: ${swVersion}`,
-                `link: ${link}`,
-                `clients: ${clientsCount}`,
-                `opened: ${openedClientUrl}`,
-                `error: ${error}`
-            ].join('\n');
-        }).join('\n\n');
-    };
-
-    const copyTextToClipboard = async (text = '', successMessage = 'Copied') => {
-        const payload = `${text || ''}`.trim();
-        if (!payload) {
-            alert('Nothing to copy.');
-            return;
-        }
-        try {
-            if (navigator?.clipboard?.writeText) {
-                await navigator.clipboard.writeText(payload);
-            } else {
-                const area = document.createElement('textarea');
-                area.value = payload;
-                area.setAttribute('readonly', '');
-                area.style.position = 'fixed';
-                area.style.opacity = '0';
-                document.body.appendChild(area);
-                area.focus();
-                area.select();
-                document.execCommand('copy');
-                document.body.removeChild(area);
-            }
-            alert(successMessage);
-        } catch (error) {
-            alert(`Copy failed: ${error?.message || error}`);
         }
     };
 
@@ -561,30 +395,10 @@ export const createBrewsPreferencesModule = ({
         }
     };
 
-    const bindNotificationsDebug = () => {
-        if (hasBoundNotificationsDebug) return;
-        hasBoundNotificationsDebug = true;
-        const refreshBtn = document.getElementById('notificationsDebugRefreshBtn');
-        const copyBtn = document.getElementById('notificationsDebugCopyBtn');
-        const swDiagRefreshBtn = document.getElementById('notificationsSwDiagRefreshBtn');
-        const swDiagCopyBtn = document.getElementById('notificationsSwDiagCopyBtn');
+    const bindNotificationsDeviceActions = () => {
+        if (hasBoundNotificationsDeviceActions) return;
+        hasBoundNotificationsDeviceActions = true;
         const registerCurrentDeviceBtn = document.getElementById('notificationsRegisterCurrentDeviceBtn');
-        refreshBtn?.addEventListener('click', () => {
-            renderNotificationsDebugPanel();
-            renderSwDiagnosticsPanel();
-            renderBuildAndVersionInfo();
-            updatePushPermissionGuard();
-        });
-        swDiagRefreshBtn?.addEventListener('click', () => {
-            renderSwDiagnosticsPanel();
-            renderBuildAndVersionInfo();
-        });
-        copyBtn?.addEventListener('click', () => {
-            copyTextToClipboard(buildPushDebugText(), 'Push debug copied.');
-        });
-        swDiagCopyBtn?.addEventListener('click', () => {
-            copyTextToClipboard(buildSwDiagnosticsText(), 'SW diagnostics copied.');
-        });
         registerCurrentDeviceBtn?.addEventListener('click', async () => {
             updateRegisterCurrentDeviceButton({ show: true, busy: true });
             try {
@@ -631,10 +445,8 @@ export const createBrewsPreferencesModule = ({
                     Promise.resolve(renderNotificationsDebugPanel()).then(() => true).catch(() => false),
                     new Promise((resolve) => setTimeout(() => resolve(false), 5000))
                 ]);
-                renderSwDiagnosticsPanel();
                 setTimeout(() => {
                     renderNotificationsDebugPanel();
-                    renderSwDiagnosticsPanel();
                     renderBuildAndVersionInfo();
                 }, 1200);
                 if (!rendered) {
@@ -843,10 +655,9 @@ export const createBrewsPreferencesModule = ({
         updatePushPermissionGuard(!!notificationPrefs.pushEnabled, { currentDeviceRegistered: false });
 
         bindPreferencesAutoSave();
-        bindNotificationsDebug();
+        bindNotificationsDeviceActions();
         bindReloadButton();
         renderNotificationsDebugPanel();
-        renderSwDiagnosticsPanel();
         renderBuildAndVersionInfo();
         isHydratingPreferences = false;
 

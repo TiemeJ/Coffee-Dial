@@ -86,16 +86,84 @@
 </head>
 <body class="bg-[#fcfbf9] text-coffee-900 dark:bg-[#1c1917] dark:text-[#e7e5e4] min-h-screen pb-20">
 
-    <div id="appHeaderMount"></div>
+    <div id="appHeaderMount">
+        <header id="appHeader" class="app-header bg-white dark:bg-[#292524] shadow-sm border-b border-coffee-200 dark:border-[#44403c] z-[60] transition-colors duration-300">
+            <div class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3 cursor-pointer select-none group" data-action-dblclick="openEasterEgg()" title="Double click for a surprise!">
+                    <i class="fa-solid fa-mug-hot text-coffee-700 dark:text-[#d6ccc2] text-2xl group-hover:scale-110 transition-transform duration-300"></i>
+                    <h1 class="text-2xl font-bold tracking-tight text-coffee-900 dark:text-white">Coffee Dial</h1>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <button id="menuAddBrewBtn" data-action-click="openAddBrewFromPinned(event)" class="hidden w-11 h-11 rounded-full hover:bg-coffee-50 dark:hover:bg-[#44403c] transition-colors text-coffee-600 dark:text-[#a8a29e] border border-coffee-200 dark:border-[#57534e] flex items-center justify-center leading-none" title="Add brew" aria-label="Add brew">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div id="authContainer" class="invisible">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <button id="loginBtn" data-action-click="googleLogin()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+                                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
+                                    <path d="M21.35 11.1h-9.17v2.92h5.27c-.23 1.5-1.76 4.4-5.27 4.4-3.17 0-5.76-2.62-5.76-5.85s2.59-5.85 5.76-5.85c1.8 0 3 .77 3.69 1.43l2.52-2.43C16.84 4.28 14.7 3.4 12.18 3.4 7.23 3.4 3.2 7.47 3.2 12.57s4.03 9.17 8.98 9.17c5.18 0 8.61-3.64 8.61-8.76 0-.59-.06-1.04-.14-1.48z"/>
+                                </svg>
+                                <span>Sign in</span>
+                            </button>
+                        </div>
+                        <div id="userProfile" class="hidden flex items-center gap-3">
+                            <button data-action-click="openFriendsModal()" class="relative flex-shrink-0 hover:opacity-80 transition-opacity">
+                                <img id="userAvatar" src="" alt="User" class="w-8 h-8 rounded-full border border-coffee-200 dark:border-[#44403c]">
+                                <div id="avatarBadge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-[#292524] shadow-md"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <button id="mainMenuBtn" data-action-click="toggleMainMenu(event)" class="relative w-11 h-11 rounded-full md:hover:bg-coffee-50 md:dark:hover:bg-[#44403c] transition-colors text-coffee-600 dark:text-[#a8a29e] flex items-center justify-center leading-none focus:outline-none" title="Menu">
+                            <i class="fa-solid fa-bars text-xl"></i>
+                            <span id="menuBadge" class="hidden absolute top-1 right-1 block h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-[#292524] bg-red-500"></span>
+                        </button>
+                        <div id="mainMenuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-[#292524] rounded-lg shadow-xl border border-coffee-200 dark:border-[#57534e] py-2 z-50">
+                            <button id="menuStatsBtn" data-action-click="openStats(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie w-4 text-center"></i> <span>Statistics</span>
+                            </button>
+                            <button id="menuBeansBtn" data-action-click="openBeans(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-seedling w-4 text-center"></i> <span>Beans</span>
+                            </button>
+                            <button id="menuCoffeesBtn" data-action-click="openCoffeeTypes(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group w-4 text-center"></i> <span>Coffees</span>
+                            </button>
+                            <button id="menuGasBtn" data-action-click="openGasList(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-screwdriver-wrench w-4 text-center"></i> <span>Gear</span>
+                            </button>
+                            <button id="menuGalleryBtn" data-action-click="openGallery(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-images w-4 text-center"></i> <span>Moments</span>
+                                </div>
+                                <span id="galleryBadge" class="hidden h-2 w-2 rounded-full bg-red-500 mr-2"></span>
+                            </button>
+                            <button id="menuImportExportBtn" data-action-click="openImportExportModal('export'); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-right-left w-4 text-center"></i> <span>Import & export</span>
+                            </button>
+                            <button id="menuPreferencesBtn" data-action-click="openPreferences(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-sliders w-4 text-center"></i> <span>Preferences</span>
+                            </button>
+                            <hr id="menuHelpDivider" class="my-1 border-coffee-100 dark:border-[#44403c]">
+                            <button id="menuHelpBtn" data-action-click="openHelp(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-circle-question w-4 text-center"></i> <span>Help</span>
+                            </button>
+                            <button id="menuAboutBtn" data-action-click="openAbout(); toggleMainMenu(null)" class="w-full text-left px-4 py-2 text-sm hover:bg-coffee-50 dark:hover:bg-[#44403c] text-coffee-900 dark:text-[#d6ccc2] flex items-center gap-2">
+                                <i class="fa-solid fa-circle-info w-4 text-center"></i> <span>About</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+    </div>
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-6 lg:px-8 py-8 relative">
         <div id="authCardMount"></div>
-        <div id="appBootstrapLoading" class="py-10 flex items-center justify-center" role="status" aria-live="polite" aria-busy="true">
-            <div class="inline-flex items-center gap-2 rounded-full border border-coffee-200 dark:border-[#44403c] bg-white/90 dark:bg-[#292524]/90 px-4 py-2 text-sm font-medium text-coffee-700 dark:text-[#d6ccc2] shadow-sm">
-                <i class="fa-solid fa-spinner fa-spin text-coffee-600 dark:text-[#a8a29e]"></i>
-                <span>Loading your brews...</span>
-            </div>
-        </div>
         <div id="signedInContent" class="hidden">
         <div id="pinnedSectionMount"></div>
 

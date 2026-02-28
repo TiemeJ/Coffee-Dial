@@ -444,6 +444,12 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             if (!hint) return;
             hint.classList.toggle('hidden', !visible);
         };
+        const setLabResultsLauncherVisible = (visible) => {
+            if (typeof document === 'undefined') return;
+            const launcher = document.getElementById('labResultsLauncher');
+            if (!launcher) return;
+            launcher.classList.toggle('hidden', !visible);
+        };
         const clearFirstInteractionListeners = () => {
             while (firstInteractionListeners.length) {
                 const entry = firstInteractionListeners.pop();
@@ -461,6 +467,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             if (hasBrewTableFirstInteraction) return;
             hasBrewTableFirstInteraction = true;
             setBrewTableDeferredHintVisible(false);
+            setLabResultsLauncherVisible(true);
             clearFirstInteractionListeners();
             flushPendingBrewTableRender();
         };
@@ -472,6 +479,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         };
         if (shouldDeferInitialTableRender && typeof window !== 'undefined' && typeof document !== 'undefined') {
             setBrewTableDeferredHintVisible(true);
+            setLabResultsLauncherVisible(false);
             bindFirstInteractionListener(window, 'pointerdown', { capture: true, passive: true });
             bindFirstInteractionListener(window, 'touchstart', { capture: true, passive: true });
             bindFirstInteractionListener(window, 'wheel', { capture: true, passive: true });
@@ -480,14 +488,17 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             bindFirstInteractionListener(document, 'click', { capture: true, passive: true });
         } else {
             setBrewTableDeferredHintVisible(false);
+            setLabResultsLauncherVisible(true);
         }
         const renderTable = (...args) => {
             if (!hasBrewTableFirstInteraction) {
                 setBrewTableDeferredHintVisible(true);
+                setLabResultsLauncherVisible(false);
                 hasPendingInitialBrewTableRender = true;
                 return;
             }
             setBrewTableDeferredHintVisible(false);
+            setLabResultsLauncherVisible(true);
             return renderTableImmediate(...args);
         };
         const {
