@@ -123,7 +123,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         if (hideDetailsInitially) {
             return '<div class="pr-16 relative z-10" data-pin-details-stage="loading"><div class="h-3 w-20 rounded bg-coffee-200 dark:bg-[#44403c] animate-pulse"></div><div class="h-2.5 w-24 mt-2 rounded bg-coffee-200 dark:bg-[#44403c] animate-pulse"></div><div class="h-2.5 w-16 mt-2 rounded bg-coffee-200 dark:bg-[#44403c] animate-pulse"></div></div>';
         }
-        return `<div class="pr-16 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${farmerText}">${farmerText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium">${roasterText}</p><div class="flex items-center mt-1">${decafIcon}</div></div>`;
+        return `<div class="pr-16 relative z-10"><p class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${farmerText}">${farmerText}</p><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium">${roasterText}</p><div class="flex items-center mt-1">${decafIcon}</div></div>`;
     };
 
     const buildPinnedTileImageCardMarkup = ({ imageUrl, titleText, stage = 'ready' }) => {
