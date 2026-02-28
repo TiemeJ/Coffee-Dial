@@ -1779,8 +1779,7 @@ export const createGalleryModule = ({
                     items: thumbBatchItems
                 });
                 setLastGalleryDoc(snapshot.docs[snapshot.docs.length - 1]);
-                const prefetchedThumbUrls = await prefetchedThumbUrlsPromise;
-                renderGalleryGrid(snapshot.docs, { prefetchedThumbUrls });
+                renderGalleryGrid(snapshot.docs, { prefetchedThumbUrlsPromise });
                 if (snapshot.docs.length < 9) btn.classList.add('hidden');
                 else btn.classList.remove('hidden');
             } else {
@@ -1803,6 +1802,10 @@ export const createGalleryModule = ({
         const prefetchedThumbUrls = options.prefetchedThumbUrls instanceof Map
             ? options.prefetchedThumbUrls
             : new Map();
+        const prefetchedThumbUrlsPromise = options.prefetchedThumbUrlsPromise && typeof options.prefetchedThumbUrlsPromise.then === 'function'
+            ? options.prefetchedThumbUrlsPromise
+            : Promise.resolve(prefetchedThumbUrls);
+        const pendingPhotoCards = [];
         const getMomentTypeMeta = (type) => {
             if (type === 'graph') {
                 return {
@@ -1847,9 +1850,6 @@ export const createGalleryModule = ({
             accent.className = `absolute top-0 left-0 right-0 h-1 z-[1] ${momentTypeMeta.accentClass}`;
             card.appendChild(accent);
 
-            const cachedThumb = getCachedSignedUrl(docItem.id, 'thumb');
-            const batchThumb = prefetchedThumbUrls.get(getSignedUrlCacheKey(docItem.id, 'thumb'));
-            const displayUrl = cachedThumb || batchThumb || resolveLegacyUrl(data, 'thumb');
             const primaryInfo = cardSnapshot.farmer || '-';
             const secondaryInfo = cardSnapshot.roaster || cardSnapshot.origin || '-';
             const graphSnapshot = data?.graphSnapshot || null;
@@ -1950,13 +1950,24 @@ export const createGalleryModule = ({
                 imageWrap.dataset.momentImageWrap = 'true';
                 imageWrap.className = 'h-48 overflow-hidden bg-gray-100 dark:bg-gray-800 relative cursor-pointer';
 
+                const imageLoader = document.createElement('div');
+                imageLoader.className = 'absolute inset-0 z-[1] animate-pulse bg-gradient-to-br from-coffee-100 via-coffee-50 to-coffee-100 dark:from-[#34302e] dark:via-[#292524] dark:to-[#34302e]';
+                imageLoader.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-coffee-400 dark:text-[#78716c]"><i class="fa-regular fa-image text-xl"></i></div>';
+                imageWrap.appendChild(imageLoader);
+
                 img = document.createElement('img');
-                img.src = displayUrl;
                 img.loading = 'lazy';
-                img.className = 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110';
+                img.decoding = 'async';
+                img.className = 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-0';
                 img.alt = 'Brew Photo';
                 img.dataset.momentId = docItem.id;
                 imageWrap.appendChild(img);
+                pendingPhotoCards.push({
+                    photoId: docItem.id,
+                    data,
+                    img,
+                    loader: imageLoader
+                });
 
                 const dateBadge = document.createElement('div');
                 dateBadge.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white text-xs';
@@ -2463,6 +2474,81 @@ export const createGalleryModule = ({
                 });
             }
         });
+
+        const loadImageIntoElement = (imgEl, url) => new Promise((resolve) => {
+            if (!imgEl || !imgEl.isConnected || !url) {
+                resolve(false);
+                return;
+            }
+            const cleanup = () => {
+                imgEl.removeEventListener('load', onLoad);
+                imgEl.removeEventListener('error', onError);
+            };
+            const onLoad = () => {
+                cleanup();
+                resolve(true);
+            };
+            const onError = () => {
+                cleanup();
+                resolve(false);
+            };
+            imgEl.addEventListener('load', onLoad);
+            imgEl.addEventListener('error', onError);
+            imgEl.src = url;
+        });
+
+        const revealPhotoImage = (imgEl, loaderEl) => {
+            if (!imgEl || !imgEl.isConnected) return;
+            imgEl.classList.remove('opacity-0');
+            loaderEl?.remove();
+        };
+
+        const showPhotoUnavailable = (loaderEl) => {
+            if (!loaderEl || !loaderEl.isConnected) return;
+            loaderEl.classList.remove('animate-pulse');
+            loaderEl.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-[11px] text-coffee-500 dark:text-[#a8a29e]">Image unavailable</div>';
+        };
+
+        const hydratePhotoCard = async ({ photoId, data, img: imgEl, loader }, batchUrls = new Map()) => {
+            if (!imgEl || !imgEl.isConnected) return;
+            const cacheKey = getSignedUrlCacheKey(photoId, 'thumb');
+            const batchThumb = batchUrls instanceof Map ? batchUrls.get(cacheKey) : '';
+            const cachedThumb = getCachedSignedUrl(photoId, 'thumb');
+            const legacyThumb = resolveLegacyUrl(data, 'thumb');
+            let thumbUrl = batchThumb || cachedThumb || legacyThumb;
+            if (!thumbUrl) {
+                thumbUrl = await resolveSignedPhotoUrl({
+                    photoId,
+                    variant: 'thumb',
+                    data
+                });
+            }
+            if (thumbUrl && await loadImageIntoElement(imgEl, thumbUrl)) {
+                revealPhotoImage(imgEl, loader);
+                return;
+            }
+
+            const fullUrl = await resolveSignedPhotoUrl({
+                photoId,
+                variant: 'full',
+                data
+            });
+            if (fullUrl && await loadImageIntoElement(imgEl, fullUrl)) {
+                revealPhotoImage(imgEl, loader);
+                return;
+            }
+            showPhotoUnavailable(loader);
+        };
+
+        prefetchedThumbUrlsPromise
+            .then((batchUrls) =>
+                Promise.all(
+                    pendingPhotoCards.map((entry) => hydratePhotoCard(entry, batchUrls))
+                )
+            )
+            .catch(() => {
+                pendingPhotoCards.forEach((entry) => showPhotoUnavailable(entry.loader));
+            });
     };
 
     const deletePhoto = async (photoId, photoRefValue, thumbRefValue, ev) => {
