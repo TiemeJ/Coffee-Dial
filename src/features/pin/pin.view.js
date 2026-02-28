@@ -101,12 +101,13 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         let dragIconClass = 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]';
         if (stockPercentage < 100) {
             const fullHeight = stockPercentage;
-            const waveSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20 L0 10 Q 25 0 50 10 T 100 10 L 100 20 Z' fill='%2357534e'/%3E%3C/svg%3E";
+            const darkCoffeeFill = '#3B2F2F';
+            const waveSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20 L0 10 Q 25 0 50 10 T 100 10 L 100 20 Z' fill='${encodeURIComponent(darkCoffeeFill)}'/%3E%3C/svg%3E`;
             const colors = ['text-amber-700', 'text-blue-500', 'text-green-600', 'text-purple-500'];
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
             const boatDelay = Math.random() * 18;
             const boatElement = `<div class="absolute top-1/2 boat-right pointer-events-none z-10" style="animation-delay: -${boatDelay}s;"><i class="fa-solid fa-mug-hot ${randomColor} text-lg drop-shadow-lg"></i></div>`;
-            stockOverlay = `<div class="absolute bottom-0 left-0 w-full z-0 pointer-events-none hidden dark:flex flex-col justify-start transition-all duration-500" style="height: ${fullHeight}%;"><div class="w-full h-3 bg-repeat-x wave-animate relative" style="background-image: url(&quot;${waveSvg}&quot;); background-size: 50% 100%;">${boatElement}</div><div class="w-full flex-1 bg-[#57534e]"></div></div>`;
+            stockOverlay = `<div class="absolute bottom-0 left-0 w-full z-0 pointer-events-none hidden dark:flex flex-col justify-start transition-all duration-500" style="height: ${fullHeight}%;"><div class="w-full h-3 bg-repeat-x wave-animate relative" style="background-image: url(&quot;${waveSvg}&quot;); background-size: 50% 100%;">${boatElement}</div><div class="w-full flex-1" style="background-color: ${darkCoffeeFill};"></div></div>`;
             if (fullHeight > 25) {
                 dragIconClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
             }
@@ -135,7 +136,7 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         if (!imageUrl) {
             return `<div data-pin-image-card="placeholder" class="${baseClass}" style="position:absolute; right:0.5rem; bottom:0.5rem; z-index:20;"><div class="w-full h-full bg-gradient-to-br from-coffee-200 via-coffee-100 to-coffee-200 dark:from-[#44403c] dark:via-[#34302e] dark:to-[#44403c]"></div><div class="absolute inset-0 flex items-center justify-center text-coffee-400 dark:text-[#78716c]"><i class="fa-regular fa-image text-xs"></i></div></div>`;
         }
-        return `<div data-pin-image-card="img" class="${baseClass}" style="position:absolute; right:0.5rem; bottom:0.5rem; z-index:20;"><div data-pin-image-bg class="absolute inset-0 bg-gradient-to-br from-coffee-200 via-coffee-100 to-coffee-200 dark:from-[#44403c] dark:via-[#34302e] dark:to-[#44403c] ai-loading-pulse"></div><img data-pin-image-img src="${imageUrl}" alt="${titleText}" class="w-full h-full object-cover opacity-0 transition-opacity duration-200" loading="lazy" decoding="async"></div>`;
+        return `<div data-pin-image-card="img" class="${baseClass}" style="position:absolute; right:0.5rem; bottom:0.5rem; z-index:20;"><img data-pin-image-img src="${imageUrl}" alt="${titleText}" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>`;
     };
 
     const wirePinnedTileImageState = (tile) => {
@@ -155,10 +156,16 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
             };
             const showFallback = () => {
                 img.remove();
-                if (!skeleton) return;
-                skeleton.classList.remove('ai-loading-pulse');
-                skeleton.classList.remove('hidden');
-                skeleton.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-coffee-400 dark:text-[#78716c]"><i class="fa-regular fa-image text-xs"></i></div>';
+                if (skeleton) {
+                    skeleton.classList.remove('ai-loading-pulse');
+                    skeleton.classList.remove('hidden');
+                    skeleton.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-coffee-400 dark:text-[#78716c]"><i class="fa-regular fa-image text-xs"></i></div>';
+                    return;
+                }
+                if (card) {
+                    card.setAttribute('data-pin-image-card', 'placeholder');
+                    card.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-coffee-200 via-coffee-100 to-coffee-200 dark:from-[#44403c] dark:via-[#34302e] dark:to-[#44403c]"></div><div class="absolute inset-0 flex items-center justify-center text-coffee-400 dark:text-[#78716c]"><i class="fa-regular fa-image text-xs"></i></div>';
+                }
             };
             img.addEventListener('load', showImage, { once: true });
             img.addEventListener('error', showFallback, { once: true });
