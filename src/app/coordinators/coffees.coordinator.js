@@ -290,6 +290,7 @@ export const createCoffeesCoordinator = ({
         triggerCoffeeTypePhoto: coffeeTypeCard.triggerCoffeeTypePhoto,
         openCoffeeTypePhoto: coffeeTypeCard.openCoffeeTypePhoto,
         removeCoffeeTypePhoto: coffeeTypeCard.removeCoffeeTypePhoto,
+        replaceCoffeeTypePhotoWithBackgroundRemoved: coffeeTypeCard.replaceCoffeeTypePhotoWithBackgroundRemoved,
         handleCoffeeTypePhoto: coffeeTypeCard.handleCoffeeTypePhoto,
         openCoffeeTypeCard: coffeeTypeCard.openCoffeeTypeCard,
         closeCoffeeTypeCard: coffeeTypeCard.closeCoffeeTypeCard,

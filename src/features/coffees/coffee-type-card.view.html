@@ -79,9 +79,16 @@
                                 <i class="fa-solid fa-image text-3xl mb-2"></i>
                                 <p class="text-xs font-medium">Add / Change picture</p>
                             </div>
-                            <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div id="coffeeTypeCardImageLoader" class="hidden absolute bottom-2 left-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs flex items-center gap-1.5">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <span>Processing</span>
+                            </div>
+                            <div class="absolute top-2 right-2 flex flex-col items-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button class="bg-black/50 text-white w-11 h-11 rounded-full flex items-center justify-center" data-action-click="triggerCoffeeTypePhoto(event)" title="Change photo">
                                     <i class="fa-solid fa-camera"></i>
+                                </button>
+                                <button id="coffeeTypeRemoveBgBtn" class="bg-black/50 text-white w-11 h-11 rounded-full flex items-center justify-center" data-action-click="replaceCoffeeTypePhotoWithBackgroundRemoved(event)" title="Remove background">
+                                    <i class="fa-solid fa-scissors"></i>
                                 </button>
                                 <button class="bg-black/50 text-white w-11 h-11 rounded-full flex items-center justify-center" data-action-click="removeCoffeeTypePhoto(event)" title="Remove photo">
                                     <i class="fa-solid fa-trash"></i>

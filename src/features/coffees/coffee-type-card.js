@@ -37,6 +37,11 @@ export const createCoffeeTypeCardModule = ({
     }
     const coffeesVm = createCoffeesVmModule();
     const getCurrentType = () => getCoffeeTypes().find((ct) => ct.id === getCurrentCoffeeTypeId());
+    const setImageLoaderVisible = (visible) => {
+        const loader = document.getElementById('coffeeTypeCardImageLoader');
+        if (!loader) return;
+        loader.classList.toggle('hidden', !visible);
+    };
     const dispatchOnly = (commandName, payload) => {
         if (typeof dispatchCommand !== 'function') return undefined;
         try {
@@ -163,6 +168,69 @@ export const createCoffeeTypeCardModule = ({
         }
     };
 
+    const replaceCoffeeTypePhotoWithBackgroundRemoved = async (e) => {
+        if (e) e.stopPropagation();
+        const user = getCurrentUser();
+        const typeId = getCurrentCoffeeTypeId();
+        if (!user || !typeId) return;
+        if (typeof removeCoffeeImageBackground !== 'function') {
+            alert('Background removal integration is unavailable.');
+            return;
+        }
+
+        const type = getCurrentType();
+        const url = type?.imageUrl || type?.imageURL;
+        if (!url) return;
+
+        const imageSection = document.getElementById('coffeeTypeCardImageSection');
+        const originalClasses = imageSection?.className || '';
+
+        try {
+            if (imageSection) imageSection.classList.add('ai-loading-pulse');
+            setImageLoaderVisible(true);
+            const sourceResponse = await fetch(url, { cache: 'no-store' });
+            if (!sourceResponse.ok) {
+                throw new Error(`Could not load current image (${sourceResponse.status}).`);
+            }
+
+            const sourceBlob = await sourceResponse.blob();
+            const sourceType = `${sourceBlob?.type || ''}`.toLowerCase();
+            const sourceExt = sourceType.includes('png') ? 'png' : (sourceType.includes('webp') ? 'webp' : 'jpg');
+            const sourceFile = new File(
+                [sourceBlob],
+                `coffee_type_${typeId}.${sourceExt}`,
+                { type: sourceBlob.type || 'image/jpeg', lastModified: Date.now() }
+            );
+
+            const bgRemovedFile = await removeCoffeeImageBackground(sourceFile, {
+                source: 'coffees.replaceCoffeeTypePhotoWithBackgroundRemoved'
+            });
+
+            const timestamp = Date.now();
+            const storageRef = ref(storage, `photos/${user.uid}/coffee_type_${typeId}_${timestamp}`);
+            const snapshot = await uploadBytes(storageRef, bgRemovedFile);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', typeId), {
+                imageUrl: downloadURL,
+                updatedAt: new Date().toISOString()
+            });
+            setCoffeeTypesState(
+                getCoffeeTypes().map((ct) => (ct.id === typeId ? { ...ct, imageUrl: downloadURL } : ct))
+            );
+            try {
+                const oldRef = ref(storage, url);
+                await deleteObject(oldRef);
+            } catch (_) {}
+            openCoffeeTypeCard(typeId);
+        } catch (err) {
+            console.error('Coffee background removal failed:', err);
+            alert(`Failed to remove background: ${err?.message || err}`);
+        } finally {
+            if (imageSection && originalClasses) imageSection.className = originalClasses;
+            setImageLoaderVisible(false);
+        }
+    };
+
     const handleCoffeeTypePhoto = async (event) => {
         const file = event.target.files?.[0];
         const user = getCurrentUser();
@@ -175,6 +243,7 @@ export const createCoffeeTypeCardModule = ({
 
         try {
             if (targetEl) targetEl.classList.add('ai-loading-pulse');
+            setImageLoaderVisible(true);
             const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: true };
             const compressedFile = await imageCompression(file, options);
             const uploadFile = typeof removeCoffeeImageBackground === 'function'
@@ -197,6 +266,7 @@ export const createCoffeeTypeCardModule = ({
             alert(`Failed to upload image: ${err?.message || err}`);
         } finally {
             if (targetEl && originalClasses) targetEl.className = originalClasses;
+            setImageLoaderVisible(false);
             event.target.value = '';
         }
     };
@@ -233,6 +303,7 @@ export const createCoffeeTypeCardModule = ({
             imgEl.classList.add('hidden');
             placeholderEl.classList.remove('hidden');
         }
+        document.getElementById('coffeeTypeRemoveBgBtn')?.classList.toggle('hidden', !imageUrl);
 
         const buyBtn = document.getElementById('coffeeTypeCardBuyBtn');
         const buyActionBtn = document.getElementById('coffeeTypeCardActionBuy');
@@ -359,6 +430,7 @@ export const createCoffeeTypeCardModule = ({
         triggerCoffeeTypePhoto,
         openCoffeeTypePhoto,
         removeCoffeeTypePhoto,
+        replaceCoffeeTypePhotoWithBackgroundRemoved,
         handleCoffeeTypePhoto,
         openCoffeeTypeCard,
         closeCoffeeTypeCard,
