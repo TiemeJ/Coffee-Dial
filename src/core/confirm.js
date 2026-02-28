@@ -21,7 +21,8 @@ export const openAppConfirm = ({
     message = '',
     confirmLabel = 'Confirm',
     cancelLabel = 'Cancel',
-    danger = true
+    danger = true,
+    showCancel = true
 } = {}) => {
     const overlay = document.getElementById('appConfirmOverlay');
     const titleEl = document.getElementById('appConfirmTitle');
@@ -34,6 +35,7 @@ export const openAppConfirm = ({
     messageEl.textContent = message;
     confirmBtn.textContent = confirmLabel;
     cancelBtn.textContent = cancelLabel;
+    cancelBtn.classList.toggle('hidden', !showCancel);
     confirmBtn.className = danger
         ? 'px-3 py-1.5 text-sm font-semibold rounded bg-red-600 hover:bg-red-700 text-white'
         : 'px-3 py-1.5 text-sm font-semibold rounded bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white';

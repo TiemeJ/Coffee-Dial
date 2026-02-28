@@ -1,4 +1,4 @@
-    <div id="toastStack" class="fixed bottom-4 right-4 z-[120] w-[calc(100%-2rem)] max-w-sm flex flex-col-reverse gap-2 pointer-events-none">
+    <div id="toastStack" class="fixed bottom-4 right-4 z-[12060] w-[calc(100%-2rem)] max-w-sm flex flex-col-reverse gap-2 pointer-events-none">
     <div id="autoArchiveToast" class="hidden w-full pointer-events-auto">
         <div class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-xl shadow-2xl p-4">
             <div class="flex items-start justify-between gap-3">
@@ -54,6 +54,18 @@
                     Autopin updated.
                 </div>
                 <button data-action-click="closeAutoPinToast()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="stickyToast" class="hidden w-full pointer-events-auto">
+        <div class="bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-xl shadow-2xl p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div id="stickyToastText" class="text-sm font-semibold text-coffee-900 dark:text-white">
+                    Message
+                </div>
+                <button data-action-click="closeStickyToast()" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>

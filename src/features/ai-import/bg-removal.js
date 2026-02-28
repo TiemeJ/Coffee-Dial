@@ -23,15 +23,18 @@ export const createBgRemovalModule = ({
     const resolveRemoveBgPrefs = () =>
         normalizeIntegrationPreferences(getIntegrationPreferences?.()).removeBg;
 
-    const removeCoffeeImageBackground = async (file, { source = 'unknown' } = {}) => {
+    const removeCoffeeImageBackground = async (
+        file,
+        { source = 'unknown', force = false } = {}
+    ) => {
         if (!file) return file;
 
         const removeBgPrefs = resolveRemoveBgPrefs();
-        if (!removeBgPrefs.enabled) return file;
+        if (!force && !removeBgPrefs.enabled) return file;
 
         const apiKey = `${removeBgPrefs.apiKey || ''}`.trim();
         if (!apiKey) {
-            throw new Error('remove.bg is enabled, but no API key is configured in Preferences > Integrations.');
+            throw new Error('Enter your remove.bg API key in Preferences > Integrations.');
         }
 
         const formData = new FormData();

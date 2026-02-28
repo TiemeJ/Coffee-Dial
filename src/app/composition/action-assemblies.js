@@ -269,6 +269,7 @@ export const createActionAssemblies = (deps = {}) => {
             'closeAppConfirm',
             'closeAutoArchiveToast',
             'closeAutoPinToast',
+            'closeStickyToast',
             'closeBeanCreatedToast',
             'closeBrewFormModal',
             'closeCoffeeTypeCreatedToast',

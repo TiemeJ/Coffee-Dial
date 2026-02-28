@@ -203,7 +203,8 @@ export const createCoffeeTypeCardModule = ({
             );
 
             const bgRemovedFile = await removeCoffeeImageBackground(sourceFile, {
-                source: 'coffees.replaceCoffeeTypePhotoWithBackgroundRemoved'
+                source: 'coffees.replaceCoffeeTypePhotoWithBackgroundRemoved',
+                force: true
             });
 
             const timestamp = Date.now();
@@ -223,8 +224,19 @@ export const createCoffeeTypeCardModule = ({
             } catch (_) {}
             openCoffeeTypeCard(typeId);
         } catch (err) {
-            console.error('Coffee background removal failed:', err);
-            alert(`Failed to remove background: ${err?.message || err}`);
+            const message = `${err?.message || err || ''}`.trim();
+            if (message === 'Enter your remove.bg API key in Preferences > Integrations.') {
+                await openAppConfirm?.({
+                    title: 'remove.bg API key required',
+                    message,
+                    confirmLabel: 'OK',
+                    danger: false,
+                    showCancel: false
+                });
+            } else {
+                console.error('Coffee background removal failed:', err);
+                alert(`Failed to remove background: ${message || 'Unknown error'}`);
+            }
         } finally {
             if (imageSection && originalClasses) imageSection.className = originalClasses;
             setImageLoaderVisible(false);
@@ -246,12 +258,9 @@ export const createCoffeeTypeCardModule = ({
             setImageLoaderVisible(true);
             const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: true };
             const compressedFile = await imageCompression(file, options);
-            const uploadFile = typeof removeCoffeeImageBackground === 'function'
-                ? await removeCoffeeImageBackground(compressedFile, { source: 'coffees.handleCoffeeTypePhoto' })
-                : compressedFile;
             const timestamp = Date.now();
             const storageRef = ref(storage, `photos/${user.uid}/coffee_type_${typeId}_${timestamp}`);
-            const snapshot = await uploadBytes(storageRef, uploadFile);
+            const snapshot = await uploadBytes(storageRef, compressedFile);
             const downloadURL = await getDownloadURL(snapshot.ref);
             await updateDoc(doc(db, 'users', user.uid, 'coffeeTypes', typeId), {
                 imageUrl: downloadURL,

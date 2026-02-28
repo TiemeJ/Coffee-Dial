@@ -42,6 +42,19 @@ export const showToast = (message) => {
     showAutoPinToast(String(message || 'Done.'));
 };
 
+export const showStickyToast = (message) => {
+    const toast = document.getElementById('stickyToast');
+    if (!toast) return;
+    const textEl = document.getElementById('stickyToastText');
+    if (textEl) textEl.textContent = String(message || 'Done.');
+    showToastInStack(toast);
+};
+
+export const closeStickyToast = () => {
+    const toast = document.getElementById('stickyToast');
+    if (toast) toast.classList.add('hidden');
+};
+
 export const createNotificationUxModule = ({
     getCoffeeTypes,
     onAutoArchiveUnarchive,

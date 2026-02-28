@@ -3,7 +3,7 @@
         import { collection, collectionGroup, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, arrayUnion, arrayRemove, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         import { parseBeanconquerorCSV, mapBeanconquerorBrews } from '../../features/import-export/importers/beanconqueror.js';
         import { initEmailLinkAuth } from '../../integrations/email-link-auth.js';
-        import { closeAutoPinToast, showAutoPinToast, showToast } from '../../core/notify.js';
+        import { closeAutoPinToast, closeStickyToast, showAutoPinToast, showToast } from '../../core/notify.js';
         import { closeAppConfirm, openAppConfirm, resolveAppConfirm, installDialogAdapters } from '../../core/confirm.js';
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../../core/format.js';
         import { createCoffeeDisplayModule } from '../../core/coffee-display.js';
@@ -1705,6 +1705,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeAppConfirm,
             closeAutoArchiveToast,
             closeAutoPinToast,
+            closeStickyToast,
             closeBeanCard,
             closeBeanCardMenu,
             closeBeanCreatedToast,
