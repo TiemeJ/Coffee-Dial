@@ -151,7 +151,13 @@ export const createPinControllerModule = ({
         sortableInstances.push(sortable);
     };
 
-    const renderPinnedTiles = () => {
+    const renderPinnedTiles = (options = {}) => {
+        const {
+            progressiveHydration = false,
+            activeBeansOnly = false,
+            suppressCoffeeDetails = false,
+            suppressCoffeeImages = false
+        } = options || {};
         const pinnedPrefs = getPinnedBrewsPreferences();
         const pinnedGrid = document.getElementById('pinnedGrid');
         const isCoffeeArtEnabled = pinnedPrefs.showTilesInsteadOfCoffeeArt === false;
@@ -162,7 +168,11 @@ export const createPinControllerModule = ({
             const result = artView.renderPinnedArtView({
                 coffees: getCoffees(),
                 beans: getBeans(),
-                pinnedBrewsPreferences: pinnedPrefs
+                pinnedBrewsPreferences: pinnedPrefs,
+                progressiveHydration,
+                activeBeansOnly,
+                suppressCoffeeDetails,
+                suppressCoffeeImages
             });
             const section = document.getElementById('pinnedSection');
             if (section) section.classList.toggle('hidden', !result.hasArt);
@@ -185,7 +195,11 @@ export const createPinControllerModule = ({
             openPinnedBeanCardWithOrder: (beanId, order = [], event = null) => {
                 dispatchCommand('beans.openCardWithOrder', { beanId, order, event });
                 publishEvent('pin.beanCardOpened', { beanId, order });
-            }
+            },
+            progressiveHydration,
+            activeBeansOnly,
+            suppressCoffeeDetails,
+            suppressCoffeeImages
         });
 
         if (result.hasTiles) initSortable();

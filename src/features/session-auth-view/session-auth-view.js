@@ -84,6 +84,8 @@ export const createSessionAuthViewModule = ({
     let currentViewListenerContext = null;
     let latestViewRequestId = 0;
     const INITIAL_BREWS_LIMIT = 120;
+    const INITIAL_PINNED_BREWS_LIMIT = 120;
+    let hasCompletedInitialViewBootstrap = false;
     const googleLogin = () => signInWithPopup(auth, provider).catch((e) => alert(e.message));
 
     const googleLogout = () => signOut(auth).then(() => location.reload());
@@ -401,130 +403,233 @@ export const createSessionAuthViewModule = ({
         const isMine = uid === 'mine';
         const targetUid = isMine ? user.uid : uid;
         currentViewListenerContext = { targetUid, requestId };
-        try {
-            const brewsInitialQ = query(
+        const sortByPinnedOrder = (left, right) => {
+            const orderDelta = (left?.customOrder || 0) - (right?.customOrder || 0);
+            if (orderDelta !== 0) return orderDelta;
+            return new Date(left?.createdAt || 0) - new Date(right?.createdAt || 0);
+        };
+        const loadPinnedBootstrapSnapshot = async () => {
+            const pinnedBrewsQ = query(
                 collection(db, 'users', targetUid, 'coffees'),
-                orderBy('createdAt', 'desc'),
-                limit(INITIAL_BREWS_LIMIT)
+                where('isActive', '==', true),
+                limit(INITIAL_PINNED_BREWS_LIMIT)
             );
-            const activeBeansInitialQ = query(
+            const activeBeansQ = query(
                 collection(db, 'users', targetUid, 'beans'),
                 where('archived', '==', false),
                 where('frozen', '==', false)
             );
-            const [brewsSnap, activeBeansSnap, gasSnap] = await Promise.all([
-                getDocs(brewsInitialQ),
-                getDocs(activeBeansInitialQ),
-                getDocs(collection(db, 'users', targetUid, 'gear'))
+            const [pinnedBrewsSnap, activeBeansSnap] = await Promise.all([
+                getDocs(pinnedBrewsQ),
+                getDocs(activeBeansQ)
             ]);
+            if (requestId !== latestViewRequestId) return false;
 
-            if (requestId !== latestViewRequestId) return;
-
-            const nextCoffees = [];
-            brewsSnap.forEach((docSnap) => nextCoffees.push({ id: docSnap.id, ...docSnap.data() }));
-            if (!getCurrentSort().key) {
-                nextCoffees.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            }
-            setCoffees(nextCoffees);
-            updateAutocompleteLists();
-            setHasLoadedBrews(true);
-
-            const nextBeans = [];
-            const beanMap = new Map();
+            const nextActiveBeans = [];
+            const activeBeanMap = new Map();
             activeBeansSnap.forEach((docSnap) => {
                 const bean = { id: docSnap.id, ...docSnap.data() };
-                beanMap.set(bean.id, bean);
-                nextBeans.push(bean);
+                activeBeanMap.set(bean.id, bean);
+                nextActiveBeans.push(bean);
             });
 
-            const referencedBeanIds = new Set(
-                nextCoffees.map((brew) => brew?.beanId).filter((beanId) => typeof beanId === 'string' && beanId.trim())
-            );
-            const missingReferencedBeanIds = Array.from(referencedBeanIds).filter((beanId) => !beanMap.has(beanId));
-            if (missingReferencedBeanIds.length) {
-                const missingBeanSnaps = await Promise.all(
-                    missingReferencedBeanIds.map((beanId) => getDoc(doc(db, 'users', targetUid, 'beans', beanId)))
+            const clean = (value) => (value || '').toString().toLowerCase().trim();
+            const resolveActiveBeanIdForBrew = (brew) => {
+                const explicitBeanId = typeof brew?.beanId === 'string' ? brew.beanId.trim() : '';
+                if (explicitBeanId && activeBeanMap.has(explicitBeanId)) return explicitBeanId;
+                const matchedBean = nextActiveBeans.find((bean) =>
+                    clean(bean.roaster) === clean(brew?.roaster) &&
+                    clean(bean.farmer) === clean(brew?.farmer) &&
+                    clean(bean.origin) === clean(brew?.origin) &&
+                    clean(bean.processing) === clean(brew?.processing) &&
+                    clean(bean.variety) === clean(brew?.variety) &&
+                    clean(bean.roastType) === clean(brew?.roastType)
                 );
-                if (requestId !== latestViewRequestId) return;
-                missingBeanSnaps.forEach((beanSnap) => {
-                    if (!beanSnap.exists()) return;
-                    const bean = { id: beanSnap.id, ...beanSnap.data() };
-                    if (beanMap.has(bean.id)) return;
-                    beanMap.set(bean.id, bean);
-                    nextBeans.push(bean);
-                });
-            }
-            // Legacy safety: older docs may miss archived/frozen fields and be excluded from the filtered query.
-            if (!nextBeans.length && referencedBeanIds.size) {
-                const legacyBeansSnap = await getDocs(collection(db, 'users', targetUid, 'beans'));
-                if (requestId !== latestViewRequestId) return;
-                legacyBeansSnap.forEach((docSnap) => {
-                    const bean = { id: docSnap.id, ...docSnap.data() };
-                    if (beanMap.has(bean.id)) return;
-                    if (referencedBeanIds.has(bean.id)) {
-                        beanMap.set(bean.id, bean);
-                        nextBeans.push(bean);
-                    }
-                });
-            }
+                return matchedBean?.id || '';
+            };
 
-            setBeans(nextBeans);
+            const nextPinnedBrews = [];
+            pinnedBrewsSnap.forEach((docSnap) => {
+                const brew = { id: docSnap.id, ...docSnap.data() };
+                if (!brew?.isActive) return;
+                const activeBeanId = resolveActiveBeanIdForBrew(brew);
+                if (!activeBeanId) return;
+                nextPinnedBrews.push({
+                    ...brew,
+                    beanId: activeBeanId
+                });
+            });
+            nextPinnedBrews.sort(sortByPinnedOrder);
+
+            setBeans(nextActiveBeans);
             if (isMine) updateBeanDropdown();
             if (!getModal('beansModal')?.classList.contains('hidden')) {
                 renderBeansTable();
             }
             setHasLoadedBeans(true);
 
-            const referencedCoffeeTypeIds = new Set(
-                nextCoffees
-                    .map((brew) => brew?.coffeeTypeId)
-                    .filter((coffeeTypeId) => typeof coffeeTypeId === 'string' && coffeeTypeId.trim())
-            );
-            nextBeans.forEach((bean) => {
-                const coffeeTypeId = bean?.coffeeTypeId;
-                if (typeof coffeeTypeId !== 'string' || !coffeeTypeId.trim()) return;
-                referencedCoffeeTypeIds.add(coffeeTypeId);
+            setCoffees(nextPinnedBrews);
+            updateAutocompleteLists();
+            setHasLoadedBrews(true);
+
+            renderPinnedTiles({
+                progressiveHydration: true,
+                activeBeansOnly: true,
+                suppressCoffeeDetails: true,
+                suppressCoffeeImages: true
             });
+            return true;
+        };
 
-            const nextCoffeeTypes = [];
-            if (referencedCoffeeTypeIds.size) {
-                const coffeeTypeSnaps = await Promise.all(
-                    Array.from(referencedCoffeeTypeIds).map((coffeeTypeId) =>
-                        getDoc(doc(db, 'users', targetUid, 'coffeeTypes', coffeeTypeId))
-                    )
+        const loadCompleteViewData = async () => {
+            try {
+                const brewsInitialQ = query(
+                    collection(db, 'users', targetUid, 'coffees'),
+                    orderBy('createdAt', 'desc'),
+                    limit(INITIAL_BREWS_LIMIT)
                 );
+                const activeBeansInitialQ = query(
+                    collection(db, 'users', targetUid, 'beans'),
+                    where('archived', '==', false),
+                    where('frozen', '==', false)
+                );
+                const [brewsSnap, activeBeansSnap, gasSnap] = await Promise.all([
+                    getDocs(brewsInitialQ),
+                    getDocs(activeBeansInitialQ),
+                    getDocs(collection(db, 'users', targetUid, 'gear'))
+                ]);
+
                 if (requestId !== latestViewRequestId) return;
-                coffeeTypeSnaps.forEach((coffeeTypeSnap) => {
-                    if (!coffeeTypeSnap.exists()) return;
-                    nextCoffeeTypes.push({ id: coffeeTypeSnap.id, ...coffeeTypeSnap.data() });
+
+                const nextCoffees = [];
+                brewsSnap.forEach((docSnap) => nextCoffees.push({ id: docSnap.id, ...docSnap.data() }));
+                if (!getCurrentSort().key) {
+                    nextCoffees.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                }
+                setCoffees(nextCoffees);
+                updateAutocompleteLists();
+                setHasLoadedBrews(true);
+
+                const nextBeans = [];
+                const beanMap = new Map();
+                activeBeansSnap.forEach((docSnap) => {
+                    const bean = { id: docSnap.id, ...docSnap.data() };
+                    beanMap.set(bean.id, bean);
+                    nextBeans.push(bean);
                 });
-            }
-            setCoffeeTypes(nextCoffeeTypes);
-            updateCoffeeTypeSelectors();
-            if (isMine) updateBeanDropdown();
-            if (!getModal('coffeeTypesModal')?.classList.contains('hidden')) {
-                renderCoffeeTypesTable();
-            }
 
-            const nextGasItems = [];
-            gasSnap.forEach((docSnap) => nextGasItems.push({ id: docSnap.id, ...docSnap.data() }));
-            setGasItems(nextGasItems);
-            if (refreshBrewGearSelectors) refreshBrewGearSelectors();
+                const referencedBeanIds = new Set(
+                    nextCoffees.map((brew) => brew?.beanId).filter((beanId) => typeof beanId === 'string' && beanId.trim())
+                );
+                const missingReferencedBeanIds = Array.from(referencedBeanIds).filter((beanId) => !beanMap.has(beanId));
+                if (missingReferencedBeanIds.length) {
+                    const missingBeanSnaps = await Promise.all(
+                        missingReferencedBeanIds.map((beanId) => getDoc(doc(db, 'users', targetUid, 'beans', beanId)))
+                    );
+                    if (requestId !== latestViewRequestId) return;
+                    missingBeanSnaps.forEach((beanSnap) => {
+                        if (!beanSnap.exists()) return;
+                        const bean = { id: beanSnap.id, ...beanSnap.data() };
+                        if (beanMap.has(bean.id)) return;
+                        beanMap.set(bean.id, bean);
+                        nextBeans.push(bean);
+                    });
+                }
+                // Legacy safety: older docs may miss archived/frozen fields and be excluded from the filtered query.
+                if (!nextBeans.length && referencedBeanIds.size) {
+                    const legacyBeansSnap = await getDocs(collection(db, 'users', targetUid, 'beans'));
+                    if (requestId !== latestViewRequestId) return;
+                    legacyBeansSnap.forEach((docSnap) => {
+                        const bean = { id: docSnap.id, ...docSnap.data() };
+                        if (beanMap.has(bean.id)) return;
+                        if (referencedBeanIds.has(bean.id)) {
+                            beanMap.set(bean.id, bean);
+                            nextBeans.push(bean);
+                        }
+                    });
+                }
 
-            renderPinnedTiles();
-            renderTable();
-            scheduleLiveViewListeners({ targetUid, isMine, requestId });
-            if (!getModal('gasModal')?.classList.contains('hidden')) {
-                ensureGasListenerForCurrentView();
+                setBeans(nextBeans);
+                if (isMine) updateBeanDropdown();
+                if (!getModal('beansModal')?.classList.contains('hidden')) {
+                    renderBeansTable();
+                }
+                setHasLoadedBeans(true);
+
+                const referencedCoffeeTypeIds = new Set(
+                    nextCoffees
+                        .map((brew) => brew?.coffeeTypeId)
+                        .filter((coffeeTypeId) => typeof coffeeTypeId === 'string' && coffeeTypeId.trim())
+                );
+                nextBeans.forEach((bean) => {
+                    const coffeeTypeId = bean?.coffeeTypeId;
+                    if (typeof coffeeTypeId !== 'string' || !coffeeTypeId.trim()) return;
+                    referencedCoffeeTypeIds.add(coffeeTypeId);
+                });
+
+                const nextCoffeeTypes = [];
+                if (referencedCoffeeTypeIds.size) {
+                    const coffeeTypeSnaps = await Promise.all(
+                        Array.from(referencedCoffeeTypeIds).map((coffeeTypeId) =>
+                            getDoc(doc(db, 'users', targetUid, 'coffeeTypes', coffeeTypeId))
+                        )
+                    );
+                    if (requestId !== latestViewRequestId) return;
+                    coffeeTypeSnaps.forEach((coffeeTypeSnap) => {
+                        if (!coffeeTypeSnap.exists()) return;
+                        nextCoffeeTypes.push({ id: coffeeTypeSnap.id, ...coffeeTypeSnap.data() });
+                    });
+                }
+                setCoffeeTypes(nextCoffeeTypes);
+                updateCoffeeTypeSelectors();
+                if (isMine) updateBeanDropdown();
+                if (!getModal('coffeeTypesModal')?.classList.contains('hidden')) {
+                    renderCoffeeTypesTable();
+                }
+
+                const nextGasItems = [];
+                gasSnap.forEach((docSnap) => nextGasItems.push({ id: docSnap.id, ...docSnap.data() }));
+                setGasItems(nextGasItems);
+                if (refreshBrewGearSelectors) refreshBrewGearSelectors();
+
+                renderPinnedTiles();
+                renderTable();
+                scheduleLiveViewListeners({ targetUid, isMine, requestId });
+                if (!getModal('gasModal')?.classList.contains('hidden')) {
+                    ensureGasListenerForCurrentView();
+                }
+            } catch (error) {
+                console.error('Initial view load failed:', error);
+                if (error?.code === 'permission-denied') {
+                    handleViewPermissionDenied();
+                    return;
+                }
+                // Fallback to immediate live listeners if the bootstrap query path fails.
+                attachLiveViewListeners({ targetUid, isMine, requestId });
             }
-        } catch (error) {
-            console.error('Initial view load failed:', error);
-            if (error?.code === 'permission-denied') {
-                handleViewPermissionDenied();
+        };
+
+        const shouldUsePinnedBootstrap = !hasCompletedInitialViewBootstrap;
+        if (shouldUsePinnedBootstrap) {
+            let renderedPinnedBootstrap = false;
+            try {
+                renderedPinnedBootstrap = await loadPinnedBootstrapSnapshot();
+            } catch (error) {
+                console.warn('Pinned bootstrap load failed, falling back to full load:', error);
+            }
+            if (renderedPinnedBootstrap) {
+                void loadCompleteViewData().then(() => {
+                    if (requestId === latestViewRequestId) {
+                        hasCompletedInitialViewBootstrap = true;
+                    }
+                });
                 return;
             }
-            // Fallback to immediate live listeners if the bootstrap query path fails.
-            attachLiveViewListeners({ targetUid, isMine, requestId });
+        }
+
+        await loadCompleteViewData();
+        if (requestId === latestViewRequestId) {
+            hasCompletedInitialViewBootstrap = true;
         }
     };
 

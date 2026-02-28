@@ -15,6 +15,12 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         return `${method} (${drink})`;
     };
 
+    const normalizeDisplayText = (value) => {
+        const text = (value ?? '').toString().trim();
+        if (!text || text === '-' || text === '—') return '';
+        return text;
+    };
+
     const closeChooser = () => {
         chooserOpenFor = null;
         const chooser = document.getElementById('brewPinArtChooser');
@@ -108,6 +114,61 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         return { stockOverlay, dragIconClass };
     };
 
+    const buildPinnedTileDetailsMarkup = ({
+        hideDetailsInitially,
+        farmerText,
+        roasterText,
+        decafIcon
+    }) => {
+        if (hideDetailsInitially) {
+            return '<div class="pr-16 relative z-10" data-pin-details-stage="loading"><div class="h-3 w-20 rounded bg-coffee-200 dark:bg-[#44403c] animate-pulse"></div><div class="h-2.5 w-24 mt-2 rounded bg-coffee-200 dark:bg-[#44403c] animate-pulse"></div><div class="h-2.5 w-16 mt-2 rounded bg-coffee-200 dark:bg-[#44403c] animate-pulse"></div></div>';
+        }
+        return `<div class="pr-16 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${farmerText}">${farmerText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium">${roasterText}</p><div class="flex items-center mt-1">${decafIcon}</div></div>`;
+    };
+
+    const buildPinnedTileImageCardMarkup = ({ imageUrl, titleText, stage = 'ready' }) => {
+        const baseClass =
+            'absolute w-12 h-16 rounded-lg overflow-hidden border border-coffee-200 dark:border-[#57534e] bg-coffee-100 dark:bg-[#1c1917]';
+        if (stage === 'loading') {
+            return `<div data-pin-image-stage="loading" class="${baseClass} ai-loading-pulse" style="position:absolute; right:0.5rem; bottom:0.5rem; z-index:20;"><div class="w-full h-full bg-gradient-to-br from-coffee-200 via-coffee-100 to-coffee-200 dark:from-[#44403c] dark:via-[#34302e] dark:to-[#44403c]"></div></div>`;
+        }
+        if (!imageUrl) {
+            return `<div data-pin-image-card="placeholder" class="${baseClass}" style="position:absolute; right:0.5rem; bottom:0.5rem; z-index:20;"><div class="w-full h-full bg-gradient-to-br from-coffee-200 via-coffee-100 to-coffee-200 dark:from-[#44403c] dark:via-[#34302e] dark:to-[#44403c]"></div><div class="absolute inset-0 flex items-center justify-center text-coffee-400 dark:text-[#78716c]"><i class="fa-regular fa-image text-xs"></i></div></div>`;
+        }
+        return `<div data-pin-image-card="img" class="${baseClass}" style="position:absolute; right:0.5rem; bottom:0.5rem; z-index:20;"><div data-pin-image-bg class="absolute inset-0 bg-gradient-to-br from-coffee-200 via-coffee-100 to-coffee-200 dark:from-[#44403c] dark:via-[#34302e] dark:to-[#44403c] ai-loading-pulse"></div><img data-pin-image-img src="${imageUrl}" alt="${titleText}" class="w-full h-full object-cover opacity-0 transition-opacity duration-200" loading="lazy" decoding="async"></div>`;
+    };
+
+    const wirePinnedTileImageState = (tile) => {
+        if (!tile) return;
+        const imgs = tile.querySelectorAll('img[data-pin-image-img]');
+        imgs.forEach((img) => {
+            if (img.dataset.bound === 'true') return;
+            img.dataset.bound = 'true';
+            const card = img.closest('[data-pin-image-card]');
+            const skeleton = card?.querySelector('[data-pin-image-bg]');
+            const showImage = () => {
+                img.classList.remove('opacity-0');
+                if (skeleton) {
+                    skeleton.classList.remove('ai-loading-pulse');
+                    skeleton.classList.add('hidden');
+                }
+            };
+            const showFallback = () => {
+                img.remove();
+                if (!skeleton) return;
+                skeleton.classList.remove('ai-loading-pulse');
+                skeleton.classList.remove('hidden');
+                skeleton.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-coffee-400 dark:text-[#78716c]"><i class="fa-regular fa-image text-xs"></i></div>';
+            };
+            img.addEventListener('load', showImage, { once: true });
+            img.addEventListener('error', showFallback, { once: true });
+            if (img.complete) {
+                if (img.naturalWidth > 0) showImage();
+                else showFallback();
+            }
+        });
+    };
+
     const renderPinnedTilesView = ({
         coffees,
         beans,
@@ -116,7 +177,11 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         currentSort,
         activeFilters,
         openPinnedBrewCard,
-        openPinnedBeanCardWithOrder
+        openPinnedBeanCardWithOrder,
+        progressiveHydration = false,
+        activeBeansOnly = false,
+        suppressCoffeeDetails = false,
+        suppressCoffeeImages = false
     }) => {
         ensureChooserWiring();
         closeChooser();
@@ -125,12 +190,25 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         if (!pinnedSection || !pinnedGrid) return { hasTiles: false, beanKeys: [] };
 
         pinnedGrid.innerHTML = '';
-        const allActiveBrews = coffees.filter((c) => c.isActive);
+        const isBeanActive = (bean) => !!bean && bean.archived !== true && bean.frozen !== true;
+        const allActiveBrews = coffees
+            .filter((c) => c.isActive)
+            .filter((brew) => {
+                if (!activeBeansOnly) return true;
+                const linkedBean = resolveLinkedBean({ brew, beans });
+                return isBeanActive(linkedBean);
+            });
         if (!allActiveBrews.length) {
             pinnedSection.classList.add('hidden');
             return { hasTiles: false, beanKeys: [] };
         }
 
+        const hideDetailsInitially = progressiveHydration || suppressCoffeeDetails;
+        const hideImagesInitially = progressiveHydration || suppressCoffeeImages;
+        const hydrateDetailsInPlace = progressiveHydration && !suppressCoffeeDetails;
+        const hydrateImagesInPlace = progressiveHydration && !suppressCoffeeImages;
+        const progressiveDetailHydrators = [];
+        const progressiveImageHydrators = [];
         const beanKeys = [];
 
         const beanGroups = new Map();
@@ -166,21 +244,53 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
             const linkedBean = bean || resolveLinkedBean({ brew: previewBrew, beans });
             const { stockOverlay, dragIconClass } = getStockOverlay({ bean: linkedBean });
             const typeDisplay = getCoffeeTypeDisplay(previewBrew);
-            const roaster = typeDisplay.roaster || previewBrew.name || 'Unknown Roaster';
-            const farmer = typeDisplay.farmer || '-';
-            const titleText = farmer && farmer !== '-' ? farmer : roaster;
-            const subtitleText = roaster;
+            const roaster = normalizeDisplayText(typeDisplay.roaster) ||
+                normalizeDisplayText(previewBrew.roaster) ||
+                normalizeDisplayText(previewBrew.name) ||
+                'Unknown Roaster';
+            const farmer = normalizeDisplayText(typeDisplay.farmer) || normalizeDisplayText(previewBrew.farmer);
+            const farmerText = farmer || roaster;
+            const roasterText = roaster;
+            const titleText = farmerText;
             const imageUrl = typeDisplay.imageUrl || typeDisplay.imageURL || '';
             const isDecaf = !!typeDisplay.decaf;
             const decafIcon = isDecaf ? '<i class="fa-solid fa-moon text-[11px] text-coffee-500 dark:text-[#a8a29e] ml-1" title="Decaf"></i>' : '';
             const dragIcon = isPinnedDraggable({ currentView, currentSort, activeFilters })
                 ? `<div class="absolute top-1 right-1 ${dragIconClass || 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]'} drag-handle p-2 z-20 transition-colors duration-200"><i class="fa-solid fa-grip-vertical text-base"></i></div>`
                 : '';
-            const imagePreview = imageUrl
-                ? `<div class="absolute w-12 h-16 rounded-lg overflow-hidden border border-coffee-200 dark:border-[#57534e] bg-coffee-100 dark:bg-[#1c1917]" style="position:absolute; right:0.5rem; bottom:0.5rem; z-index:20;"><img src="${imageUrl}" alt="${titleText}" class="w-full h-full object-cover" loading="lazy" decoding="async"></div>`
-                : '';
+            const detailsMarkup = buildPinnedTileDetailsMarkup({
+                hideDetailsInitially,
+                farmerText,
+                roasterText,
+                decafIcon
+            });
+            const imageMarkup = hideImagesInitially
+                ? buildPinnedTileImageCardMarkup({ imageUrl, titleText, stage: 'loading' })
+                : buildPinnedTileImageCardMarkup({ imageUrl, titleText, stage: 'ready' });
             const backgroundLayer = `<div class="absolute inset-0 rounded-lg overflow-hidden z-0">${stockOverlay}</div>`;
-            tile.innerHTML = `${backgroundLayer}${dragIcon}<div class="pr-4 relative z-10"><h3 class="font-bold text-coffee-900 dark:text-white truncate text-sm leading-tight" title="${titleText}">${titleText}</h3><p class="text-[10px] text-coffee-500 dark:text-[#e7e5e4] truncate font-medium mb-2">${subtitleText}</p><div class="flex items-center">${decafIcon}</div></div>${imagePreview}`;
+            tile.innerHTML = `${backgroundLayer}${dragIcon}${detailsMarkup}${imageMarkup}`;
+            if (hydrateDetailsInPlace && hideDetailsInitially) {
+                progressiveDetailHydrators.push(() => {
+                    if (!tile.isConnected) return;
+                    const detailsSkeleton = tile.querySelector('[data-pin-details-stage="loading"]');
+                    if (!detailsSkeleton) return;
+                    detailsSkeleton.outerHTML = buildPinnedTileDetailsMarkup({
+                        hideDetailsInitially: false,
+                        farmerText,
+                        roasterText,
+                        decafIcon
+                    });
+                });
+            }
+            if (hydrateImagesInPlace && hideImagesInitially) {
+                progressiveImageHydrators.push(() => {
+                    if (!tile.isConnected) return;
+                    const imageSkeleton = tile.querySelector('[data-pin-image-stage="loading"]');
+                    if (!imageSkeleton) return;
+                    imageSkeleton.outerHTML = buildPinnedTileImageCardMarkup({ imageUrl, titleText, stage: 'ready' });
+                    wirePinnedTileImageState(tile);
+                });
+            }
 
             let pressTimer = null;
             let longPressHandled = false;
@@ -223,9 +333,26 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
             });
 
             pinnedGrid.appendChild(tile);
+            wirePinnedTileImageState(tile);
         });
 
         pinnedSection.classList.remove('hidden');
+        if (hydrateDetailsInPlace || hydrateImagesInPlace) {
+            setTimeout(() => {
+                progressiveDetailHydrators.forEach((hydrate) => {
+                    try {
+                        hydrate();
+                    } catch (_) {}
+                });
+            }, 0);
+            setTimeout(() => {
+                progressiveImageHydrators.forEach((hydrate) => {
+                    try {
+                        hydrate();
+                    } catch (_) {}
+                });
+            }, 140);
+        }
         return { hasTiles: true, beanKeys };
     };
 

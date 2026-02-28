@@ -15,7 +15,6 @@
         import { createBrewsCardActionsModule } from '../../features/brews/brews-card-actions.js';
         import { createBrewsCardUiModule } from '../../features/brews/brews-card-ui.js';
         import { createBrewsCardShareModule } from '../../features/brews/brews-card-share.js';
-        import { createBrewsCardGraphModule } from '../../features/brews/brews-card-graph.js';
         import { createBrewsCardPhotoModule } from '../../features/brews/brews-card-photo.js';
         import { createBrewsFormModalModule } from '../../features/brews/brews-form-modal.js';
         import { createBrewsTableStatePresetsModule } from '../../features/brews/brews-table-state-presets.js';
@@ -391,7 +390,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getFilteredCoffees,
             getTempBadge,
             refreshTableData,
-            renderTable,
+            renderTable: renderTableImmediate,
             loadMoreBrews,
             columnPreferencesKey,
             loadColumnPreferencesFromStorage,
@@ -435,6 +434,62 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 setColumnPreferences: (value) => setColumnPreferencesState(value)
             }
         });
+        const shouldDeferInitialTableRender = !isE2ESeedMode;
+        let hasBrewTableFirstInteraction = !shouldDeferInitialTableRender;
+        let hasPendingInitialBrewTableRender = false;
+        const firstInteractionListeners = [];
+        const setBrewTableDeferredHintVisible = (visible) => {
+            if (typeof document === 'undefined') return;
+            const hint = document.getElementById('brewTableDeferredHint');
+            if (!hint) return;
+            hint.classList.toggle('hidden', !visible);
+        };
+        const clearFirstInteractionListeners = () => {
+            while (firstInteractionListeners.length) {
+                const entry = firstInteractionListeners.pop();
+                try {
+                    entry.target.removeEventListener(entry.type, entry.handler, entry.options);
+                } catch (_) {}
+            }
+        };
+        const flushPendingBrewTableRender = () => {
+            if (!hasPendingInitialBrewTableRender) return;
+            hasPendingInitialBrewTableRender = false;
+            renderTableImmediate();
+        };
+        const markBrewTableInteractionReady = () => {
+            if (hasBrewTableFirstInteraction) return;
+            hasBrewTableFirstInteraction = true;
+            setBrewTableDeferredHintVisible(false);
+            clearFirstInteractionListeners();
+            flushPendingBrewTableRender();
+        };
+        const bindFirstInteractionListener = (target, type, options = {}) => {
+            if (!target || typeof target.addEventListener !== 'function') return;
+            const handler = () => markBrewTableInteractionReady();
+            target.addEventListener(type, handler, options);
+            firstInteractionListeners.push({ target, type, handler, options });
+        };
+        if (shouldDeferInitialTableRender && typeof window !== 'undefined' && typeof document !== 'undefined') {
+            setBrewTableDeferredHintVisible(true);
+            bindFirstInteractionListener(window, 'pointerdown', { capture: true, passive: true });
+            bindFirstInteractionListener(window, 'touchstart', { capture: true, passive: true });
+            bindFirstInteractionListener(window, 'wheel', { capture: true, passive: true });
+            bindFirstInteractionListener(window, 'keydown', { capture: true });
+            bindFirstInteractionListener(window, 'mousedown', { capture: true, passive: true });
+            bindFirstInteractionListener(document, 'click', { capture: true, passive: true });
+        } else {
+            setBrewTableDeferredHintVisible(false);
+        }
+        const renderTable = (...args) => {
+            if (!hasBrewTableFirstInteraction) {
+                setBrewTableDeferredHintVisible(true);
+                hasPendingInitialBrewTableRender = true;
+                return;
+            }
+            setBrewTableDeferredHintVisible(false);
+            return renderTableImmediate(...args);
+        };
         const {
             toggleBrewsTableStateMenu,
             closeBrewsTableStateMenu,
@@ -750,6 +805,25 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const parseNum = (v) => (v === '' || v === null || isNaN(v)) ? null : parseFloat(v);
         const getChart = () => ensureChartJs();
         const getHtml2canvas = () => ensureHtml2Canvas();
+        let graphModalsMountPromise = null;
+        const ensureGraphModalsMounted = async () => {
+            if (typeof document === 'undefined') return false;
+            if (document.getElementById('graphModal') && document.getElementById('cardGraphModal')) return true;
+            if (!graphModalsMountPromise) {
+                graphModalsMountPromise = (async () => {
+                    const mountTarget = document.getElementById('graphModalsMount');
+                    if (!mountTarget) return false;
+                    const { mountGraphModalsView } = await import('../../features/graph-modals/graph-modals.mount.js');
+                    await mountGraphModalsView();
+                    return true;
+                })().catch((error) => {
+                    graphModalsMountPromise = null;
+                    console.error('Failed to mount graph modals on demand:', error);
+                    return false;
+                });
+            }
+            return graphModalsMountPromise;
+        };
         const {
             bindMethodOtherChangeListener,
             openSelectedBeanForEdit,
@@ -1136,6 +1210,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             resetLightboxZoom,
             initLightboxListeners
         } = createMediaModalsModule({
+            ensureGraphModalsMounted: (...args) => ensureGraphModalsMounted(...args),
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'media.modals' })
         });
@@ -1339,15 +1414,42 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getHtml2canvas
         });
 
-        const { openCardGraphModal, closeCardGraphModal, updateCoffeeGraphNav, navigateCoffeeCardFromGraph } = createBrewsCardGraphModule({
-            getCurrentCardGraphData: () => getCurrentCardGraphDataState(),
-            getCurrentCardCoffee: () => getCurrentCardCoffeeState(),
-            getCurrentCoffeeCardId: () => getCurrentCoffeeCardIdState(),
-            getBrewTableOrder: (...args) => getBrewTableOrder(...args),
-            getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
-            dispatchCommand: (commandName, payload) =>
-                appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-graph' })
-        });
+        let brewsCardGraphModulePromise = null;
+        const ensureBrewsCardGraphModule = async () => {
+            if (!brewsCardGraphModulePromise) {
+                brewsCardGraphModulePromise = (async () => {
+                    const { createBrewsCardGraphModule } = await import('../../features/brews/brews-card-graph.js');
+                    return createBrewsCardGraphModule({
+                        getCurrentCardGraphData: () => getCurrentCardGraphDataState(),
+                        getCurrentCardCoffee: () => getCurrentCardCoffeeState(),
+                        getCurrentCoffeeCardId: () => getCurrentCoffeeCardIdState(),
+                        getBrewTableOrder: (...args) => getBrewTableOrder(...args),
+                        getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
+                        dispatchCommand: (commandName, payload) =>
+                            appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-graph' }),
+                        ensureGraphModalsMounted: (...args) => ensureGraphModalsMounted(...args)
+                    });
+                })().catch((error) => {
+                    brewsCardGraphModulePromise = null;
+                    throw error;
+                });
+            }
+            return brewsCardGraphModulePromise;
+        };
+        const openCardGraphModal = (...args) =>
+            ensureBrewsCardGraphModule().then((module) => module.openCardGraphModal(...args));
+        const closeCardGraphModal = (...args) => {
+            const modal = document.getElementById('cardGraphModal');
+            if (modal) modal.classList.add('hidden');
+            if (!brewsCardGraphModulePromise) return;
+            void brewsCardGraphModulePromise
+                .then((module) => module.closeCardGraphModal(...args))
+                .catch((error) => console.error('Failed closing card graph modal:', error));
+        };
+        const updateCoffeeGraphNav = (...args) =>
+            ensureBrewsCardGraphModule().then((module) => module.updateCoffeeGraphNav(...args));
+        const navigateCoffeeCardFromGraph = (...args) =>
+            ensureBrewsCardGraphModule().then((module) => module.navigateCoffeeCardFromGraph(...args));
 
         createScalesController({
             appCommands,

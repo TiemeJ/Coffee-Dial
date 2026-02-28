@@ -32,11 +32,14 @@
                 <div class="flex items-center gap-2 flex-wrap" id="activeFiltersList"></div>
                 <button data-action-click="clearAllFilters()" class="text-xs text-coffee-600 dark:text-[#a8a29e] hover:text-red-500 whitespace-nowrap px-2 py-1 rounded hover:bg-coffee-50 dark:hover:bg-[#34302e] transition-colors">Clear all</button>
             </div>
-            </div>
-            <div class="overflow-x-auto min-h-[300px]">
-                <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
-                    <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
-                        <tr>
+	            </div>
+	            <div class="overflow-x-auto min-h-[300px]">
+	                <div id="brewTableDeferredHint" class="hidden px-3 py-2 text-xs text-coffee-500 dark:text-[#a8a29e] bg-coffee-50/80 dark:bg-[#1c1917]/80 border-b border-coffee-200 dark:border-[#44403c]">
+	                    <i class="fa-solid fa-hand-pointer mr-1"></i>Tap to load brews
+	                </div>
+	                <table class="w-full text-sm text-left text-coffee-900 dark:text-[#e7e5e4]">
+	                    <thead class="text-xs text-coffee-700 dark:text-[#a8a29e] uppercase bg-coffee-100/50 dark:bg-[#1c1917] border-b border-coffee-200 dark:border-[#44403c]">
+	                        <tr>
                             <th id="th-farmer" scope="col" class="px-3 py-1.5 hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors group filterable whitespace-nowrap">
                                 <button type="button" data-action-click="sortBy('farmer')" class="w-full flex items-center gap-1 text-left">
                                     <span>Blend/Farmer</span>

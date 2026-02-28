@@ -1,4 +1,4 @@
-export const createMediaModalsModule = ({ dispatchCommand }) => {
+export const createMediaModalsModule = ({ dispatchCommand, ensureGraphModalsMounted = null }) => {
     let lightboxListenersInitialized = false;
     let lightboxItems = [];
     let lightboxIndex = 0;
@@ -21,7 +21,10 @@ export const createMediaModalsModule = ({ dispatchCommand }) => {
         });
     };
 
-    const openGraphModal = () => {
+    const openGraphModal = async () => {
+        if (typeof ensureGraphModalsMounted === 'function') {
+            await ensureGraphModalsMounted();
+        }
         const modal = document.getElementById('graphModal');
         if (!modal) return;
         modal.classList.remove('hidden');

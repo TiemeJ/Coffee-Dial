@@ -4,7 +4,8 @@ export const createBrewsCardGraphModule = ({
     getCurrentCoffeeCardId,
     getBrewTableOrder,
     getCoffeeTypeDisplay,
-    dispatchCommand
+    dispatchCommand,
+    ensureGraphModalsMounted = null
 }) => {
     const updateCoffeeGraphNav = () => {
         const order = getBrewTableOrder();
@@ -22,6 +23,9 @@ export const createBrewsCardGraphModule = ({
 
     const openCardGraphModal = async (e, forceOpen = false) => {
         if (e) e.stopPropagation();
+        if (typeof ensureGraphModalsMounted === 'function') {
+            await ensureGraphModalsMounted();
+        }
         const currentGraphData = getCurrentCardGraphData();
         if (!currentGraphData && !forceOpen) return;
 
