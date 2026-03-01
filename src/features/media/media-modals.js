@@ -1,4 +1,8 @@
-export const createMediaModalsModule = ({ dispatchCommand, ensureGraphModalsMounted = null }) => {
+export const createMediaModalsModule = ({
+    dispatchCommand,
+    ensureGraphModalsMounted = null,
+    ensureGraphScaleBindings = null
+}) => {
     let lightboxListenersInitialized = false;
     let lightboxItems = [];
     let lightboxIndex = 0;
@@ -24,6 +28,9 @@ export const createMediaModalsModule = ({ dispatchCommand, ensureGraphModalsMoun
     const openGraphModal = async () => {
         if (typeof ensureGraphModalsMounted === 'function') {
             await ensureGraphModalsMounted();
+        }
+        if (typeof ensureGraphScaleBindings === 'function') {
+            await ensureGraphScaleBindings();
         }
         const modal = document.getElementById('graphModal');
         if (!modal) return;

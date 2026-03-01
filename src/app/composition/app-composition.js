@@ -1222,6 +1222,12 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             initLightboxListeners
         } = createMediaModalsModule({
             ensureGraphModalsMounted: (...args) => ensureGraphModalsMounted(...args),
+            ensureGraphScaleBindings: async () => {
+                await ensureScalesFeature();
+                coffeeScale?.bindGraphModalControls?.();
+                coffeeScale?.syncGraphFormFields?.();
+                coffeeScale?.applyGraphTogglePrefsForMethod?.();
+            },
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'media.modals' })
         });

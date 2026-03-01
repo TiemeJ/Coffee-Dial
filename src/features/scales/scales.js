@@ -16,27 +16,42 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   const connectResetTimerBtn = document.getElementById("connectScaleResetTimer");
   const connectConnectBtn = document.getElementById("connectScaleConnect");
   const flowEl = document.getElementById("flow");
-  const graphTimeEl = document.getElementById("graphTime");
+  let graphTimeEl = document.getElementById("graphTime");
   const captureOutputEl = document.getElementById("captureOutput");
   const flowOutputEl = document.getElementById("flowOutput");
   const rawOutputEl = document.getElementById("rawOutput");
-  const graphEl = document.getElementById("graph");
-  const graphInputWeightEl = document.getElementById("graphInputWeight");
-  const graphInputRatioEl = document.getElementById("graphInputRatio");
-  const graphInputYieldEl = document.getElementById("graphInputYield");
-  const graphFirstDripEl = document.getElementById("graphFirstDrip");
-  const graphMaxFlowEl = document.getElementById("graphMaxFlow");
-  const graphAvgFlowEl = document.getElementById("graphAvgFlow");
-  const graphAutoStartToggle = document.getElementById("graphAutoStartToggle");
-  const graphUnswirlToggle = document.getElementById("graphUnswirlToggle");
-  const graphEventLogEl = document.getElementById("graphEventLog");
-  const graphCountPoursToggle = document.getElementById("graphCountPoursToggle");
+  let graphEl = document.getElementById("graph");
+  let graphInputWeightEl = document.getElementById("graphInputWeight");
+  let graphInputRatioEl = document.getElementById("graphInputRatio");
+  let graphInputYieldEl = document.getElementById("graphInputYield");
+  let graphFirstDripEl = document.getElementById("graphFirstDrip");
+  let graphMaxFlowEl = document.getElementById("graphMaxFlow");
+  let graphAvgFlowEl = document.getElementById("graphAvgFlow");
+  let graphAutoStartToggle = document.getElementById("graphAutoStartToggle");
+  let graphUnswirlToggle = document.getElementById("graphUnswirlToggle");
+  let graphEventLogEl = document.getElementById("graphEventLog");
+  let graphCountPoursToggle = document.getElementById("graphCountPoursToggle");
   const GRAPH_TOGGLE_NONE_KEY = "none";
   let graphTogglePrefs = {};
   let graphTogglePrefsSaver = null;
   let liveTimerInterval = null;
   let liveTimerStartAt = null;
   let liveTimerElapsedMs = 0;
+
+  function refreshGraphDomRefs() {
+    graphTimeEl = document.getElementById("graphTime");
+    graphEl = document.getElementById("graph");
+    graphInputWeightEl = document.getElementById("graphInputWeight");
+    graphInputRatioEl = document.getElementById("graphInputRatio");
+    graphInputYieldEl = document.getElementById("graphInputYield");
+    graphFirstDripEl = document.getElementById("graphFirstDrip");
+    graphMaxFlowEl = document.getElementById("graphMaxFlow");
+    graphAvgFlowEl = document.getElementById("graphAvgFlow");
+    graphAutoStartToggle = document.getElementById("graphAutoStartToggle");
+    graphUnswirlToggle = document.getElementById("graphUnswirlToggle");
+    graphEventLogEl = document.getElementById("graphEventLog");
+    graphCountPoursToggle = document.getElementById("graphCountPoursToggle");
+  }
 
   if (!statusEl || !weightEl || !tareBtn || !timerBtn || !resetTimerBtn || !connectBtn) {
     coffeeScaleApi = null;
@@ -173,6 +188,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   }
 
   function setGraphToggleState(state) {
+    refreshGraphDomRefs();
     if (graphAutoStartToggle && typeof state.autoStart === "boolean") {
       graphAutoStartToggle.checked = state.autoStart;
       if (!state.autoStart && autoStartPending) {
@@ -202,6 +218,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   }
 
   function applyGraphTogglePrefsForMethod(methodValue = null) {
+    refreshGraphDomRefs();
     const prefs = getGraphTogglePrefs();
     const methodKey = getMethodKey(methodValue ?? getMethodValueFromForm());
     const state = prefs[methodKey];
@@ -607,6 +624,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   }
 
   function renderGraph() {
+    refreshGraphDomRefs();
     renderGraphTo(graphEl);
   }
 
@@ -1928,69 +1946,95 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     timerIconBtn.addEventListener("click", handleTimerIconClick);
   }
 
-  const graphWeighBtn = document.getElementById("graphWeighBtn");
-  if (graphWeighBtn) {
-    graphWeighBtn.addEventListener("pointerdown", () => {
-      const outField = document.getElementById("inputYield");
-      weighClickFromOut = document.activeElement === outField;
-    });
-    graphWeighBtn.addEventListener("click", handleWeighClick);
-  }
+  function bindGraphModalControls() {
+    refreshGraphDomRefs();
 
-  const graphResetScaleBtn = document.getElementById("graphResetScaleBtn");
-  if (graphResetScaleBtn) {
-    graphResetScaleBtn.addEventListener("click", handleResetScaleClick);
-  }
+    const graphWeighBtn = document.getElementById("graphWeighBtn");
+    if (graphWeighBtn && graphWeighBtn.dataset.scaleBound !== "true") {
+      graphWeighBtn.dataset.scaleBound = "true";
+      graphWeighBtn.addEventListener("pointerdown", () => {
+        const outField = document.getElementById("inputYield");
+        weighClickFromOut = document.activeElement === outField;
+      });
+      graphWeighBtn.addEventListener("click", handleWeighClick);
+    }
 
-  const graphTimerBtn = document.getElementById("graphTimerBtn");
-  if (graphTimerBtn) {
-    graphTimerBtn.addEventListener("click", handleTimerIconClick);
-  }
+    const graphResetScaleBtn = document.getElementById("graphResetScaleBtn");
+    if (graphResetScaleBtn && graphResetScaleBtn.dataset.scaleBound !== "true") {
+      graphResetScaleBtn.dataset.scaleBound = "true";
+      graphResetScaleBtn.addEventListener("click", handleResetScaleClick);
+    }
 
-  if (graphAutoStartToggle) {
-    graphAutoStartToggle.addEventListener("change", () => {
-      if (!graphAutoStartToggle.checked && autoStartPending) {
-        autoStartPending = false;
-        setTimerBlinking(false);
-      }
-      saveGraphTogglePrefsForMethod();
-    });
-  }
+    const graphTimerBtn = document.getElementById("graphTimerBtn");
+    if (graphTimerBtn && graphTimerBtn.dataset.scaleBound !== "true") {
+      graphTimerBtn.dataset.scaleBound = "true";
+      graphTimerBtn.addEventListener("click", handleTimerIconClick);
+    }
 
-  if (graphUnswirlToggle) {
-    graphUnswirlToggle.addEventListener("change", () => {
-      unswirlEnabled = graphUnswirlToggle.checked;
-      if (!unswirlEnabled) {
-        swirlActive = false;
-        currentSwirlStartMs = null;
-      } else if (Number.isFinite(lastWeight) && lastWeight > UNSWIRL_THRESHOLD) {
-        lastGoodWeight = lastWeight;
-      }
-      saveGraphTogglePrefsForMethod();
-    });
-  }
+    if (graphAutoStartToggle && graphAutoStartToggle.dataset.scaleBound !== "true") {
+      graphAutoStartToggle.dataset.scaleBound = "true";
+      graphAutoStartToggle.addEventListener("change", () => {
+        if (!graphAutoStartToggle.checked && autoStartPending) {
+          autoStartPending = false;
+          setTimerBlinking(false);
+        }
+        saveGraphTogglePrefsForMethod();
+      });
+    }
 
-  if (graphCountPoursToggle) {
-    graphCountPoursToggle.addEventListener("change", () => {
-      countPoursEnabled = graphCountPoursToggle.checked;
-      if (!countPoursEnabled) {
-        pourActive = false;
-        pourStartMs = null;
-        pourStartWeight = null;
-      }
-      saveGraphTogglePrefsForMethod();
-    });
+    if (graphUnswirlToggle && graphUnswirlToggle.dataset.scaleBound !== "true") {
+      graphUnswirlToggle.dataset.scaleBound = "true";
+      graphUnswirlToggle.addEventListener("change", () => {
+        unswirlEnabled = graphUnswirlToggle.checked;
+        if (!unswirlEnabled) {
+          swirlActive = false;
+          currentSwirlStartMs = null;
+        } else if (Number.isFinite(lastWeight) && lastWeight > UNSWIRL_THRESHOLD) {
+          lastGoodWeight = lastWeight;
+        }
+        saveGraphTogglePrefsForMethod();
+      });
+    }
+
+    if (graphCountPoursToggle && graphCountPoursToggle.dataset.scaleBound !== "true") {
+      graphCountPoursToggle.dataset.scaleBound = "true";
+      graphCountPoursToggle.addEventListener("change", () => {
+        countPoursEnabled = graphCountPoursToggle.checked;
+        if (!countPoursEnabled) {
+          pourActive = false;
+          pourStartMs = null;
+          pourStartWeight = null;
+        }
+        saveGraphTogglePrefsForMethod();
+      });
+    }
+
+    if (graphFirstDripEl && graphFirstDripEl.dataset.scaleBound !== "true") {
+      graphFirstDripEl.dataset.scaleBound = "true";
+      graphFirstDripEl.addEventListener("input", () => {
+        const value = graphFirstDripEl.value;
+        if (value === "") {
+          firstDripCapturedAt = null;
+        } else {
+          const parsed = Number(value);
+          firstDripCapturedAt = Number.isFinite(parsed) ? parsed * 1000 : firstDripCapturedAt;
+        }
+        renderGraph();
+      });
+    }
   }
 
   const inField = document.getElementById("inputWeight");
   const outField = document.getElementById("inputYield");
   const ratioField = document.getElementById("inputRatio");
   const syncGraphRecipeFields = () => {
+    refreshGraphDomRefs();
     if (graphInputWeightEl && inField) graphInputWeightEl.value = inField.value;
     if (graphInputRatioEl && ratioField) graphInputRatioEl.value = ratioField.value;
     if (graphInputYieldEl && outField) graphInputYieldEl.value = outField.value;
   };
   const syncGraphTimeFromForm = () => {
+    refreshGraphDomRefs();
     if (!graphTimeEl) return;
     const timeField = document.getElementById("time");
     const timeValue = timeField ? (timeField.value || 0) : 0;
@@ -2003,6 +2047,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   if (inField) inField.addEventListener("input", syncGraphRecipeFields);
   if (ratioField) ratioField.addEventListener("input", syncGraphRecipeFields);
   if (outField) outField.addEventListener("input", syncGraphRecipeFields);
+  bindGraphModalControls();
   syncGraphRecipeFields();
   syncGraphTimeFromForm();
   applyGraphTogglePrefsForMethod();
@@ -2016,19 +2061,6 @@ export function initCoffeeScale({ openScaleModal } = {}) {
       lastFocusedField = "out";
     });
   }
-  if (graphFirstDripEl) {
-    graphFirstDripEl.addEventListener("input", () => {
-      const value = graphFirstDripEl.value;
-      if (value === "") {
-        firstDripCapturedAt = null;
-      } else {
-        const parsed = Number(value);
-        firstDripCapturedAt = Number.isFinite(parsed) ? parsed * 1000 : firstDripCapturedAt;
-      }
-      renderGraph();
-    });
-  }
-
   function setGraphTogglePrefs(prefs) {
     const next = prefs && typeof prefs === "object" ? { ...prefs } : {};
     if (Object.prototype.hasOwnProperty.call(next, "__none__")) {
@@ -2052,6 +2084,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     setCaptureData,
     resetCaptureData,
     syncGraphFormFields,
+    bindGraphModalControls,
     renderGraphTo,
     applyGraphTogglePrefsForMethod,
     setGraphTogglePrefs,
