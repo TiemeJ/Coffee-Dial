@@ -85,11 +85,11 @@
 
                     <!-- SECTION 2: BREW PARAMETERS -->
                     <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c]">
-                         <div id="extractionHeader" data-action-click="toggleExtractionSection(event)" class="mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] flex items-center justify-between cursor-pointer select-none">
+                         <div id="extractionHeader" data-action-click="toggleExtractionSection(event)" class="mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between cursor-pointer select-none">
                              <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
                                  <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Extraction
                              </h3>
-                             <div data-action-click="event.stopPropagation()" class="flex items-center gap-2">
+                             <div data-action-click="event.stopPropagation()" class="w-full flex flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
                                  <button id="brewGraphBtn" type="button" title="Graph" data-action-click="openGraphModal()" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
                                      <i class="fa-solid fa-chart-line"></i>
                                  </button>
