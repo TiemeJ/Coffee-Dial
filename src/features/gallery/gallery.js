@@ -266,6 +266,7 @@ export const createGalleryModule = ({
     const unreadMineCommentMomentIds = new Set();
     const unreadSharedCommentMomentIds = new Set();
     let currentUploadMomentBrew = null;
+    let pendingOutsideShareContext = null;
     let galleryNotificationBaseline = null;
     const DEFAULT_URL_TTL_SECONDS = 180;
     const CACHE_SKEW_MS = 15000;
@@ -1440,6 +1441,62 @@ export const createGalleryModule = ({
         loading.classList.toggle('hidden', !isVisible);
     };
 
+    const hideMomentOutsideSharePrompt = () => {
+        const prompt = document.getElementById('momentOutsideSharePrompt');
+        if (prompt) prompt.classList.add('hidden');
+        pendingOutsideShareContext = null;
+    };
+
+    const setMomentOutsideShareButtonsDisabled = (isDisabled) => {
+        const yesBtn = document.getElementById('momentOutsideShareYesBtn');
+        const noBtn = document.getElementById('momentOutsideShareNoBtn');
+        if (yesBtn) yesBtn.disabled = isDisabled;
+        if (noBtn) noBtn.disabled = isDisabled;
+        if (yesBtn) yesBtn.classList.toggle('opacity-70', isDisabled);
+        if (yesBtn) yesBtn.classList.toggle('cursor-wait', isDisabled);
+    };
+
+    const showMomentOutsideSharePrompt = (context) => {
+        pendingOutsideShareContext = context || null;
+        const prompt = document.getElementById('momentOutsideSharePrompt');
+        if (!prompt) return;
+        setMomentOutsideShareButtonsDisabled(false);
+        prompt.classList.remove('hidden');
+    };
+
+    const bindMomentOutsideSharePromptControls = () => {
+        const yesBtn = document.getElementById('momentOutsideShareYesBtn');
+        const noBtn = document.getElementById('momentOutsideShareNoBtn');
+
+        if (noBtn && noBtn.dataset.boundOutsideShare !== 'true') {
+            noBtn.dataset.boundOutsideShare = 'true';
+            noBtn.addEventListener('click', () => {
+                hideMomentOutsideSharePrompt();
+            });
+        }
+
+        if (yesBtn && yesBtn.dataset.boundOutsideShare !== 'true') {
+            yesBtn.dataset.boundOutsideShare = 'true';
+            yesBtn.addEventListener('click', async () => {
+                const context = pendingOutsideShareContext;
+                if (!context) {
+                    hideMomentOutsideSharePrompt();
+                    return;
+                }
+                setMomentOutsideShareButtonsDisabled(true);
+                try {
+                    await shareMoment(context);
+                } catch (error) {
+                    if (error?.name !== 'AbortError') {
+                        alert(`Outside app share failed: ${error?.message || 'Unknown error'}`);
+                    }
+                } finally {
+                    hideMomentOutsideSharePrompt();
+                }
+            });
+        }
+    };
+
     const openUploadModal = (coffeeId) => {
         document.querySelectorAll('.action-menu').forEach((el) => el.classList.add('hidden'));
         setCurrentUploadCoffeeId(coffeeId);
@@ -1452,8 +1509,6 @@ export const createGalleryModule = ({
         if (msg) msg.value = '';
         const defaultType = document.getElementById('momentTypePhoto');
         if (defaultType) defaultType.checked = true;
-        const shareOutsideCheckbox = document.getElementById('momentShareOutsideApp');
-        if (shareOutsideCheckbox) shareOutsideCheckbox.checked = false;
         bindUploadMomentTypeControls();
         updateUploadMomentTypeUi();
         progress?.classList.add('hidden');
@@ -1589,7 +1644,6 @@ export const createGalleryModule = ({
         const fileInput = document.getElementById('photoInput');
         const momentType = getSelectedMomentType();
         const selectedPhotoFile = fileInput?.files?.[0];
-        const alsoShareOutsideApp = !!document.getElementById('momentShareOutsideApp')?.checked;
         const message = document.getElementById('photoMessage')?.value || '';
         if (momentType === 'photo' && !selectedPhotoFile) return alert('Please select a photo.');
 
@@ -1615,10 +1669,7 @@ export const createGalleryModule = ({
             cardSnapshot: coffeeSnapshot,
             appLink
         });
-        if (alsoShareOutsideApp) {
-            // Try early clipboard copy while still in direct user action context.
-            copyMomentShareTextToClipboard(previewShareText);
-        }
+        copyMomentShareTextToClipboard(previewShareText);
 
         document.getElementById('uploadProgress')?.classList.remove('hidden');
 
@@ -1673,34 +1724,13 @@ export const createGalleryModule = ({
             }
             const createdMomentRef = await addDoc(collection(db, 'photos'), momentPayload);
             closeUploadModal();
-
-            let outsideShareError = '';
-            if (alsoShareOutsideApp) {
-                if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
-                    outsideShareError = 'Native sharing is not supported on this device.';
-                } else {
-                    try {
-                        await shareMoment({
-                            photoId: createdMomentRef?.id,
-                            data: momentPayload,
-                            cardSnapshot: coffeeSnapshot,
-                            cardElement: null
-                        });
-                    } catch (error) {
-                        if (error?.name !== 'AbortError') {
-                            outsideShareError = error?.message || 'Could not open device share.';
-                        }
-                    }
-                }
-            }
-
-            if (outsideShareError) {
-                alert(`Moment shared in app. Outside app share failed: ${outsideShareError}`);
-            } else {
-                alert('Moment shared successfully!');
-            }
-
             await openGallery('mine');
+            showMomentOutsideSharePrompt({
+                photoId: createdMomentRef?.id,
+                data: momentPayload,
+                cardSnapshot: coffeeSnapshot,
+                cardElement: null
+            });
         } catch (error) {
             console.error('Upload failed', error);
             alert(`Upload failed: ${error.message}`);
@@ -1709,6 +1739,8 @@ export const createGalleryModule = ({
 
     const openGallery = async (initialTab = 'shared') => {
         clearLiveCommentListeners();
+        hideMomentOutsideSharePrompt();
+        bindMomentOutsideSharePromptControls();
         document.getElementById('galleryModal')?.classList.remove('hidden');
         galleryNotificationBaseline = getLastGalleryVisit();
         const user = getCurrentUser();

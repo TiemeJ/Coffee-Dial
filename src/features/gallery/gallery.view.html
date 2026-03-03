@@ -19,6 +19,15 @@
             <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
             <p class="text-sm font-medium">Loading moments...</p>
         </div>
+        <div id="momentOutsideSharePrompt" class="hidden absolute inset-0 z-30 flex items-center justify-center bg-black/45 p-4">
+            <div class="w-full max-w-sm rounded-xl border border-coffee-200 dark:border-[#57534e] bg-white dark:bg-[#292524] p-4 shadow-xl">
+                <p class="text-sm font-semibold text-coffee-900 dark:text-white mb-3">Share this moment outside the app?</p>
+                <div class="flex items-center justify-end gap-2">
+                    <button id="momentOutsideShareNoBtn" type="button" class="px-3 py-1.5 rounded-lg text-sm border border-coffee-200 dark:border-[#57534e] text-coffee-700 dark:text-[#d6ccc2] hover:bg-coffee-100 dark:hover:bg-[#34302e]">No</button>
+                    <button id="momentOutsideShareYesBtn" type="button" class="px-3 py-1.5 rounded-lg text-sm bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white">Yes</button>
+                </div>
+            </div>
+        </div>
         <div id="galleryContent" class="p-4 overflow-y-auto ios-scroll flex-1 bg-coffee-50 dark:bg-[#1c1917]">
             <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
             <div id="galleryLoadMore" class="text-center py-4 hidden">
