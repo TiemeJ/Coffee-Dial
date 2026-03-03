@@ -1224,6 +1224,8 @@ export const createGalleryModule = ({
                 ? (/[a-z]/i.test(details.temp) ? details.temp : `${details.temp}C`)
                 : '-';
             const timeText = details.time ? `${details.time}s` : '';
+            const grinderLabel = details.grinder || 'Grind';
+            const grindValue = details.grind || '-';
             const extraMeta = [
                 { label: 'First drip', value: details.firstDrip ? `${details.firstDrip}s` : '' },
                 { label: 'Max flow', value: details.maxFlow ? `${details.maxFlow}g/s` : '' },
@@ -1252,7 +1254,7 @@ export const createGalleryModule = ({
                     <div style="background:#292524;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);"><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Out</div><div style="font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:#f5f5f4;">${outText}</div></div>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;border-top:1px solid rgba(255,255,255,0.12);padding-top:8px;">
-                    <div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">${details.grinder ? 'Grinder' : 'Grind'}</div><div style="font-weight:700;color:#f5f5f4;">${details.grinder || details.grind || '-'}</div></div>
+                    <div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">${grinderLabel}</div><div style="font-weight:700;color:#f5f5f4;">${grindValue}</div></div>
                     ${timeBlock}
                     <div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Temp</div><div style="font-weight:700;color:#f5f5f4;">${tempText}</div></div>
                 </div>
@@ -1892,6 +1894,8 @@ export const createGalleryModule = ({
                     ? (/[a-z]/i.test(details.temp) ? details.temp : `${details.temp}C`)
                     : '-';
                 const timeText = details.time ? `${details.time}s` : '';
+                const grinderLabel = details.grinder || 'Grind';
+                const grindValue = details.grind || '-';
                 const timeBlock = timeText
                     ? `<div data-details-tip="Total extraction time in seconds."><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Time</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${timeText}</div></div>`
                     : '';
@@ -1910,7 +1914,7 @@ export const createGalleryModule = ({
                         <div data-details-tip="Output beverage weight in grams." class="bg-white dark:bg-[#292524] p-2 rounded border border-coffee-100 dark:border-[#44403c]"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Out</div><div class="font-mono font-bold text-coffee-900 dark:text-white">${outText}</div></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 text-center border-t border-coffee-200 dark:border-[#44403c] pt-2">
-                        <div data-details-tip="${details.grinder ? 'Grinder model used for this brew.' : 'Grind setting used for this brew.'}"><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase truncate px-1">${details.grinder ? 'Grinder' : 'Grind'}</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${details.grinder || details.grind || '-'}</div></div>
+                        <div data-details-tip="Grind setting used for this brew."><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase truncate px-1">${grinderLabel}</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${grindValue}</div></div>
                         ${timeBlock}
                         <div data-details-tip="Water temperature used during extraction."><div class="text-[10px] text-coffee-400 dark:text-[#57534e] uppercase">Temp</div><div class="font-bold text-coffee-800 dark:text-[#d6ccc2]">${tempText}</div></div>
                     </div>
