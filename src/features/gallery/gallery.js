@@ -1192,10 +1192,10 @@ export const createGalleryModule = ({
         return date.toLocaleDateString();
     };
 
-    const createShareFileFromMomentCard = async ({ photoId, cardElement, data, cardSnapshot, photoUrl }) => {
+    const createShareFileFromMomentCard = async ({ photoId, data, cardSnapshot, photoUrl }) => {
         // Use native Canvas API for fast share image generation
         const width = 400;
-        const height = 650;
+        const height = 500;
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
@@ -1965,6 +1965,7 @@ export const createGalleryModule = ({
             }
             const createdMomentRef = await addDoc(collection(db, 'photos'), momentPayload);
             closeUploadModal();
+            document.getElementById('coffeeCardOverlay')?.classList.add('hidden');
             await openGallery('mine');
             showMomentOutsideSharePrompt({
                 photoId: createdMomentRef?.id,

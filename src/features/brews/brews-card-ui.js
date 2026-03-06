@@ -18,8 +18,7 @@ export const createBrewsCardUiModule = ({
     updateCoffeeCardActionMenu,
     dispatchCommand,
     cancelBrewQuickEditMode,
-    resetCardPhotoState,
-    toggleCardMode
+    resetCardPhotoState
 }) => {
     const brewsVm = createBrewsVmModule();
     let navigationOrderOverride = null;
@@ -193,8 +192,6 @@ export const createBrewsCardUiModule = ({
         setCurrentCoffeeCardId(id);
         cancelBrewQuickEditMode();
         resetCardPhotoState();
-        toggleCardMode('stats');
-        document.getElementById('shareControls')?.classList.add('hidden');
         populateCardData(c);
         document.getElementById('coffeeCardOverlay')?.classList.remove('hidden');
         updateCoffeeCardNav();

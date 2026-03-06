@@ -2,18 +2,6 @@
     <div id="coffeeCardOverlay" data-feature-root="brews" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" data-action-click="closeCoffeeCard(event)">
         <!-- Same as original -->
         <div class="flex flex-col gap-2 w-full max-w-sm">
-            <div id="shareControls" class="hidden bg-white dark:bg-[#292524] rounded-lg p-2 shadow-lg border border-coffee-200 dark:border-[#44403c] flex justify-between items-center transition-all animate-in fade-in zoom-in duration-200" data-action-click="event.stopPropagation()">
-                <div class="flex gap-2 bg-coffee-100 dark:bg-[#1c1917] rounded p-1">
-                    <button data-action-click="toggleCardMode('stats')" id="btnCardStats" class="px-3 py-1.5 text-xs font-bold rounded shadow-sm bg-white dark:bg-[#292524] text-coffee-800 dark:text-white transition-all">Stats</button>
-                    <button data-action-click="toggleCardMode('photo')" id="btnCardPhoto" class="px-3 py-1.5 text-xs font-bold rounded text-coffee-500 dark:text-[#78716c] hover:text-coffee-700 dark:hover:text-[#d6ccc2] transition-all">Photo</button>
-                </div>
-                 <div class="flex gap-2">
-                    <button data-action-click="triggerCardPhoto()" id="btnUploadCardPhoto" class="hidden bg-coffee-200 hover:bg-coffee-300 dark:bg-[#44403c] dark:hover:bg-[#57534e] text-coffee-800 dark:text-white px-3 py-1.5 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-camera mr-1"></i> Select</button>
-                    <input type="file" id="cardPhotoInput" accept="image/*" class="hidden" data-action-change="handleCardPhoto(event)">
-                    <button data-action-click="generateShareImage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-bold shadow-sm transition-colors"><i class="fa-solid fa-share-nodes mr-1"></i> Share</button>
-                </div>
-            </div>
-
             <div id="coffeeCardContent" class="bg-white dark:bg-[#292524] w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-coffee-200 dark:border-[#44403c] flex flex-col max-h-[85vh]" data-action-click="handleCoffeeCardOverlayClick(event)">
                 <div class="bg-coffee-100 dark:bg-[#1c1917] p-5 border-b border-coffee-200 dark:border-[#44403c] relative">
                     <div class="absolute top-3 right-3 flex items-center gap-1">

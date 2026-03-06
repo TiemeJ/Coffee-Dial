@@ -14,7 +14,6 @@
         import { createSocialCoordinator } from '../coordinators/social.coordinator.js';
         import { createBrewsCardActionsModule } from '../../features/brews/brews-card-actions.js';
         import { createBrewsCardUiModule } from '../../features/brews/brews-card-ui.js';
-        import { createBrewsCardShareModule } from '../../features/brews/brews-card-share.js';
         import { createBrewsCardPhotoModule } from '../../features/brews/brews-card-photo.js';
         import { createBrewsFormModalModule } from '../../features/brews/brews-form-modal.js';
         import { createBrewsTableStatePresetsModule } from '../../features/brews/brews-table-state-presets.js';
@@ -1414,21 +1413,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             dispatchCommand: (commandName, payload) =>
                 appCommands?.dispatch?.(commandName, payload, { source: 'brews.card-ui' }),
             cancelBrewQuickEditMode: (...args) => cancelBrewQuickEditMode(...args),
-            resetCardPhotoState: (...args) => resetCardPhotoState(...args),
-            toggleCardMode: (...args) => toggleCardMode(...args)
-        });
-        // TODO: remove legacy Share brew code
-        const { toggleCardMode, shareCoffeeCard, generateShareImage } = createBrewsCardShareModule({
-            getCoffees: () => getCoffeesState(),
-            setCurrentCoffeeCardId: (value) => setCurrentCoffeeCardIdState(value),
-            getCurrentCardCoffee: () => getCurrentCardCoffeeState(),
-            getCoffeeTypeDisplay: (...args) => getCoffeeTypeDisplay(...args),
-            setCurrentShareMode: (value) => setCurrentShareModeState(value),
-            cancelBrewQuickEditMode: (...args) => cancelBrewQuickEditMode(...args),
-            resetCardPhotoState: (...args) => resetCardPhotoState(...args),
-            populateCardData: (...args) => populateCardData(...args),
-            updateCoffeeCardNav: (...args) => updateCoffeeCardNav(...args),
-            getHtml2canvas
+            resetCardPhotoState: (...args) => resetCardPhotoState(...args)
         });
 
         let brewsCardGraphModulePromise = null;
@@ -1888,8 +1873,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             fillBeanDetails,
             followUser,
             gasToggleActionMenu: toggleActionMenu,
-            // TODO: remove legacy Share brew code
-            generateShareImage,
             getFilteredCoffees,
             googleLogin,
             googleLogout,
@@ -2012,8 +1995,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             setNotesMode,
             setRating,
             setTempMode,
-            // TODO: remove legacy Share brew code
-            shareCoffeeCard,
             startLabResultBrewLongPress,
             showBeanForBrew,
             showBeansForCoffeeType,
@@ -2036,7 +2017,6 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             toggleBeanFrozen,
             toggleBeansAiMenu,
             toggleBeansQuickFilter,
-            toggleCardMode,
             toggleCoffeeDetails,
             toggleExtractionSection,
             toggleCoffeeTypesAiMenu,
