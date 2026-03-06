@@ -1,6 +1,6 @@
         import { BAG_AI_URL, STATS_AI_URL, WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, provider, getFunctionsInstance, loadFunctionsApi, loadMessagingApi, getStorageInstance, loadStorageApi } from '../../config/firebase.js';
         import { signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-        import { collection, collectionGroup, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, arrayUnion, arrayRemove, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { collection, collectionGroup, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, getDocsFromCache, arrayUnion, arrayRemove, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         import { parseBeanconquerorCSV, mapBeanconquerorBrews } from '../../features/import-export/importers/beanconqueror.js';
         import { initEmailLinkAuth } from '../../integrations/email-link-auth.js';
         import { closeAutoPinToast, closeStickyToast, showAutoPinToast, showToast } from '../../core/notify.js';
@@ -286,6 +286,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             deleteDoc,
             getDoc,
             getDocs,
+            getDocsFromCache,
             arrayUnion,
             arrayRemove,
             onSnapshot,

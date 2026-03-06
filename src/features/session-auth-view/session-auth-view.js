@@ -72,7 +72,7 @@ export const createSessionAuthViewModule = ({
     setIntegrationPreferences
 }) => {
     const { auth, provider, signInWithPopup, signOut } = authService || {};
-    const { db, doc, setDoc, updateDoc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot } = dataService || {};
+    const { db, doc, setDoc, updateDoc, getDoc, getDocs, getDocsFromCache, collection, query, where, orderBy, limit, onSnapshot } = dataService || {};
     if (!auth || !provider || !signInWithPopup || !signOut) {
         throw new Error('createSessionAuthViewModule requires authService { auth, provider, signInWithPopup, signOut }');
     }
@@ -431,9 +431,22 @@ export const createSessionAuthViewModule = ({
                 where('archived', '==', false),
                 where('frozen', '==', false)
             );
+            // Try cache first for faster repeat loads, fall back to network
+            const getDocsWithCacheFallback = async (q) => {
+                if (getDocsFromCache) {
+                    try {
+                        const cached = await getDocsFromCache(q);
+                        if (cached.size > 0) {
+                            console.log(`[PERF-DATA] Cache hit: ${cached.size} docs`);
+                            return cached;
+                        }
+                    } catch (_) { /* cache miss or error, fall through */ }
+                }
+                return getDocs(q);
+            };
             const [pinnedBrewsSnap, activeBeansSnap] = await Promise.all([
-                getDocs(pinnedBrewsQ),
-                getDocs(activeBeansQ)
+                getDocsWithCacheFallback(pinnedBrewsQ),
+                getDocsWithCacheFallback(activeBeansQ)
             ]);
             console.log(`[PERF-DATA] loadPinnedBootstrapSnapshot: queries done (brews=${pinnedBrewsSnap.size}, beans=${activeBeansSnap.size})`);
             if (requestId !== latestViewRequestId) return false;

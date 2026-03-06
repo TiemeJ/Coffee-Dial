@@ -1,7 +1,7 @@
 // IMPORTANT:
 // Bump this value every time `sw.js` changes.
 // This forces service-worker update pickup across browsers/PWAs.
-const SW_VERSION = '2026-02-28.3';
+const SW_VERSION = '2026-03-06.1';
 const PUSH_INTENT_CACHE = 'coffee-dial-push-intent-v1';
 const PUSH_INTENT_CACHE_KEY = '/__coffee_dial_push_intent__';
 const PUSH_INTENT_MAX_AGE_MS = 3 * 60 * 1000;

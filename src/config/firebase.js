@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 export const firebaseConfig = {
     apiKey: 'AIzaSyAjKRgCrNuwaAvjOJPzTrmippI2sv5QG6M',
@@ -17,7 +17,12 @@ export const WEB_PUSH_VAPID_KEY = 'BEyGyjZoS52SNCQedvEPYEWht5Kuk_N2lZbVrtLbWUNX5
 
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Enable IndexedDB persistence for offline support and faster repeat visits
+export const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+    })
+});
 export const provider = new GoogleAuthProvider();
 
 let functionsInstancePromise = null;
