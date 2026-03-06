@@ -1,3 +1,8 @@
+        /* Override Font Awesome display property when Tailwind's hidden class is applied */
+        .hidden {
+            display: none !important;
+        }
+
         body { 
             font-family: 'Outfit', sans-serif; 
             transition: background-color 0.3s ease, color 0.3s ease; 
