@@ -152,6 +152,7 @@ export const createPinControllerModule = ({
     };
 
     const renderPinnedTiles = (options = {}) => {
+        console.log('[PERF-RENDER] renderPinnedTiles: start');
         const {
             progressiveHydration = false,
             activeBeansOnly = false,
@@ -203,6 +204,7 @@ export const createPinControllerModule = ({
         });
 
         if (result.hasTiles) initSortable();
+        console.log('[PERF-RENDER] renderPinnedTiles: done');
     };
 
     appCommands.registerCommand(

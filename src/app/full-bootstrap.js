@@ -1,3 +1,7 @@
+const T0_FULL = performance.now();
+const logTimeF = (label) => console.log(`[PERF-FULL] ${label}: ${(performance.now() - T0_FULL).toFixed(0)}ms`);
+logTimeF('full-bootstrap.js loading');
+
 import { auth } from '../config/firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { createAppContainer } from './container.js';
@@ -57,11 +61,15 @@ const runActionIfPresent = async (app, actionName) => {
 };
 
 export const startFullApp = async ({ actionName = null } = {}) => {
+    logTimeF('startFullApp: called');
     if (!appStartupPromise) {
         appStartupPromise = (async () => {
+            logTimeF('mounting UI views: start');
             await mountShellHeader();
+            logTimeF('mountShellHeader done');
             await mountSignedOutAuth();
             await mountPinnedSection();
+            logTimeF('mountPinnedSection done');
             await mountBrewsPinArtView();
             await mountBrewsFormModalView();
             await mountBrewsTableView();
@@ -83,6 +91,7 @@ export const startFullApp = async ({ actionName = null } = {}) => {
             await mountScalesView();
             await mountUiShellView();
             await mountOverlayHostView();
+            logTimeF('all UI views mounted');
 
             const appCommands = createAppCommands();
             const appEvents = createAppEvents();
@@ -105,9 +114,10 @@ export const startFullApp = async ({ actionName = null } = {}) => {
             }
             registerServiceWorker();
             if (!e2eSeedData) {
+                logTimeF('registering onAuthStateChanged listener');
                 onAuthStateChanged(auth, app.handleAuthStateChanged);
             }
-
+            logTimeF('startFullApp promise resolving');
             return { app, appCommands };
         })();
     }

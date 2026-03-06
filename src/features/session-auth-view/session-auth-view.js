@@ -268,9 +268,11 @@ export const createSessionAuthViewModule = ({
     };
 
     const initUserData = async (user) => {
+        console.log('[PERF-DATA] initUserData: start');
         const userDocRef = doc(db, 'users', user.uid);
         const publicProfileRef = doc(db, 'publicProfiles', user.uid);
         const snap = await getDoc(userDocRef);
+        console.log('[PERF-DATA] initUserData: user doc fetched');
         let shouldShowOnboarding = false;
 
         if (snap.exists()) {
@@ -389,6 +391,7 @@ export const createSessionAuthViewModule = ({
     };
 
     const changeView = async (uid) => {
+        console.log(`[PERF-DATA] changeView(${uid}): start`);
         latestViewRequestId += 1;
         const requestId = latestViewRequestId;
         setCurrentView(uid);
@@ -409,6 +412,7 @@ export const createSessionAuthViewModule = ({
             return new Date(left?.createdAt || 0) - new Date(right?.createdAt || 0);
         };
         const loadPinnedBootstrapSnapshot = async () => {
+            console.log('[PERF-DATA] loadPinnedBootstrapSnapshot: start');
             const pinnedBrewsQ = query(
                 collection(db, 'users', targetUid, 'coffees'),
                 where('isActive', '==', true),
@@ -423,6 +427,7 @@ export const createSessionAuthViewModule = ({
                 getDocs(pinnedBrewsQ),
                 getDocs(activeBeansQ)
             ]);
+            console.log(`[PERF-DATA] loadPinnedBootstrapSnapshot: queries done (brews=${pinnedBrewsSnap.size}, beans=${activeBeansSnap.size})`);
             if (requestId !== latestViewRequestId) return false;
 
             const nextActiveBeans = [];
@@ -478,10 +483,12 @@ export const createSessionAuthViewModule = ({
                 suppressCoffeeDetails: true,
                 suppressCoffeeImages: true
             });
+            console.log('[PERF-DATA] loadPinnedBootstrapSnapshot: renderPinnedTiles done');
             return true;
         };
 
         const loadCompleteViewData = async () => {
+            console.log('[PERF-DATA] loadCompleteViewData: start');
             try {
                 const brewsInitialQ = query(
                     collection(db, 'users', targetUid, 'coffees'),
@@ -610,6 +617,7 @@ export const createSessionAuthViewModule = ({
         };
 
         const shouldUsePinnedBootstrap = !hasCompletedInitialViewBootstrap;
+        console.log(`[PERF-DATA] changeView: shouldUsePinnedBootstrap=${shouldUsePinnedBootstrap}`);
         if (shouldUsePinnedBootstrap) {
             let renderedPinnedBootstrap = false;
             try {

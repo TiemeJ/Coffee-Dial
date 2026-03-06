@@ -1,3 +1,6 @@
+const T0_AUTH = performance.now();
+const logTimeA = (label) => console.log(`[PERF-AUTH] ${label}: ${(performance.now() - T0_AUTH).toFixed(0)}ms`);
+
 export const createAuthStateChangedHandler = ({
     initUserData,
     initPushNotifications,
@@ -33,6 +36,7 @@ export const createAuthStateChangedHandler = ({
     };
 
     return async (user) => {
+        logTimeA(`authStateChanged fired (user=${!!user})`);
         const authContainer = document.getElementById('authContainer');
         const bootstrapLoading = document.getElementById('appBootstrapLoading');
         const setBootstrapLoadingVisible = (visible) => {
@@ -49,13 +53,18 @@ export const createAuthStateChangedHandler = ({
             document.getElementById('signedOutAuthBody').classList.add('hidden');
             document.getElementById('signedInContent').classList.add('hidden');
             setMenuVisibility(true);
+            logTimeA('initUserData: start');
             const { shouldShowOnboarding } = await initUserData(user);
+            logTimeA('initUserData: done');
             Promise.resolve(initPushNotifications?.(user)).catch((error) => {
                 console.error('Push initialization failed:', error);
             });
             loadFollowingList();
+            logTimeA('changeView: start');
             await changeView('mine');
+            logTimeA('changeView: done');
             setBootstrapLoadingVisible(false);
+            logTimeA('bootstrap loading hidden, content visible');
             document.getElementById('signedInContent').classList.remove('hidden');
             initNotificationListener(user.uid);
             if (shouldShowOnboarding) openHelp();

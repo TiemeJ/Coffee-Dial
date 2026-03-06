@@ -2,6 +2,10 @@ import { mountShellHeader } from '../features/shell/shell.controller.js';
 import { mountSignedOutAuth } from '../features/auth/auth.controller.js';
 import { mountUiShellView } from '../features/ui-shell/ui-shell.mount.js';
 
+const T0 = performance.now();
+const logTime = (label) => console.log(`[PERF] ${label}: ${(performance.now() - T0).toFixed(0)}ms`);
+logTime('bootstrap.js loaded');
+
 const shouldAutoLoadFullAppByUrl = () => {
     if (typeof window === 'undefined') return false;
     const search = new URLSearchParams(window.location.search);
@@ -43,7 +47,9 @@ const startGoogleSignIn = async () => {
 };
 
 const hasActiveSession = async () => {
+    logTime('hasActiveSession: start');
     const [{ auth }, { onAuthStateChanged }] = await Promise.all([import('../config/firebase-session.js'), import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js')]);
+    logTime('hasActiveSession: firebase imports done');
 
     if (typeof auth.authStateReady === 'function') {
         await auth.authStateReady();
@@ -55,6 +61,7 @@ const hasActiveSession = async () => {
             auth,
             (user) => {
                 unsubscribe();
+                logTime(`hasActiveSession: resolved (user=${!!user})`);
                 resolve(!!user);
             },
             () => resolve(false)
@@ -114,13 +121,16 @@ try {
 }
 
 const shouldStartFullApp = shouldAutoLoadFullAppByUrl() || hasPendingAuthRedirect || (await hasActiveSession());
+logTime(`shouldStartFullApp=${shouldStartFullApp}`);
 if (shouldStartFullApp) {
     try {
         sessionStorage.removeItem('coffeeDialPendingAuthRedirect');
     } catch (_) {
         // no-op
     }
+    logTime('startFullApp: calling');
     await startFullApp();
+    logTime('startFullApp: done');
 } else {
     await mountSignedOutShell();
 }
