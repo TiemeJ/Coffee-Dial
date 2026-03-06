@@ -215,7 +215,6 @@ export const createGalleryModule = ({
     storageService,
     functionsService,
     imageCompression,
-    getHtml2canvas,
     openLightbox,
     openAppConfirm,
     openBrewFromMoment,
@@ -269,8 +268,6 @@ export const createGalleryModule = ({
     let currentUploadMomentBrew = null;
     let pendingOutsideShareContext = null;
     let galleryNotificationBaseline = null;
-    let cachedHtml2Canvas = null;
-    let html2CanvasLoadPromise = null;
     const DEFAULT_URL_TTL_SECONDS = 180;
     const CACHE_SKEW_MS = 15000;
     const SESSION_CACHE_PREFIX = 'gallerySignedUrl:v1';
@@ -1091,37 +1088,7 @@ export const createGalleryModule = ({
         }
     };
 
-    const getHtml2Canvas = async () => {
-        if (cachedHtml2Canvas) return cachedHtml2Canvas;
-        if (html2CanvasLoadPromise) return html2CanvasLoadPromise;
-
-        html2CanvasLoadPromise = (async () => {
-            if (typeof getHtml2canvas === 'function') {
-                const capture = await getHtml2canvas();
-                if (typeof capture === 'function') {
-                    cachedHtml2Canvas = capture;
-                    return capture;
-                }
-            }
-            if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
-                cachedHtml2Canvas = window.html2canvas;
-                return window.html2canvas;
-            }
-            return null;
-        })();
-
-        cachedHtml2Canvas = await html2CanvasLoadPromise;
-        html2CanvasLoadPromise = null;
-        return cachedHtml2Canvas;
-    };
-
-    // Preload html2canvas library in background (bottleneck #1)
-    const preloadHtml2Canvas = () => {
-        if (cachedHtml2Canvas || html2CanvasLoadPromise) return;
-        getHtml2Canvas().catch(() => { /* ignore preload errors */ });
-    };
-
-    // Preload full-size signed URL and image for faster sharing (bottlenecks #2 and #3)
+    // Preload full-size signed URL and image for faster sharing
     const preloadMomentShareAssets = async (photoId, data) => {
         if (!photoId || !hasStoragePath(data, 'full')) return;
         
@@ -1129,7 +1096,7 @@ export const createGalleryModule = ({
         if (preloadedFullImages.has(photoId)) return;
 
         try {
-            // Fetch full signed URL (bottleneck #2)
+            // Fetch full signed URL
             const fullUrl = await resolveSignedPhotoUrl({
                 photoId,
                 variant: 'full',
@@ -1138,7 +1105,7 @@ export const createGalleryModule = ({
             
             if (!fullUrl) return;
 
-            // Preload the full image (bottleneck #3)
+            // Preload the full image
             const img = new Image();
             img.crossOrigin = 'anonymous';
             
@@ -1159,23 +1126,6 @@ export const createGalleryModule = ({
         } catch (error) {
             // Ignore preload errors - share will retry if needed
         }
-    };
-
-    const waitForCardImages = async (cardElement) => {
-        const images = Array.from(cardElement.querySelectorAll('img'));
-        if (!images.length) return;
-        await Promise.all(images.map((img) => {
-            if (img.complete) return Promise.resolve();
-            return new Promise((resolve) => {
-                const done = () => {
-                    img.removeEventListener('load', done);
-                    img.removeEventListener('error', done);
-                    resolve();
-                };
-                img.addEventListener('load', done, { once: true });
-                img.addEventListener('error', done, { once: true });
-            });
-        }));
     };
 
     const buildMomentBrewDetailsSnapshot = (brew) => {
@@ -1242,194 +1192,406 @@ export const createGalleryModule = ({
         return date.toLocaleDateString();
     };
 
-    const buildShareTemplateCard = ({ photoUrl, data, cardSnapshot, widthPx }) => {
-        const width = Math.max(280, Math.min(640, widthPx || 560));
-        const hasRating = (Number(cardSnapshot?.rating) || 0) > 0;
-        const isDetailsMoment = data?.momentType === 'details';
+    const createShareFileFromMomentCard = async ({ photoId, cardElement, data, cardSnapshot, photoUrl }) => {
+        // Use native Canvas API for fast share image generation
+        const width = 400;
+        const height = 650;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        // Background
+        ctx.fillStyle = '#302a28';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Track media section height
+        let mediaHeight = 0;
+        
+        // Draw graph for graph moments
         const isGraphMoment = data?.momentType === 'graph';
         const graphSnapshot = data?.graphSnapshot || null;
-
-        const card = document.createElement('div');
-        card.style.cssText = [
-            `width:${width}px`,
-            'border-radius:24px',
-            'overflow:hidden',
-            'background:#302a28',
-            'border:1px solid rgba(255,255,255,0.18)',
-            'box-shadow:0 20px 46px rgba(0,0,0,0.4)',
-            "font-family:'Nunito', system-ui, sans-serif",
-            'color:#f5f5f4'
-        ].join(';');
-
-        const mediaWrap = document.createElement('div');
-        mediaWrap.style.cssText = 'position:relative;width:100%;background:#1f1b19;overflow:hidden;';
         if (isGraphMoment && hasRenderableMomentGraph(graphSnapshot)) {
-            const graphWrap = document.createElement('div');
-            graphWrap.style.cssText = 'padding:16px;background:#1c1917;border-bottom:1px solid rgba(255,255,255,0.08);';
-            const graphCanvas = document.createElement('canvas');
-            graphCanvas.dataset.momentShareGraph = 'true';
-            graphCanvas.style.cssText = 'width:100%;height:220px;display:block;border-radius:12px;';
-            graphWrap.appendChild(graphCanvas);
-            mediaWrap.appendChild(graphWrap);
-        } else if (!isDetailsMoment && photoUrl) {
-            const img = document.createElement('img');
-            img.src = photoUrl;
-            img.alt = 'Moment photo';
-            img.crossOrigin = 'anonymous';
-            img.style.cssText = 'width:100%;height:auto;display:block;';
-            mediaWrap.appendChild(img);
-        } else if (isDetailsMoment) {
+            const graphPadding = 16;
+            const graphWidth = width - graphPadding * 2;
+            const graphHeight = 160;
+            const graphX = graphPadding;
+            const graphY = graphPadding;
+            
+            // Graph background
+            ctx.fillStyle = '#1c1917';
+            ctx.beginPath();
+            ctx.roundRect(graphX, graphY, graphWidth, graphHeight, 8);
+            ctx.fill();
+            
+            // Get samples
+            const weightSamples = Array.isArray(graphSnapshot?.capture?.samples) ? graphSnapshot.capture.samples : [];
+            const flowSamples = Array.isArray(graphSnapshot?.flowCapture?.samples) ? graphSnapshot.flowCapture.samples : [];
+            
+            // Calculate max values for axis labels
+            let maxWeight = 0;
+            let maxFlow = 0;
+            if (weightSamples.length > 1) {
+                maxWeight = Math.max(...weightSamples.map(s => s.w).filter(w => Number.isFinite(w)));
+            }
+            if (flowSamples.length > 1) {
+                maxFlow = Math.max(...flowSamples.map(s => s.flow).filter(f => Number.isFinite(f)));
+            }
+            
+            // Draw axes with labels
+            const axisMarginLeft = 36;
+            const axisMarginRight = 32;
+            const axisMarginTop = 16;
+            const axisMarginBottom = 24;
+            const innerX = graphX + axisMarginLeft;
+            const innerY = graphY + axisMarginTop;
+            const innerW = graphWidth - axisMarginLeft - axisMarginRight;
+            const innerH = graphHeight - axisMarginTop - axisMarginBottom;
+            
+            // Y-axis labels
+            ctx.font = '500 9px system-ui';
+            ctx.textAlign = 'right';
+            // Weight axis (left, blue)
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillText(`${Math.round(maxWeight)}g`, graphX + axisMarginLeft - 4, innerY + 4);
+            ctx.fillText('0g', graphX + axisMarginLeft - 4, innerY + innerH + 4);
+            // Flow axis (right, green)
+            ctx.fillStyle = '#22c55e';
+            ctx.textAlign = 'left';
+            ctx.fillText(`${maxFlow.toFixed(1)}`, graphX + graphWidth - axisMarginRight + 4, innerY + 4);
+            ctx.fillText('0', graphX + graphWidth - axisMarginRight + 4, innerY + innerH + 4);
+            
+            if (weightSamples.length > 1 || flowSamples.length > 1) {
+                const allTimes = [...weightSamples, ...flowSamples].map(s => s.tMs).filter(t => Number.isFinite(t));
+                const maxTime = Math.max(...allTimes);
+                const minTime = Math.min(...allTimes);
+                const timeRange = maxTime - minTime || 1;
+                
+                // X-axis time labels
+                ctx.fillStyle = '#a8a29e';
+                ctx.font = '500 9px system-ui';
+                ctx.textAlign = 'center';
+                const totalSeconds = Math.round(timeRange / 1000);
+                ctx.fillText('0s', innerX, innerY + innerH + 14);
+                ctx.fillText(`${totalSeconds}s`, innerX + innerW, innerY + innerH + 14);
+                
+                // Draw weight line (blue)
+                if (weightSamples.length > 1) {
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    weightSamples.forEach((sample, i) => {
+                        const x = innerX + ((sample.tMs - minTime) / timeRange) * innerW;
+                        const y = innerY + innerH - (sample.w / (maxWeight || 1)) * innerH;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    });
+                    ctx.stroke();
+                }
+                
+                // Draw flow line (green)
+                if (flowSamples.length > 1) {
+                    ctx.strokeStyle = '#22c55e';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    flowSamples.forEach((sample, i) => {
+                        const x = innerX + ((sample.tMs - minTime) / timeRange) * innerW;
+                        const y = innerY + innerH - (sample.flow / (maxFlow || 1)) * innerH;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    });
+                    ctx.stroke();
+                }
+                
+                // First drip marker
+                const firstDrip = graphSnapshot?.firstDrip;
+                if (Number.isFinite(firstDrip) && firstDrip > 0) {
+                    const dripX = innerX + ((firstDrip * 1000 - minTime) / timeRange) * innerW;
+                    if (dripX >= innerX && dripX <= innerX + innerW) {
+                        ctx.strokeStyle = '#f59e0b';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([4, 2]);
+                        ctx.beginPath();
+                        ctx.moveTo(dripX, innerY);
+                        ctx.lineTo(dripX, innerY + innerH);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+            }
+            
+            // Legend and info row below graph
+            const legendY = graphY + graphHeight + 6;
+            ctx.font = '500 10px system-ui';
+            
+            // Legend items
+            let legendX = graphX + 8;
+            // Weight legend
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(legendX, legendY, 12, 3);
+            ctx.fillStyle = '#d6d3d1';
+            ctx.textAlign = 'left';
+            ctx.fillText('Weight', legendX + 16, legendY + 4);
+            legendX += 60;
+            // Flow legend
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(legendX, legendY, 12, 3);
+            ctx.fillStyle = '#d6d3d1';
+            ctx.fillText('Flow', legendX + 16, legendY + 4);
+            legendX += 48;
+            // First drip legend (if present)
+            const firstDrip = graphSnapshot?.firstDrip;
+            if (Number.isFinite(firstDrip) && firstDrip > 0) {
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 2]);
+                ctx.beginPath();
+                ctx.moveTo(legendX, legendY + 1);
+                ctx.lineTo(legendX + 12, legendY + 1);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#d6d3d1';
+                ctx.fillText(`1st drip ${Math.round(firstDrip)}s`, legendX + 16, legendY + 4);
+                legendX += 80;
+            }
+            
+            // Pours/Swirls info
+            const steps = Array.isArray(graphSnapshot?.recipeSteps) ? graphSnapshot.recipeSteps : [];
+            const pourCount = steps.filter(s => s?.type === 'pour').length;
+            const swirlCount = steps.filter(s => s?.type === 'swirl').length;
+            
+            ctx.fillStyle = '#a8a29e';
+            ctx.textAlign = 'right';
+            let infoX = graphX + graphWidth - 8;
+            if (swirlCount > 0) {
+                ctx.fillText(`${swirlCount} swirl${swirlCount > 1 ? 's' : ''}`, infoX, legendY + 4);
+                infoX -= 56;
+            }
+            if (pourCount > 0) {
+                ctx.fillText(`${pourCount} pour${pourCount > 1 ? 's' : ''}`, infoX, legendY + 4);
+            }
+            
+            mediaHeight = graphHeight + graphPadding * 2 + 16; // Extra space for legend
+        }
+        // Draw brew details for details moments
+        else if (data?.momentType === 'details') {
             const details = data?.brewDetailsSnapshot || {};
-            const inText = details.weight ? `${details.weight}g` : '-';
-            const ratioText = details.ratio ? `1:${details.ratio}` : '-';
-            const outText = details.out ? `${details.out}g` : '-';
-            const tempText = details.temp
-                ? (/[a-z]/i.test(details.temp) ? details.temp : `${details.temp}C`)
-                : '-';
-            const timeText = details.time ? `${details.time}s` : '';
+            const padding = 16;
+            let detailsY = padding;
+            
+            // Background for details section
+            ctx.fillStyle = '#1c1917';
+            ctx.beginPath();
+            ctx.roundRect(padding, padding, width - padding * 2, 200, 8);
+            ctx.fill();
+            
+            // "Brew stats" header
+            ctx.fillStyle = '#a8a29e';
+            ctx.font = '700 10px system-ui';
+            ctx.textAlign = 'left';
+            ctx.fillText('BREW STATS', padding + 14, detailsY + 24);
+            
+            // Top row: In | Ratio | Out
+            const boxWidth = (width - padding * 2 - 28 - 16) / 3;
+            const boxHeight = 48;
+            const boxY = detailsY + 36;
+            const boxStartX = padding + 14;
+            
+            const topStats = [
+                { label: 'In', value: details.weight ? `${details.weight}g` : '-' },
+                { label: 'Ratio', value: details.ratio ? `1:${details.ratio}` : '-' },
+                { label: 'Out', value: details.out ? `${details.out}g` : '-' }
+            ];
+            
+            topStats.forEach((stat, i) => {
+                const boxX = boxStartX + i * (boxWidth + 8);
+                // Box background
+                ctx.fillStyle = '#292524';
+                ctx.beginPath();
+                ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 8);
+                ctx.fill();
+                // Border
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                // Label
+                ctx.fillStyle = '#78716c';
+                ctx.font = '500 9px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText(stat.label.toUpperCase(), boxX + boxWidth / 2, boxY + 16);
+                // Value
+                ctx.fillStyle = '#f5f5f4';
+                ctx.font = '700 14px system-ui';
+                ctx.fillText(stat.value, boxX + boxWidth / 2, boxY + 36);
+            });
+            
+            // Bottom row: Grind | Time | Temp
+            const bottomY = boxY + boxHeight + 12;
             const grinderLabel = details.grinder || 'Grind';
-            const grindValue = details.grind || '-';
+            const bottomStats = [
+                { label: grinderLabel, value: details.grind || '-' },
+                { label: 'Time', value: details.time ? `${details.time}s` : '-' },
+                { label: 'Temp', value: details.temp ? (/[a-z]/i.test(details.temp) ? details.temp : `${details.temp}C`) : '-' }
+            ];
+            
+            bottomStats.forEach((stat, i) => {
+                const boxX = boxStartX + i * (boxWidth + 8);
+                // Label
+                ctx.fillStyle = '#78716c';
+                ctx.font = '500 9px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText(stat.label.toUpperCase(), boxX + boxWidth / 2, bottomY + 10);
+                // Value
+                ctx.fillStyle = '#f5f5f4';
+                ctx.font = '700 13px system-ui';
+                ctx.fillText(stat.value, boxX + boxWidth / 2, bottomY + 28);
+            });
+            
+            // Extra chips row (first drip, max flow, etc.)
             const extraMeta = [
-                { label: 'First drip', value: details.firstDrip ? `${details.firstDrip}s` : '' },
+                { label: '1st drip', value: details.firstDrip ? `${details.firstDrip}s` : '' },
                 { label: 'Max flow', value: details.maxFlow ? `${details.maxFlow}g/s` : '' },
                 { label: 'Avg flow', value: details.avgFlow ? `${details.avgFlow}g/s` : '' },
                 { label: 'Pours', value: details.pourCount || '' },
                 { label: 'Swirls', value: details.swirlCount || '' }
             ].filter((item) => !!item.value);
-
-            const detailsWrap = document.createElement('div');
-            detailsWrap.style.cssText = 'padding:16px;background:#1c1917;border-bottom:1px solid rgba(255,255,255,0.08);';
-            const statsCard = document.createElement('div');
-            statsCard.style.cssText = 'background:#1c1917;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.12);';
-
-            const timeBlock = timeText
-                ? `<div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Time</div><div style="font-weight:700;color:#f5f5f4;">${timeText}</div></div>`
-                : '';
-            const extraChips = extraMeta.map((item) =>
-                `<span style="display:inline-flex;align-items:center;padding:2px 6px;background:#292524;border-radius:6px;border:1px solid rgba(255,255,255,0.15);font-size:10px;color:#d6ccc2;">${item.label}: ${item.value}</span>`
-            ).join('');
-
-            statsCard.innerHTML = `
-                <div style="font-size:10px;font-weight:700;color:#a8a29e;text-transform:uppercase;margin-bottom:8px;">Brew stats</div>
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;margin-bottom:8px;">
-                    <div style="background:#292524;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);"><div style="font-size:10px;color:#78716c;text-transform:uppercase;">In</div><div style="font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:#f5f5f4;">${inText}</div></div>
-                    <div style="background:#292524;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);"><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Ratio</div><div style="font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:#f5f5f4;">${ratioText}</div></div>
-                    <div style="background:#292524;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);"><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Out</div><div style="font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:#f5f5f4;">${outText}</div></div>
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;border-top:1px solid rgba(255,255,255,0.12);padding-top:8px;">
-                    <div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">${grinderLabel}</div><div style="font-weight:700;color:#f5f5f4;">${grindValue}</div></div>
-                    ${timeBlock}
-                    <div><div style="font-size:10px;color:#78716c;text-transform:uppercase;">Temp</div><div style="font-weight:700;color:#f5f5f4;">${tempText}</div></div>
-                </div>
-                ${extraChips ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">${extraChips}</div>` : ''}
-            `;
-            detailsWrap.appendChild(statsCard);
-            mediaWrap.appendChild(detailsWrap);
-        }
-        const dateBadge = document.createElement('div');
-        dateBadge.style.cssText = (isDetailsMoment || isGraphMoment)
-            ? 'padding:0 16px 12px 16px;color:#ffffff;font-size:13px;font-weight:700;line-height:1;text-align:right;'
-            : 'position:absolute;left:16px;bottom:14px;color:#ffffff;font-size:18px;font-weight:800;line-height:1;';
-        dateBadge.textContent = formatMomentDate(data?.createdAt);
-        mediaWrap.appendChild(dateBadge);
-        card.appendChild(mediaWrap);
-
-        const body = document.createElement('div');
-        body.style.cssText = 'padding:24px 24px 22px;';
-
-        const topRow = document.createElement('div');
-        topRow.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:16px;';
-        const uploader = document.createElement('div');
-        uploader.style.cssText = 'font-size:13px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:#a8a29e;line-height:1;';
-        uploader.textContent = data?.uploaderName || 'Unknown';
-        const rating = document.createElement('div');
-        rating.style.cssText = 'font-size:12px;color:#f5f5f4;font-weight:600;white-space:nowrap;line-height:1;';
-        rating.textContent = hasRating ? `${Number(cardSnapshot?.rating) || 0}/5` : '-';
-        topRow.appendChild(uploader);
-        topRow.appendChild(rating);
-        body.appendChild(topRow);
-
-        const message = document.createElement('p');
-        message.style.cssText = 'margin:0 0 18px 0;max-width:88%;color:#e7e5e4;font-size:14px;line-height:1.45;font-style:italic;font-weight:400;';
-        const rawMessage = (data?.message || '').trim();
-        message.textContent = rawMessage ? `"${rawMessage}"` : '"-"';
-        body.appendChild(message);
-
-        const info = document.createElement('div');
-        info.style.cssText = 'padding:0;';
-        const farmer = document.createElement('div');
-        farmer.style.cssText = 'font-size:14px;font-weight:700;color:#ffffff;line-height:1.2;';
-        farmer.textContent = cardSnapshot?.farmer || '-';
-        const roaster = document.createElement('div');
-        roaster.style.cssText = 'margin-top:4px;font-size:13px;font-weight:500;color:#d6d3d1;line-height:1.2;';
-        roaster.textContent = cardSnapshot?.roaster || '-';
-        const method = document.createElement('div');
-        method.style.cssText = 'margin-top:8px;font-size:13px;font-weight:500;color:#d6d3d1;line-height:1.2;text-align:left;';
-        method.textContent = cardSnapshot?.method || '-';
-        info.appendChild(farmer);
-        info.appendChild(roaster);
-        info.appendChild(method);
-        body.appendChild(info);
-
-        card.appendChild(body);
-        return card;
-    };
-
-    const createShareFileFromMomentCard = async ({ photoId, cardElement, data, cardSnapshot, photoUrl }) => {
-        const capture = await getHtml2Canvas();
-        if (!capture) {
-            throw new Error('Screenshot capture is not available.');
-        }
-        const rect = cardElement?.getBoundingClientRect?.();
-        const widthPx = rect?.width ? Math.round(rect.width) : 560;
-        const templateCard = buildShareTemplateCard({ photoUrl, data, cardSnapshot, widthPx });
-        const host = document.createElement('div');
-        host.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none;z-index:-1;';
-        host.appendChild(templateCard);
-        document.body.appendChild(host);
-
-        let canvas;
-        try {
-            const shareGraphCanvas = templateCard.querySelector('canvas[data-moment-share-graph="true"]');
-            if (shareGraphCanvas) {
-                await renderMomentGraphCanvas(shareGraphCanvas, data?.graphSnapshot || null);
+            
+            if (extraMeta.length > 0) {
+                const chipY = bottomY + 44;
+                let chipX = boxStartX;
+                ctx.font = '500 9px system-ui';
+                ctx.textAlign = 'left';
+                
+                extraMeta.forEach((item) => {
+                    const chipText = `${item.label}: ${item.value}`;
+                    const chipWidth = ctx.measureText(chipText).width + 12;
+                    
+                    // Chip background
+                    ctx.fillStyle = '#292524';
+                    ctx.beginPath();
+                    ctx.roundRect(chipX, chipY, chipWidth, 18, 6);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Chip text
+                    ctx.fillStyle = '#d6ccc2';
+                    ctx.fillText(chipText, chipX + 6, chipY + 12);
+                    
+                    chipX += chipWidth + 6;
+                });
             }
-            await waitForCardImages(templateCard);
-            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-            canvas = await capture(templateCard, {
-                scale: Math.min(2, window.devicePixelRatio || 1),
-                useCORS: true,
-                allowTaint: false,
-                backgroundColor: null,
-                logging: false
-            });
-        } finally {
-            host.remove();
+            
+            mediaHeight = 232;
+        }
+        // Load and draw photo if available
+        else if (photoUrl && data?.momentType !== 'details') {
+            try {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = photoUrl;
+                    setTimeout(reject, 3000); // 3s timeout
+                });
+                // Draw image at top, aspect-fit
+                const imgAspect = img.width / img.height;
+                const targetHeight = 220;
+                const targetWidth = Math.min(width, targetHeight * imgAspect);
+                const imgX = (width - targetWidth) / 2;
+                ctx.drawImage(img, imgX, 0, targetWidth, targetHeight);
+                mediaHeight = targetHeight + 10;
+            } catch (_) {
+                // Photo failed to load, continue without it
+            }
+        }
+        
+        const contentY = mediaHeight > 0 ? mediaHeight : 20;
+        
+        // Reset text alignment after graph legend
+        ctx.textAlign = 'left';
+        
+        // Date badge
+        ctx.fillStyle = '#a8a29e';
+        ctx.font = '600 11px system-ui';
+        const dateText = new Date(data?.createdAt).toLocaleDateString();
+        ctx.fillText(dateText, 20, contentY);
+        
+        // Uploader name
+        ctx.fillStyle = '#78716c';
+        ctx.font = '700 11px system-ui';
+        ctx.fillText((data?.uploaderName || 'Unknown').toUpperCase(), 20, contentY + 25);
+        
+        // Message
+        if (data?.message) {
+            ctx.fillStyle = '#e7e5e4';
+            ctx.font = 'italic 14px system-ui';
+            const msg = `"${data.message}"`;
+            ctx.fillText(msg.length > 50 ? msg.slice(0, 47) + '..."' : msg, 20, contentY + 55);
+        }
+        
+        // Info section background
+        const infoY = contentY + 80;
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.roundRect(20, infoY, width - 40, 100, 8);
+        ctx.fill();
+        
+        // Reset text alignment for info section
+        ctx.textAlign = 'left';
+        
+        // Farmer
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 14px system-ui';
+        ctx.fillText(cardSnapshot?.farmer || '-', 32, infoY + 28);
+        
+        // Roaster
+        ctx.fillStyle = '#d6d3d1';
+        ctx.font = '500 13px system-ui';
+        ctx.fillText(cardSnapshot?.roaster || '-', 32, infoY + 50);
+        
+        // Method badge
+        ctx.fillStyle = '#292524';
+        const methodText = cardSnapshot?.method || '-';
+        ctx.beginPath();
+        ctx.roundRect(32, infoY + 62, ctx.measureText(methodText).width + 16, 22, 4);
+        ctx.fill();
+        ctx.strokeStyle = '#57534e';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = '#d6ccc2';
+        ctx.font = '500 10px monospace';
+        ctx.fillText(methodText, 40, infoY + 77);
+        
+        // Rating
+        const rating = Number(cardSnapshot?.rating) || 0;
+        if (rating > 0) {
+            ctx.fillStyle = '#f5f5f4';
+            ctx.font = '600 12px system-ui';
+            ctx.fillText(`${rating}/5`, width - 50, contentY + 25);
         }
 
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
         if (!blob) {
             throw new Error('Screenshot generation failed.');
         }
-        const extension = inferExtensionFromContentType(blob.type);
-        return new File([blob], `moment-${photoId}.${extension}`, {
-            type: blob.type || `image/${extension}`
-        });
+        return new File([blob], `moment-${photoId}.jpg`, { type: 'image/jpeg' });
     };
 
     const prepareMomentSharePayload = async ({ photoId, data, cardSnapshot, cardElement, shareText }) => {
-        // Use preloaded URL if available (bottleneck #2), otherwise fetch
+        // Use preloaded URL if available, otherwise fetch
         const preloaded = preloadedFullImages.get(photoId);
         let fullPhotoUrl;
         
         if (preloaded?.url) {
             fullPhotoUrl = preloaded.url;
-            // Ensure preloaded image is ready (bottleneck #3)
+            // Ensure preloaded image is ready
             if (preloaded.imagePromise) {
                 try {
                     await preloaded.imagePromise;
                 } catch (_) {
-                    // Image failed to preload, will load fresh in template
+                    // Preloaded image failed, will load fresh
                 }
             }
         } else {
@@ -1821,9 +1983,6 @@ export const createGalleryModule = ({
         hideMomentOutsideSharePrompt();
         bindMomentOutsideSharePromptControls();
         
-        // Preload html2canvas early while user browses (bottleneck #1)
-        preloadHtml2Canvas();
-        
         document.getElementById('galleryModal')?.classList.remove('hidden');
         galleryNotificationBaseline = getLastGalleryVisit();
         const user = getCurrentUser();
@@ -2127,7 +2286,7 @@ export const createGalleryModule = ({
                 });
                 headerActions?.appendChild(shareBtn);
                 
-                // Preload share assets in background (bottlenecks #2 and #3)
+                // Preload share assets in background for faster sharing
                 preloadMomentShareAssets(docItem.id, data);
             }
             const momentInfoEl = body.querySelector('[data-moment-info="true"]');
