@@ -261,6 +261,7 @@ export const createGalleryModule = ({
     const signedUrlCache = new Map();
     const preparedMomentShares = new Map();
     const momentBrewAccessCache = new Map();
+    const preloadedFullImages = new Map();
     const liveCommentUnsubs = new Set();
     const unreadCommentMomentIds = new Set();
     const unreadMineCommentMomentIds = new Set();
@@ -268,6 +269,8 @@ export const createGalleryModule = ({
     let currentUploadMomentBrew = null;
     let pendingOutsideShareContext = null;
     let galleryNotificationBaseline = null;
+    let cachedHtml2Canvas = null;
+    let html2CanvasLoadPromise = null;
     const DEFAULT_URL_TTL_SECONDS = 180;
     const CACHE_SKEW_MS = 15000;
     const SESSION_CACHE_PREFIX = 'gallerySignedUrl:v1';
@@ -1089,14 +1092,73 @@ export const createGalleryModule = ({
     };
 
     const getHtml2Canvas = async () => {
-        if (typeof getHtml2canvas === 'function') {
-            const capture = await getHtml2canvas();
-            if (typeof capture === 'function') return capture;
+        if (cachedHtml2Canvas) return cachedHtml2Canvas;
+        if (html2CanvasLoadPromise) return html2CanvasLoadPromise;
+
+        html2CanvasLoadPromise = (async () => {
+            if (typeof getHtml2canvas === 'function') {
+                const capture = await getHtml2canvas();
+                if (typeof capture === 'function') {
+                    cachedHtml2Canvas = capture;
+                    return capture;
+                }
+            }
+            if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
+                cachedHtml2Canvas = window.html2canvas;
+                return window.html2canvas;
+            }
+            return null;
+        })();
+
+        cachedHtml2Canvas = await html2CanvasLoadPromise;
+        html2CanvasLoadPromise = null;
+        return cachedHtml2Canvas;
+    };
+
+    // Preload html2canvas library in background (bottleneck #1)
+    const preloadHtml2Canvas = () => {
+        if (cachedHtml2Canvas || html2CanvasLoadPromise) return;
+        getHtml2Canvas().catch(() => { /* ignore preload errors */ });
+    };
+
+    // Preload full-size signed URL and image for faster sharing (bottlenecks #2 and #3)
+    const preloadMomentShareAssets = async (photoId, data) => {
+        if (!photoId || !hasStoragePath(data, 'full')) return;
+        
+        // Skip if already have preloaded image
+        if (preloadedFullImages.has(photoId)) return;
+
+        try {
+            // Fetch full signed URL (bottleneck #2)
+            const fullUrl = await resolveSignedPhotoUrl({
+                photoId,
+                variant: 'full',
+                data
+            });
+            
+            if (!fullUrl) return;
+
+            // Preload the full image (bottleneck #3)
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            const loadPromise = new Promise((resolve, reject) => {
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Image load failed'));
+                img.src = fullUrl;
+            });
+
+            // Store the promise so we can await it during share
+            preloadedFullImages.set(photoId, {
+                url: fullUrl,
+                imagePromise: loadPromise
+            });
+
+            // Await to ensure image is actually loaded
+            await loadPromise;
+        } catch (error) {
+            // Ignore preload errors - share will retry if needed
         }
-        if (typeof window !== 'undefined' && typeof window.html2canvas === 'function') {
-            return window.html2canvas;
-        }
-        return null;
     };
 
     const waitForCardImages = async (cardElement) => {
@@ -1356,11 +1418,28 @@ export const createGalleryModule = ({
     };
 
     const prepareMomentSharePayload = async ({ photoId, data, cardSnapshot, cardElement, shareText }) => {
-        const fullPhotoUrl = await resolveSignedPhotoUrl({
-            photoId,
-            variant: 'full',
-            data
-        });
+        // Use preloaded URL if available (bottleneck #2), otherwise fetch
+        const preloaded = preloadedFullImages.get(photoId);
+        let fullPhotoUrl;
+        
+        if (preloaded?.url) {
+            fullPhotoUrl = preloaded.url;
+            // Ensure preloaded image is ready (bottleneck #3)
+            if (preloaded.imagePromise) {
+                try {
+                    await preloaded.imagePromise;
+                } catch (_) {
+                    // Image failed to preload, will load fresh in template
+                }
+            }
+        } else {
+            fullPhotoUrl = await resolveSignedPhotoUrl({
+                photoId,
+                variant: 'full',
+                data
+            });
+        }
+        
         const shareFile = await createShareFileFromMomentCard({
             photoId,
             cardElement,
@@ -1390,36 +1469,16 @@ export const createGalleryModule = ({
         // Best-effort: copy details for apps that only keep the image payload.
         copyMomentShareTextToClipboard(shareText);
 
-        // iOS Safari has a strict ~1s user gesture timeout for navigator.share().
-        // Use a race with a timeout to share text-only if image generation is slow.
-        const SHARE_TIMEOUT_MS = 800;
-        const timeoutSymbol = Symbol('timeout');
-
         let sharePayload = preparedMomentShares.get(photoId);
         if (!sharePayload) {
-            const preparePromise = prepareMomentSharePayload({
-                photoId,
-                data,
-                cardSnapshot,
-                cardElement,
-                shareText
-            });
-            const timeoutPromise = new Promise((resolve) =>
-                setTimeout(() => resolve(timeoutSymbol), SHARE_TIMEOUT_MS)
-            );
-
             try {
-                const result = await Promise.race([preparePromise, timeoutPromise]);
-                if (result === timeoutSymbol) {
-                    // Timed out - share text-only now to preserve gesture context.
-                    // Let image generation continue in background for next attempt.
-                    preparePromise
-                        .then((payload) => preparedMomentShares.set(photoId, payload))
-                        .catch(() => { /* ignore background failures */ });
-                    sharePayload = { text: shareText };
-                } else {
-                    sharePayload = result;
-                }
+                sharePayload = await prepareMomentSharePayload({
+                    photoId,
+                    data,
+                    cardSnapshot,
+                    cardElement,
+                    shareText
+                });
             } catch (error) {
                 console.warn('Moment card screenshot share fallback to text-only:', error);
                 sharePayload = { text: shareText };
@@ -1761,6 +1820,10 @@ export const createGalleryModule = ({
         clearLiveCommentListeners();
         hideMomentOutsideSharePrompt();
         bindMomentOutsideSharePromptControls();
+        
+        // Preload html2canvas early while user browses (bottleneck #1)
+        preloadHtml2Canvas();
+        
         document.getElementById('galleryModal')?.classList.remove('hidden');
         galleryNotificationBaseline = getLastGalleryVisit();
         const user = getCurrentUser();
@@ -2063,6 +2126,9 @@ export const createGalleryModule = ({
                     }
                 });
                 headerActions?.appendChild(shareBtn);
+                
+                // Preload share assets in background (bottlenecks #2 and #3)
+                preloadMomentShareAssets(docItem.id, data);
             }
             const momentInfoEl = body.querySelector('[data-moment-info="true"]');
             const linkedBrewId = typeof data?.coffeeId === 'string' ? data.coffeeId.trim() : '';
