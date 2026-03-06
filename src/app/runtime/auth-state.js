@@ -1,5 +1,10 @@
 const T0_AUTH = performance.now();
 const logTimeA = (label) => console.log(`[PERF-AUTH] ${label}: ${(performance.now() - T0_AUTH).toFixed(0)}ms`);
+const logAbsoluteTime = (label) => {
+    const navStart = performance.timing?.navigationStart || performance.timeOrigin || 0;
+    const elapsed = Date.now() - navStart;
+    console.log(`[PERF-ABSOLUTE] ${label}: ${elapsed}ms from navigation start`);
+};
 
 export const createAuthStateChangedHandler = ({
     initUserData,
@@ -65,6 +70,7 @@ export const createAuthStateChangedHandler = ({
             logTimeA('changeView: done');
             setBootstrapLoadingVisible(false);
             logTimeA('bootstrap loading hidden, content visible');
+            logAbsoluteTime('Content visible (tiles may still be loading images)');
             document.getElementById('signedInContent').classList.remove('hidden');
             initNotificationListener(user.uid);
             if (shouldShowOnboarding) openHelp();

@@ -123,8 +123,12 @@ export const createSessionAuthViewModule = ({
 
     const getModal = (id) => document.getElementById(id);
 
-    const attachLiveViewListeners = ({ targetUid, isMine, requestId }) => {
+    const attachLiveViewListeners = ({ targetUid, isMine, requestId, skipFirstCallback = false }) => {
         if (requestId !== latestViewRequestId) return;
+
+        let skipBrews = skipFirstCallback;
+        let skipBeans = skipFirstCallback;
+        let skipCoffeeTypes = skipFirstCallback;
 
         const brewsRef = collection(db, 'users', targetUid, 'coffees');
         setUnsubscribeData(
@@ -132,6 +136,7 @@ export const createSessionAuthViewModule = ({
                 brewsRef,
                 (snapshot) => {
                     if (requestId !== latestViewRequestId) return;
+                    if (skipBrews) { skipBrews = false; return; }
                     const nextCoffees = [];
                     snapshot.forEach((docSnap) => nextCoffees.push({ id: docSnap.id, ...docSnap.data() }));
                     if (!getCurrentSort().key) {
@@ -158,6 +163,7 @@ export const createSessionAuthViewModule = ({
                 beansRef,
                 (snapshot) => {
                     if (requestId !== latestViewRequestId) return;
+                    if (skipBeans) { skipBeans = false; return; }
                     const nextBeans = [];
                     snapshot.forEach((docSnap) => nextBeans.push({ id: docSnap.id, ...docSnap.data() }));
                     setBeans(nextBeans);
@@ -185,6 +191,7 @@ export const createSessionAuthViewModule = ({
                 coffeeTypesRef,
                 (snapshot) => {
                     if (requestId !== latestViewRequestId) return;
+                    if (skipCoffeeTypes) { skipCoffeeTypes = false; return; }
                     const nextCoffeeTypes = [];
                     snapshot.forEach((docSnap) => nextCoffeeTypes.push({ id: docSnap.id, ...docSnap.data() }));
                     setCoffeeTypes(nextCoffeeTypes);
@@ -246,10 +253,10 @@ export const createSessionAuthViewModule = ({
         attachGasLiveListener(currentViewListenerContext);
     };
 
-    const scheduleLiveViewListeners = ({ targetUid, isMine, requestId }) => {
+    const scheduleLiveViewListeners = ({ targetUid, isMine, requestId, skipFirstCallback = false }) => {
         const run = () => {
             pendingLiveListenerHandle = null;
-            attachLiveViewListeners({ targetUid, isMine, requestId });
+            attachLiveViewListeners({ targetUid, isMine, requestId, skipFirstCallback });
         };
         const scheduleIdle = window.requestIdleCallback;
         if (typeof scheduleIdle === 'function') {
@@ -602,7 +609,10 @@ export const createSessionAuthViewModule = ({
 
                 renderPinnedTiles();
                 renderTable();
-                scheduleLiveViewListeners({ targetUid, isMine, requestId });
+                console.log('[PERF-DATA] loadCompleteViewData: renderPinnedTiles+renderTable done');
+                const navStart = performance.timing?.navigationStart || performance.timeOrigin || 0;
+                console.log(`[PERF-ABSOLUTE] Full data loaded and rendered: ${Date.now() - navStart}ms from navigation start`);
+                scheduleLiveViewListeners({ targetUid, isMine, requestId, skipFirstCallback: true });
                 if (!getModal('gasModal')?.classList.contains('hidden')) {
                     ensureGasListenerForCurrentView();
                 }

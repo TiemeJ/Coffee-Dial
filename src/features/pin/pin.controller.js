@@ -152,13 +152,13 @@ export const createPinControllerModule = ({
     };
 
     const renderPinnedTiles = (options = {}) => {
-        console.log('[PERF-RENDER] renderPinnedTiles: start');
         const {
             progressiveHydration = false,
             activeBeansOnly = false,
             suppressCoffeeDetails = false,
             suppressCoffeeImages = false
         } = options || {};
+        console.log(`[PERF-RENDER] renderPinnedTiles: start (suppressDetails=${suppressCoffeeDetails}, suppressImages=${suppressCoffeeImages}, progressive=${progressiveHydration})`);
         const pinnedPrefs = getPinnedBrewsPreferences();
         const pinnedGrid = document.getElementById('pinnedGrid');
         const isCoffeeArtEnabled = pinnedPrefs.showTilesInsteadOfCoffeeArt === false;
@@ -177,6 +177,29 @@ export const createPinControllerModule = ({
             });
             const section = document.getElementById('pinnedSection');
             if (section) section.classList.toggle('hidden', !result.hasArt);
+            console.log('[PERF-RENDER] renderPinnedTiles (art mode): done');
+            
+            // Track when art images finish loading
+            if (!suppressCoffeeImages) {
+                const artRoot = document.getElementById('brewPinArtRoot');
+                const images = artRoot?.querySelectorAll('img') || [];
+                if (images.length) {
+                    const startTime = performance.now();
+                    let loadedCount = 0;
+                    const checkAllLoaded = () => {
+                        loadedCount++;
+                        if (loadedCount === images.length) {
+                            console.log(`[PERF-RENDER] All ${images.length} art images loaded: ${(performance.now() - startTime).toFixed(0)}ms after render`);
+                            const navStart = performance.timing?.navigationStart || performance.timeOrigin || 0;
+                            console.log(`[PERF-ABSOLUTE] Art images loaded: ${Date.now() - navStart}ms from navigation start`);
+                        }
+                    };
+                    images.forEach((img) => {
+                        if (img.complete) checkAllLoaded();
+                        else img.addEventListener('load', checkAllLoaded, { once: true });
+                    });
+                }
+            }
             return;
         }
 
@@ -205,6 +228,28 @@ export const createPinControllerModule = ({
 
         if (result.hasTiles) initSortable();
         console.log('[PERF-RENDER] renderPinnedTiles: done');
+        
+        // Track when tile images finish loading
+        if (!suppressCoffeeImages) {
+            const pinnedGrid = document.getElementById('pinnedGrid');
+            const images = pinnedGrid?.querySelectorAll('img') || [];
+            if (images.length) {
+                const startTime = performance.now();
+                let loadedCount = 0;
+                const checkAllLoaded = () => {
+                    loadedCount++;
+                    if (loadedCount === images.length) {
+                        console.log(`[PERF-RENDER] All ${images.length} tile images loaded: ${(performance.now() - startTime).toFixed(0)}ms after render`);
+                        const navStart = performance.timing?.navigationStart || performance.timeOrigin || 0;
+                        console.log(`[PERF-ABSOLUTE] Tile images loaded: ${Date.now() - navStart}ms from navigation start`);
+                    }
+                };
+                images.forEach((img) => {
+                    if (img.complete) checkAllLoaded();
+                    else img.addEventListener('load', checkAllLoaded, { once: true });
+                });
+            }
+        }
     };
 
     appCommands.registerCommand(

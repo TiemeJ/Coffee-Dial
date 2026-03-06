@@ -6,6 +6,21 @@ const T0 = performance.now();
 const logTime = (label) => console.log(`[PERF] ${label}: ${(performance.now() - T0).toFixed(0)}ms`);
 logTime('bootstrap.js loaded');
 
+// Track Largest Contentful Paint (when main visual content is visible)
+if (typeof PerformanceObserver !== 'undefined') {
+    try {
+        new PerformanceObserver((list) => {
+            const entries = list.getEntries();
+            const lastEntry = entries[entries.length - 1];
+            if (lastEntry) {
+                console.log(`[PERF] LCP (Largest Contentful Paint): ${lastEntry.startTime.toFixed(0)}ms - element: ${lastEntry.element?.tagName || 'unknown'}`);
+            }
+        }).observe({ type: 'largest-contentful-paint', buffered: true });
+    } catch (_) {
+        // LCP observer not supported
+    }
+}
+
 const shouldAutoLoadFullAppByUrl = () => {
     if (typeof window === 'undefined') return false;
     const search = new URLSearchParams(window.location.search);
@@ -120,6 +135,9 @@ try {
     // no-op
 }
 
+// Start full-bootstrap import early (in parallel with auth check) for faster startup
+const fullBootstrapPromise = import('./full-bootstrap.js');
+
 const shouldStartFullApp = shouldAutoLoadFullAppByUrl() || hasPendingAuthRedirect || (await hasActiveSession());
 logTime(`shouldStartFullApp=${shouldStartFullApp}`);
 if (shouldStartFullApp) {
@@ -129,7 +147,8 @@ if (shouldStartFullApp) {
         // no-op
     }
     logTime('startFullApp: calling');
-    await startFullApp();
+    const { startFullApp: runFullBootstrap } = await fullBootstrapPromise;
+    await runFullBootstrap();
     logTime('startFullApp: done');
 } else {
     await mountSignedOutShell();
