@@ -450,73 +450,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 setColumnPreferences: (value) => setColumnPreferencesState(value)
             }
         });
-        const shouldDeferInitialTableRender = !isE2ESeedMode;
-        let hasBrewTableFirstInteraction = !shouldDeferInitialTableRender;
-        let hasPendingInitialBrewTableRender = false;
-        const firstInteractionListeners = [];
-        const setBrewTableDeferredHintVisible = (visible) => {
-            if (typeof document === 'undefined') return;
-            const hint = document.getElementById('brewTableDeferredHint');
-            if (!hint) return;
-            hint.classList.toggle('hidden', !visible);
-        };
-        const setLabResultsLauncherVisible = (visible) => {
-            if (typeof document === 'undefined') return;
-            const launcher = document.getElementById('labResultsLauncher');
-            if (!launcher) return;
-            launcher.classList.toggle('hidden', !visible);
-        };
-        const clearFirstInteractionListeners = () => {
-            while (firstInteractionListeners.length) {
-                const entry = firstInteractionListeners.pop();
-                try {
-                    entry.target.removeEventListener(entry.type, entry.handler, entry.options);
-                } catch (_) {}
-            }
-        };
-        const flushPendingBrewTableRender = () => {
-            if (!hasPendingInitialBrewTableRender) return;
-            hasPendingInitialBrewTableRender = false;
-            renderTableImmediate();
-        };
-        const markBrewTableInteractionReady = () => {
-            if (hasBrewTableFirstInteraction) return;
-            hasBrewTableFirstInteraction = true;
-            setBrewTableDeferredHintVisible(false);
-            setLabResultsLauncherVisible(true);
-            clearFirstInteractionListeners();
-            flushPendingBrewTableRender();
-        };
-        const bindFirstInteractionListener = (target, type, options = {}) => {
-            if (!target || typeof target.addEventListener !== 'function') return;
-            const handler = () => markBrewTableInteractionReady();
-            target.addEventListener(type, handler, options);
-            firstInteractionListeners.push({ target, type, handler, options });
-        };
-        if (shouldDeferInitialTableRender && typeof window !== 'undefined' && typeof document !== 'undefined') {
-            setBrewTableDeferredHintVisible(true);
-            setLabResultsLauncherVisible(false);
-            bindFirstInteractionListener(window, 'pointerdown', { capture: true, passive: true });
-            bindFirstInteractionListener(window, 'touchstart', { capture: true, passive: true });
-            bindFirstInteractionListener(window, 'wheel', { capture: true, passive: true });
-            bindFirstInteractionListener(window, 'keydown', { capture: true });
-            bindFirstInteractionListener(window, 'mousedown', { capture: true, passive: true });
-            bindFirstInteractionListener(document, 'click', { capture: true, passive: true });
-        } else {
-            setBrewTableDeferredHintVisible(false);
-            setLabResultsLauncherVisible(true);
-        }
-        const renderTable = (...args) => {
-            if (!hasBrewTableFirstInteraction) {
-                setBrewTableDeferredHintVisible(true);
-                setLabResultsLauncherVisible(false);
-                hasPendingInitialBrewTableRender = true;
-                return;
-            }
-            setBrewTableDeferredHintVisible(false);
-            setLabResultsLauncherVisible(true);
-            return renderTableImmediate(...args);
-        };
+        const renderTable = (...args) => renderTableImmediate(...args);
         const {
             toggleBrewsTableStateMenu,
             closeBrewsTableStateMenu,
