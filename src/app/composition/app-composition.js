@@ -1291,6 +1291,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const ensureLabResultsModule = async () => {
             if (!labResultsModulePromise) {
                 labResultsModulePromise = (async () => {
+                    await ensureLabResultsModalMounted();
                     const { createLabResultsModule } = await import('../../features/brews/lab-results.js');
                     return createLabResultsModule({
                         getFilteredCoffees,
