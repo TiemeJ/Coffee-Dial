@@ -1390,16 +1390,36 @@ export const createGalleryModule = ({
         // Best-effort: copy details for apps that only keep the image payload.
         copyMomentShareTextToClipboard(shareText);
 
+        // iOS Safari has a strict ~1s user gesture timeout for navigator.share().
+        // Use a race with a timeout to share text-only if image generation is slow.
+        const SHARE_TIMEOUT_MS = 800;
+        const timeoutSymbol = Symbol('timeout');
+
         let sharePayload = preparedMomentShares.get(photoId);
         if (!sharePayload) {
+            const preparePromise = prepareMomentSharePayload({
+                photoId,
+                data,
+                cardSnapshot,
+                cardElement,
+                shareText
+            });
+            const timeoutPromise = new Promise((resolve) =>
+                setTimeout(() => resolve(timeoutSymbol), SHARE_TIMEOUT_MS)
+            );
+
             try {
-                sharePayload = await prepareMomentSharePayload({
-                    photoId,
-                    data,
-                    cardSnapshot,
-                    cardElement,
-                    shareText
-                });
+                const result = await Promise.race([preparePromise, timeoutPromise]);
+                if (result === timeoutSymbol) {
+                    // Timed out - share text-only now to preserve gesture context.
+                    // Let image generation continue in background for next attempt.
+                    preparePromise
+                        .then((payload) => preparedMomentShares.set(photoId, payload))
+                        .catch(() => { /* ignore background failures */ });
+                    sharePayload = { text: shareText };
+                } else {
+                    sharePayload = result;
+                }
             } catch (error) {
                 console.warn('Moment card screenshot share fallback to text-only:', error);
                 sharePayload = { text: shareText };
