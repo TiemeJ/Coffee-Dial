@@ -3,13 +3,17 @@ import { createGasCoordinator } from '../../app/coordinators/gas.coordinator.js'
 export const createGasController = (deps = {}) => {
     const gas = createGasCoordinator(deps);
     const appCommands = deps.appCommands;
+    const ensureCardMounted = deps.ensureCardMounted || (() => Promise.resolve());
     if (!appCommands?.registerCommand) {
         throw new Error('createGasController requires appCommands.registerCommand');
     }
 
     appCommands.registerCommand(
         'gas.openCard',
-        ({ id, event = null } = {}) => gas.openGasCard(id, event),
+        async ({ id, event = null } = {}) => {
+            await ensureCardMounted();
+            gas.openGasCard(id, event);
+        },
         {
             owner: 'gas',
             schema: {
@@ -21,7 +25,8 @@ export const createGasController = (deps = {}) => {
 
     appCommands.registerCommand(
         'gas.openCardForEdit',
-        ({ id, event = null } = {}) => {
+        async ({ id, event = null } = {}) => {
+            await ensureCardMounted();
             gas.openGasCard(id, event);
             gas.enterGasEditMode();
         },

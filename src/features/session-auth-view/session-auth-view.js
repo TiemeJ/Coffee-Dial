@@ -376,7 +376,8 @@ export const createSessionAuthViewModule = ({
 
         applyAnimationPreference();
         updatePublicToggleUI();
-        document.getElementById('myShareId').value = user.uid;
+        const shareIdInput = document.getElementById('myShareId');
+        if (shareIdInput) shareIdInput.value = user.uid;
         return { shouldShowOnboarding };
     };
 

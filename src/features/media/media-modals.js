@@ -1,5 +1,6 @@
 export const createMediaModalsModule = ({
     dispatchCommand,
+    ensureMediaModalsMounted = null,
     ensureGraphModalsMounted = null,
     ensureGraphScaleBindings = null
 }) => {
@@ -107,7 +108,8 @@ export const createMediaModalsModule = ({
         overlay.classList.add('hidden');
     };
 
-    const openLightbox = ({ items = [], startIndex = 0 } = {}) => {
+    const openLightbox = async ({ items = [], startIndex = 0 } = {}) => {
+        await ensureMediaModalsMounted?.();
         ensureOverlayLayering();
         initLightboxListeners();
         const normalized = normalizeLightboxItems(items);

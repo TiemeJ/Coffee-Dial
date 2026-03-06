@@ -8,6 +8,22 @@
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../../core/format.js';
         import { createCoffeeDisplayModule } from '../../core/coffee-display.js';
         import { createCoffeesController } from '../../features/coffees/coffees.controller.js';
+        import {
+            ensureBrewsCardMounted,
+            ensureBrewsFormModalMounted,
+            ensureLabResultsModalMounted,
+            ensureBrewsTablePrefsMounted,
+            ensureBeansCardMounted,
+            ensureCoffeeTypeCardMounted,
+            ensureGasCardMounted,
+            ensureSocialModalMounted,
+            ensureMediaModalsMounted,
+            ensureStatsMounted,
+            ensurePreferencesMounted,
+            ensureImportExportMounted,
+            ensureGalleryMounted,
+            ensureScalesMounted
+        } from '../lazy-mount.js';
         import { createGasController } from '../../features/gas/gas.controller.js';
         import { createBeansController } from '../../features/beans/beans.controller.js';
         import { createScalesController } from '../../features/scales/scales.controller.js';
@@ -577,7 +593,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             return preferencesModulePromise;
         };
 
-        const openPreferences = (...args) => ensurePreferencesModule().then((module) => module.openPreferences(...args));
+        const openPreferences = (...args) => 
+            Promise.all([ensurePreferencesMounted(), ensurePreferencesModule()])
+                .then(([, module]) => module.openPreferences(...args));
 
         const {
             autoPinOpenBagsIfEnabled,
@@ -909,6 +927,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             imageCompression,
             appCommands,
             appEvents,
+            ensureCardMounted: ensureBeansCardMounted,
             getCurrentUser: () => getCurrentUserState(),
             getCurrentView: () => getCurrentViewState(),
             getCoffees: () => getCoffeesState(),
@@ -981,6 +1000,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             removeCoffeeImageBackground: (...args) => removeCoffeeImageBackground(...args),
             appCommands,
             appEvents,
+            ensureCardMounted: ensureCoffeeTypeCardMounted,
             getCurrentUser: () => getCurrentUserState(),
             getCurrentView: () => getCurrentViewState(),
             getCurrentCoffeeTypeId: () => getCurrentCoffeeTypeIdState(),
@@ -1053,6 +1073,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             imageCompression,
             appCommands,
             appEvents,
+            ensureCardMounted: ensureGasCardMounted,
             getCurrentUser: () => getCurrentUserState(),
             getCurrentView: () => getCurrentViewState(),
             getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
@@ -1100,7 +1121,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         const {
             acceptFriendRequest,
-            openFriendsModal,
+            openFriendsModal: openFriendsModalImpl,
             closeModal,
             switchModalTab,
             toggleSocialAccordion,
@@ -1133,6 +1154,11 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             changeView,
             showToast
         });
+
+        const openFriendsModal = async (...args) => {
+            await ensureSocialModalMounted();
+            return openFriendsModalImpl(...args);
+        };
 
         setOutgoingFriendRequestsProcessor?.(() => refreshFriendRequests());
 
@@ -1203,7 +1229,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const toggleAllFriends = (...args) => ensureGalleryModule().then((module) => module.toggleAllFriends(...args));
         const closeUploadModal = (...args) => ensureGalleryModule().then((module) => module.closeUploadModal(...args));
         const handlePhotoSubmit = (...args) => ensureGalleryModule().then((module) => module.handlePhotoSubmit(...args));
-        const openGallery = (...args) => ensureGalleryModule().then((module) => module.openGallery(...args));
+        const openGallery = (...args) => 
+            Promise.all([ensureGalleryMounted(), ensureGalleryModule()])
+                .then(([, module]) => module.openGallery(...args));
         const switchGalleryTab = (...args) => ensureGalleryModule().then((module) => module.switchGalleryTab(...args));
         const loadMoreGallery = (...args) => ensureGalleryModule().then((module) => module.loadMoreGallery(...args));
         const renderGalleryGrid = (...args) => ensureGalleryModule().then((module) => module.renderGalleryGrid(...args));
@@ -1220,6 +1248,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             resetLightboxZoom,
             initLightboxListeners
         } = createMediaModalsModule({
+            ensureMediaModalsMounted,
             ensureGraphModalsMounted: (...args) => ensureGraphModalsMounted(...args),
             ensureGraphScaleBindings: async () => {
                 await ensureScalesFeature();
@@ -1257,7 +1286,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             return statsModulePromise;
         };
 
-        const openStats = (...args) => ensureStatsModule().then((module) => module.openStats(...args));
+        const openStats = (...args) => 
+            Promise.all([ensureStatsMounted(), ensureStatsModule()])
+                .then(([, module]) => module.openStats(...args));
         const closeStats = (...args) => ensureStatsModule().then((module) => module.closeStats(...args));
         const toggleStatsUniqueTable = (...args) => ensureStatsModule().then((module) => module.toggleStatsUniqueTable(...args));
         const changeStatsView = (...args) => ensureStatsModule().then((module) => module.changeStatsView(...args));
@@ -1293,7 +1324,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
 
         const resetImportState = (...args) => ensureImportExportModule().then((module) => module.resetImportState(...args));
         const renderImportPreview = (...args) => ensureImportExportModule().then((module) => module.renderImportPreview(...args));
-        const openImportExportModal = (...args) => ensureImportExportModule().then((module) => module.openImportExportModal(...args));
+        const openImportExportModal = (...args) => 
+            Promise.all([ensureImportExportMounted(), ensureImportExportModule()])
+                .then(([, module]) => module.openImportExportModal(...args));
         const closeImportExportModal = (...args) => ensureImportExportModule().then((module) => module.closeImportExportModal(...args));
         const setImportExportMode = (...args) => ensureImportExportModule().then((module) => module.setImportExportMode(...args));
         const openImportModal = (...args) => ensureImportExportModule().then((module) => module.openImportModal(...args));
@@ -1718,7 +1751,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             openAppConfirm
         });
         const openBrewFormModal = (...args) =>
-            ensureScalesFeature().then(() => openBrewFormModalImpl(...args));
+            Promise.all([ensureBrewsFormModalMounted(), ensureScalesFeature()])
+                .then(() => openBrewFormModalImpl(...args));
 
         const openAddBrewFromPinned = createOpenAddBrewFromPinned({
             openBrewFormModal
@@ -1736,9 +1770,14 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         });
         createBrewsController({
             appCommands,
-            openCard: (id, event = null, options = {}) => openBrewCardImpl(id, event, options),
-            openCardWithOrder: (id, order = [], event = null, options = {}) =>
-                openBrewCardWithOrderImpl(id, order, event, options),
+            openCard: async (id, event = null, options = {}) => {
+                await ensureBrewsCardMounted();
+                openBrewCardImpl(id, event, options);
+            },
+            openCardWithOrder: async (id, order = [], event = null, options = {}) => {
+                await ensureBrewsCardMounted();
+                openBrewCardWithOrderImpl(id, order, event, options);
+            },
             openForm: (event = null, options = {}) => openBrewFormModal(event, options),
             showForCoffeeType: (coffeeTypeId) => {
                 if (!coffeeTypeId) return;

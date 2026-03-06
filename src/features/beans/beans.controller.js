@@ -3,13 +3,16 @@ import { createBeansCoordinator } from '../../app/coordinators/beans.coordinator
 export const createBeansController = (deps = {}) => {
     const beans = createBeansCoordinator(deps);
     const appCommands = deps.appCommands;
+    const ensureCardMounted = deps.ensureCardMounted || (() => Promise.resolve());
     if (!appCommands?.registerCommand) {
         throw new Error('createBeansController requires appCommands.registerCommand');
     }
-    const openCard = (beanId, event = null, keepNavigationOrder = false) =>
+    const openCard = async (beanId, event = null, keepNavigationOrder = false) => {
+        await ensureCardMounted();
         beans.openCard(beanId, event, keepNavigationOrder);
-    const openCardForEdit = (beanId, event = null) => {
-        openCard(beanId, event, false);
+    };
+    const openCardForEdit = async (beanId, event = null) => {
+        await openCard(beanId, event, false);
         beans.enterBeanEditMode();
     };
 
@@ -29,8 +32,10 @@ export const createBeansController = (deps = {}) => {
 
     appCommands.registerCommand(
         'beans.openCardWithOrder',
-        ({ beanId, order = [], event = null } = {}) =>
-            beans.openCardWithOrder(beanId, order, event),
+        async ({ beanId, order = [], event = null } = {}) => {
+            await ensureCardMounted();
+            beans.openCardWithOrder(beanId, order, event);
+        },
         {
             owner: 'beans',
             schema: {

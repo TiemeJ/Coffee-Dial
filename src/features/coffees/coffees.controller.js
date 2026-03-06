@@ -3,13 +3,17 @@ import { createCoffeesCoordinator } from '../../app/coordinators/coffees.coordin
 export const createCoffeesController = (deps = {}) => {
     const coffees = createCoffeesCoordinator(deps);
     const appCommands = deps.appCommands;
+    const ensureCardMounted = deps.ensureCardMounted || (() => Promise.resolve());
     if (!appCommands?.registerCommand) {
         throw new Error('createCoffeesController requires appCommands.registerCommand');
     }
 
     appCommands.registerCommand(
         'coffees.openCard',
-        ({ id, event = null } = {}) => coffees.openCoffeeTypeCard(id, event),
+        async ({ id, event = null } = {}) => {
+            await ensureCardMounted();
+            coffees.openCoffeeTypeCard(id, event);
+        },
         {
             owner: 'coffees',
             schema: {
@@ -21,7 +25,8 @@ export const createCoffeesController = (deps = {}) => {
 
     appCommands.registerCommand(
         'coffees.openCardForEdit',
-        ({ id, event = null } = {}) => {
+        async ({ id, event = null } = {}) => {
+            await ensureCardMounted();
             coffees.openCoffeeTypeCard(id, event);
             coffees.enterCoffeeTypeEditMode();
         },
