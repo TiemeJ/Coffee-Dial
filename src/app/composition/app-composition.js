@@ -1573,7 +1573,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 getCoffeeScale: () => coffeeScale,
                 showToast,
                 getPinnedBrewsPreferences: () => getPinnedBrewsPreferencesState(),
-                openBrewFormModal: dispatchBrewOpenForm
+                openBrewFormModal: dispatchBrewOpenForm,
+                ensureBrewsFormModalMounted: () => ensureBrewsFormModalMounted()
             },
             refreshQuickEditGearFieldVisibility,
             setRefreshBrewGearSelectors: (fn) => { refreshBrewGearSelectors = fn; }

@@ -37,7 +37,8 @@ export const createBrewsActionsModule = ({
     getPinnedBrewsPreferences,
     getSelectedBrewGearIds,
     setSelectedBrewGearIds,
-    openBrewFormModal
+    openBrewFormModal,
+    ensureBrewsFormModalMounted
 }) => {
     const brewsVm = createBrewsVmModule();
     const {
@@ -223,7 +224,8 @@ export const createBrewsActionsModule = ({
         }
     };
 
-    const showDuplicateInForm = ({ brew, title }) => {
+    const showDuplicateInForm = async ({ brew, title }) => {
+        await ensureBrewsFormModalMounted?.();
         closeAllActionMenus();
         updateBeanDropdown();
         setBrewGearScope({ includeAll: false });
@@ -281,7 +283,8 @@ export const createBrewsActionsModule = ({
         setAiAddVisibility(false);
         presentPreparedForm({ title, syncTitleFromForm: true });
     };
-    const showFriendRepeatInForm = ({ brew, title }) => {
+    const showFriendRepeatInForm = async ({ brew, title }) => {
+        await ensureBrewsFormModalMounted?.();
         closeAllActionMenus();
         updateBeanDropdown();
         setBrewGearScope({ includeAll: false });
