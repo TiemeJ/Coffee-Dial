@@ -101,13 +101,13 @@ export const createPinViewModule = ({ getBeanCalculatedStock, getCoffeeTypeDispl
         let dragIconClass = 'text-coffee-300 dark:text-[#57534e] hover:text-coffee-600 dark:hover:text-[#a8a29e]';
         if (stockPercentage < 100) {
             const fullHeight = stockPercentage;
-            const darkCoffeeFill = '#3B2F2F';
-            const waveSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20 L0 10 Q 25 0 50 10 T 100 10 L 100 20 Z' fill='${encodeURIComponent(darkCoffeeFill)}'/%3E%3C/svg%3E`;
+            const coffeeFill = '#7f5539';
+            const waveSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20 L0 10 Q 25 0 50 10 T 100 10 L 100 20 Z' fill='${encodeURIComponent(coffeeFill)}'/%3E%3C/svg%3E`;
             const colors = ['text-amber-700', 'text-blue-500', 'text-green-600', 'text-purple-500'];
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
             const boatDelay = Math.random() * 18;
             const boatElement = `<div class="absolute top-1/2 boat-right pointer-events-none z-10" style="animation-delay: -${boatDelay}s;"><i class="fa-solid fa-mug-hot ${randomColor} text-lg drop-shadow-lg"></i></div>`;
-            stockOverlay = `<div class="absolute bottom-0 left-0 w-full z-0 pointer-events-none hidden dark:flex flex-col justify-start transition-all duration-500" style="height: ${fullHeight}%;"><div class="w-full h-3 bg-repeat-x wave-animate relative" style="background-image: url(&quot;${waveSvg}&quot;); background-size: 50% 100%;">${boatElement}</div><div class="w-full flex-1" style="background-color: ${darkCoffeeFill};"></div></div>`;
+            stockOverlay = `<div class="absolute bottom-0 left-0 w-full z-0 pointer-events-none flex flex-col justify-start transition-all duration-500" style="height: ${fullHeight}%;"><div class="w-full h-3 bg-repeat-x wave-animate relative" style="background-image: url(&quot;${waveSvg}&quot;); background-size: 50% 100%;">${boatElement}</div><div class="w-full flex-1" style="background-color: ${coffeeFill};"></div></div>`;
             if (fullHeight > 25) {
                 dragIconClass = 'text-stone-400 drop-shadow-md hover:text-stone-300';
             }
