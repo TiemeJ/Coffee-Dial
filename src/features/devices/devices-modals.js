@@ -187,8 +187,10 @@ const updateScaleUI = (slot, { weight, status, connected, timerRunning } = {}) =
                 }
             }
         }
-        // Show/hide the wrapper rows based on whether any device is connected
+        // Show/hide the wrapper rows and tint plug buttons based on whether any device is connected
         const baseIds = ['Scale1', 'Scale2', 'Pressure', 'Temp'];
+        // anyConn is derived from the extraction-header indicators (prefix 'graph') as the source of truth
+        const anyConn = baseIds.some(s => !document.getElementById(`graph${s}Indicator`)?.classList.contains('hidden'));
         for (const prefix of ['graph', 'graphModal']) {
             const anyConnected = baseIds.some(s => !document.getElementById(`${prefix}${s}Indicator`)?.classList.contains('hidden'));
             const wrapper = document.getElementById(`${prefix}DeviceIndicators`);
@@ -197,11 +199,38 @@ const updateScaleUI = (slot, { weight, status, connected, timerRunning } = {}) =
                 wrapper.classList.toggle('flex', anyConnected);
             }
         }
+        // Tint the plug icon buttons green when any device is connected
+        const extractionBtn = document.getElementById('extractionConnectBtn');
+        if (extractionBtn) {
+            extractionBtn.classList.toggle('text-green-600', anyConn);
+            extractionBtn.classList.toggle('dark:text-green-500', anyConn);
+            extractionBtn.classList.toggle('text-coffee-600', !anyConn);
+            extractionBtn.classList.toggle('dark:text-[#a8a29e]', !anyConn);
+        }
+        const graphModalBtn = document.getElementById('graphModalConnectBtn');
+        if (graphModalBtn) {
+            graphModalBtn.classList.toggle('text-green-600', anyConn);
+            graphModalBtn.classList.toggle('dark:text-green-500', anyConn);
+            graphModalBtn.classList.toggle('text-coffee-500', !anyConn);
+            graphModalBtn.classList.toggle('dark:text-[#a8a29e]', !anyConn);
+        }
     }
     
     // Update timer button text
     if (timerRunning !== undefined && timerBtn) {
         timerBtn.textContent = timerRunning ? 'Stop timer' : 'Start timer';
+    }
+};
+
+/**
+ * Re-sync all device indicator elements from current DeviceManager state.
+ * Call this whenever new indicator DOM elements have just been added to the page
+ * (e.g. after the graph modal is lazily mounted).
+ */
+export const syncAllDeviceIndicators = () => {
+    for (const slot of ['scale', 'scale2', 'pressure', 'temp']) {
+        const connected = !!DeviceManager.getDevice(slot)?.isConnected;
+        updateScaleUI(slot, { connected });
     }
 };
 

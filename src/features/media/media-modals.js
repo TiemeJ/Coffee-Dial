@@ -2,7 +2,8 @@ export const createMediaModalsModule = ({
     dispatchCommand,
     ensureMediaModalsMounted = null,
     ensureGraphModalsMounted = null,
-    ensureGraphScaleBindings = null
+    ensureGraphScaleBindings = null,
+    syncDeviceIndicators = null
 }) => {
     let lightboxListenersInitialized = false;
     let lightboxItems = [];
@@ -29,6 +30,10 @@ export const createMediaModalsModule = ({
     const openGraphModal = async () => {
         if (typeof ensureGraphModalsMounted === 'function') {
             await ensureGraphModalsMounted();
+        }
+        // Sync device indicator state into the freshly-mounted graph modal DOM
+        if (typeof syncDeviceIndicators === 'function') {
+            await syncDeviceIndicators();
         }
         if (typeof ensureGraphScaleBindings === 'function') {
             await ensureGraphScaleBindings();

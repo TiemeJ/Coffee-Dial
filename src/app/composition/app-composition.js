@@ -629,7 +629,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                         tareDevice: _tareDevice,
                         toggleDeviceTimer: _toggleDeviceTimer,
                         resetDeviceTimer: _resetDeviceTimer,
-                        initDeviceListeners
+                        initDeviceListeners,
+                        syncAllDeviceIndicators: _syncAllDeviceIndicators
                     } = await import('../../features/devices/devices-modals.js');
                     initDeviceListeners();
                     devicesFeature = {
@@ -641,7 +642,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                         connectDevice: _connectDevice,
                         tareDevice: _tareDevice,
                         toggleDeviceTimer: _toggleDeviceTimer,
-                        resetDeviceTimer: _resetDeviceTimer
+                        resetDeviceTimer: _resetDeviceTimer,
+                        syncAllDeviceIndicators: _syncAllDeviceIndicators
                     };
                     return devicesFeature;
                 })().catch((error) => {
@@ -1267,6 +1269,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         } = createMediaModalsModule({
             ensureMediaModalsMounted,
             ensureGraphModalsMounted: (...args) => ensureGraphModalsMounted(...args),
+            syncDeviceIndicators: () => ensureDevicesFeature().then((f) => f.syncAllDeviceIndicators?.()),
             ensureGraphScaleBindings: async () => {
                 await ensureScalesFeature();
                 coffeeScale?.bindGraphModalControls?.();
