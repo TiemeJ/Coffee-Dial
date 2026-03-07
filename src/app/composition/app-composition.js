@@ -50,6 +50,7 @@
         import { createBrewFormUiModule } from '../../features/brews/brew-form-ui.js';
         import { createBrewFormActionsModule } from '../../features/brews/brew-form-actions.js';
         import { createBrewCsvRecipeModule } from '../../features/brews/brew-csv-recipe.js';
+        import { createBrewRatioCalcModule } from '../../features/brews/brew-ratio-calc.js';
         import { createActionMenuModule } from '../../features/ui/action-menu.js';
         import { createUiShellModule } from '../../features/ui-shell/ui-shell.js';
         import { createMediaModalsModule } from '../../features/media/media-modals.js';
@@ -1368,6 +1369,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             getFilteredCoffees,
             getCoffeeTypeDisplay
         });
+        const { openRatioCalcModal, closeRatioCalcModal, handleRatioCalcInput } = createBrewRatioCalcModule();
         let labResultsModulePromise = null;
         const ensureLabResultsModule = async () => {
             if (!labResultsModulePromise) {
@@ -1965,6 +1967,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             handlePhotoSubmit,
             handleQuickEditRecipeInput,
             handleRecipeInput,
+            handleRatioCalcInput,
+            openRatioCalcModal,
+            closeRatioCalcModal,
             hideAiProfile,
             hideBrewsTablePrefsModal,
             hideGalleryModal,

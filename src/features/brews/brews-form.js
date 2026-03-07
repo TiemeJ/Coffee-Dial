@@ -166,7 +166,10 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
         document.getElementById('grinder').value = c.grinder || '';
         document.getElementById('grind').value = c.grind || '';
         document.getElementById('inputWeight').value = c.weight || '';
-        document.getElementById('inputRatio').value = c.ratio || '';
+        const ratioNum = c.ratio != null ? parseFloat(c.ratio) : null;
+        const ratioNumSpan = document.getElementById('inputRatio')?.querySelector('span:last-child');
+        if (ratioNumSpan) ratioNumSpan.textContent = ratioNum ? ratioNum.toFixed(2) : '';
+        const ratioHidden = document.getElementById('inputRatioHidden'); if (ratioHidden) ratioHidden.value = ratioNum ?? '';
         document.getElementById('inputYield').value = c.weight && c.ratio ? (c.weight * c.ratio).toFixed(1) : '';
         document.getElementById('time').value = c.time || '';
         document.getElementById('notes').value = c.notes || '';

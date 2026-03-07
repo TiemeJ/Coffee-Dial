@@ -1781,7 +1781,11 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
   const syncGraphRecipeFields = () => {
     refreshGraphDomRefs();
     if (graphInputWeightEl && inField) graphInputWeightEl.value = inField.value;
-    if (graphInputRatioEl && ratioField) graphInputRatioEl.value = ratioField.value;
+    if (graphInputRatioEl && ratioField) {
+      const src = ratioField.querySelector('span:last-child');
+      const dst = graphInputRatioEl.querySelector('span:last-child');
+      if (src && dst) dst.textContent = src.textContent;
+    }
     if (graphInputYieldEl && outField) graphInputYieldEl.value = outField.value;
   };
   const syncGraphTimeFromForm = () => {

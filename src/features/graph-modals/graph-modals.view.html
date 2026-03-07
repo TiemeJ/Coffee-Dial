@@ -23,8 +23,8 @@
                             <input type="number" step="any" id="cardGraphInputWeight" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
                         </div>
                         <div class="relative">
-                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label>
-                            <input type="number" step="any" id="cardGraphInputRatio" readonly tabindex="-1" class="w-full text-center font-mono bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio</label>
+                            <div id="cardGraphInputRatio" class="w-full grid grid-cols-3 items-center text-center font-mono text-sm text-coffee-500 dark:text-[#78716c] py-1.5 select-none"><span>1</span><span>:</span><span></span></div>
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label>
@@ -68,7 +68,10 @@
         <div class="bg-white dark:bg-[#292524] rounded-2xl shadow-2xl w-full max-w-lg mx-auto border border-coffee-200 dark:border-[#44403c] max-h-[90vh] flex flex-col" data-action-click="event.stopPropagation()">
             <div class="flex justify-between items-center p-5 border-b border-coffee-100 dark:border-[#44403c]">
                 <h2 class="text-xl font-bold text-coffee-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-chart-line text-coffee-700 dark:text-[#d6ccc2]"></i> Graph</h2>
-                <button data-action-click="closeGraphModal()" aria-label="Close graph modal" class="w-11 h-11 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <div class="flex items-center gap-2">
+                    <button type="button" title="Connect devices" data-action-click="openConnectDevicesModal()" class="w-11 h-11 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center"><i class="fa-solid fa-plug"></i></button>
+                    <button data-action-click="closeGraphModal()" aria-label="Close graph modal" class="w-11 h-11 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
             </div>
             <div class="p-6 text-coffee-800 dark:text-[#d6ccc2] space-y-4 overflow-y-auto ios-scroll">
                 <div class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg p-2">
@@ -91,8 +94,8 @@
                             <input type="number" step="any" id="graphInputWeight" readonly tabindex="-1" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
                         </div>
                         <div class="relative">
-                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label>
-                            <input type="number" step="any" id="graphInputRatio" readonly tabindex="-1" class="w-full text-center font-mono bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed" />
+                            <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio</label>
+                            <div id="graphInputRatio" class="w-full grid grid-cols-3 items-center text-center font-mono text-sm text-coffee-500 dark:text-[#78716c] py-1.5 select-none"><span>1</span><span>:</span><span></span></div>
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label>

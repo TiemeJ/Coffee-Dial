@@ -85,25 +85,18 @@
 
                     <!-- SECTION 2: BREW PARAMETERS -->
                     <div class="bg-white dark:bg-[#292524] p-4 rounded-lg border border-coffee-100 dark:border-[#44403c]">
-                         <div id="extractionHeader" data-action-click="toggleExtractionSection(event)" class="mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between cursor-pointer select-none">
-                             <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                         <div id="extractionHeader" data-action-click="toggleExtractionSection(event)" class="relative mb-4 pb-2 border-b border-coffee-200 dark:border-[#44403c] flex flex-wrap items-center gap-2 pr-14 cursor-pointer select-none">
+                             <!-- Title: natural width, flush left -->
+                             <h3 class="text-sm font-bold text-coffee-800 dark:text-white uppercase tracking-wide flex items-center gap-2 flex-shrink-0">
                                  <i class="fa-solid fa-flask text-coffee-600 dark:text-[#a8a29e]"></i> Extraction
                              </h3>
-                             <div data-action-click="event.stopPropagation()" class="w-full flex flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
+                             <!-- Graph + Connect: right-aligned, wrap to second row when needed -->
+                             <div data-action-click="event.stopPropagation()" class="ml-auto flex-shrink-0 flex items-center gap-2">
                                  <button id="brewGraphBtn" type="button" title="Graph" data-action-click="openGraphModal()" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
                                      <i class="fa-solid fa-chart-line"></i>
                                  </button>
-                                 <button id="brewWeighBtn" type="button" title="Weigh" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
-                                     <i class="fa-solid fa-scale-balanced"></i>
-                                 </button>
-                                 <button id="brewTimerBtn" type="button" title="Start timer" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
-                                     <i class="fa-solid fa-play"></i>
-                                 </button>
-                                 <button id="brewResetScaleBtn" type="button" title="Reset scale" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
-                                     <i class="fa-solid fa-rotate-left"></i>
-                                 </button>
-                                 <button type="button" data-action-click="toggleExtractionSection(event)" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse extraction">
-                                     <i id="extractionToggleIcon" class="fa-solid fa-chevron-up transition-transform"></i>
+                                 <button type="button" title="Connect devices" data-action-click="openConnectDevicesModal()" class="w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center">
+                                     <i class="fa-solid fa-plug"></i>
                                  </button>
                              </div>
                              <!-- Device connection indicators: shown when a device is connected -->
@@ -113,6 +106,10 @@
                                  <span id="graphPressureIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-gauge-high"></i> Pressure</span>
                                  <span id="graphTempIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-temperature-half"></i> Temp</span>
                              </div>
+                             <!-- Collapse: absolute top-right, always anchored regardless of flow -->
+                             <button type="button" data-action-click="toggleExtractionSection(event)" class="absolute top-0 right-0 w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse extraction">
+                                 <i id="extractionToggleIcon" class="fa-solid fa-chevron-up transition-transform"></i>
+                             </button>
                          </div>
                          
                         <div id="extractionBody" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -197,10 +194,23 @@
                                 <input type="hidden" id="tempMode" name="tempMode" value="numeric">
                             </div>
                             
-                            <!-- Recipe Block -->
-                             <div class="grid grid-cols-3 gap-2 bg-coffee-50/50 dark:bg-[#201d1b] p-2 rounded-lg border border-coffee-100 dark:border-[#44403c]">
+                            <!-- Scale control buttons: own grid cell, above In/Ratio/Out on mobile -->
+                            <div class="grid grid-cols-3 gap-2 self-end">
+                                 <button id="brewWeighBtn" type="button" title="Weigh" class="w-full h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center gap-1.5 text-xs font-medium">
+                                     <i class="fa-solid fa-scale-balanced"></i><span>Weigh</span>
+                                 </button>
+                                 <button id="brewTimerBtn" type="button" title="Start timer" class="w-full h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center gap-1.5 text-xs font-medium">
+                                     <i class="fa-solid fa-play"></i><span>Timer</span>
+                                 </button>
+                                 <button id="brewResetScaleBtn" type="button" title="Reset scale" class="w-full h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center gap-1.5 text-xs font-medium">
+                                     <i class="fa-solid fa-rotate-left"></i><span>Reset</span>
+                                 </button>
+                             </div>
+
+                            <!-- Recipe block: own grid cell, spans 2 cols on lg like Gear -->
+                            <div class="grid grid-cols-3 gap-2 bg-coffee-50/50 dark:bg-[#201d1b] p-2 rounded-lg border border-coffee-100 dark:border-[#44403c] lg:col-span-2">
                                 <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">In (g)</label><input type="number" step="any" id="inputWeight" name="weight" data-action-input="handleRecipeInput('weight')" placeholder="18" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
-                                <div class="relative"><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio 1:X</label><input type="number" step="any" id="inputRatio" name="ratio" readonly class="w-full text-center font-mono bg-coffee-50 dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-0 cursor-not-allowed"></div>
+                                <div class="relative" data-action-click="event.stopPropagation(); openRatioCalcModal()" style="cursor:pointer;"><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center cursor-pointer">Ratio</label><div id="inputRatio" class="w-full grid grid-cols-3 items-center text-center font-mono text-sm text-coffee-500 dark:text-[#78716c] py-1.5 select-none"><span>1</span><span>:</span><span></span></div><input type="hidden" id="inputRatioHidden" name="ratio"></div>
                                 <div><label class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label><input type="number" step="any" id="inputYield" name="yield" data-action-input="handleRecipeInput('yield')" placeholder="288" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded px-2 py-1.5 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500"></div>
                             </div>
                             
@@ -259,4 +269,36 @@
             </div>
             </div>
             
+            <!-- Ratio Calculator Modal -->
+            <div id="ratioCalcModal" class="hidden fixed inset-0 z-[10055] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" data-action-click="closeRatioCalcModal()">
+                <div class="bg-white dark:bg-[#292524] rounded-2xl shadow-2xl w-full max-w-sm mx-auto border border-coffee-200 dark:border-[#44403c]" data-action-click="event.stopPropagation()">
+                    <div class="flex justify-between items-center px-5 pt-5 pb-3 border-b border-coffee-100 dark:border-[#44403c]">
+                        <h2 class="text-base font-bold text-coffee-900 dark:text-white">Ratio calculator</h2>
+                        <button type="button" data-action-click="closeRatioCalcModal()" aria-label="Close ratio calculator" title="Close" class="w-11 h-11 flex items-center justify-center rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="p-5">
+                        <div class="grid grid-cols-4 gap-3">
+                            <!-- In -->
+                            <div class="col-span-1">
+                                <label for="ratioCalcIn" class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">In (g)</label>
+                                <input type="number" step="any" inputmode="decimal" id="ratioCalcIn" aria-label="Dose in grams" data-action-input="handleRatioCalcInput('in')" placeholder="18" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-2 py-2 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 focus:outline-none">
+                            </div>
+                            <!-- Ratio -->
+                            <div class="col-span-2">
+                                <label for="ratioCalcRatio" class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Ratio</label>
+                                <div class="flex items-center border border-coffee-200 dark:border-[#44403c] rounded-lg bg-white dark:bg-[#1c1917] focus-within:ring-1 focus-within:ring-coffee-500 px-2 py-2">
+                                    <span class="text-sm font-mono text-coffee-400 dark:text-[#78716c] select-none shrink-0 mr-1">1 :</span>
+                                    <input type="number" step="any" inputmode="decimal" id="ratioCalcRatio" aria-label="Ratio multiplier" data-action-input="handleRatioCalcInput('ratio')" placeholder="10.5" class="w-0 flex-1 min-w-0 text-center bg-transparent border-0 p-0 text-sm font-mono text-coffee-900 dark:text-white focus:ring-0 focus:outline-none">
+                                </div>
+                            </div>
+                            <!-- Out -->
+                            <div class="col-span-1">
+                                <label for="ratioCalcOut" class="block text-[10px] font-bold text-coffee-500 dark:text-[#78716c] mb-1 uppercase text-center">Out (g)</label>
+                                <input type="number" step="any" inputmode="decimal" id="ratioCalcOut" aria-label="Yield in grams" data-action-input="handleRatioCalcInput('out')" placeholder="189" class="w-full text-center font-mono bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] rounded-lg px-2 py-2 text-sm text-coffee-900 dark:text-white focus:ring-1 focus:ring-coffee-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>

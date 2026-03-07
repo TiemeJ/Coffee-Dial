@@ -59,8 +59,16 @@ export const createBrewCsvRecipeModule = ({ getFilteredCoffees, getCoffeeTypeDis
         const weightVal = parseFloat(weightInput.value) || 0;
         const yieldVal = parseFloat(yieldInput.value) || 0;
         if (!weightVal) return;
-        if (source === 'weight' && yieldVal > 0) ratioInput.value = (yieldVal / weightVal).toFixed(2);
-        if (source === 'yield' && weightVal > 0) ratioInput.value = (yieldVal / weightVal).toFixed(2);
+        if (source === 'weight' && yieldVal > 0) {
+            const num = (yieldVal / weightVal).toFixed(2);
+            const s = ratioInput?.querySelector('span:last-child'); if (s) s.textContent = num;
+            const h = document.getElementById('inputRatioHidden'); if (h) h.value = num;
+        }
+        if (source === 'yield' && weightVal > 0) {
+            const num = (yieldVal / weightVal).toFixed(2);
+            const s = ratioInput?.querySelector('span:last-child'); if (s) s.textContent = num;
+            const h = document.getElementById('inputRatioHidden'); if (h) h.value = num;
+        }
     };
 
     return {
