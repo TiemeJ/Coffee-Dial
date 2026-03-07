@@ -214,7 +214,8 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       connectWeightEl.textContent = formattedWeight;
     }
     lastWeight = value;
-    updateLiveWeight(value);
+    // When scale 2 (cup) is active it owns the live yield field; suppress scale 1 updates.
+    if (!isScale2Active()) updateLiveWeight(value);
     if (timerRunning) {
       addRawSample(value, Date.now());
     }
@@ -224,6 +225,11 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
         triggerAutoStartTimer();
       }
     }
+  }
+
+  // Returns true when a Scale 2 device (cup) is actively connected.
+  function isScale2Active() {
+    return !!DeviceManager.getDevice('scale2')?.isConnected;
   }
 
   function setFlow(value) {
@@ -944,7 +950,19 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
         }
       }
 
-      if (firstDripCapturedAt === null && Number.isFinite(effectiveWeight) && effectiveWeight > FIRST_DRIP_THRESHOLD) {
+      // --- Pre-compute scale 2 interpolated weight (reused below and for first-drip) ---
+      // Computed here — before the scale 2 block at the end — so first-drip detection
+      // can use it without repeating the interpolation.
+      let s2w = null;
+      if (scale2RawSamples.length > 0) {
+        const s2raw = getInterpolatedWeightScale2(capture.startAt + elapsedMs);
+        s2w = Number.isFinite(s2raw) ? Math.max(0, Number(s2raw.toFixed(1))) : null;
+      }
+
+      // First drip: scale 2 (cup) when active → coffee has arrived in the cup.
+      // Fall back to scale 1 (dripper) when only one scale is in use.
+      const firstDripWeight = (isScale2Active() && Number.isFinite(s2w)) ? s2w : effectiveWeight;
+      if (firstDripCapturedAt === null && Number.isFinite(firstDripWeight) && firstDripWeight > FIRST_DRIP_THRESHOLD) {
         firstDripCapturedAt = elapsedMs;
         syncFirstDripInputFromState();
         if (graphFirstDripEl) graphFirstDripEl.dispatchEvent(new Event("input", { bubbles: true }));
@@ -1048,9 +1066,8 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
         }
       }
       // --- Scale 2 weight + flow (resampled, same cadence as scale 1) ---
+      // s2w was already interpolated above for first-drip detection; reuse it.
       if (scale2RawSamples.length > 0) {
-        const s2raw = getInterpolatedWeightScale2(capture.startAt + elapsedMs);
-        const s2w = Number.isFinite(s2raw) ? Math.max(0, Number(s2raw.toFixed(1))) : null;
         scale2Capture.samples.push({ tMs: elapsedMs, w: s2w });
         if (Number.isFinite(s2w)) {
           scale2FlowHistory.push({ tMs: elapsedMs, w: s2w });
@@ -1069,6 +1086,8 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
           }
           scale2FlowCapture.samples.push({ tMs: elapsedMs, flow: Number.isFinite(s2flow) ? s2flow : null });
         }
+        // Scale 2 (cup) owns the live beverage-weight yield field when active.
+        if (isScale2Active() && Number.isFinite(s2w)) updateLiveWeight(s2w);
       }
 
       setFlow(flow);
