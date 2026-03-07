@@ -610,33 +610,55 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       ctx.fillText(label, labelX, axisY + 16);
     }
 
-    ctx.fillStyle = "#2563eb";
-    const legendY = height - 6;
+    const hasScale2Data = scale2Samples.length > 0 || scale2FlowSamples.length > 0;
+    const weightLabel = hasScale2Data ? "Poured weight" : "Weight";
+    const flowLabel = hasScale2Data ? "Pouring flow" : "Flow";
     ctx.font = "12px system-ui";
     ctx.textAlign = "left";
-    const weightLabel = "Weight";
-    const flowLabel = "Flow";
-    const weightWidth = ctx.measureText(weightLabel).width;
-    const flowWidth = ctx.measureText(flowLabel).width;
     const maxFlowLabelWidth = ctx.measureText(maxFlowLabel).width;
     const minFlowLabelWidth = ctx.measureText(minFlowLabel).width;
     const flowAxisLabelRight = flowLabelX + Math.max(maxFlowLabelWidth, minFlowLabelWidth);
     const swatchWidth = 10;
     const gap = 6;
     const itemGap = 12;
-    const totalWidth = swatchWidth + gap + weightWidth + itemGap + swatchWidth + gap + flowWidth;
-    const legendLeft = Math.max(padding.left, flowAxisLabelRight - totalWidth);
 
-    ctx.fillStyle = "#2563eb";
-    ctx.fillRect(legendLeft, legendY, swatchWidth, 2);
-    ctx.fillStyle = "#444";
-    ctx.fillText(weightLabel, legendLeft + swatchWidth + gap, legendY + 4);
+    const legendEntries = hasScale2Data ? [
+      { color: "#2563eb", dash: null,   label: weightLabel },
+      { color: "#16a34a", dash: null,   label: flowLabel },
+      { color: "#f97316", dash: [6, 3], label: "Beverage weight" },
+      { color: "#fb923c", dash: [3, 4], label: "Drip flow" },
+    ] : [
+      { color: "#2563eb", dash: null, label: weightLabel },
+      { color: "#16a34a", dash: null, label: flowLabel },
+    ];
 
-    const flowLeft = legendLeft + swatchWidth + gap + weightWidth + itemGap;
-    ctx.fillStyle = "#16a34a";
-    ctx.fillRect(flowLeft, legendY, swatchWidth, 2);
-    ctx.fillStyle = "#444";
-    ctx.fillText(flowLabel, flowLeft + swatchWidth + gap, legendY + 4);
+    const legendTotalWidth = legendEntries.reduce((acc, e, i) => {
+      return acc + swatchWidth + gap + ctx.measureText(e.label).width + (i < legendEntries.length - 1 ? itemGap : 0);
+    }, 0);
+    const legendLeft = Math.max(padding.left, flowAxisLabelRight - legendTotalWidth);
+    const legendY = height - 6;
+
+    let legendCurX = legendLeft;
+    legendEntries.forEach(({ color, dash, label }) => {
+      ctx.save();
+      if (dash) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash(dash);
+        ctx.beginPath();
+        ctx.moveTo(legendCurX, legendY + 1);
+        ctx.lineTo(legendCurX + swatchWidth, legendY + 1);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = color;
+        ctx.fillRect(legendCurX, legendY, swatchWidth, 2);
+      }
+      ctx.restore();
+      ctx.fillStyle = "#444";
+      ctx.textAlign = "left";
+      ctx.fillText(label, legendCurX + swatchWidth + gap, legendY + 4);
+      legendCurX += swatchWidth + gap + ctx.measureText(label).width + itemGap;
+    });
 
     graphLabelHits.set(targetEl, labelHits);
     attachGraphTooltipHandler(targetEl);
