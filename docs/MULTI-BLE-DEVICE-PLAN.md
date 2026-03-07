@@ -130,12 +130,12 @@ Add small device status icons near the graph panel:
 ```
 
 #### 2.4 Tasks
-- [ ] Rebuild connect modal with 2x2 device grid
-- [ ] Add device indicator icons to graph panel header
-- [ ] Create individual connect functions per device type
-- [ ] Implement auto-reconnect on modal open for all remembered devices
-- [ ] Update `openConnectScaleModal` → `openConnectDevicesModal` naming
-- [ ] Wire device connect buttons to adapters via device-manager
+- [x] Rebuild connect modal with 2x2 device grid
+- [x] Add device indicator icons to graph panel header
+- [x] Create individual connect functions per device type
+- [x] Implement auto-reconnect on modal open for all remembered devices
+- [x] Update `openConnectScaleModal` → `openConnectDevicesModal` naming
+- [x] Wire device connect buttons to adapters via device-manager
 
 ---
 
@@ -253,14 +253,14 @@ Add series visibility toggles:
 ```
 
 #### 3.6 Tasks
-- [ ] Extend brew data model with new capture fields
-- [ ] Update `brews-actions.js` `handleFormSubmit` to save all captures
-- [ ] Update `brews-form.js` `populateFromBrew` to restore all captures
-- [ ] Modify/replace graph renderer to support multiple data series
+- [x] Extend brew data model with new capture fields
+- [x] Update `brews-actions.js` `handleFormSubmit` to save all captures
+- [x] Update `brews-form.js` `populateFromBrew` to restore all captures
+- [x] Modify/replace graph renderer to support multiple data series
 - [ ] Add Y-axis configuration for pressure (bar) and temperature (°C)
 - [ ] Add series visibility toggles to graph panel
 - [ ] Update `graphTogglePrefs` schema and persistence
-- [ ] Update card graph preview to show multi-series data
+- [x] Update card graph preview to show multi-series data
 
 ---
 

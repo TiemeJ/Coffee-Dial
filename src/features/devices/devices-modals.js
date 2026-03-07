@@ -73,6 +73,10 @@ export const connectDevice = async (slot) => {
         await DeviceManager.connect(slot);
     } catch (err) {
         console.error(`[DevicesModals] Connect ${slot} failed:`, err);
+        // Show failure in UI
+        if (slot === 'scale' || slot === 'scale2') {
+            updateScaleUI(slot, { status: 'Failed to connect', connected: false });
+        }
     }
 };
 
@@ -121,21 +125,24 @@ const formatWeight = (weight) => {
  * @param {object} params
  */
 const updateScaleUI = (slot, { weight, status, connected, timerRunning } = {}) => {
-    const prefix = slot === 'scale' ? 'Scale' : 'Scale2';
+    // Troubleshoot modal uses 'Scale' / 'Scale2' prefix
+    const devicePrefix = slot === 'scale' ? 'Scale' : 'Scale2';
+    // Connect modal uses 'Scale1' / 'Scale2' prefix
+    const connectPrefix = slot === 'scale' ? 'Scale1' : 'Scale2';
     
     // Troubleshoot modal elements
-    const weightEl = document.getElementById(`device${prefix}Weight`);
-    const statusEl = document.getElementById(`device${prefix}Status`);
-    const connectBtn = document.getElementById(`device${prefix}Connect`);
-    const tareBtn = document.getElementById(`device${prefix}Tare`);
-    const timerBtn = document.getElementById(`device${prefix}Timer`);
-    const resetTimerBtn = document.getElementById(`device${prefix}ResetTimer`);
+    const weightEl = document.getElementById(`device${devicePrefix}Weight`);
+    const statusEl = document.getElementById(`device${devicePrefix}Status`);
+    const connectBtn = document.getElementById(`device${devicePrefix}Connect`);
+    const tareBtn = document.getElementById(`device${devicePrefix}Tare`);
+    const timerBtn = document.getElementById(`device${devicePrefix}Timer`);
+    const resetTimerBtn = document.getElementById(`device${devicePrefix}ResetTimer`);
     
     // Connect modal elements
-    const connectModalWeightEl = document.getElementById(`connect${prefix}Weight`);
-    const connectModalStatusEl = document.getElementById(`connect${prefix}Status`);
-    const connectModalIndicator = document.getElementById(`connect${prefix}Indicator`);
-    const connectModalBtn = document.getElementById(`connect${prefix}Btn`);
+    const connectModalWeightEl = document.getElementById(`connect${connectPrefix}Weight`);
+    const connectModalStatusEl = document.getElementById(`connect${connectPrefix}Status`);
+    const connectModalIndicator = document.getElementById(`connect${connectPrefix}Indicator`);
+    const connectModalBtn = document.getElementById(`connect${connectPrefix}Btn`);
     
     // Update weight
     if (weight !== undefined) {
@@ -166,6 +173,27 @@ const updateScaleUI = (slot, { weight, status, connected, timerRunning } = {}) =
         }
         if (connectModalIndicator) {
             connectModalIndicator.classList.toggle('hidden', !connected);
+        }
+
+        // Update brew form graph panel indicator
+        const graphIndicatorId = slot === 'scale' ? 'graphScale1Indicator'
+            : slot === 'scale2' ? 'graphScale2Indicator'
+            : slot === 'pressure' ? 'graphPressureIndicator'
+            : slot === 'temp' ? 'graphTempIndicator' : null;
+        if (graphIndicatorId) {
+            const graphIndicator = document.getElementById(graphIndicatorId);
+            if (graphIndicator) {
+                graphIndicator.classList.toggle('hidden', !connected);
+                graphIndicator.classList.toggle('flex', connected);
+            }
+        }
+        // Show/hide the wrapper row based on whether any device is connected
+        const anyConnected = ['graphScale1Indicator', 'graphScale2Indicator', 'graphPressureIndicator', 'graphTempIndicator']
+            .some(id => !document.getElementById(id)?.classList.contains('hidden'));
+        const wrapper = document.getElementById('graphDeviceIndicators');
+        if (wrapper) {
+            wrapper.classList.toggle('hidden', !anyConnected);
+            wrapper.classList.toggle('flex', anyConnected);
         }
     }
     

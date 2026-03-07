@@ -106,6 +106,13 @@
                                      <i id="extractionToggleIcon" class="fa-solid fa-chevron-up transition-transform"></i>
                                  </button>
                              </div>
+                             <!-- Device connection indicators: shown when a device is connected -->
+                             <div id="graphDeviceIndicators" class="hidden w-full flex items-center gap-3 text-[10px]">
+                                 <span id="graphScale1Indicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-scale-balanced"></i> Scale</span>
+                                 <span id="graphScale2Indicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-scale-balanced"></i> Scale 2</span>
+                                 <span id="graphPressureIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-gauge-high"></i> Pressure</span>
+                                 <span id="graphTempIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-temperature-half"></i> Temp</span>
+                             </div>
                          </div>
                          
                         <div id="extractionBody" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,8 +1,10 @@
+import { DeviceManager } from '../devices/device-manager.js';
+
 let coffeeScaleApi = null;
 
 export const getCoffeeScale = () => coffeeScaleApi;
 
-export function initCoffeeScale({ openScaleModal } = {}) {
+export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureReset } = {}) {
   const statusEl = document.getElementById("status");
   const weightEl = document.getElementById("weight");
   const tareBtn = document.getElementById("tare");
@@ -56,22 +58,10 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   // Scale modal elements may not be mounted (graph-only usage): do not early-return,
   // all element-dependent code below is already guarded with null checks.
 
-  let device;
-  let server;
-  let notifyChar;
-  let writeChar;
-  let scaleType = "UNKNOWN"; // OLD, NEW, GENERIC
-
-  let heartbeatTimer;
-  let lastPacketAt = 0;
   let timerRunning = false;
-  let acaiaBuffer = new Uint8Array(0);
-  let writeQueue = Promise.resolve();
-  let writeInProgress = false;
   let lastWeight = null;
   let isConnected = false;
   let lastFocusedField = null;
-  let autoConnectInProgress = false;
   let weighClickFromOut = false;
   let capture = {
     startAt: null,
@@ -121,33 +111,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   let lastCaptureUiRefreshAt = 0;
   let lastLiveYieldInputDispatchAt = 0;
 
-  /* ---- Acaia/Bookoo UUIDs (Beanconqueror-compatible) ---- */
-  const ACAIA_SERVICE_UUID = "00001820-0000-1000-8000-00805f9b34fb";
-  const READ_CHAR_OLD_UUID = "00002a80-0000-1000-8000-00805f9b34fb";
-  const WRITE_CHAR_OLD_UUID = "00002a80-0000-1000-8000-00805f9b34fb";
-  const PYXIS_SERVICE_UUID = "49535343-fe7d-4ae5-8fa9-9fafd205e455";
-  const READ_CHAR_NEW_UUID = "49535343-1e4d-4bd9-ba61-23c647249616";
-  const WRITE_CHAR_NEW_UUID = "49535343-8841-43f4-a8d4-ecbe34729bb3";
-  const READ_CHAR_GENERIC_UUID = "0000ff11-0000-1000-8000-00805f9b34fb";
-  const WRITE_CHAR_GENERIC_UUID = "0000ff12-0000-1000-8000-00805f9b34fb";
-  const BOOKOO_SERVICE_UUID = "00000ffe-0000-1000-8000-00805f9b34fb";
-  const GENERIC_SERVICE_UUID = "0000ff10-0000-1000-8000-00805f9b34fb";
 
-  const HEARTBEAT_PERIOD_MS = 2750;
-  const MAX_PACKET_PERIOD_MS = 5000;
-
-  /* ---- Commands (AcaiaArduinoBLE) ---- */
-  const IDENTIFY = new Uint8Array([0xef, 0xdd, 0x0b, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31, 0x32, 0x33, 0x34, 0x9a, 0x6d]);
-  const HEARTBEAT = new Uint8Array([0xef, 0xdd, 0x00, 0x02, 0x00, 0x02, 0x00]);
-  const NOTIFICATION_REQUEST = new Uint8Array([0xef, 0xdd, 0x0c, 0x09, 0x00, 0x01, 0x01, 0x02, 0x02, 0x05, 0x03, 0x04, 0x15, 0x06]);
-  const TARE_ACAIA = new Uint8Array([0xef, 0xdd, 0x04, 0x00, 0x00, 0x00]);
-  const TARE_GENERIC = new Uint8Array([0x03, 0x0a, 0x01, 0x00, 0x00, 0x08]);
-  const START_TIMER_ACAIA = new Uint8Array([0xef, 0xdd, 0x0d, 0x00, 0x00, 0x00, 0x00]);
-  const STOP_TIMER_ACAIA = new Uint8Array([0xef, 0xdd, 0x0d, 0x00, 0x02, 0x00, 0x02]);
-  const RESET_TIMER_ACAIA = new Uint8Array([0xef, 0xdd, 0x0d, 0x00, 0x01, 0x00, 0x01]);
-  const START_TIMER_BOOKOO = new Uint8Array([0x03, 0x0a, 0x04, 0x00, 0x00, 0x0a]);
-  const STOP_TIMER_BOOKOO = new Uint8Array([0x03, 0x0a, 0x05, 0x00, 0x00, 0x0d]);
-  const RESET_TIMER_BOOKOO = new Uint8Array([0x03, 0x0a, 0x06, 0x00, 0x00, 0x0c]);
 
   function getMethodValueFromForm() {
     const methodEl = document.getElementById("method");
@@ -336,6 +300,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
 
     const captureData = dataOverride?.capture || capture;
     const flowData = dataOverride?.flowCapture || flowCapture;
+    const scale2CaptureData = dataOverride?.scale2Capture || null;
     const firstDripSource = dataOverride?.firstDrip ?? getFirstDripSecondsFromState();
     const firstDripSeconds = Number.isFinite(Number(firstDripSource)) ? Number(firstDripSource) : null;
     const elapsedSecondsSource = dataOverride?.elapsedSeconds;
@@ -348,24 +313,28 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     }
     const samples = captureData.samples || [];
     const flowSamples = flowData.samples || [];
-    console.log('[renderGraphTo] captureData keys:', Object.keys(dataOverride || {}), 'samples:', samples.length, 'flowSamples:', flowSamples.length);
-    if (!samples.length && !flowSamples.length) {
+    const scale2Samples = (scale2CaptureData?.samples || []).filter((s) => Number.isFinite(s?.w));
+    if (!samples.length && !flowSamples.length && !scale2Samples.length) {
       ctx.fillStyle = "#999";
       ctx.font = "12px system-ui";
       ctx.fillText("No data", padding.left, padding.top + 12);
       return;
     }
 
-    const allTimes = samples.map((s) => s.tMs).concat(flowSamples.map((s) => s.tMs));
+    const allTimes = samples.map((s) => s.tMs)
+      .concat(flowSamples.map((s) => s.tMs))
+      .concat(scale2Samples.map((s) => s.tMs));
     const minT = Math.min(...allTimes);
     const maxT = Math.max(...allTimes);
     const spanT = Math.max(1, maxT - minT);
 
     const weightVals = samples.map((s) => s.w).filter((v) => Number.isFinite(v));
+    const scale2WeightVals = scale2Samples.map((s) => s.w).filter((v) => Number.isFinite(v));
     const flowVals = flowSamples.map((s) => s.flow).filter((v) => Number.isFinite(v));
 
-    let minW = weightVals.length ? Math.min(...weightVals) : 0;
-    let maxW = weightVals.length ? Math.max(...weightVals) : 1;
+    const allWeightVals = weightVals.concat(scale2WeightVals);
+    let minW = allWeightVals.length ? Math.min(...allWeightVals) : 0;
+    let maxW = allWeightVals.length ? Math.max(...allWeightVals) : 1;
     let minF = flowVals.length ? Math.min(...flowVals) : 0;
     let maxF = flowVals.length ? Math.max(...flowVals) : 1;
 
@@ -396,6 +365,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
       spanT,
       samples,
       flowSamples,
+      scale2Samples,
       minW,
       maxW,
       minF,
@@ -442,6 +412,22 @@ export function initCoffeeScale({ openScaleModal } = {}) {
         else ctx.lineTo(x, y);
       });
       ctx.stroke();
+    }
+
+    if (scale2Samples.length) {
+      ctx.save();
+      ctx.strokeStyle = "#f97316";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath();
+      scale2Samples.forEach((s, i) => {
+        const x = xFor(s.tMs);
+        const y = yForW(s.w);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.restore();
     }
 
     if (flowSamples.length) {
@@ -1125,6 +1111,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     updateFlowOutput();
     updateRawOutput();
     renderGraph();
+    onCaptureReset?.();
   }
 
   function setCaptureData(data) {
@@ -1345,91 +1332,6 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     renderGraph();
   }
 
-  function enqueueWrite(data) {
-    if (!writeChar) return Promise.resolve();
-    writeQueue = writeQueue
-      .then(async () => {
-        writeInProgress = true;
-        await writeChar.writeValue(data);
-      })
-      .catch(() => {})
-      .finally(() => {
-        writeInProgress = false;
-      });
-    return writeQueue;
-  }
-
-  function appendAcaiaBuffer(chunk) {
-    if (!chunk || chunk.length === 0) return;
-    const merged = new Uint8Array(acaiaBuffer.length + chunk.length);
-    merged.set(acaiaBuffer, 0);
-    merged.set(chunk, acaiaBuffer.length);
-    acaiaBuffer = merged;
-  }
-
-  function consumeAcaiaBuffer(startIndex) {
-    if (startIndex <= 0) return;
-    acaiaBuffer = acaiaBuffer.slice(startIndex);
-  }
-
-  function parseAcaiaMessages() {
-    let offset = 0;
-    while (offset < acaiaBuffer.length - 6) {
-      let start = -1;
-      for (let i = offset; i < acaiaBuffer.length - 1; i++) {
-        if (acaiaBuffer[i] === 0xef && acaiaBuffer[i + 1] === 0xdd) {
-          start = i;
-          break;
-        }
-      }
-
-      if (start < 0) {
-        acaiaBuffer = new Uint8Array(0);
-        return;
-      }
-
-      const payloadLen = acaiaBuffer[start + 3];
-      const messageEnd = start + payloadLen + 5;
-      if (messageEnd > acaiaBuffer.length) {
-        consumeAcaiaBuffer(start);
-        return;
-      }
-
-      const cmd = acaiaBuffer[start + 2];
-      if (cmd === 0x0c) {
-        const msgType = acaiaBuffer[start + 4];
-        if (msgType === 0x08) {
-          const payload = acaiaBuffer.slice(start + 5, messageEnd);
-          if (payload.length >= 2) {
-            const p0 = payload[0];
-            const p1 = payload[1];
-            let matched = false;
-            if (p0 === 0x08 && p1 === 0x05) {
-              setTimerRunningState(true);
-              matched = true;
-            } else if (p0 === 0x0a && p1 === 0x07) {
-              setTimerRunningState(false);
-              matched = true;
-            } else if (p0 === 0x09 && p1 === 0x07) {
-              setTimerRunningState(false);
-              matched = true;
-            }
-
-            if (!matched && timerRunning) {
-              // Some Lunar firmware reports stop as unknown; mirror Beanconqueror fallback
-              setTimerRunningState(false);
-            }
-          }
-        }
-      }
-
-      offset = messageEnd;
-    }
-
-    if (offset > 0) {
-      consumeAcaiaBuffer(offset);
-    }
-  }
 
   function setTimerRunningState(running, options = {}) {
     const { skipFinalizeMetrics = false } = options;
@@ -1442,9 +1344,11 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     if (timerRunning) {
       startLiveTimer();
       startCapture();
+      onTimerStateChange?.(true);
     } else {
       stopLiveTimer();
       stopCapture();
+      onTimerStateChange?.(false);
       if (!skipFinalizeMetrics) {
         const outField = document.getElementById("inputYield");
         const timeField = document.getElementById("time");
@@ -1462,328 +1366,42 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     }
   }
 
-  function handleAcaiaTimerEvent(data) {
-    appendAcaiaBuffer(data);
-    parseAcaiaMessages();
-    return true;
-  }
-
-  function handleBookooTimerEvent(data) {
-    // Some Bookoo variants send button events as short frames
-    if (data.length >= 3 && data[0] === 0x03 && data[1] === 0x0a) {
-      if (data[2] === 0x04) {
-        setTimerRunningState(true);
-        return true;
-      }
-      if (data[2] === 0x05 || data[2] === 0x06) {
-        setTimerRunningState(false);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function applyConnectedState() {
-    if (tareBtn) tareBtn.disabled = false;
-    if (timerBtn) timerBtn.disabled = false;
-    if (resetTimerBtn) resetTimerBtn.disabled = false;
-    if (timerBtn) timerBtn.textContent = "Start timer";
-    if (connectTareBtn) connectTareBtn.disabled = false;
-    if (connectTimerBtn) connectTimerBtn.disabled = false;
-    if (connectResetTimerBtn) connectResetTimerBtn.disabled = false;
-    if (connectTimerBtn) connectTimerBtn.textContent = "Start timer";
-    timerRunning = false;
-  }
-
-  async function connectToCurrentDevice() {
-    if (!device) return;
-    device.addEventListener(
-      "gattserverdisconnected",
-      onDisconnected
-    );
-    server = await device.gatt.connect();
-    setStatus("Connected to " + device.name);
-    await setupGatt();
-    applyConnectedState();
-  }
-
-  async function attemptAutoConnect() {
-    if (isConnected || autoConnectInProgress) return;
-    if (!device || !device.gatt) return;
-    if (device.gatt.connected) {
-      isConnected = true;
-      return;
-    }
-
-    autoConnectInProgress = true;
-    try {
-      setStatus("Connecting...");
-      await connectToCurrentDevice();
-    } catch (err) {
-      console.warn("Auto connect failed", err);
-      setStatus("Disconnected");
-    } finally {
-      autoConnectInProgress = false;
-    }
-  }
-
-  /* ---- Connect ---- */
-  const handleConnectClick = async () => {
-    if (!navigator.bluetooth) {
-      alert("Web Bluetooth not supported");
-      return;
-    }
-
-    try {
-      setStatus("Requesting device...");
-
-      device = await navigator.bluetooth.requestDevice({
-        filters: [
-          { namePrefix: "ACAIA" },
-          { namePrefix: "Acaia" },
-          { namePrefix: "PEARL" },
-          { namePrefix: "LUNAR" },
-          { namePrefix: "BOOKOO" },
-          { namePrefix: "BOOKO" },
-          { namePrefix: "CINCO" },
-          { namePrefix: "PYXIS" },
-          { namePrefix: "PROCH" }
-        ],
-        optionalServices: [
-          ACAIA_SERVICE_UUID,
-          PYXIS_SERVICE_UUID,
-          BOOKOO_SERVICE_UUID,
-          GENERIC_SERVICE_UUID,
-          "00001800-0000-1000-8000-00805f9b34fb",
-          "00001801-0000-1000-8000-00805f9b34fb",
-          "0000180a-0000-1000-8000-00805f9b34fb",
-          "0000180f-0000-1000-8000-00805f9b34fb"
-        ]
-      });
-
-      device.addEventListener("gattserverdisconnected", onDisconnected);
-
-      await connectToCurrentDevice();
-    } catch (err) {
-      console.error(err);
-      setStatus("Connection failed");
-    }
-  };
-
-  if (connectBtn) connectBtn.onclick = handleConnectClick;
-  if (connectConnectBtn) connectConnectBtn.onclick = handleConnectClick;
-
-  /* ---- GATT setup ---- */
-  async function setupGatt() {
-    const services = await server.getPrimaryServices();
-
-    let oldChar = null;
-    let newReadChar = null;
-    let newWriteChar = null;
-    let genericReadChar = null;
-    let genericWriteChar = null;
-    for (const service of services) {
-      const chars = await service.getCharacteristics();
-      for (const char of chars) {
-        const uuid = char.uuid.toLowerCase();
-        if (uuid === READ_CHAR_OLD_UUID) {
-          oldChar = char;
-        } else if (uuid === READ_CHAR_NEW_UUID) {
-          newReadChar = char;
-        } else if (uuid === WRITE_CHAR_NEW_UUID) {
-          newWriteChar = char;
-        } else if (uuid === READ_CHAR_GENERIC_UUID) {
-          genericReadChar = char;
-        } else if (uuid === WRITE_CHAR_GENERIC_UUID) {
-          genericWriteChar = char;
-        }
-      }
-    }
-
-    if (newReadChar && newWriteChar) {
-      scaleType = "NEW";
-      notifyChar = newReadChar;
-      writeChar = newWriteChar;
-    } else if (oldChar) {
-      scaleType = "OLD";
-      notifyChar = oldChar;
-      writeChar = oldChar;
-    } else if (genericReadChar && genericWriteChar) {
-      scaleType = "GENERIC";
-      notifyChar = genericReadChar;
-      writeChar = genericWriteChar;
-    } else {
-      setStatus("No compatible Acaia/Bookoo characteristics found");
-      return;
-    }
-
-    await notifyChar.startNotifications();
-    notifyChar.addEventListener("characteristicvaluechanged", onNotify);
-
-    if (scaleType === "OLD" || scaleType === "NEW") {
-      await enqueueWrite(IDENTIFY);
-      await enqueueWrite(NOTIFICATION_REQUEST);
-      startHeartbeat();
-    }
-
-    isConnected = true;
-    setStatus(`Connected to ${device.name} (${scaleType})`);
-  }
-
-  /* ---- Notification handler ---- */
-  function onNotify(event) {
-    const value = event.target.value;
-    const data = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
-    const l = data.length;
-
-    if (scaleType === "OLD" || scaleType === "NEW") {
-      handleAcaiaTimerEvent(data);
-    } else if (scaleType === "GENERIC") {
-      handleBookooTimerEvent(data);
-    }
-
-    let weight = null;
-
-    if ((scaleType === "NEW") && (l === 13 || l === 17) && data[4] === 0x05) {
-      const raw = ((data[6] & 0xff) << 8) + (data[5] & 0xff);
-      const unit = data[9];
-      const sign = (data[10] & 0x02) ? -1 : 1;
-      weight = (raw / Math.pow(10, unit)) * sign;
-    } else if ((scaleType === "OLD") && (l === 10 || l === 14)) {
-      const raw = ((data[3] & 0xff) << 8) + (data[2] & 0xff);
-      const unit = data[6];
-      const sign = (data[7] & 0x02) ? -1 : 1;
-      weight = (raw / Math.pow(10, unit)) * sign;
-    } else if ((scaleType === "GENERIC") && l === 20) {
-      const raw = ((data[7] & 0xff) << 16) | ((data[8] & 0xff) << 8) | (data[9] & 0xff);
-      const sign = (data[6] === 45) ? -1 : 1;
-      weight = (raw / 100) * sign;
-    }
-
-    if (weight !== null && Number.isFinite(weight)) {
-      setWeight(weight);
-      lastPacketAt = Date.now();
-    }
-  }
-
-  /* ---- Tare ---- */
+  /* ---- Scale 1 tare (via DeviceManager) ---- */
   if (tareBtn) {
     tareBtn.onclick = async () => {
-      if (!writeChar) return;
-
-      try {
-        await enqueueWrite(scaleType === "GENERIC" ? TARE_GENERIC : TARE_ACAIA);
-      } catch (err) {
-        console.warn("Tare failed", err);
-      }
+      await DeviceManager.getDevice('scale')?.tare?.();
     };
   }
-
   if (connectTareBtn) {
     connectTareBtn.onclick = () => tareBtn?.onclick?.();
   }
 
-  /* ---- Timer ---- */
+  /* ---- Scale 1 timer (via DeviceManager) ---- */
   if (timerBtn) {
     timerBtn.onclick = async () => {
-      if (!writeChar) return;
-
-      try {
-        if (scaleType === "OLD" || scaleType === "NEW") {
-          await enqueueWrite(timerRunning ? STOP_TIMER_ACAIA : START_TIMER_ACAIA);
-        } else if (scaleType === "GENERIC") {
-          await enqueueWrite(timerRunning ? STOP_TIMER_BOOKOO : START_TIMER_BOOKOO);
-        } else {
-          return;
-        }
-
-        setTimerRunningState(!timerRunning);
-      } catch (err) {
-        console.warn("Timer command failed", err);
-      }
+      const dev = DeviceManager.getDevice('scale');
+      if (!dev?.isConnected) return;
+      await dev.toggleTimer();
+      setTimerRunningState(!timerRunning);
     };
   }
-
   if (connectTimerBtn) {
     connectTimerBtn.onclick = () => timerBtn?.onclick?.();
   }
 
-  /* ---- Reset Timer ---- */
+  /* ---- Scale 1 reset timer (via DeviceManager) ---- */
   if (resetTimerBtn) {
     resetTimerBtn.onclick = async () => {
-      if (!writeChar) return;
-
-      try {
-        if (scaleType === "OLD" || scaleType === "NEW") {
-          await enqueueWrite(RESET_TIMER_ACAIA);
-        } else if (scaleType === "GENERIC") {
-          await enqueueWrite(RESET_TIMER_BOOKOO);
-        } else {
-          return;
-        }
-
-        setTimerRunningState(false, { skipFinalizeMetrics: true });
-        resetLiveTimer();
-        resetCaptureData();
-        resetGraphMetrics();
-      } catch (err) {
-        console.warn("Reset timer failed", err);
-      }
+      const dev = DeviceManager.getDevice('scale');
+      if (dev?.isConnected) await dev.resetTimer();
+      setTimerRunningState(false, { skipFinalizeMetrics: true });
+      resetLiveTimer();
+      resetCaptureData();
+      resetGraphMetrics();
     };
   }
-
   if (connectResetTimerBtn) {
     connectResetTimerBtn.onclick = () => resetTimerBtn?.onclick?.();
-  }
-
-  /* ---- Disconnect ---- */
-  function onDisconnected() {
-    const wasRunning = timerRunning;
-    setStatus("Disconnected");
-    if (tareBtn) tareBtn.disabled = true;
-    if (timerBtn) timerBtn.disabled = true;
-    if (resetTimerBtn) resetTimerBtn.disabled = true;
-    if (timerBtn) timerBtn.textContent = "Start timer";
-    timerRunning = false;
-    isConnected = false;
-    updateTimerIcon();
-    pauseCapture();
-    
-    if (wasRunning) {
-        stopLiveTimer();
-    }
-
-    if (weightEl) weightEl.textContent = "--.- g";
-    if (connectWeightEl) connectWeightEl.textContent = "--.- g";
-    if (connectTareBtn) connectTareBtn.disabled = true;
-    if (connectTimerBtn) connectTimerBtn.disabled = true;
-    if (connectResetTimerBtn) connectResetTimerBtn.disabled = true;
-    if (connectTimerBtn) connectTimerBtn.textContent = "Start timer";
-    stopHeartbeat();
-  }
-
-  function startHeartbeat() {
-    stopHeartbeat();
-    heartbeatTimer = setInterval(async () => {
-      if (!writeChar || (scaleType !== "OLD" && scaleType !== "NEW")) return;
-      if (writeInProgress) return;
-      if (lastPacketAt && Date.now() - lastPacketAt > MAX_PACKET_PERIOD_MS) {
-        setStatus("No data (timeout)");
-        return;
-      }
-      try {
-        await enqueueWrite(HEARTBEAT);
-      } catch (err) {
-        console.warn("Heartbeat failed", err);
-      }
-    }, HEARTBEAT_PERIOD_MS);
-  }
-
-  function stopHeartbeat() {
-    if (heartbeatTimer) {
-      clearInterval(heartbeatTimer);
-      heartbeatTimer = null;
-    }
   }
 
   function handleWeighClick() {
@@ -1815,14 +1433,11 @@ export function initCoffeeScale({ openScaleModal } = {}) {
       openScaleModal?.();
     }
 
-    if (isConnected && writeChar) {
+    const dev = DeviceManager.getDevice('scale');
+    if (dev?.isConnected) {
       try {
-        await enqueueWrite(scaleType === "GENERIC" ? TARE_GENERIC : TARE_ACAIA);
-        if (scaleType === "OLD" || scaleType === "NEW") {
-          await enqueueWrite(RESET_TIMER_ACAIA);
-        } else if (scaleType === "GENERIC") {
-          await enqueueWrite(RESET_TIMER_BOOKOO);
-        }
+        await dev.tare();
+        await dev.resetTimer();
       } catch (err) {
         console.warn("Reset scale failed", err);
       }
@@ -1841,7 +1456,8 @@ export function initCoffeeScale({ openScaleModal } = {}) {
       return;
     }
 
-    if (!writeChar) return;
+    const dev = DeviceManager.getDevice('scale');
+    if (!dev?.isConnected) return;
 
     const autoStartEnabled = graphAutoStartToggle ? graphAutoStartToggle.checked : false;
     if (!timerRunning && autoStartEnabled) {
@@ -1851,14 +1467,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     }
 
     try {
-      if (scaleType === "OLD" || scaleType === "NEW") {
-        await enqueueWrite(timerRunning ? STOP_TIMER_ACAIA : START_TIMER_ACAIA);
-      } else if (scaleType === "GENERIC") {
-        await enqueueWrite(timerRunning ? STOP_TIMER_BOOKOO : START_TIMER_BOOKOO);
-      } else {
-        return;
-      }
-
+      await dev.toggleTimer();
       setTimerRunningState(!timerRunning);
     } catch (err) {
       console.warn("Timer icon command failed", err);
@@ -1916,15 +1525,10 @@ export function initCoffeeScale({ openScaleModal } = {}) {
 
   async function triggerAutoStartTimer() {
     if (!autoStartPending || timerRunning) return;
-    if (!isConnected || !writeChar) return;
+    const dev = DeviceManager.getDevice('scale');
+    if (!dev?.isConnected) return;
     try {
-      if (scaleType === "OLD" || scaleType === "NEW") {
-        await enqueueWrite(START_TIMER_ACAIA);
-      } else if (scaleType === "GENERIC") {
-        await enqueueWrite(START_TIMER_BOOKOO);
-      } else {
-        return;
-      }
+      await dev.startTimer();
       autoStartPending = false;
       setTimerRunningState(true);
       setTimerBlinking(false);
@@ -1958,6 +1562,40 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   }
 
   bindBrewFormControls();
+
+  // Subscribe to Scale 1 events via DeviceManager
+  DeviceManager.onConnectionChange('scale', (connected) => {
+    isConnected = connected;
+    if (connected) {
+      const dev = DeviceManager.getDevice('scale');
+      dev?.onTimerStateChange?.((running) => setTimerRunningState(running));
+      if (tareBtn) tareBtn.disabled = false;
+      if (timerBtn) timerBtn.disabled = false;
+      if (resetTimerBtn) resetTimerBtn.disabled = false;
+      if (connectTareBtn) connectTareBtn.disabled = false;
+      if (connectTimerBtn) connectTimerBtn.disabled = false;
+      if (connectResetTimerBtn) connectResetTimerBtn.disabled = false;
+      setStatus(`Connected to ${DeviceManager.getDeviceName('scale') || 'scale'}`);
+    } else {
+      const wasRunning = timerRunning;
+      timerRunning = false;
+      updateTimerIcon();
+      pauseCapture();
+      if (wasRunning) stopLiveTimer();
+      setStatus('Disconnected');
+      setWeight(NaN);
+      if (tareBtn) tareBtn.disabled = true;
+      if (timerBtn) timerBtn.disabled = true;
+      if (resetTimerBtn) resetTimerBtn.disabled = true;
+      if (connectTareBtn) connectTareBtn.disabled = true;
+      if (connectTimerBtn) connectTimerBtn.disabled = true;
+      if (connectResetTimerBtn) connectResetTimerBtn.disabled = true;
+    }
+  });
+  DeviceManager.onValueChange('scale', (weight) => {
+    if (Number.isFinite(weight)) setWeight(weight);
+  });
+  DeviceManager.onStatusChange('scale', (status) => setStatus(status));
 
   function bindGraphModalControls() {
     refreshGraphDomRefs();
@@ -2092,7 +1730,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   coffeeScaleApi = {
     isConnected: () => isConnected,
     getLastWeight: () => lastWeight,
-    autoConnect: attemptAutoConnect,
+    autoConnect: () => DeviceManager.autoConnect('scale'),
     bindBrewFormControls,
     getCaptureData,
     setCaptureData,

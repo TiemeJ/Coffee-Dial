@@ -562,12 +562,24 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                     const scaleModals = createScaleModalsModule({
                         getCoffeeScale: () => coffeeScale
                     });
-                    coffeeScale = initCoffeeScale({
-                        openScaleModal: async () => {
-                            // Mount scales HTML so connectScaleModal exists in the DOM
-                            await ensureScalesMounted();
-                            scaleModals.openConnectScaleModal();
+                    let _dmPromise = null;
+                    const getDeviceManager = () => {
+                        if (!_dmPromise) {
+                            _dmPromise = import('../../features/devices/device-manager.js').then(m => m.DeviceManager);
                         }
+                        return _dmPromise;
+                    };
+                    coffeeScale = initCoffeeScale({
+                        openScaleModal: () => {
+                            // Open the new multi-device connect modal
+                            return openConnectDevicesModal();
+                        },
+                        onTimerStateChange: (running) => {
+                            void getDeviceManager().then(dm => running ? dm.startCapture() : dm.stopCapture());
+                        },
+                        onCaptureReset: () => {
+                            void getDeviceManager().then(dm => dm.resetCapture());
+                        },
                     });
                     console.log('[ensureScalesFeature] coffeeScale created, renderGraphTo:', typeof coffeeScale?.renderGraphTo);
                     scalesFeature = {

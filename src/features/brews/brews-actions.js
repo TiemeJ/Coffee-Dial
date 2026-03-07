@@ -1,5 +1,6 @@
 import { createBrewsVmModule } from './brews.vm.js';
 import { withDetectedDecaf } from '../../core/coffee-decaf.js';
+import { DeviceManager } from '../devices/device-manager.js';
 import { createBrewGrinderGearSyncModule } from './brew-grinder-gear-sync.js';
 
 export const createBrewsActionsModule = ({
@@ -155,6 +156,7 @@ export const createBrewsActionsModule = ({
         delete d.scaleCapture;
         delete d.scaleFlowCapture;
         delete d.scaleRawCapture;
+        delete d.scale2Capture;
         delete d.swirlCount;
         delete d.pourCount;
         delete d.bloomTime;
@@ -438,6 +440,11 @@ export const createBrewsActionsModule = ({
                 );
                 if (firstDripSample) d.firstDrip = Math.round(firstDripSample.tMs / 1000);
             }
+        }
+
+        const dmCapture = DeviceManager.getCaptureData();
+        if (dmCapture.scale2Capture?.samples?.length) {
+            d.scale2Capture = dmCapture.scale2Capture;
         }
 
         const graphStats = scale()?.getGraphEventStats?.();

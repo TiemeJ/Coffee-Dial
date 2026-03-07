@@ -309,6 +309,19 @@ export class BaseBleDevice {
     }
     
     /**
+     * Restore previously saved capture data (e.g. when re-editing a brew)
+     * @param {{ startAt: number|null, samples: Array }} captureData
+     */
+    setCaptureData(captureData) {
+        if (captureData && Array.isArray(captureData.samples)) {
+            this._capture = JSON.parse(JSON.stringify(captureData));
+        } else {
+            this._capture = { startAt: null, samples: [] };
+        }
+        this._isCapturing = false;
+    }
+
+    /**
      * Reset capture data
      */
     resetCapture() {

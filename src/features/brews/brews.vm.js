@@ -45,7 +45,8 @@ export const createBrewsVmModule = () => {
         const hasGraph = !!(
             (brew.scaleCapture && brew.scaleCapture.samples && brew.scaleCapture.samples.length) ||
             (brew.scaleFlowCapture && brew.scaleFlowCapture.samples && brew.scaleFlowCapture.samples.length) ||
-            (brew.scaleRawCapture && brew.scaleRawCapture.samples && brew.scaleRawCapture.samples.length)
+            (brew.scaleRawCapture && brew.scaleRawCapture.samples && brew.scaleRawCapture.samples.length) ||
+            (brew.scale2Capture && brew.scale2Capture.samples && brew.scale2Capture.samples.length)
         );
         if (!hasGraph) return { hasGraph: false, graphData: null };
         return {
@@ -54,6 +55,7 @@ export const createBrewsVmModule = () => {
                 capture: brew.scaleCapture || { startAt: null, samples: [] },
                 flowCapture: brew.scaleFlowCapture || { startAt: (brew.scaleCapture && brew.scaleCapture.startAt) || null, samples: [] },
                 rawCapture: brew.scaleRawCapture || { startAt: (brew.scaleCapture && brew.scaleCapture.startAt) || null, samples: [] },
+                scale2Capture: brew.scale2Capture || null,
                 firstDrip: Number.isFinite(Number(brew.firstDrip)) ? Number(brew.firstDrip) : null,
                 elapsedSeconds: Number.isFinite(Number(brew.time)) ? Number(brew.time) : null,
                 recipeSteps: Array.isArray(brew.recipeSteps) ? brew.recipeSteps : []

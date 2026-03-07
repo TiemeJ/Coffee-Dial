@@ -99,6 +99,7 @@ class DeviceManagerClass {
             }
         } catch (err) {
             this._devices.delete(slot);
+            this._notifyConnectionListeners(slot, false);
             throw err;
         }
     }

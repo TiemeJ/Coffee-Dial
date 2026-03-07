@@ -1,3 +1,5 @@
+import { DeviceManager } from '../devices/device-manager.js';
+
 export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, getCoffeeScale, getGasItems, fillBeanDetails }) => {
     let brewGearSelection = new Set();
     let brewGearFilter = '';
@@ -244,6 +246,15 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
                   }
                 : null;
             coffeeScale.setCaptureData(graphData);
+        }
+
+        if (c.scale2Capture?.samples?.length) {
+            const scale2Device = DeviceManager.getDevice('scale2');
+            if (scale2Device) {
+                scale2Device.setCaptureData(c.scale2Capture);
+            }
+        } else {
+            DeviceManager.getDevice('scale2')?.resetCapture?.();
         }
 
         if (coffeeScale?.setRecipeSteps) coffeeScale.setRecipeSteps(c.recipeSteps || []);
