@@ -1551,6 +1551,51 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
     connectResetTimerBtn.onclick = () => resetTimerBtn?.onclick?.();
   }
 
+  // --- Weigh button IN-field highlight helpers ---
+  function getInFieldTargets() {
+    return [
+      document.getElementById('inputWeight'),
+      document.getElementById('graphInputWeight'),
+    ].filter(Boolean);
+  }
+
+  function setInFieldHover() {
+    getInFieldTargets().forEach(el => {
+      // Cancel any in-progress transition so the flash is crisp
+      el.style.transition = 'none';
+      el.style.outline = '2px solid white';
+      el.style.outlineOffset = '-1px';
+      void el.offsetWidth;
+      el.style.transition = 'outline-color 1s ease';
+      el.style.outlineColor = 'transparent';
+      const onEnd = () => {
+        el.style.outline = '';
+        el.style.outlineOffset = '';
+        el.style.transition = '';
+        el.removeEventListener('transitionend', onEnd);
+      };
+      el.addEventListener('transitionend', onEnd);
+    });
+  }
+
+  function flashInField() {
+    getInFieldTargets().forEach(el => {
+      el.style.transition = 'none';
+      el.style.outline = '2px solid #16a34a';
+      el.style.outlineOffset = '-1px';
+      void el.offsetWidth; // force reflow
+      el.style.transition = 'outline-color 2s ease';
+      el.style.outlineColor = 'transparent';
+      const onEnd = () => {
+        el.style.outline = '';
+        el.style.outlineOffset = '';
+        el.style.transition = '';
+        el.removeEventListener('transitionend', onEnd);
+      };
+      el.addEventListener('transitionend', onEnd);
+    });
+  }
+
   function handleWeighClick() {
     if (!isConnected) {
       openScaleModal?.();
@@ -1572,6 +1617,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
     if (inField) {
       inField.value = lastWeight.toFixed(1);
       inField.dispatchEvent(new Event("input", { bubbles: true }));
+      flashInField();
     }
   }
 
@@ -1685,6 +1731,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
         weighClickFromOut = document.activeElement === outField;
       });
       weighBtn.addEventListener("click", handleWeighClick);
+      weighBtn.addEventListener("mouseenter", () => setInFieldHover());
     }
 
     const resetScaleBtn = document.getElementById("brewResetScaleBtn");
@@ -1750,6 +1797,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
         weighClickFromOut = document.activeElement === outField;
       });
       graphWeighBtn.addEventListener("click", handleWeighClick);
+      graphWeighBtn.addEventListener("mouseenter", () => setInFieldHover());
     }
 
     const graphResetScaleBtn = document.getElementById("graphResetScaleBtn");
