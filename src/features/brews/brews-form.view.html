@@ -100,11 +100,11 @@
                                  </button>
                              </div>
                              <!-- Device connection indicators: shown when a device is connected -->
-                             <div id="graphDeviceIndicators" class="hidden w-full flex items-center gap-3 text-[10px]">
-                                 <span id="graphScale1Indicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-scale-balanced"></i> Scale</span>
-                                 <span id="graphScale2Indicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-scale-balanced"></i> Scale 2</span>
-                                 <span id="graphPressureIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-gauge-high"></i> Pressure</span>
-                                 <span id="graphTempIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500"><i class="fa-solid fa-temperature-half"></i> Temp</span>
+                             <div id="graphDeviceIndicators" class="hidden w-full flex items-center gap-3 text-[10px]" data-action-click="event.stopPropagation()">
+                                 <button type="button" id="graphScale1Indicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-300 cursor-pointer transition-colors" title="Scale connected — click to manage" data-action-click="openConnectDevicesModal()"><i class="fa-solid fa-scale-balanced"></i> Scale</button>
+                                 <button type="button" id="graphScale2Indicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-300 cursor-pointer transition-colors" title="Scale 2 connected — click to manage" data-action-click="openConnectDevicesModal()"><i class="fa-solid fa-scale-balanced"></i> Scale 2</button>
+                                 <button type="button" id="graphPressureIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-300 cursor-pointer transition-colors" title="Pressure sensor connected — click to manage" data-action-click="openConnectDevicesModal()"><i class="fa-solid fa-gauge-high"></i> Pressure</button>
+                                 <button type="button" id="graphTempIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-300 cursor-pointer transition-colors" title="Thermometer connected — click to manage" data-action-click="openConnectDevicesModal()"><i class="fa-solid fa-temperature-half"></i> Temp</button>
                              </div>
                              <!-- Collapse: absolute top-right, always anchored regardless of flow -->
                              <button type="button" data-action-click="toggleExtractionSection(event)" class="absolute top-0 right-0 w-11 h-11 rounded-md border border-coffee-200 dark:border-[#44403c] text-coffee-600 dark:text-[#a8a29e] hover:bg-coffee-50 dark:hover:bg-[#1c1917] transition-colors flex items-center justify-center" title="Collapse extraction">

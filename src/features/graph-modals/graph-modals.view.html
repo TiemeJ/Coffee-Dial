@@ -67,7 +67,16 @@
     <div id="graphModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[10040] flex items-center justify-center p-4" data-action-click="closeGraphModal()">
         <div class="bg-white dark:bg-[#292524] rounded-2xl shadow-2xl w-full max-w-lg mx-auto border border-coffee-200 dark:border-[#44403c] max-h-[90vh] flex flex-col" data-action-click="event.stopPropagation()">
             <div class="flex justify-between items-center p-5 border-b border-coffee-100 dark:border-[#44403c]">
-                <h2 class="text-xl font-bold text-coffee-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-chart-line text-coffee-700 dark:text-[#d6ccc2]"></i> Graph</h2>
+                <div class="flex flex-col gap-1.5">
+                    <h2 class="text-xl font-bold text-coffee-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-chart-line text-coffee-700 dark:text-[#d6ccc2]"></i> Graph</h2>
+                    <!-- Device connection indicators: shown when a device is connected -->
+                    <div id="graphModalDeviceIndicators" class="hidden items-center gap-3 text-[10px]">
+                        <button type="button" id="graphModalScale1Indicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-300 cursor-pointer transition-colors" title="Scale connected — click to manage" data-action-click="openConnectDevicesModal()"><i class="fa-solid fa-scale-balanced"></i> Scale</button>
+                        <button type="button" id="graphModalScale2Indicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-300 cursor-pointer transition-colors" title="Scale 2 connected — click to manage" data-action-click="openConnectDevicesModal()"><i class="fa-solid fa-scale-balanced"></i> Scale 2</button>
+                        <button type="button" id="graphModalPressureIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-300 cursor-pointer transition-colors" title="Pressure sensor connected — click to manage" data-action-click="openConnectDevicesModal()"><i class="fa-solid fa-gauge-high"></i> Pressure</button>
+                        <button type="button" id="graphModalTempIndicator" class="hidden items-center gap-1 text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-300 cursor-pointer transition-colors" title="Thermometer connected — click to manage" data-action-click="openConnectDevicesModal()"><i class="fa-solid fa-temperature-half"></i> Temp</button>
+                    </div>
+                </div>
                 <div class="flex items-center gap-2">
                     <button type="button" title="Connect devices" data-action-click="openConnectDevicesModal()" class="w-11 h-11 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center"><i class="fa-solid fa-plug"></i></button>
                     <button data-action-click="closeGraphModal()" aria-label="Close graph modal" class="w-11 h-11 rounded-full text-coffee-500 dark:text-[#a8a29e] hover:bg-coffee-100 dark:hover:bg-[#44403c] transition-colors flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>

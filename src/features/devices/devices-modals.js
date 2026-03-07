@@ -175,25 +175,27 @@ const updateScaleUI = (slot, { weight, status, connected, timerRunning } = {}) =
             connectModalIndicator.classList.toggle('hidden', !connected);
         }
 
-        // Update brew form graph panel indicator
-        const graphIndicatorId = slot === 'scale' ? 'graphScale1Indicator'
-            : slot === 'scale2' ? 'graphScale2Indicator'
-            : slot === 'pressure' ? 'graphPressureIndicator'
-            : slot === 'temp' ? 'graphTempIndicator' : null;
-        if (graphIndicatorId) {
-            const graphIndicator = document.getElementById(graphIndicatorId);
-            if (graphIndicator) {
-                graphIndicator.classList.toggle('hidden', !connected);
-                graphIndicator.classList.toggle('flex', connected);
+        // Update brew form graph panel indicator (extraction header + graph modal header)
+        const slotToSuffix = { scale: 'Scale1', scale2: 'Scale2', pressure: 'Pressure', temp: 'Temp' };
+        const suffix = slotToSuffix[slot];
+        if (suffix) {
+            for (const prefix of ['graph', 'graphModal']) {
+                const el = document.getElementById(`${prefix}${suffix}Indicator`);
+                if (el) {
+                    el.classList.toggle('hidden', !connected);
+                    el.classList.toggle('flex', connected);
+                }
             }
         }
-        // Show/hide the wrapper row based on whether any device is connected
-        const anyConnected = ['graphScale1Indicator', 'graphScale2Indicator', 'graphPressureIndicator', 'graphTempIndicator']
-            .some(id => !document.getElementById(id)?.classList.contains('hidden'));
-        const wrapper = document.getElementById('graphDeviceIndicators');
-        if (wrapper) {
-            wrapper.classList.toggle('hidden', !anyConnected);
-            wrapper.classList.toggle('flex', anyConnected);
+        // Show/hide the wrapper rows based on whether any device is connected
+        const baseIds = ['Scale1', 'Scale2', 'Pressure', 'Temp'];
+        for (const prefix of ['graph', 'graphModal']) {
+            const anyConnected = baseIds.some(s => !document.getElementById(`${prefix}${s}Indicator`)?.classList.contains('hidden'));
+            const wrapper = document.getElementById(`${prefix}DeviceIndicators`);
+            if (wrapper) {
+                wrapper.classList.toggle('hidden', !anyConnected);
+                wrapper.classList.toggle('flex', anyConnected);
+            }
         }
     }
     
