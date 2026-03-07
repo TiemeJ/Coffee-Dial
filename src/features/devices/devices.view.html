@@ -103,7 +103,7 @@
 
     <!-- Connect Devices Modal (simplified for brew form) -->
     <div id="connectDevicesModal" class="hidden fixed inset-0 z-[10060] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md border border-coffee-200 dark:border-[#44403c]">
             <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
                 <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-bluetooth mr-2"></i>Connect Devices</h3>
                 <button data-action-click="closeConnectDevicesModal()" aria-label="Close connect devices modal" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
@@ -129,6 +129,12 @@
                         <div class="flex items-center gap-2 mb-2">
                             <i class="fa-solid fa-scale-balanced text-coffee-600 dark:text-[#a8a29e]"></i>
                             <span class="text-xs font-bold uppercase text-coffee-600 dark:text-[#a8a29e]">Scale 2</span>
+                            <span class="relative group cursor-help">
+                                <i class="fa-regular fa-circle-question text-coffee-400 dark:text-[#78716c] text-[11px]"></i>
+                                <span class="pointer-events-none absolute bottom-full right-0 mb-3 w-56 rounded-lg bg-coffee-900 dark:bg-[#1c1917] border border-coffee-700 dark:border-[#44403c] text-white text-[10px] leading-relaxed p-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-xl z-20 normal-case font-normal">
+                                    Pour over setup: place your cup on Scale 2, then set Scale 2 on your dripper stand base. Put the whole setup — stand, Scale 2, cup and dripper — on Scale 1.
+                                </span>
+                            </span>
                             <span id="connectScale2Indicator" class="hidden ml-auto text-green-500"><i class="fa-solid fa-circle text-[8px]"></i></span>
                         </div>
                         <div id="connectScale2Weight" class="text-2xl font-semibold text-coffee-900 dark:text-white">--.- g</div>
