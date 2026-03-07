@@ -242,6 +242,9 @@ export const createSocialModule = ({
         s.forEach((d) => following.push(d.data()));
         setFollowingState(following);
 
+        // Always update the view selectors regardless of whether the friends modal is open.
+        updateFriendViewSelectors();
+
         const l = document.getElementById('followingList');
         if (!l) return;
         l.innerHTML = '';
@@ -255,7 +258,6 @@ export const createSocialModule = ({
                 l.appendChild(d);
             });
         }
-        updateFriendViewSelectors();
     };
 
     const loadFollowersList = async () => {
