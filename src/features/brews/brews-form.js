@@ -1,4 +1,3 @@
-import { DeviceManager } from '../devices/device-manager.js';
 
 export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, getCoffeeScale, getGasItems, fillBeanDetails }) => {
     let brewGearSelection = new Set();
@@ -237,24 +236,19 @@ export const createBrewsFormModule = ({ setTempMode, setRating, setNotesMode, ge
         }
 
         if (coffeeScale?.setCaptureData) {
-            const graphData = c.scaleCapture || c.scaleFlowCapture || c.scaleRawCapture
+            const hasData = c.scaleCapture || c.scaleFlowCapture || c.scaleRawCapture || c.scale2Capture;
+            const graphData = hasData
                 ? {
                       capture: c.scaleCapture || { startAt: null, samples: [] },
                       flowCapture: c.scaleFlowCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
                       rawCapture: c.scaleRawCapture || { startAt: (c.scaleCapture && c.scaleCapture.startAt) || null, samples: [] },
-                      firstDrip: c.firstDrip
+                      firstDrip: c.firstDrip,
+                      ...(c.scale2Capture ? { scale2Capture: c.scale2Capture } : {}),
+                      ...(c.scale2FlowCapture ? { scale2FlowCapture: c.scale2FlowCapture } : {}),
+                      ...(c.scale2RawCapture ? { scale2RawCapture: c.scale2RawCapture } : {})
                   }
                 : null;
             coffeeScale.setCaptureData(graphData);
-        }
-
-        if (c.scale2Capture?.samples?.length) {
-            const scale2Device = DeviceManager.getDevice('scale2');
-            if (scale2Device) {
-                scale2Device.setCaptureData(c.scale2Capture);
-            }
-        } else {
-            DeviceManager.getDevice('scale2')?.resetCapture?.();
         }
 
         if (coffeeScale?.setRecipeSteps) coffeeScale.setRecipeSteps(c.recipeSteps || []);

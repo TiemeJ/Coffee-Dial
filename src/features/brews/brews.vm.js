@@ -56,6 +56,7 @@ export const createBrewsVmModule = () => {
                 flowCapture: brew.scaleFlowCapture || { startAt: (brew.scaleCapture && brew.scaleCapture.startAt) || null, samples: [] },
                 rawCapture: brew.scaleRawCapture || { startAt: (brew.scaleCapture && brew.scaleCapture.startAt) || null, samples: [] },
                 scale2Capture: brew.scale2Capture || null,
+                scale2FlowCapture: brew.scale2FlowCapture || null,
                 firstDrip: Number.isFinite(Number(brew.firstDrip)) ? Number(brew.firstDrip) : null,
                 elapsedSeconds: Number.isFinite(Number(brew.time)) ? Number(brew.time) : null,
                 recipeSteps: Array.isArray(brew.recipeSteps) ? brew.recipeSteps : []

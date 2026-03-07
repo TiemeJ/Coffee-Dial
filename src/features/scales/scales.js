@@ -61,6 +61,11 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
   let timerRunning = false;
   let lastWeight = null;
   let isConnected = false;
+  let scale2Capture = { startAt: null, samples: [] };
+  let scale2RawSamples = [];
+  let scale2LastInterpolatedWeight = null;
+  let scale2FlowHistory = [];
+  let scale2FlowCapture = { startAt: null, samples: [] };
   let lastFocusedField = null;
   let weighClickFromOut = false;
   let capture = {
@@ -300,7 +305,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
 
     const captureData = dataOverride?.capture || capture;
     const flowData = dataOverride?.flowCapture || flowCapture;
-    const scale2CaptureData = dataOverride?.scale2Capture || null;
+    const scale2CaptureData = dataOverride?.scale2Capture ?? (scale2Capture.samples.length ? scale2Capture : null);
     const firstDripSource = dataOverride?.firstDrip ?? getFirstDripSecondsFromState();
     const firstDripSeconds = Number.isFinite(Number(firstDripSource)) ? Number(firstDripSource) : null;
     const elapsedSecondsSource = dataOverride?.elapsedSeconds;
@@ -314,7 +319,9 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
     const samples = captureData.samples || [];
     const flowSamples = flowData.samples || [];
     const scale2Samples = (scale2CaptureData?.samples || []).filter((s) => Number.isFinite(s?.w));
-    if (!samples.length && !flowSamples.length && !scale2Samples.length) {
+    const scale2FlowData = dataOverride?.scale2FlowCapture ?? (scale2FlowCapture.samples.length ? scale2FlowCapture : null);
+    const scale2FlowSamples = (scale2FlowData?.samples || []).filter((s) => Number.isFinite(s?.flow));
+    if (!samples.length && !flowSamples.length && !scale2Samples.length && !scale2FlowSamples.length) {
       ctx.fillStyle = "#999";
       ctx.font = "12px system-ui";
       ctx.fillText("No data", padding.left, padding.top + 12);
@@ -331,12 +338,14 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
     const weightVals = samples.map((s) => s.w).filter((v) => Number.isFinite(v));
     const scale2WeightVals = scale2Samples.map((s) => s.w).filter((v) => Number.isFinite(v));
     const flowVals = flowSamples.map((s) => s.flow).filter((v) => Number.isFinite(v));
+    const scale2FlowVals = scale2FlowSamples.map((s) => s.flow).filter((v) => Number.isFinite(v));
 
     const allWeightVals = weightVals.concat(scale2WeightVals);
+    const allFlowVals = flowVals.concat(scale2FlowVals);
     let minW = allWeightVals.length ? Math.min(...allWeightVals) : 0;
     let maxW = allWeightVals.length ? Math.max(...allWeightVals) : 1;
-    let minF = flowVals.length ? Math.min(...flowVals) : 0;
-    let maxF = flowVals.length ? Math.max(...flowVals) : 1;
+    let minF = allFlowVals.length ? Math.min(...allFlowVals) : 0;
+    let maxF = allFlowVals.length ? Math.max(...allFlowVals) : 1;
 
     if (minW === maxW) {
       minW -= 0.5;
@@ -366,6 +375,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       samples,
       flowSamples,
       scale2Samples,
+      scale2FlowSamples,
       minW,
       maxW,
       minF,
@@ -423,6 +433,23 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       scale2Samples.forEach((s, i) => {
         const x = xFor(s.tMs);
         const y = yForW(s.w);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (scale2FlowSamples.length) {
+      ctx.save();
+      ctx.strokeStyle = "#fb923c";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      scale2FlowSamples.forEach((s, i) => {
+        if (!Number.isFinite(s.flow)) return;
+        const x = xFor(s.tMs);
+        const y = yForF(s.flow);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
@@ -814,6 +841,11 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       startAt: capture.startAt,
       samples: [],
     };
+    scale2Capture = { startAt: capture.startAt, samples: [] };
+    scale2RawSamples = [];
+    scale2LastInterpolatedWeight = null;
+    scale2FlowHistory = [];
+    scale2FlowCapture = { startAt: capture.startAt, samples: [] };
     flowPrevWeight = null;
     rawSamples = [];
     lastInterpolatedWeight = null;
@@ -1015,6 +1047,30 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
           pourMaxFlow = null;
         }
       }
+      // --- Scale 2 weight + flow (resampled, same cadence as scale 1) ---
+      if (scale2RawSamples.length > 0) {
+        const s2raw = getInterpolatedWeightScale2(capture.startAt + elapsedMs);
+        const s2w = Number.isFinite(s2raw) ? Math.max(0, Number(s2raw.toFixed(1))) : null;
+        scale2Capture.samples.push({ tMs: elapsedMs, w: s2w });
+        if (Number.isFinite(s2w)) {
+          scale2FlowHistory.push({ tMs: elapsedMs, w: s2w });
+          const s2cutoff = elapsedMs - FLOW_WINDOW_MS;
+          while (scale2FlowHistory.length && scale2FlowHistory[0].tMs < s2cutoff) scale2FlowHistory.shift();
+          let s2flow = null;
+          if (scale2FlowHistory.length >= 2) {
+            let sT = 0, sW = 0, sTT = 0, sTW = 0;
+            for (const p of scale2FlowHistory) {
+              const t = p.tMs / 1000;
+              sT += t; sW += p.w; sTT += t * t; sTW += t * p.w;
+            }
+            const n = scale2FlowHistory.length;
+            const denom = n * sTT - sT * sT;
+            if (denom !== 0) s2flow = Math.max(0, Number(((n * sTW - sT * sW) / denom).toFixed(1)));
+          }
+          scale2FlowCapture.samples.push({ tMs: elapsedMs, flow: Number.isFinite(s2flow) ? s2flow : null });
+        }
+      }
+
       setFlow(flow);
 
       const now = Date.now();
@@ -1080,9 +1136,45 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
     return lastInterpolatedWeight;
   }
 
+  function addScale2RawSample(weight, timeMs) {
+    scale2RawSamples.push({ t: timeMs, w: weight });
+    if (scale2RawSamples.length > 2000) {
+      scale2RawSamples.splice(0, scale2RawSamples.length - 2000);
+    }
+  }
+
+  function getInterpolatedWeightScale2(targetTime) {
+    if (scale2RawSamples.length === 0) return scale2LastInterpolatedWeight;
+    if (targetTime <= scale2RawSamples[0].t) {
+      scale2LastInterpolatedWeight = scale2RawSamples[0].w;
+      return scale2LastInterpolatedWeight;
+    }
+    if (targetTime >= scale2RawSamples[scale2RawSamples.length - 1].t) {
+      scale2LastInterpolatedWeight = scale2RawSamples[scale2RawSamples.length - 1].w;
+      return scale2LastInterpolatedWeight;
+    }
+    let i = 1;
+    while (i < scale2RawSamples.length && scale2RawSamples[i].t < targetTime) { i++; }
+    const prev = scale2RawSamples[i - 1];
+    const next = scale2RawSamples[i];
+    const span = next.t - prev.t;
+    if (span <= 0) {
+      scale2LastInterpolatedWeight = prev.w;
+      return scale2LastInterpolatedWeight;
+    }
+    const ratio = (targetTime - prev.t) / span;
+    scale2LastInterpolatedWeight = prev.w + (next.w - prev.w) * ratio;
+    return scale2LastInterpolatedWeight;
+  }
+
   function resetCaptureData() {
     capture = { startAt: null, samples: [] };
     flowCapture = { startAt: null, samples: [] };
+    scale2Capture = { startAt: null, samples: [] };
+    scale2RawSamples = [];
+    scale2LastInterpolatedWeight = null;
+    scale2FlowHistory = [];
+    scale2FlowCapture = { startAt: null, samples: [] };
     flowPrevWeight = null;
     rawSamples = [];
     lastInterpolatedWeight = null;
@@ -1122,6 +1214,11 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
 
     capture = data.capture || { startAt: null, samples: [] };
     flowCapture = data.flowCapture || { startAt: capture.startAt, samples: [] };
+    scale2Capture = data.scale2Capture || { startAt: capture.startAt, samples: [] };
+    scale2FlowCapture = data.scale2FlowCapture || { startAt: capture.startAt, samples: [] };
+    scale2RawSamples = data.scale2RawCapture?.samples ? [...data.scale2RawCapture.samples] : [];
+    scale2LastInterpolatedWeight = null;
+    scale2FlowHistory = [];
     rawSamples = (data.rawCapture && data.rawCapture.samples) ? data.rawCapture.samples : [];
     firstDripCapturedAt = Number.isFinite(Number(data.firstDrip)) ? Number(data.firstDrip) * 1000 : null;
     flowPrevWeight = null;
@@ -1147,11 +1244,11 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       return null;
     }
     const rawCapture = { startAt: capture.startAt, samples: rawSamples };
-    return JSON.parse(JSON.stringify({
-      capture,
-      flowCapture,
-      rawCapture
-    }));
+    const result = { capture, flowCapture, rawCapture };
+    if (scale2Capture.samples.length) result.scale2Capture = scale2Capture;
+    if (scale2FlowCapture.samples.length) result.scale2FlowCapture = scale2FlowCapture;
+    if (scale2RawSamples.length) result.scale2RawCapture = { startAt: scale2Capture.startAt, samples: scale2RawSamples };
+    return JSON.parse(JSON.stringify(result));
   }
 
   function formatLiveTime(ms) {
@@ -1594,6 +1691,9 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
   });
   DeviceManager.onValueChange('scale', (weight) => {
     if (Number.isFinite(weight)) setWeight(weight);
+  });
+  DeviceManager.onValueChange('scale2', (weight) => {
+    if (Number.isFinite(weight)) addScale2RawSample(weight, Date.now());
   });
   DeviceManager.onStatusChange('scale', (status) => setStatus(status));
 
