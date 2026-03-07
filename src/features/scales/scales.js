@@ -1775,18 +1775,37 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
     }
   }
 
-  const inField = document.getElementById("inputWeight");
-  const outField = document.getElementById("inputYield");
-  const ratioField = document.getElementById("inputRatio");
+  // Keep references for event listener binding; re-query at runtime in case
+  // the brew form modal is mounted lazily (after initCoffeeScale runs).
+  let inField = document.getElementById("inputWeight");
+  let outField = document.getElementById("inputYield");
+  let ratioField = document.getElementById("inputRatio");
   const syncGraphRecipeFields = () => {
+    // Always do a live lookup so stale null refs (brew form mounted after
+    // initCoffeeScale) don't silently prevent the sync.
+    const curInField = document.getElementById("inputWeight");
+    const curOutField = document.getElementById("inputYield");
+    const curRatioField = document.getElementById("inputRatio");
+    // Refresh live listener refs if they were null at init time
+    if (!inField && curInField) {
+      inField = curInField;
+      inField.addEventListener("input", syncGraphRecipeFields);
+    }
+    if (!outField && curOutField) {
+      outField = curOutField;
+      outField.addEventListener("input", syncGraphRecipeFields);
+    }
+    if (!ratioField && curRatioField) {
+      ratioField = curRatioField;
+    }
     refreshGraphDomRefs();
-    if (graphInputWeightEl && inField) graphInputWeightEl.value = inField.value;
-    if (graphInputRatioEl && ratioField) {
-      const src = ratioField.querySelector('span:last-child');
+    if (graphInputWeightEl && curInField) graphInputWeightEl.value = curInField.value;
+    if (graphInputRatioEl && curRatioField) {
+      const src = curRatioField.querySelector('span:last-child');
       const dst = graphInputRatioEl.querySelector('span:last-child');
       if (src && dst) dst.textContent = src.textContent;
     }
-    if (graphInputYieldEl && outField) graphInputYieldEl.value = outField.value;
+    if (graphInputYieldEl && curOutField) graphInputYieldEl.value = curOutField.value;
   };
   const syncGraphTimeFromForm = () => {
     refreshGraphDomRefs();
