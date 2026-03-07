@@ -1505,11 +1505,20 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
     connectTimerBtn.onclick = () => timerBtn?.onclick?.();
   }
 
+  /* ---- Shared helper: tare + reset timer on every connected scale ---- */
+  async function resetAllScaleDevices() {
+    const dev1 = DeviceManager.getDevice('scale');
+    const dev2 = DeviceManager.getDevice('scale2');
+    await Promise.all([
+      dev1?.isConnected ? (async () => { try { await dev1.tare(); await dev1.resetTimer(); } catch (e) { console.warn('Reset scale 1 failed', e); } })() : Promise.resolve(),
+      dev2?.isConnected ? (async () => { try { await dev2.tare(); } catch (e) { console.warn('Reset scale 2 failed', e); } })() : Promise.resolve(),
+    ]);
+  }
+
   /* ---- Scale 1 reset timer (via DeviceManager) ---- */
   if (resetTimerBtn) {
     resetTimerBtn.onclick = async () => {
-      const dev = DeviceManager.getDevice('scale');
-      if (dev?.isConnected) await dev.resetTimer();
+      await resetAllScaleDevices();
       setTimerRunningState(false, { skipFinalizeMetrics: true });
       resetLiveTimer();
       resetCaptureData();
@@ -1549,15 +1558,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       openScaleModal?.();
     }
 
-    const dev = DeviceManager.getDevice('scale');
-    if (dev?.isConnected) {
-      try {
-        await dev.tare();
-        await dev.resetTimer();
-      } catch (err) {
-        console.warn("Reset scale failed", err);
-      }
-    }
+    await resetAllScaleDevices();
 
     // Always clear local extraction state/graph, even when no scale is connected.
     setTimerRunningState(false, { skipFinalizeMetrics: true });
