@@ -94,3 +94,9 @@ export const ensureScalesMounted = createLazyMount('scales', async () => {
     const { mountScalesView } = await import('../features/scales/scales.mount.js');
     await mountScalesView();
 });
+
+// Devices modal
+export const ensureDevicesMounted = createLazyMount('devices', async () => {
+    const { mountDevicesView } = await import('../features/devices/devices.mount.js');
+    await mountDevicesView();
+});

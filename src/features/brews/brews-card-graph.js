@@ -79,12 +79,15 @@ export const createBrewsCardGraphModule = ({
         if (avgFlowEl) avgFlowEl.value = c.avgFlow ?? '';
 
         let rendered = false;
+        console.log('[brews-card-graph] currentGraphData:', !!currentGraphData, 'dispatchCommand:', typeof dispatchCommand);
         if (currentGraphData) {
             try {
-                rendered = !!(await dispatchCommand?.('scales.renderGraph', {
+                const result = await dispatchCommand?.('scales.renderGraph', {
                     canvasId: 'cardGraphCanvas',
                     graphData: currentGraphData
-                }));
+                });
+                console.log('[brews-card-graph] scales.renderGraph result:', result);
+                rendered = !!result;
             } catch (error) {
                 console.error('Card graph render command failed:', error);
             }

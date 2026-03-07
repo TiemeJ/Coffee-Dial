@@ -53,10 +53,8 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     graphCountPoursToggle = document.getElementById("graphCountPoursToggle");
   }
 
-  if (!statusEl || !weightEl || !tareBtn || !timerBtn || !resetTimerBtn || !connectBtn) {
-    coffeeScaleApi = null;
-    return;
-  }
+  // Scale modal elements may not be mounted (graph-only usage): do not early-return,
+  // all element-dependent code below is already guarded with null checks.
 
   let device;
   let server;
@@ -233,14 +231,14 @@ export function initCoffeeScale({ openScaleModal } = {}) {
 
   /* ---- UI helpers ---- */
   function setStatus(text) {
-    statusEl.textContent = text;
+    if (statusEl) statusEl.textContent = text;
     if (connectStatusEl) connectStatusEl.textContent = text;
   }
 
   function setWeight(value) {
     const prevWeight = lastWeight;
     const formattedWeight = value.toFixed(1) + " g";
-    if (weightEl.textContent !== formattedWeight) {
+    if (weightEl && weightEl.textContent !== formattedWeight) {
       weightEl.textContent = formattedWeight;
     }
     if (connectWeightEl && connectWeightEl.textContent !== formattedWeight) {
@@ -322,7 +320,8 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   }
 
   function renderGraphTo(targetEl, dataOverride = null) {
-    if (!targetEl) return;
+    console.log('[renderGraphTo] called, targetEl:', targetEl, 'dataOverride:', dataOverride);
+    if (!targetEl) { console.warn('[renderGraphTo] no targetEl, returning'); return; }
     const ctx = targetEl.getContext("2d");
     const width = targetEl.clientWidth || 320;
     const height = targetEl.clientHeight || 220;
@@ -349,6 +348,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     }
     const samples = captureData.samples || [];
     const flowSamples = flowData.samples || [];
+    console.log('[renderGraphTo] captureData keys:', Object.keys(dataOverride || {}), 'samples:', samples.length, 'flowSamples:', flowSamples.length);
     if (!samples.length && !flowSamples.length) {
       ctx.fillStyle = "#999";
       ctx.font = "12px system-ui";
@@ -1434,7 +1434,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   function setTimerRunningState(running, options = {}) {
     const { skipFinalizeMetrics = false } = options;
     timerRunning = running;
-    timerBtn.textContent = timerRunning ? "Stop timer" : "Start timer";
+    if (timerBtn) timerBtn.textContent = timerRunning ? "Stop timer" : "Start timer";
     updateTimerIcon();
     if (connectTimerBtn) {
       connectTimerBtn.textContent = timerRunning ? "Stop timer" : "Start timer";
@@ -1484,10 +1484,10 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   }
 
   function applyConnectedState() {
-    tareBtn.disabled = false;
-    timerBtn.disabled = false;
-    resetTimerBtn.disabled = false;
-    timerBtn.textContent = "Start timer";
+    if (tareBtn) tareBtn.disabled = false;
+    if (timerBtn) timerBtn.disabled = false;
+    if (resetTimerBtn) resetTimerBtn.disabled = false;
+    if (timerBtn) timerBtn.textContent = "Start timer";
     if (connectTareBtn) connectTareBtn.disabled = false;
     if (connectTimerBtn) connectTimerBtn.disabled = false;
     if (connectResetTimerBtn) connectResetTimerBtn.disabled = false;
@@ -1570,7 +1570,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     }
   };
 
-  connectBtn.onclick = handleConnectClick;
+  if (connectBtn) connectBtn.onclick = handleConnectClick;
   if (connectConnectBtn) connectConnectBtn.onclick = handleConnectClick;
 
   /* ---- GATT setup ---- */
@@ -1667,77 +1667,83 @@ export function initCoffeeScale({ openScaleModal } = {}) {
   }
 
   /* ---- Tare ---- */
-  tareBtn.onclick = async () => {
-    if (!writeChar) return;
+  if (tareBtn) {
+    tareBtn.onclick = async () => {
+      if (!writeChar) return;
 
-    try {
-      await enqueueWrite(scaleType === "GENERIC" ? TARE_GENERIC : TARE_ACAIA);
-    } catch (err) {
-      console.warn("Tare failed", err);
-    }
-  };
+      try {
+        await enqueueWrite(scaleType === "GENERIC" ? TARE_GENERIC : TARE_ACAIA);
+      } catch (err) {
+        console.warn("Tare failed", err);
+      }
+    };
+  }
 
   if (connectTareBtn) {
-    connectTareBtn.onclick = () => tareBtn.onclick();
+    connectTareBtn.onclick = () => tareBtn?.onclick?.();
   }
 
   /* ---- Timer ---- */
-  timerBtn.onclick = async () => {
-    if (!writeChar) return;
+  if (timerBtn) {
+    timerBtn.onclick = async () => {
+      if (!writeChar) return;
 
-    try {
-      if (scaleType === "OLD" || scaleType === "NEW") {
-        await enqueueWrite(timerRunning ? STOP_TIMER_ACAIA : START_TIMER_ACAIA);
-      } else if (scaleType === "GENERIC") {
-        await enqueueWrite(timerRunning ? STOP_TIMER_BOOKOO : START_TIMER_BOOKOO);
-      } else {
-        return;
+      try {
+        if (scaleType === "OLD" || scaleType === "NEW") {
+          await enqueueWrite(timerRunning ? STOP_TIMER_ACAIA : START_TIMER_ACAIA);
+        } else if (scaleType === "GENERIC") {
+          await enqueueWrite(timerRunning ? STOP_TIMER_BOOKOO : START_TIMER_BOOKOO);
+        } else {
+          return;
+        }
+
+        setTimerRunningState(!timerRunning);
+      } catch (err) {
+        console.warn("Timer command failed", err);
       }
-
-      setTimerRunningState(!timerRunning);
-    } catch (err) {
-      console.warn("Timer command failed", err);
-    }
-  };
+    };
+  }
 
   if (connectTimerBtn) {
-    connectTimerBtn.onclick = () => timerBtn.onclick();
+    connectTimerBtn.onclick = () => timerBtn?.onclick?.();
   }
 
   /* ---- Reset Timer ---- */
-  resetTimerBtn.onclick = async () => {
-    if (!writeChar) return;
+  if (resetTimerBtn) {
+    resetTimerBtn.onclick = async () => {
+      if (!writeChar) return;
 
-    try {
-      if (scaleType === "OLD" || scaleType === "NEW") {
-        await enqueueWrite(RESET_TIMER_ACAIA);
-      } else if (scaleType === "GENERIC") {
-        await enqueueWrite(RESET_TIMER_BOOKOO);
-      } else {
-        return;
+      try {
+        if (scaleType === "OLD" || scaleType === "NEW") {
+          await enqueueWrite(RESET_TIMER_ACAIA);
+        } else if (scaleType === "GENERIC") {
+          await enqueueWrite(RESET_TIMER_BOOKOO);
+        } else {
+          return;
+        }
+
+        setTimerRunningState(false, { skipFinalizeMetrics: true });
+        resetLiveTimer();
+        resetCaptureData();
+        resetGraphMetrics();
+      } catch (err) {
+        console.warn("Reset timer failed", err);
       }
-
-      setTimerRunningState(false, { skipFinalizeMetrics: true });
-      resetLiveTimer();
-      resetCaptureData();
-      resetGraphMetrics();
-    } catch (err) {
-      console.warn("Reset timer failed", err);
-    }
-  };
+    };
+  }
 
   if (connectResetTimerBtn) {
-    connectResetTimerBtn.onclick = () => resetTimerBtn.onclick();
+    connectResetTimerBtn.onclick = () => resetTimerBtn?.onclick?.();
   }
 
   /* ---- Disconnect ---- */
   function onDisconnected() {
     const wasRunning = timerRunning;
     setStatus("Disconnected");
-    tareBtn.disabled = true;
-    timerBtn.disabled = true;
-    resetTimerBtn.disabled = true;
-    timerBtn.textContent = "Start timer";
+    if (tareBtn) tareBtn.disabled = true;
+    if (timerBtn) timerBtn.disabled = true;
+    if (resetTimerBtn) resetTimerBtn.disabled = true;
+    if (timerBtn) timerBtn.textContent = "Start timer";
     timerRunning = false;
     isConnected = false;
     updateTimerIcon();
@@ -1747,7 +1753,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
         stopLiveTimer();
     }
 
-    weightEl.textContent = "--.- g";
+    if (weightEl) weightEl.textContent = "--.- g";
     if (connectWeightEl) connectWeightEl.textContent = "--.- g";
     if (connectTareBtn) connectTareBtn.disabled = true;
     if (connectTimerBtn) connectTimerBtn.disabled = true;
@@ -1927,24 +1933,31 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     }
   }
 
-  const weighBtn = document.getElementById("brewWeighBtn");
-  if (weighBtn) {
-    weighBtn.addEventListener("pointerdown", () => {
-      const outField = document.getElementById("inputYield");
-      weighClickFromOut = document.activeElement === outField;
-    });
-    weighBtn.addEventListener("click", handleWeighClick);
+  function bindBrewFormControls() {
+    const weighBtn = document.getElementById("brewWeighBtn");
+    if (weighBtn && weighBtn.dataset.scaleBound !== "true") {
+      weighBtn.dataset.scaleBound = "true";
+      weighBtn.addEventListener("pointerdown", () => {
+        const outField = document.getElementById("inputYield");
+        weighClickFromOut = document.activeElement === outField;
+      });
+      weighBtn.addEventListener("click", handleWeighClick);
+    }
+
+    const resetScaleBtn = document.getElementById("brewResetScaleBtn");
+    if (resetScaleBtn && resetScaleBtn.dataset.scaleBound !== "true") {
+      resetScaleBtn.dataset.scaleBound = "true";
+      resetScaleBtn.addEventListener("click", handleResetScaleClick);
+    }
+
+    const timerIconBtn = document.getElementById("brewTimerBtn");
+    if (timerIconBtn && timerIconBtn.dataset.scaleBound !== "true") {
+      timerIconBtn.dataset.scaleBound = "true";
+      timerIconBtn.addEventListener("click", handleTimerIconClick);
+    }
   }
 
-  const resetScaleBtn = document.getElementById("brewResetScaleBtn");
-  if (resetScaleBtn) {
-    resetScaleBtn.addEventListener("click", handleResetScaleClick);
-  }
-
-  const timerIconBtn = document.getElementById("brewTimerBtn");
-  if (timerIconBtn) {
-    timerIconBtn.addEventListener("click", handleTimerIconClick);
-  }
+  bindBrewFormControls();
 
   function bindGraphModalControls() {
     refreshGraphDomRefs();
@@ -2080,6 +2093,7 @@ export function initCoffeeScale({ openScaleModal } = {}) {
     isConnected: () => isConnected,
     getLastWeight: () => lastWeight,
     autoConnect: attemptAutoConnect,
+    bindBrewFormControls,
     getCaptureData,
     setCaptureData,
     resetCaptureData,

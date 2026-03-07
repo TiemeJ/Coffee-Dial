@@ -22,7 +22,8 @@
             ensurePreferencesMounted,
             ensureImportExportMounted,
             ensureGalleryMounted,
-            ensureScalesMounted
+            ensureScalesMounted,
+            ensureDevicesMounted
         } from '../lazy-mount.js';
         import { createGasController } from '../../features/gas/gas.controller.js';
         import { createBeansController } from '../../features/beans/beans.controller.js';
@@ -548,29 +549,34 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         let scalesFeature = null;
         let scalesFeaturePromise = null;
         const ensureScalesFeature = async () => {
+            console.log('[ensureScalesFeature] called, already loaded:', !!scalesFeature);
             if (scalesFeature) return scalesFeature;
             if (!scalesFeaturePromise) {
                 scalesFeaturePromise = (async () => {
+                    console.log('[ensureScalesFeature] importing scales modules...');
                     const [{ initCoffeeScale }, { createScaleModalsModule }] = await Promise.all([
                         import('../../features/scales/scales.js'),
                         import('../../features/scales/scales-modals.js')
                     ]);
+                    console.log('[ensureScalesFeature] modules imported, initCoffeeScale:', typeof initCoffeeScale);
                     const scaleModals = createScaleModalsModule({
                         getCoffeeScale: () => coffeeScale
                     });
                     coffeeScale = initCoffeeScale({
-                        openScaleModal: () => {
-                            const connectModal = document.getElementById('connectScaleModal');
-                            if (connectModal) scaleModals.openConnectScaleModal();
-                            else scaleModals.openCoffeeScaleModal();
+                        openScaleModal: async () => {
+                            // Mount scales HTML so connectScaleModal exists in the DOM
+                            await ensureScalesMounted();
+                            scaleModals.openConnectScaleModal();
                         }
                     });
+                    console.log('[ensureScalesFeature] coffeeScale created, renderGraphTo:', typeof coffeeScale?.renderGraphTo);
                     scalesFeature = {
                         ...scaleModals,
                         coffeeScale
                     };
                     return scalesFeature;
                 })().catch((error) => {
+                    console.error('[ensureScalesFeature] FAILED:', error);
                     scalesFeaturePromise = null;
                     throw error;
                 });
@@ -592,7 +598,70 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             void ensureScalesFeature().then((feature) => feature.closeConnectScaleModal(...args));
         };
 
-        // --- Functions ---
+        // --- Devices Feature (multi-BLE) ---
+        let devicesFeature = null;
+        let devicesFeaturePromise = null;
+        const ensureDevicesFeature = async () => {
+            if (devicesFeature) return devicesFeature;
+            if (!devicesFeaturePromise) {
+                devicesFeaturePromise = (async () => {
+                    await ensureDevicesMounted();
+                    const {
+                        openDeviceTroubleshootModal: _openDeviceTroubleshootModal,
+                        closeDeviceTroubleshootModal: _closeDeviceTroubleshootModal,
+                        openConnectDevicesModal: _openConnectDevicesModal,
+                        closeConnectDevicesModal: _closeConnectDevicesModal,
+                        switchDeviceTab: _switchDeviceTab,
+                        connectDevice: _connectDevice,
+                        tareDevice: _tareDevice,
+                        toggleDeviceTimer: _toggleDeviceTimer,
+                        resetDeviceTimer: _resetDeviceTimer,
+                        initDeviceListeners
+                    } = await import('../../features/devices/devices-modals.js');
+                    initDeviceListeners();
+                    devicesFeature = {
+                        openDeviceTroubleshootModal: _openDeviceTroubleshootModal,
+                        closeDeviceTroubleshootModal: _closeDeviceTroubleshootModal,
+                        openConnectDevicesModal: _openConnectDevicesModal,
+                        closeConnectDevicesModal: _closeConnectDevicesModal,
+                        switchDeviceTab: _switchDeviceTab,
+                        connectDevice: _connectDevice,
+                        tareDevice: _tareDevice,
+                        toggleDeviceTimer: _toggleDeviceTimer,
+                        resetDeviceTimer: _resetDeviceTimer
+                    };
+                    return devicesFeature;
+                })().catch((error) => {
+                    devicesFeaturePromise = null;
+                    throw error;
+                });
+            }
+            return devicesFeaturePromise;
+        };
+        const openDeviceTroubleshootModal = (...args) =>
+            ensureDevicesFeature().then((f) => f.openDeviceTroubleshootModal(...args));
+        const closeDeviceTroubleshootModal = (...args) => {
+            document.getElementById('deviceTroubleshootModal')?.classList.add('hidden');
+            if (!devicesFeaturePromise) return;
+            void ensureDevicesFeature().then((f) => f.closeDeviceTroubleshootModal(...args));
+        };
+        const openConnectDevicesModal = (...args) =>
+            ensureDevicesFeature().then((f) => f.openConnectDevicesModal(...args));
+        const closeConnectDevicesModal = (...args) => {
+            document.getElementById('connectDevicesModal')?.classList.add('hidden');
+            if (!devicesFeaturePromise) return;
+            void ensureDevicesFeature().then((f) => f.closeConnectDevicesModal(...args));
+        };
+        const switchDeviceTab = (...args) =>
+            ensureDevicesFeature().then((f) => f.switchDeviceTab(...args));
+        const connectDevice = (...args) =>
+            ensureDevicesFeature().then((f) => f.connectDevice(...args));
+        const tareDevice = (...args) =>
+            ensureDevicesFeature().then((f) => f.tareDevice(...args));
+        const toggleDeviceTimer = (...args) =>
+            ensureDevicesFeature().then((f) => f.toggleDeviceTimer(...args));
+        const resetDeviceTimer = (...args) =>
+            ensureDevicesFeature().then((f) => f.resetDeviceTimer(...args));
 
         let bgRemovalModulePromise = null;
         const ensureBgRemovalModule = async () => {
@@ -1422,11 +1491,17 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
         const navigateCoffeeCardFromGraph = (...args) =>
             ensureBrewsCardGraphModule().then((module) => module.navigateCoffeeCardFromGraph(...args));
 
+        console.log('[AppComposition] calling createScalesController, appCommands:', !!appCommands, 'registerCommand:', !!appCommands?.registerCommand);
         createScalesController({
             appCommands,
             ensureScalesFeature: (...args) => ensureScalesFeature(...args),
-            getCoffeeScale: () => coffeeScale
+            getCoffeeScale: () => {
+                const val = scalesFeature?.coffeeScale ?? coffeeScale;
+                console.log('[getCoffeeScale] scalesFeature?.coffeeScale:', scalesFeature?.coffeeScale, 'coffeeScale:', coffeeScale, 'returning:', val);
+                return val;
+            }
         });
+        console.log('[AppComposition] createScalesController done');
 
         const {
             populateForm,
@@ -1687,7 +1762,14 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             openAppConfirm
         });
         const openBrewFormModal = (...args) =>
-            Promise.all([ensureBrewsFormModalMounted(), ensureScalesFeature()])
+            // Mount the form HTML first so initCoffeeScale can bind brewWeighBtn/brewTimerBtn/brewResetScaleBtn
+            ensureBrewsFormModalMounted()
+                .then(() => ensureScalesMounted())
+                .then(() => ensureScalesFeature())
+                .then(() => {
+                    // Re-bind brew form buttons in case scales was initialised before the form was mounted
+                    coffeeScale?.bindBrewFormControls?.();
+                })
                 .then(() => openBrewFormModalImpl(...args));
 
         const openAddBrewFromPinned = createOpenAddBrewFromPinned({
@@ -1799,6 +1881,8 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             closeCoffeeTypeCreatedToast,
             closeCoffeeTypes,
             closeConnectScaleModal,
+            closeConnectDevicesModal,
+            closeDeviceTroubleshootModal,
             closeBrewsTableStateMenu,
             closeEasterEgg,
             closeExportModal,
@@ -1893,6 +1977,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             openCoffeeCardQuickEdit,
             openCoffeeFromBeanEdit,
             openCoffeeScaleModal,
+            connectDevice,
+            openConnectDevicesModal,
+            openDeviceTroubleshootModal,
             openCoffeeTypeCard,
             openCoffeeTypeFromTableEdit,
             openCoffeeTypePhoto,
@@ -1941,6 +2028,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             removeCoffeeTypePhoto,
             removeGasPhoto,
             resetCardPhotoState,
+            resetDeviceTimer,
             resetFormState,
             resetSca,
             resetLightboxZoom,
@@ -1982,8 +2070,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             showCoffeeForBrew,
             sortBy,
             submitBrewFormModal,
+            switchDeviceTab,
             switchGalleryTab,
             switchModalTab,
+            tareDevice,
             toggleSocialAccordion,
             toggleActionMenu,
             toggleAiMenu,
@@ -1997,6 +2087,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             toggleCoffeeTypesAiMenu,
             toggleCoffeeTypesQuickFilter,
             toggleDrinkOther,
+            toggleDeviceTimer,
             toggleForm,
             toggleGasArchive,
             toggleGasArchiveFromTable,

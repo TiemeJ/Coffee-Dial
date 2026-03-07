@@ -1,0 +1,173 @@
+    <!-- Device Troubleshoot Modal -->
+    <div id="deviceTroubleshootModal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
+                <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-bluetooth mr-2"></i>BLE Devices</h3>
+                <button data-action-click="closeDeviceTroubleshootModal()" aria-label="Close device troubleshoot modal" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Device Tab Selector -->
+            <div class="p-4 pb-0">
+                <div class="flex gap-1 bg-coffee-100 dark:bg-[#1c1917] p-1 rounded-lg">
+                    <button data-device-tab="scale" data-action-click="switchDeviceTab('scale')" class="device-tab-btn flex-1 px-3 py-2 text-xs font-bold rounded-md transition-colors bg-white dark:bg-[#292524] text-coffee-800 dark:text-white shadow-sm">
+                        <i class="fa-solid fa-scale-balanced mr-1"></i>Scale
+                    </button>
+                    <button data-device-tab="scale2" data-action-click="switchDeviceTab('scale2')" class="device-tab-btn flex-1 px-3 py-2 text-xs font-bold rounded-md transition-colors text-coffee-500 dark:text-[#78716c] hover:text-coffee-800 dark:hover:text-white">
+                        <i class="fa-solid fa-scale-balanced mr-1"></i>Scale 2
+                    </button>
+                    <button data-device-tab="pressure" data-action-click="switchDeviceTab('pressure')" class="device-tab-btn flex-1 px-3 py-2 text-xs font-bold rounded-md transition-colors text-coffee-500 dark:text-[#78716c] hover:text-coffee-800 dark:hover:text-white" disabled>
+                        <i class="fa-solid fa-gauge-high mr-1"></i>Press
+                    </button>
+                    <button data-device-tab="temp" data-action-click="switchDeviceTab('temp')" class="device-tab-btn flex-1 px-3 py-2 text-xs font-bold rounded-md transition-colors text-coffee-500 dark:text-[#78716c] hover:text-coffee-800 dark:hover:text-white" disabled>
+                        <i class="fa-solid fa-temperature-half mr-1"></i>Temp
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Device Panels -->
+            <div class="p-6 space-y-4">
+                <!-- Scale Panel -->
+                <div id="devicePanelScale" class="device-panel">
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-4 text-center">
+                        <div id="deviceScaleWeight" class="text-5xl font-semibold text-coffee-900 dark:text-white">--.- g</div>
+                        <div id="deviceScaleStatus" class="text-xs text-coffee-500 dark:text-[#a8a29e] mt-2">Disconnected</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <button id="deviceScaleConnect" data-action-click="connectDevice('scale')" class="col-span-2 bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-link"></i> Connect
+                        </button>
+                        <button id="deviceScaleTare" data-action-click="tareDevice('scale')" disabled class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            Tare
+                        </button>
+                        <button id="deviceScaleTimer" data-action-click="toggleDeviceTimer('scale')" disabled class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            Start timer
+                        </button>
+                        <button id="deviceScaleResetTimer" data-action-click="resetDeviceTimer('scale')" disabled class="col-span-2 bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            Reset timer
+                        </button>
+                    </div>
+                    <div class="text-[11px] text-coffee-500 dark:text-[#78716c] bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c] rounded-lg p-3 mt-4">
+                        <i class="fa-solid fa-circle-info mr-1"></i> Supports Acaia, Bookoo, and compatible scales. Web Bluetooth works in Chrome-based browsers. Safari is not supported.
+                    </div>
+                </div>
+                
+                <!-- Scale 2 Panel -->
+                <div id="devicePanelScale2" class="device-panel hidden">
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-4 text-center">
+                        <div id="deviceScale2Weight" class="text-5xl font-semibold text-coffee-900 dark:text-white">--.- g</div>
+                        <div id="deviceScale2Status" class="text-xs text-coffee-500 dark:text-[#a8a29e] mt-2">Disconnected</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <button id="deviceScale2Connect" data-action-click="connectDevice('scale2')" class="col-span-2 bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-link"></i> Connect
+                        </button>
+                        <button id="deviceScale2Tare" data-action-click="tareDevice('scale2')" disabled class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            Tare
+                        </button>
+                        <button id="deviceScale2Timer" data-action-click="toggleDeviceTimer('scale2')" disabled class="bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            Start timer
+                        </button>
+                        <button id="deviceScale2ResetTimer" data-action-click="resetDeviceTimer('scale2')" disabled class="col-span-2 bg-white dark:bg-[#1c1917] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#e7e5e4] px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            Reset timer
+                        </button>
+                    </div>
+                    <div class="text-[11px] text-coffee-500 dark:text-[#78716c] bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c] rounded-lg p-3 mt-4">
+                        <i class="fa-solid fa-circle-info mr-1"></i> Connect a second scale for input water measurement or dual-scale brewing setups.
+                    </div>
+                </div>
+                
+                <!-- Pressure Panel (placeholder) -->
+                <div id="devicePanelPressure" class="device-panel hidden">
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-4 text-center">
+                        <div id="devicePressureValue" class="text-5xl font-semibold text-coffee-900 dark:text-white">-- bar</div>
+                        <div id="devicePressureStatus" class="text-xs text-coffee-500 dark:text-[#a8a29e] mt-2">Coming soon</div>
+                    </div>
+                    <div class="text-[11px] text-coffee-500 dark:text-[#78716c] bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg p-3 mt-4">
+                        <i class="fa-solid fa-clock mr-1"></i> Pressure sensor support is coming in a future update. Planned: Bookoo Espresso Monitor, Smart Espresso Profiler.
+                    </div>
+                </div>
+                
+                <!-- Temperature Panel (placeholder) -->
+                <div id="devicePanelTemp" class="device-panel hidden">
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-4 text-center">
+                        <div id="deviceTempValue" class="text-5xl font-semibold text-coffee-900 dark:text-white">-- °C</div>
+                        <div id="deviceTempStatus" class="text-xs text-coffee-500 dark:text-[#a8a29e] mt-2">Coming soon</div>
+                    </div>
+                    <div class="text-[11px] text-coffee-500 dark:text-[#78716c] bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg p-3 mt-4">
+                        <i class="fa-solid fa-clock mr-1"></i> Temperature sensor support is coming in a future update. Planned: ThermaQ Blue, Combustion, Meater.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connect Devices Modal (simplified for brew form) -->
+    <div id="connectDevicesModal" class="hidden fixed inset-0 z-[10060] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-[#292524] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-coffee-200 dark:border-[#44403c]">
+            <div class="p-5 border-b border-coffee-200 dark:border-[#44403c] flex justify-between items-center">
+                <h3 class="font-bold text-coffee-900 dark:text-white"><i class="fa-solid fa-bluetooth mr-2"></i>Connect Devices</h3>
+                <button data-action-click="closeConnectDevicesModal()" aria-label="Close connect devices modal" class="text-gray-500 hover:text-gray-700 dark:text-[#78716c] dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Scale 1 -->
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-3">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-scale-balanced text-coffee-600 dark:text-[#a8a29e]"></i>
+                            <span class="text-xs font-bold uppercase text-coffee-600 dark:text-[#a8a29e]">Scale</span>
+                            <span id="connectScale1Indicator" class="hidden ml-auto text-green-500"><i class="fa-solid fa-circle text-[8px]"></i></span>
+                        </div>
+                        <div id="connectScale1Weight" class="text-2xl font-semibold text-coffee-900 dark:text-white">--.- g</div>
+                        <div id="connectScale1Status" class="text-[10px] text-coffee-500 dark:text-[#78716c] mb-2">Disconnected</div>
+                        <button id="connectScale1Btn" data-action-click="connectDevice('scale')" class="w-full text-xs px-2 py-1.5 rounded bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white font-medium">
+                            Connect
+                        </button>
+                    </div>
+                    
+                    <!-- Scale 2 -->
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-3">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-scale-balanced text-coffee-600 dark:text-[#a8a29e]"></i>
+                            <span class="text-xs font-bold uppercase text-coffee-600 dark:text-[#a8a29e]">Scale 2</span>
+                            <span id="connectScale2Indicator" class="hidden ml-auto text-green-500"><i class="fa-solid fa-circle text-[8px]"></i></span>
+                        </div>
+                        <div id="connectScale2Weight" class="text-2xl font-semibold text-coffee-900 dark:text-white">--.- g</div>
+                        <div id="connectScale2Status" class="text-[10px] text-coffee-500 dark:text-[#78716c] mb-2">Disconnected</div>
+                        <button id="connectScale2Btn" data-action-click="connectDevice('scale2')" class="w-full text-xs px-2 py-1.5 rounded bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white font-medium">
+                            Connect
+                        </button>
+                    </div>
+                    
+                    <!-- Pressure (coming soon) -->
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-3 opacity-50">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-gauge-high text-coffee-600 dark:text-[#a8a29e]"></i>
+                            <span class="text-xs font-bold uppercase text-coffee-600 dark:text-[#a8a29e]">Pressure</span>
+                        </div>
+                        <div class="text-2xl font-semibold text-coffee-900 dark:text-white">-- bar</div>
+                        <div class="text-[10px] text-coffee-500 dark:text-[#78716c] mb-2">Coming soon</div>
+                        <button disabled class="w-full text-xs px-2 py-1.5 rounded bg-gray-300 dark:bg-[#44403c] text-gray-500 dark:text-[#78716c] font-medium cursor-not-allowed">
+                            Connect
+                        </button>
+                    </div>
+                    
+                    <!-- Temp (coming soon) -->
+                    <div class="bg-coffee-50 dark:bg-[#1c1917] rounded-lg border border-coffee-100 dark:border-[#44403c] p-3 opacity-50">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-temperature-half text-coffee-600 dark:text-[#a8a29e]"></i>
+                            <span class="text-xs font-bold uppercase text-coffee-600 dark:text-[#a8a29e]">Temp</span>
+                        </div>
+                        <div class="text-2xl font-semibold text-coffee-900 dark:text-white">-- °C</div>
+                        <div class="text-[10px] text-coffee-500 dark:text-[#78716c] mb-2">Coming soon</div>
+                        <button disabled class="w-full text-xs px-2 py-1.5 rounded bg-gray-300 dark:bg-[#44403c] text-gray-500 dark:text-[#78716c] font-medium cursor-not-allowed">
+                            Connect
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-[11px] text-coffee-500 dark:text-[#78716c] bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c] rounded-lg p-3 mt-4">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Web Bluetooth works in Chrome-based browsers. Safari is not supported.
+                </div>
+            </div>
+        </div>
+    </div>
