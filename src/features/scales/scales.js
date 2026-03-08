@@ -1,10 +1,8 @@
-import { DeviceManager } from '../devices/device-manager.js';
-
 let coffeeScaleApi = null;
 
 export const getCoffeeScale = () => coffeeScaleApi;
 
-export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureReset } = {}) {
+export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureReset, deviceManager } = {}) {
   const statusEl = document.getElementById("status");
   const weightEl = document.getElementById("weight");
   const tareBtn = document.getElementById("tare");
@@ -229,7 +227,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
 
   // Returns true when a Scale 2 device (cup) is actively connected.
   function isScale2Active() {
-    return !!DeviceManager.getDevice('scale2')?.isConnected;
+    return !!deviceManager.getDevice('scale2')?.isConnected;
   }
 
   function setFlow(value) {
@@ -1507,7 +1505,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
   /* ---- Scale 1 tare (via DeviceManager) ---- */
   if (tareBtn) {
     tareBtn.onclick = async () => {
-      await DeviceManager.getDevice('scale')?.tare?.();
+      await deviceManager.getDevice('scale')?.tare?.();
     };
   }
   if (connectTareBtn) {
@@ -1517,7 +1515,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
   /* ---- Scale 1 timer (via DeviceManager) ---- */
   if (timerBtn) {
     timerBtn.onclick = async () => {
-      const dev = DeviceManager.getDevice('scale');
+      const dev = deviceManager.getDevice('scale');
       if (!dev?.isConnected) return;
       await dev.toggleTimer();
       setTimerRunningState(!timerRunning);
@@ -1529,8 +1527,8 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
 
   /* ---- Shared helper: tare + reset timer on every connected scale ---- */
   async function resetAllScaleDevices() {
-    const dev1 = DeviceManager.getDevice('scale');
-    const dev2 = DeviceManager.getDevice('scale2');
+    const dev1 = deviceManager.getDevice('scale');
+    const dev2 = deviceManager.getDevice('scale2');
     await Promise.all([
       dev1?.isConnected ? (async () => { try { await dev1.tare(); await dev1.resetTimer(); } catch (e) { console.warn('Reset scale 1 failed', e); } })() : Promise.resolve(),
       dev2?.isConnected ? (async () => { try { await dev2.tare(); } catch (e) { console.warn('Reset scale 2 failed', e); } })() : Promise.resolve(),
@@ -1641,7 +1639,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       return;
     }
 
-    const dev = DeviceManager.getDevice('scale');
+    const dev = deviceManager.getDevice('scale');
     if (!dev?.isConnected) return;
 
     const autoStartEnabled = graphAutoStartToggle ? graphAutoStartToggle.checked : false;
@@ -1710,7 +1708,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
 
   async function triggerAutoStartTimer() {
     if (!autoStartPending || timerRunning) return;
-    const dev = DeviceManager.getDevice('scale');
+    const dev = deviceManager.getDevice('scale');
     if (!dev?.isConnected) return;
     try {
       await dev.startTimer();
@@ -1750,10 +1748,10 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
   bindBrewFormControls();
 
   // Subscribe to Scale 1 events via DeviceManager
-  DeviceManager.onConnectionChange('scale', (connected) => {
+  deviceManager.onConnectionChange('scale', (connected) => {
     isConnected = connected;
     if (connected) {
-      const dev = DeviceManager.getDevice('scale');
+      const dev = deviceManager.getDevice('scale');
       dev?.onTimerStateChange?.((running) => setTimerRunningState(running));
       if (tareBtn) tareBtn.disabled = false;
       if (timerBtn) timerBtn.disabled = false;
@@ -1761,7 +1759,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       if (connectTareBtn) connectTareBtn.disabled = false;
       if (connectTimerBtn) connectTimerBtn.disabled = false;
       if (connectResetTimerBtn) connectResetTimerBtn.disabled = false;
-      setStatus(`Connected to ${DeviceManager.getDeviceName('scale') || 'scale'}`);
+      setStatus(`Connected to ${deviceManager.getDeviceName('scale') || 'scale'}`);
     } else {
       const wasRunning = timerRunning;
       timerRunning = false;
@@ -1778,13 +1776,13 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
       if (connectResetTimerBtn) connectResetTimerBtn.disabled = true;
     }
   });
-  DeviceManager.onValueChange('scale', (weight) => {
+  deviceManager.onValueChange('scale', (weight) => {
     if (Number.isFinite(weight)) setWeight(weight);
   });
-  DeviceManager.onValueChange('scale2', (weight) => {
+  deviceManager.onValueChange('scale2', (weight) => {
     if (Number.isFinite(weight)) addScale2RawSample(weight, Date.now());
   });
-  DeviceManager.onStatusChange('scale', (status) => setStatus(status));
+  deviceManager.onStatusChange('scale', (status) => setStatus(status));
 
   function bindGraphModalControls() {
     refreshGraphDomRefs();
@@ -1943,7 +1941,7 @@ export function initCoffeeScale({ openScaleModal, onTimerStateChange, onCaptureR
   coffeeScaleApi = {
     isConnected: () => isConnected,
     getLastWeight: () => lastWeight,
-    autoConnect: () => DeviceManager.autoConnect('scale'),
+    autoConnect: () => deviceManager.autoConnect('scale'),
     bindBrewFormControls,
     getCaptureData,
     setCaptureData,

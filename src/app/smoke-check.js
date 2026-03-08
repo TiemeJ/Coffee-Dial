@@ -12,10 +12,9 @@ const REQUIRED_ELEMENT_IDS = [
     'viewSelect',
     'coffeeTableBody',
     'pinnedSection',
-    'pinnedGrid',
-    'coffeeCardOverlay',
-    'coffeeCardPrevBtn',
-    'coffeeCardNextBtn'
+    'pinnedGrid'
+    // coffeeCardOverlay, coffeeCardPrevBtn, coffeeCardNextBtn are in brews-card.view.html
+    // which is lazy-mounted on first use — not present at startup check time.
 ];
 
 const TABLE_ROW_ID_CHECKS = [
@@ -44,9 +43,17 @@ const cleanupSmokeUiState = (actions = {}) => {
     try { actions.closeBeanCard?.(null); } catch (_) {}
     try { actions.discardBrewFormModal?.(); } catch (_) {}
     // Hard-close overlays in case action wiring or command timing leaves stale UI state behind.
+    // brewFormModal is included because discardBrewFormModal is async (awaits confirmDiscardIfNeeded)
+    // and may not have resolved before the smoke report status is updated and tests proceed.
+    // Also call closeBrewFormModal (the route-wrapped action) to remove 'brew' from the URL route —
+    // without this, the lazy-mounted modal is never observed by the MutationObserver route-sync, so
+    // the 'brew' route key persists and a subsequent pageshow/visibilitychange re-opens the form.
+    try { actions.closeBrewFormModal?.(null); } catch (_) {}
     document.getElementById('beansModal')?.classList.add('hidden');
     document.getElementById('coffeeTypeCardOverlay')?.classList.add('hidden');
     document.getElementById('beanCardOverlay')?.classList.add('hidden');
+    document.getElementById('brewFormModal')?.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -356,10 +363,21 @@ export const runSmokeChecks = ({ actions = {}, appCommands = null } = {}) => {
 
     // Async behavioral smoke flow for command-driven cross-feature paths.
     runCommandFlowSmoke({ actions, appCommands })
-        .then((commandFlowReport) => {
+        .then(async (commandFlowReport) => {
+            // Run cleanup BEFORE updating report.commandFlows on the shared object.
+            // window.__coffeeDialSmokeReport already points to `report`, so any mutation
+            // is immediately visible to Playwright's polling condition. Cleanup must
+            // hide the brew form modal (and remove its route key) before tests unblock.
+            cleanupSmokeUiState(actions);
+            // Yield to the macrotask queue so all pending microtasks (async discard/close
+            // chains from smoke flows) have a chance to finish BEFORE we signal completion.
+            // A setTimeout(0) creates a macrotask boundary that drains the microtask queue.
+            await delay(0);
+            // Hard-close again after microtask drain, in case any deferred open fired.
+            document.getElementById('brewFormModal')?.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
             report.commandFlows = commandFlowReport;
             report.ok = report.ok && commandFlowReport.ok;
-            cleanupSmokeUiState(actions);
             if (typeof window !== 'undefined') {
                 window.__coffeeDialSmokeReport = report;
                 window.__coffeeDialCommandFlowSmokeReport = commandFlowReport;

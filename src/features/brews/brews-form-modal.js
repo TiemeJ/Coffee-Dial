@@ -92,7 +92,8 @@ export const createBrewsFormModalModule = ({
         const {
             reset = true,
             title = null,
-            syncTitleFromForm = false
+            syncTitleFromForm = false,
+            onBeforeShow = null
         } = options;
 
         const modal = getModal();
@@ -103,6 +104,9 @@ export const createBrewsFormModalModule = ({
 
         if (reset) resetFormState(null);
         if (reset || !isExpanded) toggleForm(true);
+        // Run caller-supplied setup (e.g. fill bean details) BEFORE taking the
+        // initial snapshot, so hasUnsavedChanges() compares against the populated state.
+        if (typeof onBeforeShow === 'function') onBeforeShow();
         if (syncTitleFromForm) setModalTitleFromForm();
         else if (title !== null) setModalTitle(title);
         else if (reset) setModalTitle('Add new brew');

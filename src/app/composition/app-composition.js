@@ -555,9 +555,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             if (!scalesFeaturePromise) {
                 scalesFeaturePromise = (async () => {
                     console.log('[ensureScalesFeature] importing scales modules...');
-                    const [{ initCoffeeScale }, { createScaleModalsModule }] = await Promise.all([
+                    const [{ initCoffeeScale }, { createScaleModalsModule }, { DeviceManager }] = await Promise.all([
                         import('../../features/scales/scales.js'),
-                        import('../../features/scales/scales-modals.js')
+                        import('../../features/scales/scales-modals.js'),
+                        import('../../features/devices/device-manager.js')
                     ]);
                     console.log('[ensureScalesFeature] modules imported, initCoffeeScale:', typeof initCoffeeScale);
                     const scaleModals = createScaleModalsModule({
@@ -581,6 +582,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                         onCaptureReset: () => {
                             void getDeviceManager().then(dm => dm.resetCapture());
                         },
+                        deviceManager: DeviceManager,
                     });
                     console.log('[ensureScalesFeature] coffeeScale created, renderGraphTo:', typeof coffeeScale?.renderGraphTo);
                     scalesFeature = {
@@ -1843,11 +1845,19 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             openFormForBean: (beanId, event = null) => {
                 if (!beanId) return;
                 if (getCurrentViewState() !== 'mine') changeView('mine');
-                const select = document.getElementById('savedBeanSelect');
-                if (select) select.value = beanId;
-                fillBeanDetails(beanId);
-                toggleForm(true);
-                openBrewFormModal(event, { reset: false, syncTitleFromForm: true });
+                // All DOM work must happen after the form HTML is mounted (lazy).
+                // Pass reset:false and fill bean details inside the .then so they
+                // run on the already-mounted form, keeping initialSnapshot accurate.
+                openBrewFormModal(event, {
+                    reset: false,
+                    syncTitleFromForm: true,
+                    onBeforeShow: () => {
+                        const select = document.getElementById('savedBeanSelect');
+                        if (select) select.value = beanId;
+                        fillBeanDetails(beanId);
+                        toggleForm(true);
+                    }
+                });
             },
             refreshTable: () => {
                 renderTable();
