@@ -39,5 +39,32 @@ export const createGasController = (deps = {}) => {
         }
     );
 
-    return gas;
+    // Wrap card functions to ensure HTML is mounted before accessing DOM
+    const openGasCard = async (...args) => {
+        await ensureCardMounted();
+        return gas.openGasCard(...args);
+    };
+
+    const openGasFromTableEdit = async (...args) => {
+        await ensureCardMounted();
+        return gas.openGasFromTableEdit(...args);
+    };
+
+    const openGasMergeFromTable = async (...args) => {
+        await ensureCardMounted();
+        return gas.openGasMergeFromTable(...args);
+    };
+
+    const openGasBulkAddFromTable = async (...args) => {
+        await ensureCardMounted();
+        return gas.openGasBulkAddFromTable(...args);
+    };
+
+    return {
+        ...gas,
+        openGasCard,
+        openGasFromTableEdit,
+        openGasMergeFromTable,
+        openGasBulkAddFromTable
+    };
 };

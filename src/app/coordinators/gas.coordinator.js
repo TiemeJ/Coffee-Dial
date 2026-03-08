@@ -82,8 +82,7 @@ export const createGasCoordinator = ({
             }
             getRefreshBrewGearSelectors()?.();
             notifyGasUiOpened();
-            openGasCard(newGas.id);
-            enterGasEditMode();
+            await dispatchCommand('gas.openCardForEdit', { id: newGas.id });
             publishEvent('gas.created', { gasId: newGas.id });
         } catch (err) {
             console.error('Error creating gear item:', err);
