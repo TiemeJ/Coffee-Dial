@@ -267,7 +267,7 @@ export const createCoffeesCoordinator = ({
         getCoffeeTypesSortDir,
         setCoffeeTypesSortDirState,
         getStarDisplay,
-        openCoffeeTypeCard
+        dispatchCommand
     });
     getFilteredSortedCoffeeTypes = coffeeTypesTable.getFilteredSortedCoffeeTypes;
     renderCoffeeTypesTable = coffeeTypesTable.renderCoffeeTypesTable;

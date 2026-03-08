@@ -20,7 +20,7 @@ export const createCoffeeTypesTableModule = ({
     getCoffeeTypesSortDir,
     setCoffeeTypesSortDirState,
     getStarDisplay,
-    openCoffeeTypeCard
+    dispatchCommand
 }) => {
     const coffeesVm = createCoffeesVmModule();
     let hasBoundResponsiveTableListener = false;
@@ -656,7 +656,7 @@ export const createCoffeeTypesTableModule = ({
                     if (event.target && event.target.closest?.('[data-action-click]')) return;
                     const now = Date.now();
                     if (now - lastTapAt < 300) {
-                        openCoffeeTypeCard(type.id, event);
+                        dispatchCommand('coffees.openCard', { id: type.id, event });
                         lastTapAt = 0;
                         return;
                     }
@@ -676,7 +676,7 @@ export const createCoffeeTypesTableModule = ({
             const row = document.createElement('tr');
             row.setAttribute('data-id', type.id);
             row.className = 'bg-white dark:bg-[#292524] border-b border-coffee-100 dark:border-[#44403c] last:border-b-0';
-            row.ondblclick = (event) => openCoffeeTypeCard(type.id, event);
+            row.ondblclick = (event) => dispatchCommand('coffees.openCard', { id: type.id, event });
             row.innerHTML = `
                 <td class="px-4 py-3 text-sm">${farmer}</td>
                 <td class="px-4 py-3 font-semibold">${roaster}</td>

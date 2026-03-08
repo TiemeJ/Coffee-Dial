@@ -39,5 +39,20 @@ export const createCoffeesController = (deps = {}) => {
         }
     );
 
-    return coffees;
+    // Wrap card functions to ensure HTML is mounted before accessing DOM
+    const openCoffeeTypeCard = async (...args) => {
+        await ensureCardMounted();
+        return coffees.openCoffeeTypeCard(...args);
+    };
+
+    const openCoffeeTypeFromTableEdit = async (...args) => {
+        await ensureCardMounted();
+        return coffees.openCoffeeTypeFromTableEdit(...args);
+    };
+
+    return {
+        ...coffees,
+        openCoffeeTypeCard,
+        openCoffeeTypeFromTableEdit
+    };
 };
