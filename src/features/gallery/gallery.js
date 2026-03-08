@@ -197,6 +197,7 @@ const createGalleryCommentsModule = ({
 };
 
 export const createGalleryModule = ({
+    ensureGalleryMounted = null,
     getCurrentUser,
     getCurrentUploadCoffeeId,
     setCurrentUploadCoffeeId,
@@ -1980,6 +1981,7 @@ export const createGalleryModule = ({
     };
 
     const openGallery = async (initialTab = 'shared') => {
+        await ensureGalleryMounted?.();
         clearLiveCommentListeners();
         hideMomentOutsideSharePrompt();
         bindMomentOutsideSharePromptControls();

@@ -1187,6 +1187,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 galleryModulePromise = (async () => {
                     const { createGalleryModule } = await import('../../features/gallery/gallery.js');
                     return createGalleryModule({
+                        ensureGalleryMounted,
                         getCurrentUser: () => getCurrentUserState(),
                         getCurrentUploadCoffeeId: () => getCurrentUploadCoffeeIdState(),
                         setCurrentUploadCoffeeId: (value) => setCurrentUploadCoffeeIdState(value),
@@ -1244,7 +1245,9 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             return galleryModulePromise;
         };
 
-        const openUploadModal = (...args) => ensureGalleryModule().then((module) => module.openUploadModal(...args));
+        const openUploadModal = (...args) => 
+            Promise.all([ensureMediaModalsMounted(), ensureGalleryModule()])
+                .then(([, module]) => module.openUploadModal(...args));
         const toggleAllFriends = (...args) => ensureGalleryModule().then((module) => module.toggleAllFriends(...args));
         const closeUploadModal = (...args) => ensureGalleryModule().then((module) => module.closeUploadModal(...args));
         const handlePhotoSubmit = (...args) => ensureGalleryModule().then((module) => module.handlePhotoSubmit(...args));
