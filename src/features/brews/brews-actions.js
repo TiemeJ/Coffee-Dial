@@ -38,7 +38,8 @@ export const createBrewsActionsModule = ({
     getSelectedBrewGearIds,
     setSelectedBrewGearIds,
     openBrewFormModal,
-    ensureBrewsFormModalMounted
+    ensureBrewsFormModalMounted,
+    addBeanToLocalState
 }) => {
     const brewsVm = createBrewsVmModule();
     const {
@@ -191,11 +192,55 @@ export const createBrewsActionsModule = ({
         return d;
     };
 
+    const createNewBagForArchivedBrew = async (brew) => {
+        if (!brew?.beanId) return null;
+        const sourceBean = getBeans().find((b) => b.id === brew.beanId);
+        if (!sourceBean?.archived) return null;
+
+        const nowIso = new Date().toISOString();
+        const newBeanData = { ...sourceBean };
+        delete newBeanData.id;
+        delete newBeanData.stock;
+        delete newBeanData.beansLeft;
+        delete newBeanData.frozenDate;
+        delete newBeanData.roastDate;
+        delete newBeanData.archivedDate;
+        delete newBeanData.frozen;
+        delete newBeanData.archived;
+        delete newBeanData.calculatedStock;
+        newBeanData.stock = 250;
+        newBeanData.beansLeft = 250;
+        newBeanData.price = sourceBean.price ?? null;
+        newBeanData.frozen = false;
+        newBeanData.archived = false;
+        newBeanData.frozenDate = null;
+        newBeanData.archivedDate = null;
+        newBeanData.openedDate = nowIso;
+        newBeanData.createdAt = nowIso;
+        newBeanData.updatedAt = nowIso;
+
+        const newBeanId = await addBean(newBeanData);
+        if (!getBeans().some((b) => b.id === newBeanId)) {
+            addBeanToLocalState?.({ id: newBeanId, ...newBeanData });
+        }
+
+        const display = getBeanCoffeeTypeDisplay ? getBeanCoffeeTypeDisplay({ id: newBeanId, ...newBeanData }) : newBeanData;
+        const roaster = display.roaster !== '-' ? (display.roaster || '') : '';
+        const farmer = display.farmer !== '-' ? (display.farmer || '') : '';
+        const label = [roaster, farmer].filter(Boolean).join(' ');
+        showToast?.(`New bag of ${label} opened.`);
+
+        return newBeanId;
+    };
+
     const saveRepeatedBrew = async ({ sourceBrew, successMessage, errorMessage, closeCardAfter = false }) => {
         const user = getCurrentUser();
         if (!user || !sourceBrew) return;
 
         const d = buildDuplicateBrewData(sourceBrew);
+
+        const newBagBeanId = await createNewBagForArchivedBrew(sourceBrew);
+        if (newBagBeanId) d.beanId = newBagBeanId;
         const grinderNameFromGear = resolveGrinderNameFromGearIds(d.gearIds);
         if (grinderNameFromGear) d.grinder = grinderNameFromGear;
         else {
@@ -227,17 +272,30 @@ export const createBrewsActionsModule = ({
     const showDuplicateInForm = async ({ brew, title }) => {
         await ensureBrewsFormModalMounted?.();
         closeAllActionMenus();
-        updateBeanDropdown();
         setBrewGearScope({ includeAll: false });
         const d = stripBrewGraphFields(brew);
         const sourceForCoffeeFields = { ...d };
+
+        // For "Repeat brew": if source bean is archived, auto-create a new bag with today's opened date
+        let autoCreatedBeanId = null;
+        if (title === 'Repeat brew' && d.beanId) {
+            const sourceBeanCheck = getBeans().find((item) => item.id === d.beanId);
+            if (sourceBeanCheck?.archived) {
+                autoCreatedBeanId = await createNewBagForArchivedBrew(brew);
+                if (autoCreatedBeanId) d.beanId = autoCreatedBeanId;
+            }
+        }
+
+        updateBeanDropdown();
+
         const shouldUseNewBeanForRepeat = () => {
             if (title !== 'Repeat brew') return false;
+            if (autoCreatedBeanId) return false;
             const sourceBeanId = d?.beanId;
             if (!sourceBeanId) return false;
             const sourceBean = getBeans().find((item) => item.id === sourceBeanId);
             if (!sourceBean) return true;
-            if (sourceBean.archived || sourceBean.frozen) return true;
+            if (sourceBean.frozen) return true;
             const select = document.getElementById('savedBeanSelect');
             if (!select) return false;
             return !Array.from(select.options || []).some((option) => option.value === sourceBeanId);
