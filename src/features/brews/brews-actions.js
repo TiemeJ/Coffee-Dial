@@ -56,6 +56,7 @@ export const createBrewsActionsModule = ({
     }
     const clean = (value) => (value || '').toString().toLowerCase().trim();
     const shouldKeepRepeatCuppingFields = () => getPinnedBrewsPreferences?.()?.keepCuppingNotesWhenRepeatingBrew === true;
+    const shouldKeepRepeatInOutTimeFields = () => getPinnedBrewsPreferences?.()?.keepInOutTimeWhenRepeatingBrew === true;
     const grinderGearSync = createBrewGrinderGearSyncModule({
         getGasItems,
         addGear
@@ -305,12 +306,13 @@ export const createBrewsActionsModule = ({
         const clearRepeatOnlyFields = () => {
             if (title !== 'Repeat brew') return;
             const keepCuppingFields = shouldKeepRepeatCuppingFields();
+            const keepInOutTime = shouldKeepRepeatInOutTimeFields();
             const setValue = (id, value = '') => {
                 const el = document.getElementById(id);
                 if (el) el.value = value;
             };
-            setValue('inputYield', '');
-            setValue('time', '');
+            if (!keepInOutTime) setValue('inputYield', '');
+            if (!keepInOutTime) setValue('time', '');
             if (!keepCuppingFields) {
                 setValue('notes', '');
                 setValue('improve', '');
@@ -350,12 +352,13 @@ export const createBrewsActionsModule = ({
         const clearRepeatOnlyFields = () => {
             if (title !== 'Repeat brew') return;
             const keepCuppingFields = shouldKeepRepeatCuppingFields();
+            const keepInOutTime = shouldKeepRepeatInOutTimeFields();
             const setValue = (id, value = '') => {
                 const el = document.getElementById(id);
                 if (el) el.value = value;
             };
-            setValue('inputYield', '');
-            setValue('time', '');
+            if (!keepInOutTime) setValue('inputYield', '');
+            if (!keepInOutTime) setValue('time', '');
             if (!keepCuppingFields) {
                 setValue('notes', '');
                 setValue('improve', '');
