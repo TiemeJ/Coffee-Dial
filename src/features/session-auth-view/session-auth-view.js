@@ -123,12 +123,12 @@ export const createSessionAuthViewModule = ({
 
     const getModal = (id) => document.getElementById(id);
 
-    const attachLiveViewListeners = ({ targetUid, isMine, requestId, skipFirstCallback = false }) => {
+    // The first snapshot of each listener must always be applied: the bootstrap queries only load a
+    // subset (latest brews, active beans, referenced coffees). With the persistent local cache the
+    // first snapshot comes from IndexedDB and, when the cache is already complete, the server never
+    // sends a second one, so skipping it leaves the app with partial data for the whole session.
+    const attachLiveViewListeners = ({ targetUid, isMine, requestId }) => {
         if (requestId !== latestViewRequestId) return;
-
-        let skipBrews = skipFirstCallback;
-        let skipBeans = skipFirstCallback;
-        let skipCoffeeTypes = skipFirstCallback;
 
         const brewsRef = collection(db, 'users', targetUid, 'coffees');
         setUnsubscribeData(
@@ -136,7 +136,6 @@ export const createSessionAuthViewModule = ({
                 brewsRef,
                 (snapshot) => {
                     if (requestId !== latestViewRequestId) return;
-                    if (skipBrews) { skipBrews = false; return; }
                     const nextCoffees = [];
                     snapshot.forEach((docSnap) => nextCoffees.push({ id: docSnap.id, ...docSnap.data() }));
                     if (!getCurrentSort().key) {
@@ -163,7 +162,6 @@ export const createSessionAuthViewModule = ({
                 beansRef,
                 (snapshot) => {
                     if (requestId !== latestViewRequestId) return;
-                    if (skipBeans) { skipBeans = false; return; }
                     const nextBeans = [];
                     snapshot.forEach((docSnap) => nextBeans.push({ id: docSnap.id, ...docSnap.data() }));
                     setBeans(nextBeans);
@@ -191,7 +189,6 @@ export const createSessionAuthViewModule = ({
                 coffeeTypesRef,
                 (snapshot) => {
                     if (requestId !== latestViewRequestId) return;
-                    if (skipCoffeeTypes) { skipCoffeeTypes = false; return; }
                     const nextCoffeeTypes = [];
                     snapshot.forEach((docSnap) => nextCoffeeTypes.push({ id: docSnap.id, ...docSnap.data() }));
                     setCoffeeTypes(nextCoffeeTypes);
@@ -253,10 +250,10 @@ export const createSessionAuthViewModule = ({
         attachGasLiveListener(currentViewListenerContext);
     };
 
-    const scheduleLiveViewListeners = ({ targetUid, isMine, requestId, skipFirstCallback = false }) => {
+    const scheduleLiveViewListeners = ({ targetUid, isMine, requestId }) => {
         const run = () => {
             pendingLiveListenerHandle = null;
-            attachLiveViewListeners({ targetUid, isMine, requestId, skipFirstCallback });
+            attachLiveViewListeners({ targetUid, isMine, requestId });
         };
         const scheduleIdle = window.requestIdleCallback;
         if (typeof scheduleIdle === 'function') {
@@ -625,7 +622,7 @@ export const createSessionAuthViewModule = ({
                 console.log('[PERF-DATA] loadCompleteViewData: renderPinnedTiles+renderTable done');
                 const navStart = performance.timing?.navigationStart || performance.timeOrigin || 0;
                 console.log(`[PERF-ABSOLUTE] Full data loaded and rendered: ${Date.now() - navStart}ms from navigation start`);
-                scheduleLiveViewListeners({ targetUid, isMine, requestId, skipFirstCallback: true });
+                scheduleLiveViewListeners({ targetUid, isMine, requestId });
                 if (!getModal('gasModal')?.classList.contains('hidden')) {
                     ensureGasListenerForCurrentView();
                 }
