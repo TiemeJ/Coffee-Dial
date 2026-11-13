@@ -123,6 +123,25 @@
                     </div>
                 </div>
                 <div class="mt-6">
+                    <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">AI</h4>
+                    <div class="p-3 rounded bg-coffee-50 dark:bg-[#1c1917] border border-coffee-100 dark:border-[#44403c] space-y-3">
+                        <div>
+                            <label for="aiGeminiApiKey" class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide mb-1">Gemini API key</label>
+                            <input id="aiGeminiApiKey" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Paste API key" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors" />
+                        </div>
+                        <div>
+                            <label for="aiGeminiModel" class="block text-xs font-medium text-coffee-600 dark:text-[#a8a29e] uppercase tracking-wide mb-1">Model</label>
+                            <input id="aiGeminiModel" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" class="w-full bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] rounded-lg px-3 py-2 text-sm text-coffee-900 dark:text-white focus:border-coffee-500 transition-colors" />
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="aiSettingsSaveBtn" type="button" class="flex-1 bg-coffee-700 hover:bg-coffee-800 dark:bg-[#57534e] text-white px-4 py-2 rounded-lg text-sm font-medium">Save</button>
+                            <button id="aiSettingsTestBtn" type="button" class="flex-1 bg-white dark:bg-[#292524] border border-coffee-200 dark:border-[#44403c] text-coffee-800 dark:text-[#d6ccc2] px-4 py-2 rounded-lg text-sm font-medium">Test key</button>
+                        </div>
+                        <div id="aiSettingsStatus" class="hidden text-xs text-coffee-600 dark:text-[#a8a29e]" role="status"></div>
+                        <p class="text-[11px] text-coffee-500 dark:text-[#78716c]">Used for AI bag scan and the AI profile in Statistics. Requests go straight from this app to Google with your own key; usage is billed to your Google account. The key is private to you and syncs to your other devices. Get a key from <a id="aiGeminiKeyLink" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="underline hover:text-coffee-700 dark:hover:text-[#d6ccc2]">Google AI Studio</a>.</p>
+                    </div>
+                </div>
+                <div class="mt-6">
                     <h4 class="text-sm font-bold text-coffee-800 dark:text-white mb-1">Advanced</h4>
                     <div class="space-y-3">
                         <button id="preferencesReloadAppBtn" type="button" class="w-full text-xs bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/30 dark:hover:bg-sky-900/40 text-sky-800 dark:text-sky-300 px-3 py-2 rounded font-bold transition-colors border border-sky-200 dark:border-sky-900/40">

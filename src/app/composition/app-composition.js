@@ -1,8 +1,9 @@
-        import { BAG_AI_URL, STATS_AI_URL, WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, provider, getFunctionsInstance, loadFunctionsApi, loadMessagingApi, getStorageInstance, loadStorageApi } from '../../config/firebase.js';
+        import { WEB_PUSH_VAPID_KEY, app as firebaseApp, auth, db, provider, getFunctionsInstance, loadFunctionsApi, loadMessagingApi, getStorageInstance, loadStorageApi } from '../../config/firebase.js';
         import { signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { collection, collectionGroup, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, getDocsFromCache, arrayUnion, arrayRemove, onSnapshot, query, writeBatch, where, orderBy, limit, startAfter } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         import { parseBeanconquerorCSV, mapBeanconquerorBrews } from '../../features/import-export/importers/beanconqueror.js';
         import { initEmailLinkAuth } from '../../integrations/email-link-auth.js';
+        import { createAiSettingsStore } from '../../core/ai-settings.js';
         import { closeAutoPinToast, closeStickyToast, showAutoPinToast, showToast } from '../../core/notify.js';
         import { closeAppConfirm, openAppConfirm, resolveAppConfirm, installDialogAdapters } from '../../core/confirm.js';
         import { getStarDisplay, formatBeanOpenedDate, formatTime, getRoastBadge } from '../../core/format.js';
@@ -299,6 +300,10 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             startAfter,
             writeBatch
         });
+        const aiSettings = createAiSettingsStore({
+            dataService,
+            getCurrentUser: () => getCurrentUserState()
+        });
         const storageService = createStorageService({
             getStorageInstance,
             loadStorageApi
@@ -503,6 +508,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                         setIntegrationPreferences: (value) => setIntegrationPreferencesState(value),
                         getCurrentUser: () => getCurrentUserState(),
                         dataService,
+                        aiSettings,
                         applyAnimationClass: (...args) => applyAnimationClass(...args),
                         renderTable: (...args) => renderTable(...args),
                         renderPinnedTiles: (...args) => renderPinnedTiles(...args),
@@ -701,7 +707,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
                 aiImportModulePromise = (async () => {
                     const { createAiImportModule } = await import('../../features/ai-import/ai-import.js');
                     return createAiImportModule({
-                        BAG_AI_URL,
+                        aiSettings,
                         imageCompression,
                         getCurrentUser: () => getCurrentUserState(),
                         toggleForm: (...args) => toggleForm(...args),
@@ -737,7 +743,7 @@ export const createAppComposition = ({ appCommands = null, appEvents = null } = 
             ensureAiImportModule().then((module) => module.handleCoffeeTypesAIFile(...args));
 
         const { triggerAIProfile } = createStatsAiProfileModule({
-            STATS_AI_URL,
+            aiSettings,
             getCurrentStatsData: () => getCurrentStatsDataState(),
             getCurrentUser: () => getCurrentUserState()
         });

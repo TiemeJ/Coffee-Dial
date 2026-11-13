@@ -1,7 +1,8 @@
 import { withDetectedDecaf } from '../../core/coffee-decaf.js';
+import { AiNotConfiguredError, analyzeCoffeeBag } from '../../core/gemini-client.js';
 
 export const createAiImportModule = ({
-    BAG_AI_URL,
+    aiSettings,
     imageCompression,
     getCurrentUser,
     toggleForm,
@@ -29,6 +30,9 @@ export const createAiImportModule = ({
     };
 
     const callBagAi = async (file) => {
+        // Resolve the key first so a missing key fails before the image is compressed.
+        const { geminiApiKey, geminiModel } = await aiSettings.load();
+        if (!geminiApiKey) throw new AiNotConfiguredError();
         const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true };
         const compressedFile = await imageCompression(file, options);
         const base64String = await new Promise((resolve) => {
@@ -37,14 +41,12 @@ export const createAiImportModule = ({
             reader.readAsDataURL(compressedFile);
         });
 
-        const response = await fetch(BAG_AI_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ base64Image: base64String })
+        const data = await analyzeCoffeeBag({
+            apiKey: geminiApiKey,
+            model: geminiModel,
+            base64Image: base64String,
+            mimeType: compressedFile.type || 'image/jpeg'
         });
-
-        if (!response.ok) throw new Error('AI Analysis Failed.');
-        const data = await response.json();
         return { compressedFile, data };
     };
 

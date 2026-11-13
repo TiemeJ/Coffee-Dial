@@ -1,4 +1,5 @@
 import { normalizeIntegrationPreferences } from '../../core/integration-preferences.js';
+import { DEFAULT_GEMINI_MODEL, testGeminiConnection } from '../../core/gemini-client.js';
 
 const normalizeNotificationPreferences = (value = null) => {
     const source = (value && typeof value === 'object') ? value : {};
@@ -38,6 +39,7 @@ export const createBrewsPreferencesModule = ({
     setIntegrationPreferences,
     getCurrentUser,
     dataService,
+    aiSettings,
     applyAnimationClass,
     renderTable,
     renderPinnedTiles,
@@ -635,6 +637,64 @@ export const createBrewsPreferencesModule = ({
         });
     };
 
+    let hasBoundAiSettings = false;
+    const setAiSettingsStatus = (message = '', tone = 'info') => {
+        const status = document.getElementById('aiSettingsStatus');
+        if (!status) return;
+        status.textContent = message;
+        status.classList.toggle('hidden', !message);
+        status.classList.toggle('text-red-600', tone === 'error');
+        status.classList.toggle('text-emerald-600', tone === 'success');
+    };
+    const readAiSettingsForm = () => ({
+        geminiApiKey: document.getElementById('aiGeminiApiKey')?.value || '',
+        geminiModel: document.getElementById('aiGeminiModel')?.value || ''
+    });
+    const hydrateAiSettings = async () => {
+        const keyInput = document.getElementById('aiGeminiApiKey');
+        const modelInput = document.getElementById('aiGeminiModel');
+        if (!aiSettings || !keyInput || !modelInput) return;
+        modelInput.placeholder = DEFAULT_GEMINI_MODEL;
+        setAiSettingsStatus('');
+        const settings = await aiSettings.load();
+        // Do not overwrite what the user started typing while the cloud copy was loading.
+        if (document.activeElement !== keyInput) keyInput.value = settings.geminiApiKey;
+        if (document.activeElement !== modelInput) modelInput.value = settings.geminiModel;
+    };
+    const bindAiSettings = () => {
+        if (hasBoundAiSettings || !aiSettings) return;
+        const saveBtn = document.getElementById('aiSettingsSaveBtn');
+        const testBtn = document.getElementById('aiSettingsTestBtn');
+        if (!saveBtn || !testBtn) return;
+        hasBoundAiSettings = true;
+        saveBtn.addEventListener('click', async () => {
+            saveBtn.disabled = true;
+            try {
+                const { settings, synced } = await aiSettings.save(readAiSettingsForm());
+                document.getElementById('aiGeminiModel').value = settings.geminiModel;
+                if (!synced) setAiSettingsStatus('Saved on this device only. Syncing to your other devices failed.', 'error');
+                else setAiSettingsStatus(settings.geminiApiKey ? 'Saved.' : 'Key removed.', 'success');
+            } catch (error) {
+                setAiSettingsStatus(error?.message || 'Saving failed.', 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        });
+        testBtn.addEventListener('click', async () => {
+            const { geminiApiKey, geminiModel } = readAiSettingsForm();
+            testBtn.disabled = true;
+            setAiSettingsStatus('Testing...');
+            try {
+                await testGeminiConnection({ apiKey: geminiApiKey, model: geminiModel });
+                setAiSettingsStatus('The key works with this model.', 'success');
+            } catch (error) {
+                setAiSettingsStatus(error?.message || 'Test failed.', 'error');
+            } finally {
+                testBtn.disabled = false;
+            }
+        });
+    };
+
     const openPreferences = () => {
         const pinnedPrefs = getPinnedBrewsPreferences();
 
@@ -659,6 +719,8 @@ export const createBrewsPreferencesModule = ({
         updatePushPermissionGuard(!!notificationPrefs.pushEnabled, { currentDeviceRegistered: false });
 
         bindPreferencesAutoSave();
+        bindAiSettings();
+        void hydrateAiSettings();
         bindNotificationsDeviceActions();
         bindReloadButton();
         renderNotificationsDebugPanel();

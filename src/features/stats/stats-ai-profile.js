@@ -1,8 +1,9 @@
+import { analyzeBrewProfile } from '../../core/gemini-client.js';
+
 export const createStatsAiProfileModule = ({
-    STATS_AI_URL,
+    aiSettings,
     getCurrentStatsData,
-    getCurrentUser,
-    fetchImpl = fetch
+    getCurrentUser
 }) => {
     const triggerAIProfile = async () => {
         const currentStatsData = getCurrentStatsData();
@@ -38,15 +39,13 @@ export const createStatsAiProfileModule = ({
                 )
                 .join('\n');
 
-            const response = await fetchImpl(STATS_AI_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ brewData: dataString, userName: aiTargetName })
+            const { geminiApiKey, geminiModel } = await aiSettings.load();
+            textBox.innerText = await analyzeBrewProfile({
+                apiKey: geminiApiKey,
+                model: geminiModel,
+                brewData: dataString,
+                userName: aiTargetName
             });
-
-            if (!response.ok) throw new Error('Analysis failed.');
-            const data = await response.json();
-            textBox.innerText = data.profile;
             container.classList.remove('hidden');
         } catch (err) {
             console.error(err);
