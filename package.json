@@ -35,7 +35,7 @@
     "firebase-admin": "^13.6.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.51.0",
+    "@playwright/test": "^1.65.0",
     "esbuild": "^0.25.10",
     "tailwindcss": "^3.4.17",
     "ttf2woff2": "^8.0.0"
